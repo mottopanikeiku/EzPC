@@ -18,7 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update 
 RUN apt-get -y install sudo software-properties-common git wget vim apt-utils
 RUN mkdir -p /ezpc_dir

@@ -1,0 +1,203 @@
+EMON Version .............. V11.58  
+Copyright(C) 1993 Intel Corporation. All rights reserved.
+Application Build Date: Mar  4 2026 at 09:26:15
+SEP Driver Version: 5.56  (public)
+PAX Driver Version: 1.0
+Linux Kernel Version: 6.8.0-78-generic
+Collection Mode: Driver
+total_number_of_processors  ...... 32
+number_of_online_processors ...... 32
+cpu_family ................ Intel(R) Xeon(R) Processor code named Sapphirerapids
+cpu_model ................. 143 (0x8f)
+cpu_stepping .............. 8 (0x8)
+
+Cache Info (core):
+L1 Data Cache ............. 48KB, 12-way, 64-byte line size
+                            2 HW threads share this cache, No SW Init Required
+L1 Code Cache ............. 32KB, 8-way, 64-byte line size
+                            2 HW threads share this cache, No SW Init Required
+L2 Unified Cache .......... 2MB, 16-way, 64-byte line size
+                            2 HW threads share this cache, No SW Init Required
+L3 Unified Cache .......... 45MB, Fully Associative, 64-byte line size
+                            No SW Init Required
+64-byte Prefetching
+
+Device Type ............... Intel(R) Xeon(R) Processor code named Sapphirerapids
+EMON Database ............. sapphirerapids_server
+Platform type ............. 131
+
+System Features:
+    (Number of Packages:    1)
+    (Cores Per Package:    16)
+    (Threads Per Package:  32)
+
+Processor Features (core):
+number_of_selectors ....... 8
+number_of_var_counters .... 8
+number_of_fixed_ctrs....... 4
+Fixed Counter Events:
+counter 0 ................. INST_RETIRED.ANY
+counter 1 ................. CPU_CLK_UNHALTED.THREAD
+counter 2 ................. CPU_CLK_UNHALTED.REF_TSC
+counter 3 ................. TOPDOWN.SLOTS
+number of devices ......... 1
+number_of_events .......... 408
+    (Thermal Throttling) (Enabled)
+    (Hyper-Threading) (Enabled)
+    (DCU IP Prefetching) (Enabled)
+    (DCU Streamer Prefetching) (Enabled)
+    (MLC Spatial Prefetching) (Enabled)
+    (MLC Streamer Prefetching) (Enabled)
+    (Threads Per Core:      2)
+
+Uncore Performance Monitoring Units:
+    cha             : 24
+    mdf             : 40
+    imc             : 8
+    cxlcm           : 6
+    cxldp           : 6
+    mchbm           : 0
+    m2hbm           : 0
+    m2m             : 4
+    qpi             : 0
+    r3qpi           : 4
+    iio             : 12
+    irp             : 12
+    pcu             : 1
+    ubox            : 1
+    m2pcie          : 12
+    rdt             : 1
+
+RDT H/W Support:
+    L3 Cache Occupancy		: Yes
+    Total Memory Bandwidth	: Yes
+    Local Memory Bandwidth	: Yes
+    L3 Cache Allocation		: Yes
+    L2 Cache Allocation		: Yes
+    Memory Bandwidth Allocation : Yes
+    L2 Core Data Prioritization : Yes
+    L3 Core Data Prioritization : Yes
+    IO Cache Occupancy		: No
+    IO Memory Bandwidth		: No
+    IO Cache Allocation		: No
+    Highest Available RMID	: 191
+    Sample Multiplier		: 49152
+    Max MBA Throttling Value	: 89
+    MBA Delay Value is Linear	: Yes
+    Number of MBA CLOS		: 15
+
+GPU Information:
+    No GPU devices found
+
+RAM Features:
+    (Package/Memory Controller/Channel)
+	(0/0/0) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/0/1) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/1/0) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/1/1) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/2/0) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/2/1) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/3/0) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+	(0/3/1) (Total Number of Ranks on this Channel: 2)
+		 (Dimm0 Info: Empty)
+		 (Dimm1 Info: Empty)
+
+QPI Link Features:
+	Package 0 :
+
+IIO Unit Features:
+	Package 0 :
+		domain:0 bus:0x00 stack:0 mesh:111
+		domain:0 bus:0x15 stack:1 mesh:112
+		domain:0 bus:0x8d stack:2 mesh:118
+		domain:0 bus:0x51 stack:3 mesh:114
+		domain:0 bus:0x33 stack:4 mesh:113
+		domain:0 bus:0x6f stack:5 mesh:119
+		domain:0 bus:0xab stack:6 mesh:117
+		domain:0 bus:0xc9 stack:7 mesh:120
+		domain:0 bus:0xe7 stack:8 mesh:110
+		domain:0 bus:0xec stack:9 mesh:116
+		domain:0 bus:0xf1 stack:10 mesh:115
+		domain:0 bus:0xf6 stack:11 mesh:121
+
+TSC Freq .................. 3096.00 MHz
+
+UFS Freq (limit) .......... 2500.00 MHz
+
+Processor Base Freq ....... 3100.00 MHz
+
+Processor Maximum Freq .... 4700.00 MHz
+
+Bus Reference Freq ........ 100.00 MHz
+
+MAX TURBO RATIO (limit)
+1C .......... 4700.00 MHz
+2C .......... 4700.00 MHz
+3C .......... 4600.00 MHz
+4C .......... 4600.00 MHz
+5C .......... 4300.00 MHz
+6C .......... 4300.00 MHz
+7C .......... 4200.00 MHz
+8C .......... 4200.00 MHz
+9C .......... 4200.00 MHz
+10C ......... 4200.00 MHz
+11C ......... 4100.00 MHz
+12C ......... 4100.00 MHz
+13C ......... 3800.00 MHz
+14C ......... 3800.00 MHz
+15C ......... 3700.00 MHz
+16C ......... 3700.00 MHz
+
+NUMA node(s):                         1
+NUMA node0 CPU(s):                    0-31
+
+		   OS Processor <-> Physical/Logical Mapping
+		   -----------------------------------------
+	OS Processor	Phys. Package	Core	Logical Processor	Core Type	
+	0           	0            	0   	0                	core     	
+	1           	0            	1   	0                	core     	
+	2           	0            	2   	0                	core     	
+	3           	0            	3   	0                	core     	
+	4           	0            	4   	0                	core     	
+	5           	0            	5   	0                	core     	
+	6           	0            	6   	0                	core     	
+	7           	0            	7   	0                	core     	
+	8           	0            	8   	0                	core     	
+	9           	0            	9   	0                	core     	
+	10          	0            	10  	0                	core     	
+	11          	0            	11  	0                	core     	
+	12          	0            	12  	0                	core     	
+	13          	0            	13  	0                	core     	
+	14          	0            	14  	0                	core     	
+	15          	0            	15  	0                	core     	
+	16          	0            	0   	1                	core     	
+	17          	0            	1   	1                	core     	
+	18          	0            	2   	1                	core     	
+	19          	0            	3   	1                	core     	
+	20          	0            	4   	1                	core     	
+	21          	0            	5   	1                	core     	
+	22          	0            	6   	1                	core     	
+	23          	0            	7   	1                	core     	
+	24          	0            	8   	1                	core     	
+	25          	0            	9   	1                	core     	
+	26          	0            	10  	1                	core     	
+	27          	0            	11  	1                	core     	
+	28          	0            	12  	1                	core     	
+	29          	0            	13  	1                	core     	
+	30          	0            	14  	1                	core     	
+	31          	0            	15  	1                	core     	
+		   -----------------------------------------

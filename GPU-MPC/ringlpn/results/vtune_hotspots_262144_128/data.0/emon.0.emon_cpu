@@ -1,0 +1,37 @@
+
+		   OS Processor <-> Physical/Logical Mapping
+		   -----------------------------------------
+	OS Processor	Phys. Package	Core	Logical Processor	Core Type	
+	0           	0            	0   	0                	core     	
+	1           	0            	1   	0                	core     	
+	2           	0            	2   	0                	core     	
+	3           	0            	3   	0                	core     	
+	4           	0            	4   	0                	core     	
+	5           	0            	5   	0                	core     	
+	6           	0            	6   	0                	core     	
+	7           	0            	7   	0                	core     	
+	8           	0            	8   	0                	core     	
+	9           	0            	9   	0                	core     	
+	10          	0            	10  	0                	core     	
+	11          	0            	11  	0                	core     	
+	12          	0            	12  	0                	core     	
+	13          	0            	13  	0                	core     	
+	14          	0            	14  	0                	core     	
+	15          	0            	15  	0                	core     	
+	16          	0            	0   	1                	core     	
+	17          	0            	1   	1                	core     	
+	18          	0            	2   	1                	core     	
+	19          	0            	3   	1                	core     	
+	20          	0            	4   	1                	core     	
+	21          	0            	5   	1                	core     	
+	22          	0            	6   	1                	core     	
+	23          	0            	7   	1                	core     	
+	24          	0            	8   	1                	core     	
+	25          	0            	9   	1                	core     	
+	26          	0            	10  	1                	core     	
+	27          	0            	11  	1                	core     	
+	28          	0            	12  	1                	core     	
+	29          	0            	13  	1                	core     	
+	30          	0            	14  	1                	core     	
+	31          	0            	15  	1                	core     	
+		   -----------------------------------------
