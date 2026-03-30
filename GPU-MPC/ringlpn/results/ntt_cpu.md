@@ -1,24 +1,47 @@
 # Ring-LPN CPU Baseline (NFLLib)
 
-Generated: 2026-03-08 05:26 UTC
+Generated: 2026-03-30 08:17 UTC
 
 ## Results
 
-| n | q (bits) | iters | NTT mean (us) | NTT std (us) | INTT mean (us) | INTT std (us) | PolyMul mean (us) | PolyMul std (us) | Ops/s | Data rate (GB/s) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1024 | 30 | 10000 | 6.133 | 1.957 | 6.531 | 0.417 | 19.595 | 1.266 | 51032.91 | 0.42 |
-| 1024 | 60 | 10000 | 12.037 | 0.488 | 13.081 | 0.731 | 38.401 | 1.289 | 26041.19 | 0.43 |
-| 2048 | 30 | 10000 | 12.563 | 0.581 | 13.572 | 0.669 | 41.381 | 2.253 | 24165.50 | 0.40 |
-| 2048 | 60 | 10000 | 25.705 | 1.110 | 26.928 | 0.975 | 81.474 | 7.717 | 12273.79 | 0.40 |
-| 4096 | 30 | 10000 | 27.633 | 2.438 | 29.644 | 1.805 | 86.712 | 5.916 | 11532.43 | 0.38 |
-| 4096 | 60 | 10000 | 54.021 | 2.189 | 60.121 | 2.881 | 173.490 | 6.405 | 5764.02 | 0.38 |
-| 8192 | 30 | 10000 | 56.833 | 1.555 | 63.626 | 2.074 | 180.200 | 5.273 | 5549.39 | 0.36 |
-| 8192 | 60 | 10000 | 116.530 | 14.638 | 127.232 | 5.039 | 372.832 | 22.177 | 2682.17 | 0.35 |
-| 16384 | 30 | 10000 | 121.083 | 5.554 | 130.851 | 7.994 | 384.645 | 12.202 | 2599.80 | 0.34 |
-| 16384 | 60 | 10000 | 243.040 | 9.027 | 272.304 | 13.432 | 791.702 | 45.723 | 1263.10 | 0.33 |
+| n | log2(n) | q req | q actual | limb | validate | iters | NTT mean (us) | INTT mean (us) | Pointwise est. (us) | Full PolyMul mean (us) | Ops/s | Est. coeff GB/s |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 8192 | 13 | 32 | 30 | u32/30 | pass | 800 | 57.623 | 64.525 | 3.896 | 183.667 | 5444.64 | 0.36 |
+| 8192 | 13 | 64 | 62 | u64/62 | pass | 800 | 63.169 | 70.680 | 3.779 | 200.798 | 4980.13 | 0.65 |
+| 8192 | 13 | 128 | 124 | u64/62 | pass | 800 | 129.529 | 134.951 | 1.923 | 395.932 | 2525.69 | 0.66 |
+| 16384 | 14 | 32 | 30 | u32/30 | pass | 800 | 121.067 | 132.578 | 10.633 | 385.345 | 2595.08 | 0.34 |
+| 16384 | 14 | 64 | 62 | u64/62 | pass | 800 | 123.307 | 143.097 | 21.941 | 411.652 | 2429.24 | 0.64 |
+| 16384 | 14 | 128 | 124 | u64/62 | pass | 800 | 253.046 | 292.494 | 45.117 | 843.703 | 1185.25 | 0.62 |
+| 32768 | 15 | 32 | 30 | u32/30 | pass | 800 | 256.393 | 288.655 | 24.124 | 825.565 | 1211.29 | 0.32 |
+| 32768 | 15 | 64 | 62 | u64/62 | pass | 800 | 264.513 | 315.081 | 33.883 | 877.990 | 1138.97 | 0.60 |
+| 32768 | 15 | 128 | 124 | u64/62 | pass | 800 | 534.061 | 628.781 | 90.117 | 1787.020 | 559.59 | 0.59 |
+| 65536 | 16 | 64 | 62 | u64/62 | pass | 200 | 557.355 | 650.194 | 154.646 | 1919.550 | 520.96 | 0.55 |
+| 65536 | 16 | 128 | 124 | u64/62 | pass | 200 | 1156.080 | 1401.370 | 56.540 | 3770.070 | 265.25 | 0.56 |
+| 131072 | 17 | 64 | 62 | u64/62 | pass | 200 | 1195.020 | 1406.840 | 147.120 | 3944.000 | 253.55 | 0.53 |
+| 131072 | 17 | 128 | 124 | u64/62 | pass | 200 | 2524.500 | 3489.300 | 122.820 | 8661.120 | 115.46 | 0.48 |
+| 262144 | 18 | 64 | 62 | u64/62 | pass | 50 | 2640.390 | 4245.850 | 597.170 | 10123.800 | 98.78 | 0.41 |
+| 262144 | 18 | 128 | 124 | u64/62 | pass | 50 | 5556.950 | 9178.220 | 680.380 | 20972.500 | 47.68 | 0.40 |
+| 524288 | 19 | 64 | 62 | u64/62 | pass | 50 | 6146.530 | 10971.900 | 915.240 | 24180.200 | 41.36 | 0.35 |
+| 524288 | 19 | 128 | 124 | u64/62 | pass | 50 | 12936.800 | 22503.500 | 3157.900 | 51535.000 | 19.40 | 0.33 |
+| 1048576 | 20 | 64 | 62 | u64/62 | pass | 12 | 13388.900 | 23578.500 | 3664.600 | 54020.900 | 18.51 | 0.31 |
+| 1048576 | 20 | 128 | 124 | u64/62 | pass | 12 | 27604.600 | 49102.700 | 7171.100 | 111483.000 | 8.97 | 0.30 |
+
+## Unsupported Requested Points
+
+| n | log2(n) | q req | status | reason |
+| --- | --- | --- | --- | --- |
+| 65536 | 16 | 32 | unsupported | Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode |
+| 131072 | 17 | 32 | unsupported | Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode |
+| 262144 | 18 | 32 | unsupported | Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode |
+| 524288 | 19 | 32 | unsupported | Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode |
+| 1048576 | 20 | 32 | unsupported | Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode |
 
 ## Notes
 
-- Coefficients are uint32_t with 30-bit primes; qbits=60 uses two moduli.
-- Data rate uses bytes_per_op = n * 4 * nb_moduli * 2.
-- Ops/s = 1e6 / PolyMul_mean_us.
+- NFLLib only supports aggregated modulus sizes that are multiples of 30 bits in uint32_t mode or 62 bits in uint64_t mode.
+- Requested qbits 32, 64, and 128 therefore resolve to actual qbits 30, 62, and 124 when the requested point is feasible.
+- Requested qbits=32 is only feasible up to n=32768 because NFLLib uint32_t mode caps the degree there.
+- Est. coeff GB/s uses bytes_per_op = n * limb_bytes * nb_moduli * 2 and is a rough throughput proxy, not a hardware counter.
+- Full PolyMul is measured directly in the benchmark as NTT(a) + NTT(b) + pointwise multiply + INTT.
+- Pointwise est. is back-computed as Full PolyMul - 2*NTT - INTT and is shown only as a sanity check.
+- Ops/s = 1e6 / Full PolyMul_mean_us.

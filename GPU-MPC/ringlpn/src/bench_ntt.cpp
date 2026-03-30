@@ -10,10 +10,13 @@
 #include <gmpxx.h>
 #include <iostream>
 #include <map>
+#include <memory>
+#include <new>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <sys/resource.h>
 #include <utility>
 #include <vector>
 
@@ -99,6 +102,21 @@ static int ilog2_exact(int n) {
     return logn;
 }
 
+static void maximize_stack_limit() {
+    struct rlimit limit;
+    if (getrlimit(RLIMIT_STACK, &limit) != 0) {
+        return;
+    }
+
+    if (limit.rlim_cur == RLIM_INFINITY || limit.rlim_cur == limit.rlim_max) {
+        return;
+    }
+
+    struct rlimit updated = limit;
+    updated.rlim_cur = limit.rlim_max;
+    setrlimit(RLIMIT_STACK, &updated);
+}
+
 static ResolvedConfig resolve_config(int n, int requested_qbits) {
     if (!is_power_of_two(n) || n < 1024 || n > 1048576) {
         throw std::invalid_argument("Unsupported degree: n must be a power of two in [1024, 1048576]");
@@ -134,6 +152,36 @@ static ResolvedConfig resolve_config(int n, int requested_qbits) {
 }
 
 template <typename Poly>
+struct PolyDeleter {
+    void operator()(Poly *poly) const {
+        if (poly == nullptr) {
+            return;
+        }
+        poly->~Poly();
+        std::free(poly);
+    }
+};
+
+template <typename Poly>
+using PolyPtr = std::unique_ptr<Poly, PolyDeleter<Poly>>;
+
+template <typename Poly, typename... Args>
+static PolyPtr<Poly> make_aligned_poly(Args&&... args) {
+    void *storage = nullptr;
+    const size_t alignment = std::max<size_t>(32, alignof(Poly));
+    if (posix_memalign(&storage, alignment, sizeof(Poly)) != 0) {
+        throw std::bad_alloc();
+    }
+
+    try {
+        return PolyPtr<Poly>(new (storage) Poly(std::forward<Args>(args)...));
+    } catch (...) {
+        std::free(storage);
+        throw;
+    }
+}
+
+template <typename Poly>
 static std::vector<std::pair<size_t, uint64_t>> make_sparse_terms(size_t salt) {
     const size_t degree = Poly::degree;
     std::vector<size_t> positions;
@@ -162,8 +210,8 @@ static std::vector<std::pair<size_t, uint64_t>> make_sparse_terms(size_t salt) {
 }
 
 template <typename Poly>
-static Poly make_sparse_poly(const std::vector<std::pair<size_t, uint64_t>> &terms) {
-    Poly poly(0);
+static void fill_sparse_poly(Poly &poly, const std::vector<std::pair<size_t, uint64_t>> &terms) {
+    poly = static_cast<typename Poly::value_type>(0);
     for (size_t term_index = 0; term_index < terms.size(); term_index++) {
         const size_t position = terms[term_index].first;
         const typename Poly::value_type value = static_cast<typename Poly::value_type>(terms[term_index].second);
@@ -171,7 +219,6 @@ static Poly make_sparse_poly(const std::vector<std::pair<size_t, uint64_t>> &ter
             poly(modulus_index, position) = value;
         }
     }
-    return poly;
 }
 
 template <typename Poly>
@@ -249,15 +296,17 @@ static void validate_config(const ResolvedConfig &config) {
     const std::vector<std::pair<size_t, uint64_t>> lhs_terms = make_sparse_terms<Poly>(1);
     const std::vector<std::pair<size_t, uint64_t>> rhs_terms = make_sparse_terms<Poly>(5);
 
-    Poly lhs = make_sparse_poly<Poly>(lhs_terms);
-    Poly rhs = make_sparse_poly<Poly>(rhs_terms);
+    PolyPtr<Poly> lhs = make_aligned_poly<Poly>(0);
+    PolyPtr<Poly> rhs = make_aligned_poly<Poly>(0);
+    fill_sparse_poly(*lhs, lhs_terms);
+    fill_sparse_poly(*rhs, rhs_terms);
 
-    Poly roundtrip = lhs;
-    roundtrip.ntt_pow_phi();
-    roundtrip.invntt_pow_invphi();
+    PolyPtr<Poly> roundtrip = make_aligned_poly<Poly>(*lhs);
+    roundtrip->ntt_pow_phi();
+    roundtrip->invntt_pow_invphi();
 
     std::string reason;
-    if (!same_coefficients(roundtrip, lhs, &reason)) {
+    if (!same_coefficients(*roundtrip, *lhs, &reason)) {
         std::ostringstream stream;
         stream << "Validation failed for requested qbits=" << config.requested_qbits
                << " (actual qbits=" << config.actual_qbits << "): NTT roundtrip mismatch. "
@@ -265,15 +314,15 @@ static void validate_config(const ResolvedConfig &config) {
         throw std::runtime_error(stream.str());
     }
 
-    Poly lhs_ntt = lhs;
-    Poly rhs_ntt = rhs;
-    lhs_ntt.ntt_pow_phi();
-    rhs_ntt.ntt_pow_phi();
-    Poly product = lhs_ntt * rhs_ntt;
-    product.invntt_pow_invphi();
+    PolyPtr<Poly> lhs_ntt = make_aligned_poly<Poly>(*lhs);
+    PolyPtr<Poly> rhs_ntt = make_aligned_poly<Poly>(*rhs);
+    lhs_ntt->ntt_pow_phi();
+    rhs_ntt->ntt_pow_phi();
+    PolyPtr<Poly> product = make_aligned_poly<Poly>((*lhs_ntt) * (*rhs_ntt));
+    product->invntt_pow_invphi();
 
     const std::map<size_t, long long> expected = reference_negacyclic_product<Poly>(lhs_terms, rhs_terms);
-    if (!matches_reference_product(product, expected, &reason)) {
+    if (!matches_reference_product(*product, expected, &reason)) {
         std::ostringstream stream;
         stream << "Validation failed for requested qbits=" << config.requested_qbits
                << " (actual qbits=" << config.actual_qbits << "): negacyclic product mismatch. "
@@ -288,16 +337,18 @@ static void run_bench(const Args &args, const ResolvedConfig &config) {
         validate_config<Poly>(config);
     }
 
-    Poly a = nfl::uniform();
-    Poly b = nfl::uniform();
-    Poly c;
+    PolyPtr<Poly> a = make_aligned_poly<Poly>(nfl::uniform());
+    PolyPtr<Poly> b = make_aligned_poly<Poly>(nfl::uniform());
+    PolyPtr<Poly> c = make_aligned_poly<Poly>();
+    PolyPtr<Poly> x = make_aligned_poly<Poly>(*a);
+    PolyPtr<Poly> y = make_aligned_poly<Poly>(*b);
 
     // Warmup
     for (int i = 0; i < args.warmup; i++) {
-        Poly x = a;
-        x.ntt_pow_phi();
-        x.invntt_pow_invphi();
-        c = a * b;
+        *x = *a;
+        x->ntt_pow_phi();
+        x->invntt_pow_invphi();
+        *c = (*a) * (*b);
     }
 
     std::vector<double> ntt_samples;
@@ -309,21 +360,21 @@ static void run_bench(const Args &args, const ResolvedConfig &config) {
 
     // Forward NTT timing
     for (int i = 0; i < args.iters; i++) {
-        Poly x = a;
+        *x = *a;
         auto start = std::chrono::high_resolution_clock::now();
-        x.ntt_pow_phi();
+        x->ntt_pow_phi();
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::micro> elapsed = end - start;
         ntt_samples.push_back(elapsed.count());
-        x.invntt_pow_invphi();
+        x->invntt_pow_invphi();
     }
 
     // Inverse NTT timing (prepare x in NTT domain once per iteration)
     for (int i = 0; i < args.iters; i++) {
-        Poly x = a;
-        x.ntt_pow_phi();
+        *x = *a;
+        x->ntt_pow_phi();
         auto start = std::chrono::high_resolution_clock::now();
-        x.invntt_pow_invphi();
+        x->invntt_pow_invphi();
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::micro> elapsed = end - start;
         intt_samples.push_back(elapsed.count());
@@ -331,13 +382,13 @@ static void run_bench(const Args &args, const ResolvedConfig &config) {
 
     // Polynomial multiplication timing (NTT(a) + NTT(b) + pointwise + INTT)
     for (int i = 0; i < args.iters; i++) {
-        Poly x = a;
-        Poly y = b;
+        *x = *a;
+        *y = *b;
         auto start = std::chrono::high_resolution_clock::now();
-        x.ntt_pow_phi();
-        y.ntt_pow_phi();
-        c = x * y;
-        c.invntt_pow_invphi();
+        x->ntt_pow_phi();
+        y->ntt_pow_phi();
+        *c = (*x) * (*y);
+        c->invntt_pow_invphi();
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::micro> elapsed = end - start;
         mul_samples.push_back(elapsed.count());
@@ -406,18 +457,22 @@ static void dispatch(const Args &args) {
 
     if (config.actual_qbits == 30) {
         dispatch_u32<30>(args, config);
+        return;
     }
 
     if (config.actual_qbits == 60) {
         dispatch_u32<60>(args, config);
+        return;
     }
 
     if (config.actual_qbits == 62) {
         dispatch_u64<62>(args, config);
+        return;
     }
 
     if (config.actual_qbits == 124) {
         dispatch_u64<124>(args, config);
+        return;
     }
 
     throw std::invalid_argument("Unsupported resolved configuration");
@@ -425,6 +480,7 @@ static void dispatch(const Args &args) {
 
 int main(int argc, char **argv) {
     try {
+        maximize_stack_limit();
         Args args = parse_args(argc, argv);
         if (args.csv_header) {
             std::cout << "n,logn,requested_qbits,actual_qbits,limb_bits,limb_bytes,limb_type,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us\n";
