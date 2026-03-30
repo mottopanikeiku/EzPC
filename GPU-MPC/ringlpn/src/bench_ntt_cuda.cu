@@ -14,15 +14,11 @@
 
 namespace {
 
-constexpr int kMinDegree = 8192;
-constexpr int kMaxDegree = 1048576;
-constexpr uint32_t kModulus = 1004535809u;
-constexpr uint32_t kPrimitiveGenerator = 3u;
-constexpr int kActualQBits = 30;
+constexpr int kMaxDegree = 16384;
+constexpr uint32_t kModulus = 1073479681u;
+constexpr uint32_t kPrimitiveRootMax = 31849551u;
+constexpr int kMaxPolyDegree = 32768;
 constexpr int kFusedStages = 8;
-constexpr int kSegmentSize = 256;
-constexpr int kThreadsPerSegment = kSegmentSize / 2;
-constexpr int kMaxValidationBatches = 4;
 
 struct Stats {
     double mean_us;
@@ -30,13 +26,10 @@ struct Stats {
 };
 
 struct Args {
-    int n = kMinDegree;
-    int requested_qbits = 32;
-    int batch_size = 1;
+    int n = 4096;
     int iters = 10000;
     int warmup = 1000;
     bool csv_header = false;
-    bool skip_validation = false;
 };
 
 struct DeviceTables {
@@ -55,17 +48,13 @@ static void check(cudaError_t err, const char *msg) {
 }
 
 static void check_launch(const char *msg) {
+    // Per CUDA Runtime API docs, cudaGetLastError reports launch/configuration errors
+    // for prior runtime calls and resets the thread-local runtime error state.
     check(cudaGetLastError(), msg);
 }
 
-static bool is_power_of_two(int n) {
-    return n > 0 && ((n & (n - 1)) == 0);
-}
-
 static void usage(const char *prog) {
-    std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 30|32] [--batch N] [--iters N] [--warmup N]"
-              << " [--csv-header] [--skip-validation]\n";
+    std::cerr << "Usage: " << prog << " [--n 4096|16384] [--iters N] [--warmup N] [--csv-header]\n";
 }
 
 static Args parse_args(int argc, char **argv) {
@@ -73,44 +62,21 @@ static Args parse_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (std::strcmp(argv[i], "--n") == 0 && i + 1 < argc) {
             args.n = std::atoi(argv[++i]);
-        } else if (std::strcmp(argv[i], "--qbits") == 0 && i + 1 < argc) {
-            args.requested_qbits = std::atoi(argv[++i]);
-        } else if (std::strcmp(argv[i], "--batch") == 0 && i + 1 < argc) {
-            args.batch_size = std::atoi(argv[++i]);
         } else if (std::strcmp(argv[i], "--iters") == 0 && i + 1 < argc) {
             args.iters = std::atoi(argv[++i]);
         } else if (std::strcmp(argv[i], "--warmup") == 0 && i + 1 < argc) {
             args.warmup = std::atoi(argv[++i]);
         } else if (std::strcmp(argv[i], "--csv-header") == 0) {
             args.csv_header = true;
-        } else if (std::strcmp(argv[i], "--skip-validation") == 0) {
-            args.skip_validation = true;
         } else {
             usage(argv[0]);
             std::exit(1);
         }
     }
-
-    if (!is_power_of_two(args.n) || args.n < kMinDegree || args.n > kMaxDegree) {
+    if (args.n != 4096 && args.n != 16384) {
         usage(argv[0]);
         std::exit(1);
     }
-
-    if (args.requested_qbits != 30 && args.requested_qbits != 32) {
-        std::cerr << "Unsupported qbits request: expected one of 30 or 32\n";
-        std::exit(1);
-    }
-
-    if (args.batch_size <= 0 || args.iters <= 0 || args.warmup < 0) {
-        usage(argv[0]);
-        std::exit(1);
-    }
-
-    if (((kModulus - 1ULL) % (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
-        std::cerr << "Unsupported degree for selected 30-bit prime: need 2n to divide q-1\n";
-        std::exit(1);
-    }
-
     return args;
 }
 
@@ -209,7 +175,13 @@ static uint32_t bit_reverse(uint32_t x, int log_degree) {
 }
 
 static uint32_t compute_phi_for_n(int n) {
-    return mod_pow(kPrimitiveGenerator, (kModulus - 1ULL) / (2ULL * static_cast<uint64_t>(n)));
+    uint32_t phi = kPrimitiveRootMax;
+    int ratio = kMaxPolyDegree / n;
+    while (ratio > 1) {
+        phi = mod_mul_host(phi, phi);
+        ratio >>= 1;
+    }
+    return phi;
 }
 
 static void compute_tables(
@@ -262,7 +234,7 @@ static void compute_tables(
         uint32_t iwlen = mod_pow(invomega, static_cast<uint64_t>(n / len));
         uint32_t w = 1;
         uint32_t iw = 1;
-        int base = static_cast<int>(stage_offsets[stage]);
+        int base = stage_offsets[stage];
         for (int j = 0; j < half; j++) {
             fwd_twiddles_mont[base + j] = to_mont_host(w, nprime, r2_mod_q);
             inv_twiddles_mont[base + j] = to_mont_host(iw, nprime, r2_mod_q);
@@ -357,18 +329,8 @@ static std::vector<uint32_t> make_input_pattern(int n, InputPattern pattern, uin
     return values;
 }
 
-static std::vector<uint32_t> make_batched_pattern(int batch_count, int n, InputPattern pattern, uint32_t seed_base = 0) {
-    std::vector<uint32_t> values(static_cast<size_t>(batch_count) * static_cast<size_t>(n));
-    for (int batch = 0; batch < batch_count; batch++) {
-        std::vector<uint32_t> lane = make_input_pattern(n, pattern, seed_base + static_cast<uint32_t>(batch * 17));
-        std::copy(lane.begin(), lane.end(), values.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n));
-    }
-    return values;
-}
-
 static bool compare_vectors(const std::vector<uint32_t> &expected,
                             const std::vector<uint32_t> &actual,
-                            int n,
                             const char *label) {
     if (expected.size() != actual.size()) {
         std::cerr << label << " size mismatch: expected " << expected.size()
@@ -377,8 +339,7 @@ static bool compare_vectors(const std::vector<uint32_t> &expected,
     }
     for (size_t i = 0; i < expected.size(); i++) {
         if (expected[i] != actual[i]) {
-            std::cerr << label << " mismatch at batch " << (i / static_cast<size_t>(n))
-                      << ", index " << (i % static_cast<size_t>(n))
+            std::cerr << label << " mismatch at index " << i
                       << ": expected " << expected[i]
                       << ", got " << actual[i] << "\n";
             return false;
@@ -388,11 +349,11 @@ static bool compare_vectors(const std::vector<uint32_t> &expected,
 }
 
 static std::vector<uint32_t> host_polymul_reference(const std::vector<uint32_t> &lhs,
-                                                    const std::vector<uint32_t> &rhs,
-                                                    const std::vector<uint32_t> &phi_norm,
-                                                    const std::vector<uint32_t> &post_norm,
-                                                    int n,
-                                                    int log_degree) {
+                                                     const std::vector<uint32_t> &rhs,
+                                                     const std::vector<uint32_t> &phi_norm,
+                                                     const std::vector<uint32_t> &post_norm,
+                                                     int n,
+                                                     int log_degree) {
     std::vector<uint32_t> host_a = lhs;
     std::vector<uint32_t> host_b = rhs;
     host_forward_ntt(host_a, phi_norm, n, log_degree);
@@ -403,6 +364,142 @@ static std::vector<uint32_t> host_polymul_reference(const std::vector<uint32_t> 
     }
     host_inverse_ntt(host_c, post_norm, n, log_degree);
     return host_c;
+}
+
+static bool validate_roundtrip_case(const char *label,
+                                    const std::vector<uint32_t> &input,
+                                    uint32_t *d_input,
+                                    uint32_t *d_work,
+                                    uint32_t *d_tmp,
+                                    uint32_t *d_out,
+                                    const DeviceTables &tables,
+                                    const std::vector<uint32_t> &stage_offsets,
+                                    int n,
+                                    int log_degree,
+                                    uint32_t nprime,
+                                    uint32_t r2_mod_q) {
+    check(cudaMemcpy(d_input, input.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice),
+          "copy roundtrip input");
+    run_forward_only(d_input, d_work, tables, stage_offsets, n, log_degree, nprime, r2_mod_q);
+    run_inverse_only(d_work, d_tmp, d_out, tables, stage_offsets, n, log_degree, nprime);
+    check(cudaDeviceSynchronize(), "sync roundtrip validation");
+    std::vector<uint32_t> output(n);
+    check(cudaMemcpy(output.data(), d_out, sizeof(uint32_t) * n, cudaMemcpyDeviceToHost),
+          "copy roundtrip output");
+    return compare_vectors(input, output, label);
+}
+
+static bool validate_polymul_case(const char *label,
+                                  const std::vector<uint32_t> &lhs,
+                                  const std::vector<uint32_t> &rhs,
+                                  uint32_t *d_a,
+                                  uint32_t *d_b,
+                                  uint32_t *d_a_work,
+                                  uint32_t *d_b_work,
+                                  uint32_t *d_c_work,
+                                  uint32_t *d_tmp,
+                                  uint32_t *d_out,
+                                  const DeviceTables &tables,
+                                  const std::vector<uint32_t> &stage_offsets,
+                                  const std::vector<uint32_t> &phi_norm,
+                                  const std::vector<uint32_t> &post_norm,
+                                  int n,
+                                  int log_degree,
+                                  uint32_t nprime,
+                                  uint32_t r2_mod_q) {
+    const std::vector<uint32_t> expected =
+        host_polymul_reference(lhs, rhs, phi_norm, post_norm, n, log_degree);
+
+    check(cudaMemcpy(d_a, lhs.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice),
+          "copy polymul lhs");
+    check(cudaMemcpy(d_b, rhs.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice),
+          "copy polymul rhs");
+    run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                     tables, stage_offsets, n, log_degree, nprime, r2_mod_q);
+    check(cudaDeviceSynchronize(), "sync polymul validation");
+
+    std::vector<uint32_t> actual(n);
+    check(cudaMemcpy(actual.data(), d_out, sizeof(uint32_t) * n, cudaMemcpyDeviceToHost),
+          "copy polymul output");
+    return compare_vectors(expected, actual, label);
+}
+
+static bool run_validation_suite(uint32_t *d_a,
+                                 uint32_t *d_b,
+                                 uint32_t *d_a_work,
+                                 uint32_t *d_b_work,
+                                 uint32_t *d_c_work,
+                                 uint32_t *d_tmp,
+                                 uint32_t *d_out,
+                                 const DeviceTables &tables,
+                                 const std::vector<uint32_t> &stage_offsets,
+                                 const std::vector<uint32_t> &phi_norm,
+                                 const std::vector<uint32_t> &post_norm,
+                                 int n,
+                                 int log_degree,
+                                 uint32_t nprime,
+                                 uint32_t r2_mod_q) {
+    bool ok = true;
+
+    ok = validate_roundtrip_case("roundtrip zeros",
+                                 make_input_pattern(n, InputPattern::Zero),
+                                 d_a, d_a_work, d_tmp, d_out, tables,
+                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_roundtrip_case("roundtrip ones",
+                                 make_input_pattern(n, InputPattern::One),
+                                 d_a, d_a_work, d_tmp, d_out, tables,
+                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_roundtrip_case("roundtrip impulse",
+                                 make_input_pattern(n, InputPattern::Impulse),
+                                 d_a, d_a_work, d_tmp, d_out, tables,
+                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_roundtrip_case("roundtrip max",
+                                 make_input_pattern(n, InputPattern::Max),
+                                 d_a, d_a_work, d_tmp, d_out, tables,
+                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_roundtrip_case("roundtrip random(12345)",
+                                 make_input_pattern(n, InputPattern::Random, 12345u),
+                                 d_a, d_a_work, d_tmp, d_out, tables,
+                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
+
+    ok = validate_polymul_case("polymul zero*zero",
+                               make_input_pattern(n, InputPattern::Zero),
+                               make_input_pattern(n, InputPattern::Zero),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_polymul_case("polymul one*one",
+                               make_input_pattern(n, InputPattern::One),
+                               make_input_pattern(n, InputPattern::One),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_polymul_case("polymul impulse*ones",
+                               make_input_pattern(n, InputPattern::Impulse),
+                               make_input_pattern(n, InputPattern::One),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_polymul_case("polymul max*max",
+                               make_input_pattern(n, InputPattern::Max),
+                               make_input_pattern(n, InputPattern::Max),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_polymul_case("polymul random(1)*random(2)",
+                               make_input_pattern(n, InputPattern::Random, 1u),
+                               make_input_pattern(n, InputPattern::Random, 2u),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+    ok = validate_polymul_case("polymul random(3)*random(4)",
+                               make_input_pattern(n, InputPattern::Random, 3u),
+                               make_input_pattern(n, InputPattern::Random, 4u),
+                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+                               tables, stage_offsets, phi_norm, post_norm,
+                               n, log_degree, nprime, r2_mod_q) && ok;
+
+    return ok;
 }
 
 __device__ __forceinline__ uint32_t mont_mul(uint32_t a, uint32_t b, uint32_t q, uint32_t nprime) {
@@ -431,63 +528,34 @@ __device__ __forceinline__ uint32_t device_bit_reverse(uint32_t x, int log_degre
     return __brev(x) >> (32 - log_degree);
 }
 
-__global__ void preprocess_phi_kernel(const uint32_t *in,
-                                      uint32_t *out,
-                                      const uint32_t *phi_mont,
-                                      int n,
-                                      int batch_count,
-                                      int log_degree,
-                                      uint32_t q,
-                                      uint32_t nprime,
-                                      uint32_t r2_mod_q) {
-    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    if (idx >= total_coeffs) {
+__global__ void preprocess_phi_kernel(const uint32_t *in, uint32_t *out, const uint32_t *phi_mont, int n, int log_degree, uint32_t q, uint32_t nprime, uint32_t r2_mod_q) {
+    uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= static_cast<uint32_t>(n)) {
         return;
     }
-    size_t batch = idx / static_cast<size_t>(n);
-    uint32_t lane = static_cast<uint32_t>(idx % static_cast<size_t>(n));
-    uint32_t rev = device_bit_reverse(lane, log_degree);
+    uint32_t rev = device_bit_reverse(idx, log_degree);
     uint32_t x_mont = mont_mul(in[idx], r2_mod_q, q, nprime);
-    out[batch * static_cast<size_t>(n) + rev] = mont_mul(x_mont, phi_mont[lane], q, nprime);
+    out[rev] = mont_mul(x_mont, phi_mont[idx], q, nprime);
 }
 
-__global__ void bit_reverse_copy_kernel(const uint32_t *in,
-                                        uint32_t *out,
-                                        int n,
-                                        int batch_count,
-                                        int log_degree) {
-    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    if (idx >= total_coeffs) {
+__global__ void bit_reverse_copy_kernel(const uint32_t *in, uint32_t *out, int n, int log_degree) {
+    uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= static_cast<uint32_t>(n)) {
         return;
     }
-    size_t batch = idx / static_cast<size_t>(n);
-    uint32_t lane = static_cast<uint32_t>(idx % static_cast<size_t>(n));
-    uint32_t rev = device_bit_reverse(lane, log_degree);
-    out[batch * static_cast<size_t>(n) + rev] = in[idx];
+    uint32_t rev = device_bit_reverse(idx, log_degree);
+    out[rev] = in[idx];
 }
 
-__global__ void ntt_stage_kernel(uint32_t *data,
-                                 const uint32_t *twiddles,
-                                 uint32_t stage_offset,
-                                 uint32_t len,
-                                 int n,
-                                 int batch_count,
-                                 uint32_t q,
-                                 uint32_t nprime) {
-    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    size_t butterflies_per_poly = static_cast<size_t>(n / 2);
-    size_t total_butterflies = static_cast<size_t>(batch_count) * butterflies_per_poly;
-    if (idx >= total_butterflies) {
-        return;
-    }
-    size_t batch = idx / butterflies_per_poly;
-    size_t local = idx % butterflies_per_poly;
+__global__ void ntt_stage_kernel(uint32_t *data, const uint32_t *twiddles, uint32_t stage_offset, uint32_t len, int n, uint32_t q, uint32_t nprime) {
+    uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
     uint32_t half = len >> 1;
-    size_t group = local / half;
-    size_t j = local % half;
-    size_t base = batch * static_cast<size_t>(n) + group * len + j;
+    if (idx >= static_cast<uint32_t>(n / 2)) {
+        return;
+    }
+    uint32_t group = idx / half;
+    uint32_t j = idx % half;
+    uint32_t base = group * len + j;
     uint32_t w = twiddles[stage_offset + j];
     uint32_t u = data[base];
     uint32_t v = mont_mul(data[base + half], w, q, nprime);
@@ -495,29 +563,24 @@ __global__ void ntt_stage_kernel(uint32_t *data,
     data[base + half] = sub_mod(u, v, q);
 }
 
-__global__ void ntt_first8_stages_kernel(uint32_t *data,
-                                         const uint32_t *twiddles,
-                                         const uint32_t *stage_offsets,
-                                         int n,
-                                         int batch_count,
-                                         int log_degree,
-                                         uint32_t q,
-                                         uint32_t nprime) {
+__global__ void ntt_first8_stages_kernel(
+    uint32_t *data,
+    const uint32_t *twiddles,
+    const uint32_t *stage_offsets,
+    int n,
+    int log_degree,
+    uint32_t q,
+    uint32_t nprime
+) {
     extern __shared__ uint32_t s[];
     const uint32_t tid = threadIdx.x;
-    size_t segment_idx = blockIdx.x;
-    size_t segments_per_poly = static_cast<size_t>(n / kSegmentSize);
-    size_t total_segments = static_cast<size_t>(batch_count) * segments_per_poly;
-    if (segment_idx >= total_segments) {
+    const uint32_t segment_base = blockIdx.x * 256;
+    if (segment_base >= static_cast<uint32_t>(n)) {
         return;
     }
 
-    size_t batch = segment_idx / segments_per_poly;
-    size_t local_segment = segment_idx % segments_per_poly;
-    size_t segment_base = batch * static_cast<size_t>(n) + local_segment * kSegmentSize;
-
     s[tid] = data[segment_base + tid];
-    s[tid + kThreadsPerSegment] = data[segment_base + tid + kThreadsPerSegment];
+    s[tid + 128] = data[segment_base + tid + 128];
     __syncthreads();
 
     const int fused = (log_degree < kFusedStages) ? log_degree : kFusedStages;
@@ -536,324 +599,111 @@ __global__ void ntt_first8_stages_kernel(uint32_t *data,
     }
 
     data[segment_base + tid] = s[tid];
-    data[segment_base + tid + kThreadsPerSegment] = s[tid + kThreadsPerSegment];
+    data[segment_base + tid + 128] = s[tid + 128];
 }
 
-__global__ void pointwise_mul_kernel(const uint32_t *a,
-                                     const uint32_t *b,
-                                     uint32_t *out,
-                                     int n,
-                                     int batch_count,
-                                     uint32_t q,
-                                     uint32_t nprime) {
-    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    if (idx >= total_coeffs) {
+__global__ void pointwise_mul_kernel(const uint32_t *a, const uint32_t *b, uint32_t *out, int n, uint32_t q, uint32_t nprime) {
+    uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= static_cast<uint32_t>(n)) {
         return;
     }
     out[idx] = mont_mul(a[idx], b[idx], q, nprime);
 }
 
-__global__ void postprocess_inv_kernel(const uint32_t *in,
-                                       uint32_t *out,
-                                       const uint32_t *post_scale_mont,
-                                       int n,
-                                       int batch_count,
-                                       uint32_t q,
-                                       uint32_t nprime) {
-    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    if (idx >= total_coeffs) {
+__global__ void postprocess_inv_kernel(const uint32_t *in, uint32_t *out, const uint32_t *post_scale_mont, int n, uint32_t q, uint32_t nprime) {
+    uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= static_cast<uint32_t>(n)) {
         return;
     }
-    uint32_t lane = static_cast<uint32_t>(idx % static_cast<size_t>(n));
-    uint32_t scaled = mont_mul(in[idx], post_scale_mont[lane], q, nprime);
+    uint32_t scaled = mont_mul(in[idx], post_scale_mont[idx], q, nprime);
     out[idx] = mont_mul(scaled, 1u, q, nprime);
 }
 
-static unsigned int grid_size(size_t work_items, unsigned int block_size) {
-    return static_cast<unsigned int>((work_items + block_size - 1) / block_size);
-}
-
-static void run_forward_only(uint32_t *d_input,
-                             uint32_t *d_work,
-                             const DeviceTables &tables,
-                             const std::vector<uint32_t> &stage_offsets,
-                             int n,
-                             int batch_count,
-                             int log_degree,
-                             uint32_t nprime,
-                             uint32_t r2_mod_q) {
+static void run_forward_only(uint32_t *d_input, uint32_t *d_work, const DeviceTables &tables, const std::vector<uint32_t> &stage_offsets, int n, int log_degree, uint32_t nprime, uint32_t r2_mod_q) {
     dim3 block(256);
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    dim3 grid(grid_size(total_coeffs, block.x));
-    preprocess_phi_kernel<<<grid, block>>>(
-        d_input, d_work, tables.d_phi, n, batch_count, log_degree, kModulus, nprime, r2_mod_q);
+    dim3 grid((n + block.x - 1) / block.x);
+    preprocess_phi_kernel<<<grid, block>>>(d_input, d_work, tables.d_phi, n, log_degree, kModulus, nprime, r2_mod_q);
     check_launch("launch preprocess_phi_kernel (forward)");
 
-    dim3 fused_block(kThreadsPerSegment);
-    dim3 fused_grid(static_cast<unsigned int>(static_cast<size_t>(batch_count) * static_cast<size_t>(n / kSegmentSize)));
-    ntt_first8_stages_kernel<<<fused_grid, fused_block, kSegmentSize * sizeof(uint32_t)>>>(
-        d_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, batch_count, log_degree, kModulus, nprime);
+    dim3 fused_block(128);
+    dim3 fused_grid((n + 255) / 256);
+    ntt_first8_stages_kernel<<<fused_grid, fused_block, 256 * sizeof(uint32_t)>>>(
+        d_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, log_degree, kModulus, nprime);
     check_launch("launch ntt_first8_stages_kernel (forward)");
 
-    size_t total_butterflies = static_cast<size_t>(batch_count) * static_cast<size_t>(n / 2);
     for (int stage = kFusedStages; stage < log_degree; stage++) {
         int len = 2 << stage;
-        dim3 stage_grid(grid_size(total_butterflies, block.x));
-        ntt_stage_kernel<<<stage_grid, block>>>(
-            d_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, batch_count, kModulus, nprime);
+        dim3 stage_grid(((n / 2) + block.x - 1) / block.x);
+        ntt_stage_kernel<<<stage_grid, block>>>(d_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, kModulus, nprime);
         check_launch("launch ntt_stage_kernel (forward tail)");
     }
 }
 
-static void run_inverse_only(uint32_t *d_ntt_input,
-                             uint32_t *d_tmp,
-                             uint32_t *d_out,
-                             const DeviceTables &tables,
-                             const std::vector<uint32_t> &stage_offsets,
-                             int n,
-                             int batch_count,
-                             int log_degree,
-                             uint32_t nprime) {
+static void run_inverse_only(uint32_t *d_ntt_input, uint32_t *d_tmp, uint32_t *d_out, const DeviceTables &tables, const std::vector<uint32_t> &stage_offsets, int n, int log_degree, uint32_t nprime) {
     dim3 block(256);
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    dim3 grid(grid_size(total_coeffs, block.x));
-    bit_reverse_copy_kernel<<<grid, block>>>(d_ntt_input, d_tmp, n, batch_count, log_degree);
+    dim3 grid((n + block.x - 1) / block.x);
+    bit_reverse_copy_kernel<<<grid, block>>>(d_ntt_input, d_tmp, n, log_degree);
     check_launch("launch bit_reverse_copy_kernel (inverse)");
 
-    dim3 fused_block(kThreadsPerSegment);
-    dim3 fused_grid(static_cast<unsigned int>(static_cast<size_t>(batch_count) * static_cast<size_t>(n / kSegmentSize)));
-    ntt_first8_stages_kernel<<<fused_grid, fused_block, kSegmentSize * sizeof(uint32_t)>>>(
-        d_tmp, tables.d_inv_twiddles, tables.d_stage_offsets, n, batch_count, log_degree, kModulus, nprime);
+    dim3 fused_block(128);
+    dim3 fused_grid((n + 255) / 256);
+    ntt_first8_stages_kernel<<<fused_grid, fused_block, 256 * sizeof(uint32_t)>>>(
+        d_tmp, tables.d_inv_twiddles, tables.d_stage_offsets, n, log_degree, kModulus, nprime);
     check_launch("launch ntt_first8_stages_kernel (inverse)");
 
-    size_t total_butterflies = static_cast<size_t>(batch_count) * static_cast<size_t>(n / 2);
     for (int stage = kFusedStages; stage < log_degree; stage++) {
         int len = 2 << stage;
-        dim3 stage_grid(grid_size(total_butterflies, block.x));
-        ntt_stage_kernel<<<stage_grid, block>>>(
-            d_tmp, tables.d_inv_twiddles, stage_offsets[stage], len, n, batch_count, kModulus, nprime);
+        dim3 stage_grid(((n / 2) + block.x - 1) / block.x);
+        ntt_stage_kernel<<<stage_grid, block>>>(d_tmp, tables.d_inv_twiddles, stage_offsets[stage], len, n, kModulus, nprime);
         check_launch("launch ntt_stage_kernel (inverse tail)");
     }
-    postprocess_inv_kernel<<<grid, block>>>(d_tmp, d_out, tables.d_post_scale, n, batch_count, kModulus, nprime);
+    postprocess_inv_kernel<<<grid, block>>>(d_tmp, d_out, tables.d_post_scale, n, kModulus, nprime);
     check_launch("launch postprocess_inv_kernel");
 }
 
-static void run_full_polymul(uint32_t *d_a,
-                             uint32_t *d_b,
-                             uint32_t *d_a_work,
-                             uint32_t *d_b_work,
-                             uint32_t *d_c_work,
-                             uint32_t *d_tmp,
-                             uint32_t *d_out,
-                             const DeviceTables &tables,
-                             const std::vector<uint32_t> &stage_offsets,
-                             int n,
-                             int batch_count,
-                             int log_degree,
-                             uint32_t nprime,
-                             uint32_t r2_mod_q) {
+static void run_full_polymul(uint32_t *d_a, uint32_t *d_b, uint32_t *d_a_work, uint32_t *d_b_work, uint32_t *d_c_work, uint32_t *d_tmp, uint32_t *d_out, const DeviceTables &tables, const std::vector<uint32_t> &stage_offsets, int n, int log_degree, uint32_t nprime, uint32_t r2_mod_q) {
     dim3 block(256);
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
-    dim3 grid(grid_size(total_coeffs, block.x));
+    dim3 grid((n + block.x - 1) / block.x);
 
-    preprocess_phi_kernel<<<grid, block>>>(
-        d_a, d_a_work, tables.d_phi, n, batch_count, log_degree, kModulus, nprime, r2_mod_q);
+    preprocess_phi_kernel<<<grid, block>>>(d_a, d_a_work, tables.d_phi, n, log_degree, kModulus, nprime, r2_mod_q);
     check_launch("launch preprocess_phi_kernel (polymul lhs)");
-    preprocess_phi_kernel<<<grid, block>>>(
-        d_b, d_b_work, tables.d_phi, n, batch_count, log_degree, kModulus, nprime, r2_mod_q);
+    preprocess_phi_kernel<<<grid, block>>>(d_b, d_b_work, tables.d_phi, n, log_degree, kModulus, nprime, r2_mod_q);
     check_launch("launch preprocess_phi_kernel (polymul rhs)");
 
-    dim3 fused_block(kThreadsPerSegment);
-    dim3 fused_grid(static_cast<unsigned int>(static_cast<size_t>(batch_count) * static_cast<size_t>(n / kSegmentSize)));
-    ntt_first8_stages_kernel<<<fused_grid, fused_block, kSegmentSize * sizeof(uint32_t)>>>(
-        d_a_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, batch_count, log_degree, kModulus, nprime);
+    dim3 fused_block(128);
+    dim3 fused_grid((n + 255) / 256);
+    ntt_first8_stages_kernel<<<fused_grid, fused_block, 256 * sizeof(uint32_t)>>>(
+        d_a_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, log_degree, kModulus, nprime);
     check_launch("launch ntt_first8_stages_kernel (polymul lhs)");
-    ntt_first8_stages_kernel<<<fused_grid, fused_block, kSegmentSize * sizeof(uint32_t)>>>(
-        d_b_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, batch_count, log_degree, kModulus, nprime);
+    ntt_first8_stages_kernel<<<fused_grid, fused_block, 256 * sizeof(uint32_t)>>>(
+        d_b_work, tables.d_fwd_twiddles, tables.d_stage_offsets, n, log_degree, kModulus, nprime);
     check_launch("launch ntt_first8_stages_kernel (polymul rhs)");
 
-    size_t total_butterflies = static_cast<size_t>(batch_count) * static_cast<size_t>(n / 2);
     for (int stage = kFusedStages; stage < log_degree; stage++) {
         int len = 2 << stage;
-        dim3 stage_grid(grid_size(total_butterflies, block.x));
-        ntt_stage_kernel<<<stage_grid, block>>>(
-            d_a_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, batch_count, kModulus, nprime);
+        dim3 stage_grid(((n / 2) + block.x - 1) / block.x);
+        ntt_stage_kernel<<<stage_grid, block>>>(d_a_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, kModulus, nprime);
         check_launch("launch ntt_stage_kernel (polymul lhs tail)");
-        ntt_stage_kernel<<<stage_grid, block>>>(
-            d_b_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, batch_count, kModulus, nprime);
+        ntt_stage_kernel<<<stage_grid, block>>>(d_b_work, tables.d_fwd_twiddles, stage_offsets[stage], len, n, kModulus, nprime);
         check_launch("launch ntt_stage_kernel (polymul rhs tail)");
     }
-    pointwise_mul_kernel<<<grid, block>>>(d_a_work, d_b_work, d_c_work, n, batch_count, kModulus, nprime);
+    pointwise_mul_kernel<<<grid, block>>>(d_a_work, d_b_work, d_c_work, n, kModulus, nprime);
     check_launch("launch pointwise_mul_kernel");
-    bit_reverse_copy_kernel<<<grid, block>>>(d_c_work, d_tmp, n, batch_count, log_degree);
+    bit_reverse_copy_kernel<<<grid, block>>>(d_c_work, d_tmp, n, log_degree);
     check_launch("launch bit_reverse_copy_kernel (polymul inverse prep)");
 
-    ntt_first8_stages_kernel<<<fused_grid, fused_block, kSegmentSize * sizeof(uint32_t)>>>(
-        d_tmp, tables.d_inv_twiddles, tables.d_stage_offsets, n, batch_count, log_degree, kModulus, nprime);
+    ntt_first8_stages_kernel<<<fused_grid, fused_block, 256 * sizeof(uint32_t)>>>(
+        d_tmp, tables.d_inv_twiddles, tables.d_stage_offsets, n, log_degree, kModulus, nprime);
     check_launch("launch ntt_first8_stages_kernel (polymul inverse)");
 
     for (int stage = kFusedStages; stage < log_degree; stage++) {
         int len = 2 << stage;
-        dim3 stage_grid(grid_size(total_butterflies, block.x));
-        ntt_stage_kernel<<<stage_grid, block>>>(
-            d_tmp, tables.d_inv_twiddles, stage_offsets[stage], len, n, batch_count, kModulus, nprime);
+        dim3 stage_grid(((n / 2) + block.x - 1) / block.x);
+        ntt_stage_kernel<<<stage_grid, block>>>(d_tmp, tables.d_inv_twiddles, stage_offsets[stage], len, n, kModulus, nprime);
         check_launch("launch ntt_stage_kernel (polymul inverse tail)");
     }
-    postprocess_inv_kernel<<<grid, block>>>(d_tmp, d_out, tables.d_post_scale, n, batch_count, kModulus, nprime);
+    postprocess_inv_kernel<<<grid, block>>>(d_tmp, d_out, tables.d_post_scale, n, kModulus, nprime);
     check_launch("launch postprocess_inv_kernel (polymul)");
-}
-
-static bool validate_roundtrip_case(const char *label,
-                                    const std::vector<uint32_t> &input,
-                                    int batch_count,
-                                    uint32_t *d_input,
-                                    uint32_t *d_work,
-                                    uint32_t *d_tmp,
-                                    uint32_t *d_out,
-                                    const DeviceTables &tables,
-                                    const std::vector<uint32_t> &stage_offsets,
-                                    int n,
-                                    int log_degree,
-                                    uint32_t nprime,
-                                    uint32_t r2_mod_q) {
-    check(cudaMemcpy(d_input, input.data(), sizeof(uint32_t) * input.size(), cudaMemcpyHostToDevice),
-          "copy roundtrip input");
-    run_forward_only(d_input, d_work, tables, stage_offsets, n, batch_count, log_degree, nprime, r2_mod_q);
-    run_inverse_only(d_work, d_tmp, d_out, tables, stage_offsets, n, batch_count, log_degree, nprime);
-    check(cudaDeviceSynchronize(), "sync roundtrip validation");
-    std::vector<uint32_t> output(input.size());
-    check(cudaMemcpy(output.data(), d_out, sizeof(uint32_t) * output.size(), cudaMemcpyDeviceToHost),
-          "copy roundtrip output");
-    return compare_vectors(input, output, n, label);
-}
-
-static bool validate_polymul_case(const char *label,
-                                  const std::vector<uint32_t> &lhs,
-                                  const std::vector<uint32_t> &rhs,
-                                  int batch_count,
-                                  uint32_t *d_a,
-                                  uint32_t *d_b,
-                                  uint32_t *d_a_work,
-                                  uint32_t *d_b_work,
-                                  uint32_t *d_c_work,
-                                  uint32_t *d_tmp,
-                                  uint32_t *d_out,
-                                  const DeviceTables &tables,
-                                  const std::vector<uint32_t> &stage_offsets,
-                                  const std::vector<uint32_t> &phi_norm,
-                                  const std::vector<uint32_t> &post_norm,
-                                  int n,
-                                  int log_degree,
-                                  uint32_t nprime,
-                                  uint32_t r2_mod_q) {
-    std::vector<uint32_t> expected(lhs.size());
-    for (int batch = 0; batch < batch_count; batch++) {
-        std::vector<uint32_t> lhs_poly(lhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                       lhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<uint32_t> rhs_poly(rhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                       rhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<uint32_t> poly = host_polymul_reference(lhs_poly, rhs_poly, phi_norm, post_norm, n, log_degree);
-        std::copy(poly.begin(), poly.end(), expected.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n));
-    }
-
-    check(cudaMemcpy(d_a, lhs.data(), sizeof(uint32_t) * lhs.size(), cudaMemcpyHostToDevice),
-          "copy polymul lhs");
-    check(cudaMemcpy(d_b, rhs.data(), sizeof(uint32_t) * rhs.size(), cudaMemcpyHostToDevice),
-          "copy polymul rhs");
-    run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                     tables, stage_offsets, n, batch_count, log_degree, nprime, r2_mod_q);
-    check(cudaDeviceSynchronize(), "sync polymul validation");
-
-    std::vector<uint32_t> actual(lhs.size());
-    check(cudaMemcpy(actual.data(), d_out, sizeof(uint32_t) * actual.size(), cudaMemcpyDeviceToHost),
-          "copy polymul output");
-    return compare_vectors(expected, actual, n, label);
-}
-
-static bool run_validation_suite(uint32_t *d_a,
-                                 uint32_t *d_b,
-                                 uint32_t *d_a_work,
-                                 uint32_t *d_b_work,
-                                 uint32_t *d_c_work,
-                                 uint32_t *d_tmp,
-                                 uint32_t *d_out,
-                                 const DeviceTables &tables,
-                                 const std::vector<uint32_t> &stage_offsets,
-                                 const std::vector<uint32_t> &phi_norm,
-                                 const std::vector<uint32_t> &post_norm,
-                                 int n,
-                                 int batch_size,
-                                 int log_degree,
-                                 uint32_t nprime,
-                                 uint32_t r2_mod_q) {
-    const int validation_batches = std::min(batch_size, kMaxValidationBatches);
-    bool ok = true;
-
-    ok = validate_roundtrip_case("roundtrip zeros",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Zero),
-                                 validation_batches,
-                                 d_a, d_a_work, d_tmp, d_out, tables,
-                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_roundtrip_case("roundtrip ones",
-                                 make_batched_pattern(validation_batches, n, InputPattern::One),
-                                 validation_batches,
-                                 d_a, d_a_work, d_tmp, d_out, tables,
-                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_roundtrip_case("roundtrip impulse",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Impulse),
-                                 validation_batches,
-                                 d_a, d_a_work, d_tmp, d_out, tables,
-                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_roundtrip_case("roundtrip max",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Max),
-                                 validation_batches,
-                                 d_a, d_a_work, d_tmp, d_out, tables,
-                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_roundtrip_case("roundtrip random",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Random, 12345u),
-                                 validation_batches,
-                                 d_a, d_a_work, d_tmp, d_out, tables,
-                                 stage_offsets, n, log_degree, nprime, r2_mod_q) && ok;
-
-    ok = validate_polymul_case("polymul zero*zero",
-                               make_batched_pattern(validation_batches, n, InputPattern::Zero),
-                               make_batched_pattern(validation_batches, n, InputPattern::Zero),
-                               validation_batches,
-                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                               tables, stage_offsets, phi_norm, post_norm,
-                               n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_polymul_case("polymul one*one",
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
-                               validation_batches,
-                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                               tables, stage_offsets, phi_norm, post_norm,
-                               n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_polymul_case("polymul impulse*ones",
-                               make_batched_pattern(validation_batches, n, InputPattern::Impulse),
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
-                               validation_batches,
-                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                               tables, stage_offsets, phi_norm, post_norm,
-                               n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_polymul_case("polymul max*max",
-                               make_batched_pattern(validation_batches, n, InputPattern::Max),
-                               make_batched_pattern(validation_batches, n, InputPattern::Max),
-                               validation_batches,
-                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                               tables, stage_offsets, phi_norm, post_norm,
-                               n, log_degree, nprime, r2_mod_q) && ok;
-    ok = validate_polymul_case("polymul random",
-                               make_batched_pattern(validation_batches, n, InputPattern::Random, 1u),
-                               make_batched_pattern(validation_batches, n, InputPattern::Random, 2u),
-                               validation_batches,
-                               d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                               tables, stage_offsets, phi_norm, post_norm,
-                               n, log_degree, nprime, r2_mod_q) && ok;
-
-    return ok;
 }
 
 static void alloc_and_copy(DeviceTables &tables,
@@ -887,12 +737,11 @@ static void free_tables(DeviceTables &tables) {
 int main(int argc, char **argv) {
     Args args = parse_args(argc, argv);
     if (args.csv_header) {
-        std::cout << "device,n,logn,requested_qbits,actual_qbits,batch_size,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct\n";
+        std::cout << "device,n,qbits,iters,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct\n";
     }
 
     const int n = args.n;
     const int log_degree = int_log2(static_cast<uint32_t>(n));
-    const size_t total_coeffs = static_cast<size_t>(args.batch_size) * static_cast<size_t>(n);
 
     uint32_t nprime = 0;
     uint32_t r2_mod_q = 0;
@@ -905,12 +754,13 @@ int main(int argc, char **argv) {
 
     DeviceTables tables;
     alloc_and_copy(tables, phi_mont, post_scale_mont, fwd_twiddles_mont, inv_twiddles_mont, stage_offsets);
+    const std::vector<uint32_t> &stage_offsets_host = stage_offsets;
 
     std::mt19937 rng(12345);
     std::uniform_int_distribution<uint32_t> dist(0, kModulus - 1);
-    std::vector<uint32_t> a(total_coeffs);
-    std::vector<uint32_t> b(total_coeffs);
-    for (size_t i = 0; i < total_coeffs; i++) {
+    std::vector<uint32_t> a(n);
+    std::vector<uint32_t> b(n);
+    for (int i = 0; i < n; i++) {
         a[i] = dist(rng);
         b[i] = dist(rng);
     }
@@ -922,16 +772,17 @@ int main(int argc, char **argv) {
     uint32_t *d_c_work = nullptr;
     uint32_t *d_tmp = nullptr;
     uint32_t *d_out = nullptr;
-    check(cudaMalloc(&d_a, sizeof(uint32_t) * total_coeffs), "malloc d_a");
-    check(cudaMalloc(&d_b, sizeof(uint32_t) * total_coeffs), "malloc d_b");
-    check(cudaMalloc(&d_a_work, sizeof(uint32_t) * total_coeffs), "malloc d_a_work");
-    check(cudaMalloc(&d_b_work, sizeof(uint32_t) * total_coeffs), "malloc d_b_work");
-    check(cudaMalloc(&d_c_work, sizeof(uint32_t) * total_coeffs), "malloc d_c_work");
-    check(cudaMalloc(&d_tmp, sizeof(uint32_t) * total_coeffs), "malloc d_tmp");
-    check(cudaMalloc(&d_out, sizeof(uint32_t) * total_coeffs), "malloc d_out");
-    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "copy a");
-    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "copy b");
+    check(cudaMalloc(&d_a, sizeof(uint32_t) * n), "malloc d_a");
+    check(cudaMalloc(&d_b, sizeof(uint32_t) * n), "malloc d_b");
+    check(cudaMalloc(&d_a_work, sizeof(uint32_t) * n), "malloc d_a_work");
+    check(cudaMalloc(&d_b_work, sizeof(uint32_t) * n), "malloc d_b_work");
+    check(cudaMalloc(&d_c_work, sizeof(uint32_t) * n), "malloc d_c_work");
+    check(cudaMalloc(&d_tmp, sizeof(uint32_t) * n), "malloc d_tmp");
+    check(cudaMalloc(&d_out, sizeof(uint32_t) * n), "malloc d_out");
+    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice), "copy a");
+    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice), "copy b");
 
+    // Build host reference tables once, then run a validation suite before timing.
     std::vector<uint32_t> phi_norm(n);
     std::vector<uint32_t> post_norm(n);
     uint32_t phi = compute_phi_for_n(n);
@@ -948,16 +799,13 @@ int main(int argc, char **argv) {
         cur = mod_mul_host(cur, invphi);
     }
 
-    bool correct = true;
-    if (!args.skip_validation) {
-        correct = run_validation_suite(
-            d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-            tables, stage_offsets, phi_norm, post_norm,
-            n, args.batch_size, log_degree, nprime, r2_mod_q);
-    }
+    bool correct = run_validation_suite(
+        d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
+        tables, stage_offsets_host, phi_norm, post_norm,
+        n, log_degree, nprime, r2_mod_q);
 
-    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "restore benchmark a");
-    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "restore benchmark b");
+    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice), "restore benchmark a");
+    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * n, cudaMemcpyHostToDevice), "restore benchmark b");
 
     std::vector<double> ntt_samples;
     std::vector<double> intt_samples;
@@ -971,20 +819,20 @@ int main(int argc, char **argv) {
     check(cudaEventCreate(&start_evt), "create start event");
     check(cudaEventCreate(&stop_evt), "create stop event");
 
-    run_forward_only(d_a, d_a_work, tables, stage_offsets, n, args.batch_size, log_degree, nprime, r2_mod_q);
+    // prepare an NTT-domain sample for inverse timing
+    run_forward_only(d_a, d_a_work, tables, stage_offsets_host, n, log_degree, nprime, r2_mod_q);
     check(cudaDeviceSynchronize(), "sync prep forward");
 
     for (int i = 0; i < args.warmup; i++) {
-        run_forward_only(d_a, d_a_work, tables, stage_offsets, n, args.batch_size, log_degree, nprime, r2_mod_q);
-        run_inverse_only(d_a_work, d_tmp, d_out, tables, stage_offsets, n, args.batch_size, log_degree, nprime);
-        run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                         tables, stage_offsets, n, args.batch_size, log_degree, nprime, r2_mod_q);
+        run_forward_only(d_a, d_a_work, tables, stage_offsets_host, n, log_degree, nprime, r2_mod_q);
+        run_inverse_only(d_a_work, d_tmp, d_out, tables, stage_offsets_host, n, log_degree, nprime);
+        run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out, tables, stage_offsets_host, n, log_degree, nprime, r2_mod_q);
         check(cudaDeviceSynchronize(), "sync warmup");
     }
 
     for (int i = 0; i < args.iters; i++) {
         check(cudaEventRecord(start_evt), "record start ntt");
-        run_forward_only(d_a, d_a_work, tables, stage_offsets, n, args.batch_size, log_degree, nprime, r2_mod_q);
+        run_forward_only(d_a, d_a_work, tables, stage_offsets_host, n, log_degree, nprime, r2_mod_q);
         check(cudaEventRecord(stop_evt), "record stop ntt");
         check(cudaEventSynchronize(stop_evt), "sync stop ntt");
         float ms = 0.0f;
@@ -992,15 +840,14 @@ int main(int argc, char **argv) {
         ntt_samples.push_back(ms * 1000.0);
 
         check(cudaEventRecord(start_evt), "record start intt");
-        run_inverse_only(d_a_work, d_tmp, d_out, tables, stage_offsets, n, args.batch_size, log_degree, nprime);
+        run_inverse_only(d_a_work, d_tmp, d_out, tables, stage_offsets_host, n, log_degree, nprime);
         check(cudaEventRecord(stop_evt), "record stop intt");
         check(cudaEventSynchronize(stop_evt), "sync stop intt");
         check(cudaEventElapsedTime(&ms, start_evt, stop_evt), "elapsed intt");
         intt_samples.push_back(ms * 1000.0);
 
         check(cudaEventRecord(start_evt), "record start polymul");
-        run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out,
-                         tables, stage_offsets, n, args.batch_size, log_degree, nprime, r2_mod_q);
+        run_full_polymul(d_a, d_b, d_a_work, d_b_work, d_c_work, d_tmp, d_out, tables, stage_offsets_host, n, log_degree, nprime, r2_mod_q);
         check(cudaEventRecord(stop_evt), "record stop polymul");
         check(cudaEventSynchronize(stop_evt), "sync stop polymul");
         check(cudaEventElapsedTime(&ms, start_evt, stop_evt), "elapsed polymul");
@@ -1010,17 +857,12 @@ int main(int argc, char **argv) {
     Stats ntt = compute_stats(ntt_samples);
     Stats intt = compute_stats(intt_samples);
     Stats poly = compute_stats(poly_samples);
-    const char *validation = args.skip_validation ? "skipped" : (correct ? "pass" : "fail");
-    const int correct_flag = args.skip_validation ? -1 : (correct ? 1 : 0);
 
-    std::cout << "cuda," << n << "," << log_degree << ","
-              << args.requested_qbits << "," << kActualQBits << ","
-              << args.batch_size << "," << args.iters << ","
-              << validation << ","
+    std::cout << "cuda," << n << ",30," << args.iters << ","
               << ntt.mean_us << "," << ntt.stddev_us << ","
               << intt.mean_us << "," << intt.stddev_us << ","
               << poly.mean_us << "," << poly.stddev_us << ","
-              << correct_flag << "\n";
+              << (correct ? 1 : 0) << "\n";
 
     cudaEventDestroy(start_evt);
     cudaEventDestroy(stop_evt);
@@ -1032,5 +874,5 @@ int main(int argc, char **argv) {
     cudaFree(d_c_work);
     cudaFree(d_tmp);
     cudaFree(d_out);
-    return (args.skip_validation || correct) ? 0 : 2;
+    return correct ? 0 : 2;
 }
