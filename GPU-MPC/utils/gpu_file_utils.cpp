@@ -89,7 +89,7 @@ void writeKeyBuf(int fd, size_t keySize, const u8 *key_as_bytes)
     size_t chunkSize = (1ULL << 30);
     size_t bytesWritten = 0;
     // printf("%d, %lu, %lx\n", fd, keySize, key_as_bytes);
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     while (bytesWritten < keySize)
     {
         size_t toWrite = std::min(chunkSize, keySize - bytesWritten);
@@ -104,9 +104,9 @@ void writeKeyBuf(int fd, size_t keySize, const u8 *key_as_bytes)
         bytesWritten += numWritten;
     }
     // sync();
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto elapsed = end - start;
-    // std::cout << "Time for key write: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = end - start;
+    std::cout << "Time for key write: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << std::endl;
 }
 
 int openForReading(std::string filename)

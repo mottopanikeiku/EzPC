@@ -1,0 +1,144 @@
+[10:19:21] === TRAINING: P-SecureML ===
+[10:19:21]   Dealer P0...
+[10:20:27]   Dealer P1...
+-rw-r--r-- 1 root root 338M Feb 12 10:19 /home/keys/P0/P-SecureML_training_key0.dat
+-rw-r--r-- 1 root root 338M Feb 12 10:20 /home/keys/P1/P-SecureML_training_key1.dat
+[10:21:33]   Evaluator...
+[10:21:38]   Results:
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+
+P-SecureML
+Total time taken (ms): 328
+Total bytes communicated: 62613872
+Secfloat softmax bytes: 0
+Iterations: 11
+
+Total time / iterations (ms): 32.800000
+Avg key read time (ms): 9.909091
+Avg compute time (ms): 32.272727
+Comm per iteration (B): 5692170.181818
+
+[10:21:38] ✅ P-SecureML done
+[10:21:38] === TRAINING: P-LeNet ===
+[10:21:38]   Dealer P0...
+[10:22:45]   Dealer P1...
+-rw-r--r-- 1 root root 4.0G Feb 12 10:21 /home/keys/P0/P-LeNet_training_key0.dat
+-rw-r--r-- 1 root root 4.0G Feb 12 10:22 /home/keys/P1/P-LeNet_training_key1.dat
+[10:23:53]   Evaluator...
+[10:23:59]   Results:
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+
+P-LeNet
+Total time taken (ms): 1208
+Total bytes communicated: 721300912
+Secfloat softmax bytes: 0
+Iterations: 11
+
+Total time / iterations (ms): 120.800000
+Avg key read time (ms): 109.727273
+Avg compute time (ms): 107.727273
+Comm per iteration (B): 65572810.181818
+
+[10:23:59] ✅ P-LeNet done
+[10:23:59] === TRAINING: P-AlexNet ===
+[10:23:59]   Dealer P0...
+[10:29:06]   Dealer P1...
+-rw-r--r-- 1 root root 3.8G Feb 12 10:24 /home/keys/P0/P-AlexNet_training_key0.dat
+-rw-r--r-- 1 root root 3.8G Feb 12 10:29 /home/keys/P1/P-AlexNet_training_key1.dat
+[10:34:14]   Evaluator...
+[10:34:20]   Results:
+Time for key write: 0
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+
+P-AlexNet
+Total time taken (ms): 1238
+Total bytes communicated: 1253044080
+Secfloat softmax bytes: 0
+Iterations: 11
+
+Total time / iterations (ms): 123.800000
+Avg key read time (ms): 104.818182
+Avg compute time (ms): 121.727273
+Comm per iteration (B): 113913098.181818
+
+[10:34:20] ✅ P-AlexNet done
+[10:34:20] === INFERENCE: CNN2 ===
+[10:34:20]   Dealer P0...
+[10:34:26]   Dealer P1...
+-rw-r--r-- 1 root root 520M Feb 12 10:34 /home/keys/P0/CNN2_64_24_inference_key0.dat
+-rw-r--r-- 1 root root 520M Feb 12 10:34 /home/keys/P1/CNN2_64_24_inference_key1.dat
+[10:34:31]   Evaluator...
+[Fri Feb 13 07:37:02 UTC 2026] CNN2 inference
+CUDA error at ./utils/gpu_mem.cu:51 code=2(cudaErrorMemoryAllocation) "cudaMallocAsync(&d_dummy_ptr, bytes, 0)" 
+CUDA error: out of memory
+[Fri Feb 13 07:59:27 UTC 2026] CNN3 inference
+CUDA error at ./utils/gpu_mem.cu:51 code=2(cudaErrorMemoryAllocation) "cudaMallocAsync(&d_dummy_ptr, bytes, 0)" 
+CUDA error: out of memory
+[Fri Feb 13 07:59:33 UTC 2026] VGG16 inference
+[Fri Feb 13 07:59:36 UTC 2026] CNN2-perf training
+[Fri Feb 13 07:59:38 UTC 2026] ModelB training
+[Fri Feb 13 07:59:38 UTC 2026] AlexNet training
+[Fri Feb 13 07:59:39 UTC 2026] ALL DONE
+========== FULL SUMMARY ==========
+--- AlexNet_eval_P1.log ---
+
+--- CNN2-perf_eval_P1.log ---
+
+--- CNN2_inf_eval_P1.log ---
+
+--- CNN3_inf_eval_P1.log ---
+
+--- ModelB_eval_P1.log ---
+
+--- P-AlexNet_eval_P1.log ---
+Online time (ms): 1238
+Total time taken (ms): 1238
+Total time / iterations (ms): 123.800000
+Avg key read time (ms): 104.818182
+Avg compute time (ms): 121.727273
+Comm per iteration (B): 113913098.181818
+
+--- P-LeNet_eval_P1.log ---
+Online time (ms): 1208
+Total time taken (ms): 1208
+Total time / iterations (ms): 120.800000
+Avg key read time (ms): 109.727273
+Avg compute time (ms): 107.727273
+Comm per iteration (B): 65572810.181818
+
+--- P-SecureML_eval_P1.log ---
+Online time (ms): 328
+Total time taken (ms): 328
+Total time / iterations (ms): 32.800000
+Avg key read time (ms): 9.909091
+Avg compute time (ms): 32.272727
+Comm per iteration (B): 5692170.181818
+
+--- VGG16_inf_eval_P1.log ---
+
+--- CNN2_inf_eval_P1.log ---
+
+--- CNN3_inf_eval_P1.log ---
+
+--- VGG16_inf_eval_P1.log ---
+

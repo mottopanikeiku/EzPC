@@ -2,21 +2,21 @@
     "P0": {
         "dealer": {
             "gpu": 0,
-            "key_dir": "/tmp/"
+            "key_dir": "/tmp/P0_keys/"
         },
         "evaluator": {
             "gpu": 1,
-            "peer": "0.0.0.0"
+            "peer": "127.0.0.1"
         }
     },
     "P1": {
         "dealer": {
             "gpu": 2,
-            "key_dir": "/tmp/"
+            "key_dir": "/tmp/P1_keys/"
         },
         "evaluator": {
             "gpu": 3,
-            "peer": "0.0.0.0"
+            "peer": "127.0.0.1"
         }
     }
 }

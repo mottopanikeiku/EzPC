@@ -1,0 +1,136 @@
+reserved memory: 26877100032 18446744073709551615
+########Layers=5
+/home/keys/P0/P-SecureML_training_key0.dat
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 10.594 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.731 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.524 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.921 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.098 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.065 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 10.335 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 10.159 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.863 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.9 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+>> Softmax - start
+>> MaxPool - Start
+   Dealer time: 9.853 milliseconds
+>> MaxPool - End
+>> Relu2Round - Start
+>> Relu2Round - End
+>> InsecureInverse - start
+>> InsecureInverse - end
+>> ElemWise Mult - start
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 8
+Sleeping for 60 seconds.

@@ -1,0 +1,4 @@
+reserved memory: 26877100032 18446744073709551615
+Opening file=/home/keys/P0/CNN2_64_24_inference_key0.dat
+Allocating 5368709120 bytes of memory for comm bufs
+waiting for connection from client...

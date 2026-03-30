@@ -1,0 +1,482 @@
+reserved memory: 26877100032 18446744073709551615
+CPU randomness, seed: 1234567890, offset: 0
+########Layers=9
+Allocating 5368709120 bytes of memory for comm bufs
+trying to connect with server...connected
+Dropping the OS page cache
+Opening file=/home/keys/P1/P-LeNet_training_key1.dat
+Time for key read: 117
+Time for key read: 111
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 5.501 milliseconds
+   Reconstruct Time = 0.042 milliseconds
+   Online Time = 5.545 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 10.067 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.268 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.268 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 4
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 5.196 milliseconds
+   Reconstruct Time = 0.129 milliseconds
+   Online Time = 5.326 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.177 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.288 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.288 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 113
+Time for key write: 0
+Time for key write: 4
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 4.301 milliseconds
+   Reconstruct Time = 0.479 milliseconds
+   Online Time = 4.781 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.414 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.171 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.171 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 98
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 6.051 milliseconds
+   Reconstruct Time = 0.117 milliseconds
+   Online Time = 6.171 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.49 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.155 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.155 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 123
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 4.65 milliseconds
+   Reconstruct Time = 0.18 milliseconds
+   Online Time = 4.832 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.656 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.133 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.133 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 113
+Time for key write: 0
+Time for key write: 4
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 5.595 milliseconds
+   Reconstruct Time = 0.046 milliseconds
+   Online Time = 5.642 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 8.25 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.102 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.102 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 102
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 5.258 milliseconds
+   Reconstruct Time = 0.095 milliseconds
+   Online Time = 5.354 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.256 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.089 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.089 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 109
+Time for key write: 0
+Time for key write: 3
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 6.351 milliseconds
+   Reconstruct Time = 0.12 milliseconds
+   Online Time = 6.472 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 7.087 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.092 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.092 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 111
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 4.938 milliseconds
+   Reconstruct Time = 0.041 milliseconds
+   Online Time = 4.982 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 9.038 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.172 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.172 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key read: 108
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 4.763 milliseconds
+   Reconstruct Time = 0.071 milliseconds
+   Online Time = 4.835 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 9.254 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.145 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.145 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key read: 102
+Time for key write: 0
+Online time (ms): 1208
+Time for key write: 0
+Time for key write: 2
+Time for key write: 0
+Time for key write: 1
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+>> Softmax - start
+>> MaxPool - Start
+>> MaxPool - End
+>> Relu2Round - Start
+   Key Read Time = 0 milliseconds
+   Compute Time = 5.663 milliseconds
+   Reconstruct Time = 0.087 milliseconds
+   Online Time = 5.751 milliseconds
+   Online Comm = 23040 bytes
+>> Relu2Round - End
+>> InsecureInverse - start
+   Online Time = 6.979 milliseconds
+>> InsecureInverse - end
+>> ElemWise Mult - start
+   Key Read Time = 0 milliseconds
+   Compute Time = 0.122 milliseconds
+   Reconstruct Time = 0 milliseconds
+   Online Time = 0.122 milliseconds
+>> ElemWise Mult - end
+>> Softmax - end
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+Time for key write: 0
+
+P-LeNet
+Total time taken (ms): 1208
+Total bytes communicated: 721300912
+Secfloat softmax bytes: 0
+Iterations: 11
+
+Total time / iterations (ms): 120.800000
+Avg key read time (ms): 109.727273
+Avg compute time (ms): 107.727273
+Comm per iteration (B): 65572810.181818
+
