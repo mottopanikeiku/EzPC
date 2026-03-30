@@ -30,30 +30,38 @@ def main():
     gpu = load_one(args.gpu_csv)
 
     n = cpu.get("n", "?")
-    qbits = cpu.get("qbits", "?")
+    cpu_requested_qbits = cpu.get("requested_qbits", cpu.get("qbits", "?"))
+    cpu_actual_qbits = cpu.get("actual_qbits", cpu_requested_qbits)
+    gpu_requested_qbits = gpu.get("requested_qbits", gpu.get("qbits", "?"))
+    gpu_actual_qbits = gpu.get("actual_qbits", gpu_requested_qbits)
+    gpu_batch = int(gpu.get("batch_size", "1"))
 
     cpu_ntt = as_float(cpu, "ntt_mean_us")
     cpu_poly = as_float(cpu, "poly_mul_mean_us")
     gpu_ntt = as_float(gpu, "ntt_mean_us")
     gpu_poly = as_float(gpu, "poly_mul_mean_us")
+    gpu_ntt_per_poly = gpu_ntt / gpu_batch
+    gpu_poly_per_poly = gpu_poly / gpu_batch
 
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     with open(args.out_md, "w", encoding="utf-8") as f:
-        f.write(f"# CPU vs GPU NTT Baseline (n={n}, q={qbits})\n\n")
+        f.write(
+            f"# CPU vs GPU NTT Comparison (n={n}, q req CPU/GPU={cpu_requested_qbits}/{gpu_requested_qbits})\n\n"
+        )
         f.write(f"Generated: {now}\n\n")
         f.write("## Comparison\n\n")
-        f.write("| Impl | NTT mean (us) | NTT std (us) | INTT mean (us) | INTT std (us) | Full PolyMul mean (us) | Full PolyMul std (us) | Correct |\n")
-        f.write("| --- | --- | --- | --- | --- | --- | --- | --- |\n")
+        f.write("| Impl | q actual | batch | validation | NTT mean (us) | INTT mean (us) | Full PolyMul mean (us) | Per-poly PolyMul (us) | Correct |\n")
+        f.write("| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
         f.write(
-            f"| CPU (NFLLib) | {cpu['ntt_mean_us']} | {cpu['ntt_std_us']} | {cpu['intt_mean_us']} | {cpu['intt_std_us']} | {cpu['poly_mul_mean_us']} | {cpu['poly_mul_std_us']} | n/a |\n"
+            f"| CPU (NFLLib) | {cpu_actual_qbits} | 1 | {cpu.get('validation', 'n/a')} | {cpu['ntt_mean_us']} | {cpu['intt_mean_us']} | {cpu['poly_mul_mean_us']} | {cpu['poly_mul_mean_us']} | n/a |\n"
         )
         f.write(
-            f"| GPU (CUDA) | {gpu['ntt_mean_us']} | {gpu['ntt_std_us']} | {gpu['intt_mean_us']} | {gpu['intt_std_us']} | {gpu['poly_mul_mean_us']} | {gpu['poly_mul_std_us']} | {gpu['correct']} |\n"
+            f"| GPU (CUDA) | {gpu_actual_qbits} | {gpu_batch} | {gpu.get('validation', 'n/a')} | {gpu['ntt_mean_us']} | {gpu['intt_mean_us']} | {gpu['poly_mul_mean_us']} | {gpu_poly_per_poly:.3f} | {gpu['correct']} |\n"
         )
         f.write("\n")
         f.write("## Speedups\n\n")
-        f.write(f"- Forward NTT speedup: {cpu_ntt / gpu_ntt:.2f}x\n")
-        f.write(f"- Full PolyMul speedup: {cpu_poly / gpu_poly:.2f}x\n")
+        f.write(f"- Forward NTT speedup per polynomial: {cpu_ntt / gpu_ntt_per_poly:.2f}x\n")
+        f.write(f"- Full PolyMul speedup per polynomial: {cpu_poly / gpu_poly_per_poly:.2f}x\n")
 
 
 if __name__ == "__main__":
