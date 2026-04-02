@@ -14,6 +14,10 @@
 
 namespace {
 
+#ifndef RINGLPN_DEVICE_LABEL
+#define RINGLPN_DEVICE_LABEL "cuda_legacy"
+#endif
+
 constexpr int kMinDegree = 8192;
 constexpr int kMaxDegree = 1048576;
 constexpr uint32_t kModulus = 1004535809u;
@@ -1013,7 +1017,7 @@ int main(int argc, char **argv) {
     const char *validation = args.skip_validation ? "skipped" : (correct ? "pass" : "fail");
     const int correct_flag = args.skip_validation ? -1 : (correct ? 1 : 0);
 
-    std::cout << "cuda," << n << "," << log_degree << ","
+    std::cout << RINGLPN_DEVICE_LABEL << "," << n << "," << log_degree << ","
               << args.requested_qbits << "," << kActualQBits << ","
               << args.batch_size << "," << args.iters << ","
               << validation << ","
