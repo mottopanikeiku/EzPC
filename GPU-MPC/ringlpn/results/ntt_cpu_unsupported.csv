@@ -1,0 +1,6 @@
+n,logn,requested_qbits,status,reason
+65536,16,32,unsupported,Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode
+131072,17,32,unsupported,Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode
+262144,18,32,unsupported,Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode
+524288,19,32,unsupported,Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode
+1048576,20,32,unsupported,Unsupported config: requested qbits=32 maps to actual qbits=30; which is limited to n <= 32768 in NFLLib uint32_t mode

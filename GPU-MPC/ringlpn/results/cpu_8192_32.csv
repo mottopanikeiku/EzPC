@@ -1,0 +1,2 @@
+n,logn,requested_qbits,actual_qbits,limb_bits,limb_bytes,limb_type,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us
+8192,13,32,30,30,4,u32,10000,pass,51.7008,2.24953,56.3666,2.54352,168.777,9.25506

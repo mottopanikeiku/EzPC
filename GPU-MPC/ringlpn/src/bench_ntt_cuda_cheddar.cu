@@ -23,11 +23,36 @@ constexpr int kMinDegree = 8192;
 constexpr int kMaxDegree = 1048576;
 constexpr int kMinLogDegree = 13;
 constexpr int kMaxLogDegree = 20;
-constexpr uint32_t kModulus = 1004535809u;
-constexpr uint32_t kPrimitiveGenerator = 3u;
-constexpr int kActualQBits = 30;
 constexpr int kMaxValidationBatches = 4;
 constexpr int kLsbSize = 32;
+
+template <typename Word>
+using SignedWord = std::make_signed_t<Word>;
+
+template <typename Word>
+using WideWord = std::conditional_t<(sizeof(Word) <= 4), uint64_t, __uint128_t>;
+
+template <typename Word>
+struct ModulusConfig {
+    Word modulus;
+    Word primitive_generator;
+    Word primitive_root_max_degree;
+    int actual_qbits;
+};
+
+constexpr ModulusConfig<uint32_t> kConfig30 = {
+    1004535809u,
+    3u,
+    0u,
+    30,
+};
+
+constexpr ModulusConfig<uint64_t> kConfig62 = {
+    4611686018326724609ULL,
+    0ULL,
+    2262382610096409597ULL,
+    62,
+};
 
 struct Stats {
     double mean_us;
@@ -44,28 +69,30 @@ struct Args {
     bool skip_validation = false;
 };
 
+template <typename Word>
 struct HostTables {
-    std::vector<uint32_t> primes;
-    std::vector<int32_t> inv_primes;
-    std::vector<uint32_t> fwd_twiddles_mont;
-    std::vector<uint32_t> fwd_twiddles_msb;
-    std::vector<uint32_t> inv_twiddles_mont;
-    std::vector<uint32_t> inv_twiddles_msb;
-    std::vector<uint32_t> inv_degree;
-    std::vector<uint32_t> inv_degree_mont;
-    std::vector<uint32_t> montgomery_converter;
+    std::vector<Word> primes;
+    std::vector<SignedWord<Word>> inv_primes;
+    std::vector<Word> fwd_twiddles_mont;
+    std::vector<Word> fwd_twiddles_msb;
+    std::vector<Word> inv_twiddles_mont;
+    std::vector<Word> inv_twiddles_msb;
+    std::vector<Word> inv_degree;
+    std::vector<Word> inv_degree_mont;
+    std::vector<Word> montgomery_converter;
 };
 
+template <typename Word>
 struct DeviceTables {
-    uint32_t *d_primes = nullptr;
-    int32_t *d_inv_primes = nullptr;
-    uint32_t *d_fwd_twiddles = nullptr;
-    uint32_t *d_fwd_twiddles_msb = nullptr;
-    uint32_t *d_inv_twiddles = nullptr;
-    uint32_t *d_inv_twiddles_msb = nullptr;
-    uint32_t *d_inv_degree = nullptr;
-    uint32_t *d_inv_degree_mont = nullptr;
-    uint32_t *d_montgomery_converter = nullptr;
+    Word *d_primes = nullptr;
+    SignedWord<Word> *d_inv_primes = nullptr;
+    Word *d_fwd_twiddles = nullptr;
+    Word *d_fwd_twiddles_msb = nullptr;
+    Word *d_inv_twiddles = nullptr;
+    Word *d_inv_twiddles_msb = nullptr;
+    Word *d_inv_degree = nullptr;
+    Word *d_inv_degree_mont = nullptr;
+    Word *d_montgomery_converter = nullptr;
 };
 
 static void check(cudaError_t err, const char *msg) {
@@ -85,7 +112,7 @@ static bool is_power_of_two(int n) {
 
 static void usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 30|32] [--batch N] [--iters N] [--warmup N]"
+              << " --n <deg> [--qbits 30|32|64] [--batch N] [--iters N] [--warmup N]"
               << " [--csv-header] [--skip-validation]\n";
 }
 
@@ -129,8 +156,8 @@ static Args parse_args(int argc, char **argv) {
         std::exit(1);
     }
 
-    if (args.requested_qbits != 30 && args.requested_qbits != 32) {
-        std::cerr << "Unsupported qbits request: expected one of 30 or 32\n";
+    if (args.requested_qbits != 30 && args.requested_qbits != 32 && args.requested_qbits != 64) {
+        std::cerr << "Unsupported qbits request: expected one of 30, 32, or 64\n";
         std::exit(1);
     }
 
@@ -141,11 +168,6 @@ static Args parse_args(int argc, char **argv) {
 
     if (args.batch_size > 65535) {
         std::cerr << "Unsupported batch size: grid.y is capped at 65535 in this extracted kernel path\n";
-        std::exit(1);
-    }
-
-    if (((kModulus - 1ULL) % (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
-        std::cerr << "Unsupported degree for selected 30-bit prime: need 2n to divide q-1\n";
         std::exit(1);
     }
 
@@ -186,67 +208,59 @@ static Stats compute_stats(const std::vector<double> &samples) {
     return s;
 }
 
-static uint32_t mod_add(uint32_t a, uint32_t b) {
-    uint64_t sum = static_cast<uint64_t>(a) + b;
-    if (sum >= kModulus) {
-        sum -= kModulus;
+template <typename Word>
+static Word mod_add(Word a, Word b, Word q) {
+    WideWord<Word> sum = static_cast<WideWord<Word>>(a) + static_cast<WideWord<Word>>(b);
+    if (sum >= static_cast<WideWord<Word>>(q)) {
+        sum -= static_cast<WideWord<Word>>(q);
     }
-    return static_cast<uint32_t>(sum);
+    return static_cast<Word>(sum);
 }
 
-static uint32_t mod_sub(uint32_t a, uint32_t b) {
-    return a >= b ? (a - b) : (a + kModulus - b);
+template <typename Word>
+static Word mod_sub(Word a, Word b, Word q) {
+    return a >= b ? static_cast<Word>(a - b) : static_cast<Word>(a + q - b);
 }
 
-static uint32_t mod_mul_host(uint32_t a, uint32_t b) {
-    return static_cast<uint32_t>((static_cast<uint64_t>(a) * b) % kModulus);
+template <typename Word>
+static Word mod_mul_host(Word a, Word b, Word q) {
+    WideWord<Word> product = static_cast<WideWord<Word>>(a) * static_cast<WideWord<Word>>(b);
+    return static_cast<Word>(product % static_cast<WideWord<Word>>(q));
 }
 
-static uint32_t mod_pow(uint32_t base, uint64_t exp) {
-    uint32_t result = 1;
-    uint32_t cur = base;
+template <typename Word>
+static Word mod_pow(Word base, uint64_t exp, Word q) {
+    Word result = 1;
+    Word cur = base;
     while (exp > 0) {
         if (exp & 1ULL) {
-            result = mod_mul_host(result, cur);
+            result = mod_mul_host(result, cur, q);
         }
-        cur = mod_mul_host(cur, cur);
+        cur = mod_mul_host(cur, cur, q);
         exp >>= 1ULL;
     }
     return result;
 }
 
-static uint32_t mod_inv(uint32_t x) {
-    return mod_pow(x, kModulus - 2ULL);
+template <typename Word>
+static Word mod_inv(Word x, Word q) {
+    return mod_pow(x, static_cast<uint64_t>(q) - 2ULL, q);
 }
 
-static int64_t gcd_extended(int64_t a, int64_t b, int64_t &x, int64_t &y) {
-    if (a == 0) {
-        x = 0;
-        y = 1;
-        return b;
+template <typename Word>
+static SignedWord<Word> inv_mod_base(Word q) {
+    Word inv = 1;
+    constexpr int word_bits = static_cast<int>(sizeof(Word) * 8);
+    for (int bits = 1; bits < word_bits; bits <<= 1) {
+        inv *= static_cast<Word>(2 - q * inv);
     }
-    int64_t x1 = 0;
-    int64_t y1 = 0;
-    int64_t gcd = gcd_extended(b % a, a, x1, y1);
-    x = y1 - (b / a) * x1;
-    y = x1;
-    return gcd;
+    return static_cast<SignedWord<Word>>(inv);
 }
 
-static int32_t inv_mod_base(uint32_t q) {
-    uint32_t base_minus_one = ~static_cast<uint32_t>(0);
-    uint32_t quotient = base_minus_one / q;
-    uint32_t remainder = (base_minus_one % q) + 1;
-    int64_t x = 0;
-    int64_t y = 0;
-    gcd_extended(static_cast<int64_t>(remainder), static_cast<int64_t>(q), x, y);
-    int64_t inv_q = y - static_cast<int64_t>(quotient) * x;
-    return static_cast<int32_t>(inv_q);
-}
-
-static uint32_t to_montgomery_host(uint32_t x) {
-    uint64_t wide = static_cast<uint64_t>(x) << 32;
-    return static_cast<uint32_t>(wide % kModulus);
+template <typename Word>
+static Word to_montgomery_host(Word x, Word q) {
+    WideWord<Word> wide = static_cast<WideWord<Word>>(x) << (sizeof(Word) * 8);
+    return static_cast<Word>(wide % static_cast<WideWord<Word>>(q));
 }
 
 static uint32_t bit_reverse(uint32_t x, int log_degree) {
@@ -258,7 +272,8 @@ static uint32_t bit_reverse(uint32_t x, int log_degree) {
     return x >> (32 - log_degree);
 }
 
-static void bit_reverse_vector(std::vector<uint32_t> &data) {
+template <typename Word>
+static void bit_reverse_vector(std::vector<Word> &data) {
     const int n = static_cast<int>(data.size());
     const int log_degree = int_log2(static_cast<uint32_t>(n));
     for (int i = 0; i < n; i++) {
@@ -269,64 +284,78 @@ static void bit_reverse_vector(std::vector<uint32_t> &data) {
     }
 }
 
-static uint32_t compute_phi_for_n(int n) {
-    return mod_pow(kPrimitiveGenerator, (kModulus - 1ULL) / (2ULL * static_cast<uint64_t>(n)));
+template <typename Word>
+static Word compute_phi_for_n(const ModulusConfig<Word> &config, int n) {
+    if (config.primitive_root_max_degree != 0) {
+        return mod_pow(config.primitive_root_max_degree,
+                       static_cast<uint64_t>(kMaxDegree / n),
+                       config.modulus);
+    }
+    return mod_pow(config.primitive_generator,
+                   (static_cast<uint64_t>(config.modulus) - 1ULL) /
+                       (2ULL * static_cast<uint64_t>(n)),
+                   config.modulus);
 }
 
-static void compute_reference_vectors(std::vector<uint32_t> &phi_norm,
-                                      std::vector<uint32_t> &post_norm,
-                                      int n) {
+template <typename Word>
+static void compute_reference_vectors(std::vector<Word> &phi_norm,
+                                      std::vector<Word> &post_norm,
+                                      int n,
+                                      const ModulusConfig<Word> &config) {
     phi_norm.resize(n);
     post_norm.resize(n);
 
-    uint32_t phi = compute_phi_for_n(n);
-    uint32_t invphi = mod_inv(phi);
-    uint32_t inv_n = mod_inv(static_cast<uint32_t>(n));
+    Word phi = compute_phi_for_n(config, n);
+    Word invphi = mod_inv(phi, config.modulus);
+    Word inv_n = mod_inv(static_cast<Word>(n), config.modulus);
 
-    uint32_t cur = 1;
+    Word cur = 1;
     for (int i = 0; i < n; i++) {
         phi_norm[i] = cur;
-        cur = mod_mul_host(cur, phi);
+        cur = mod_mul_host(cur, phi, config.modulus);
     }
 
     cur = inv_n;
     for (int i = 0; i < n; i++) {
         post_norm[i] = cur;
-        cur = mod_mul_host(cur, invphi);
+        cur = mod_mul_host(cur, invphi, config.modulus);
     }
 }
 
-static void compute_cheddar_tables(HostTables &tables, int n) {
+template <typename Word>
+static void compute_cheddar_tables(HostTables<Word> &tables,
+                                   int n,
+                                   const ModulusConfig<Word> &config) {
     const int msb_size = n / kLsbSize;
-    uint32_t psi = compute_phi_for_n(n);
-    uint32_t psi_inv = mod_inv(psi);
-    uint32_t inv_n = mod_inv(static_cast<uint32_t>(n));
-    uint32_t one_mont = to_montgomery_host(1u);
+    Word psi = compute_phi_for_n(config, n);
+    Word psi_inv = mod_inv(psi, config.modulus);
+    Word inv_n = mod_inv(static_cast<Word>(n), config.modulus);
+    Word one_mont = to_montgomery_host(static_cast<Word>(1), config.modulus);
 
-    std::vector<uint32_t> psi_rev(n);
-    std::vector<uint32_t> psi_inv_rev(n);
-    psi_rev[0] = 1u;
-    psi_inv_rev[0] = 1u;
+    std::vector<Word> psi_rev(n);
+    std::vector<Word> psi_inv_rev(n);
+    psi_rev[0] = 1;
+    psi_inv_rev[0] = 1;
     for (int i = 1; i < n; i++) {
-        psi_rev[i] = mod_mul_host(psi_rev[i - 1], psi);
-        psi_inv_rev[i] = mod_mul_host(psi_inv_rev[i - 1], psi_inv);
+        psi_rev[i] = mod_mul_host(psi_rev[i - 1], psi, config.modulus);
+        psi_inv_rev[i] = mod_mul_host(psi_inv_rev[i - 1], psi_inv, config.modulus);
     }
     bit_reverse_vector(psi_rev);
     bit_reverse_vector(psi_inv_rev);
 
-    tables.primes = {kModulus};
-    tables.inv_primes = {inv_mod_base(kModulus)};
+    tables.primes = {config.modulus};
+    tables.inv_primes = {inv_mod_base(config.modulus)};
     tables.fwd_twiddles_mont.resize(n);
     tables.inv_twiddles_mont.resize(n);
     tables.fwd_twiddles_msb.resize(msb_size);
     tables.inv_twiddles_msb.resize(msb_size);
     tables.inv_degree = {inv_n};
-    tables.inv_degree_mont = {to_montgomery_host(inv_n)};
-    tables.montgomery_converter = {to_montgomery_host(one_mont)};
+    tables.inv_degree_mont = {to_montgomery_host(inv_n, config.modulus)};
+    tables.montgomery_converter = {to_montgomery_host(one_mont, config.modulus)};
 
     for (int i = 0; i < n; i++) {
-        tables.fwd_twiddles_mont[i] = to_montgomery_host(psi_rev[i]);
-        tables.inv_twiddles_mont[i] = to_montgomery_host(psi_inv_rev[i]);
+        tables.fwd_twiddles_mont[i] = to_montgomery_host(psi_rev[i], config.modulus);
+        tables.inv_twiddles_mont[i] = to_montgomery_host(psi_inv_rev[i], config.modulus);
     }
 
     for (int i = 0; i < msb_size; i++) {
@@ -335,88 +364,98 @@ static void compute_cheddar_tables(HostTables &tables, int n) {
     }
 }
 
-static void host_forward_ntt(std::vector<uint32_t> &a,
-                             const std::vector<uint32_t> &phi,
+template <typename Word>
+static void host_forward_ntt(std::vector<Word> &a,
+                             const std::vector<Word> &phi,
                              int n,
-                             int log_degree) {
-    std::vector<uint32_t> tmp(n);
+                             int log_degree,
+                             const ModulusConfig<Word> &config) {
+    std::vector<Word> tmp(n);
     for (int i = 0; i < n; i++) {
-        tmp[bit_reverse(static_cast<uint32_t>(i), log_degree)] = mod_mul_host(a[i], phi[i]);
+        tmp[bit_reverse(static_cast<uint32_t>(i), log_degree)] =
+            mod_mul_host(a[i], phi[i], config.modulus);
     }
     a.swap(tmp);
 
-    uint32_t phi_root = compute_phi_for_n(n);
-    uint32_t omega = mod_mul_host(phi_root, phi_root);
+    Word phi_root = compute_phi_for_n(config, n);
+    Word omega = mod_mul_host(phi_root, phi_root, config.modulus);
 
     for (int len = 2; len <= n; len <<= 1) {
         int half = len / 2;
-        uint32_t wlen = mod_pow(omega, static_cast<uint64_t>(n / len));
+        Word wlen = mod_pow(omega, static_cast<uint64_t>(n / len), config.modulus);
         for (int start = 0; start < n; start += len) {
-            uint32_t w = 1;
+            Word w = 1;
             for (int j = 0; j < half; j++) {
-                uint32_t u = a[start + j];
-                uint32_t v = mod_mul_host(a[start + j + half], w);
-                a[start + j] = mod_add(u, v);
-                a[start + j + half] = mod_sub(u, v);
-                w = mod_mul_host(w, wlen);
+                Word u = a[start + j];
+                Word v = mod_mul_host(a[start + j + half], w, config.modulus);
+                a[start + j] = mod_add(u, v, config.modulus);
+                a[start + j + half] = mod_sub(u, v, config.modulus);
+                w = mod_mul_host(w, wlen, config.modulus);
             }
         }
     }
 }
 
-static void host_inverse_ntt(std::vector<uint32_t> &a,
-                             const std::vector<uint32_t> &post_scale,
+template <typename Word>
+static void host_inverse_ntt(std::vector<Word> &a,
+                             const std::vector<Word> &post_scale,
                              int n,
-                             int log_degree) {
-    std::vector<uint32_t> tmp(n);
+                             int log_degree,
+                             const ModulusConfig<Word> &config) {
+    std::vector<Word> tmp(n);
     for (int i = 0; i < n; i++) {
         tmp[bit_reverse(static_cast<uint32_t>(i), log_degree)] = a[i];
     }
     a.swap(tmp);
 
-    uint32_t phi_root = compute_phi_for_n(n);
-    uint32_t omega = mod_mul_host(phi_root, phi_root);
-    uint32_t invomega = mod_inv(omega);
+    Word phi_root = compute_phi_for_n(config, n);
+    Word omega = mod_mul_host(phi_root, phi_root, config.modulus);
+    Word invomega = mod_inv(omega, config.modulus);
 
     for (int len = 2; len <= n; len <<= 1) {
         int half = len / 2;
-        uint32_t wlen = mod_pow(invomega, static_cast<uint64_t>(n / len));
+        Word wlen = mod_pow(invomega, static_cast<uint64_t>(n / len), config.modulus);
         for (int start = 0; start < n; start += len) {
-            uint32_t w = 1;
+            Word w = 1;
             for (int j = 0; j < half; j++) {
-                uint32_t u = a[start + j];
-                uint32_t v = mod_mul_host(a[start + j + half], w);
-                a[start + j] = mod_add(u, v);
-                a[start + j + half] = mod_sub(u, v);
-                w = mod_mul_host(w, wlen);
+                Word u = a[start + j];
+                Word v = mod_mul_host(a[start + j + half], w, config.modulus);
+                a[start + j] = mod_add(u, v, config.modulus);
+                a[start + j + half] = mod_sub(u, v, config.modulus);
+                w = mod_mul_host(w, wlen, config.modulus);
             }
         }
     }
 
     for (int i = 0; i < n; i++) {
-        a[i] = mod_mul_host(a[i], post_scale[i]);
+        a[i] = mod_mul_host(a[i], post_scale[i], config.modulus);
     }
 }
 
-static std::vector<uint32_t> make_input_pattern(int n, InputPattern pattern, uint32_t seed = 0) {
-    std::vector<uint32_t> values(n, 0);
+template <typename Word>
+static std::vector<Word> make_input_pattern(int n,
+                                            InputPattern pattern,
+                                            Word modulus,
+                                            uint64_t seed = 0) {
+    std::vector<Word> values(n, 0);
     switch (pattern) {
     case InputPattern::Zero:
         break;
     case InputPattern::One:
-        std::fill(values.begin(), values.end(), 1u);
+        std::fill(values.begin(), values.end(), static_cast<Word>(1));
         break;
     case InputPattern::Impulse:
         if (n > 0) {
-            values[0] = 1u;
+            values[0] = static_cast<Word>(1);
         }
         break;
     case InputPattern::Max:
-        std::fill(values.begin(), values.end(), kModulus - 1u);
+        std::fill(values.begin(), values.end(), static_cast<Word>(modulus - 1));
         break;
     case InputPattern::Random: {
-        std::mt19937 rng(seed);
-        std::uniform_int_distribution<uint32_t> dist(0, kModulus - 1);
+        using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
+        Rng rng(static_cast<typename Rng::result_type>(seed));
+        std::uniform_int_distribution<Word> dist(0, static_cast<Word>(modulus - 1));
         for (int i = 0; i < n; i++) {
             values[i] = dist(rng);
         }
@@ -426,22 +465,27 @@ static std::vector<uint32_t> make_input_pattern(int n, InputPattern pattern, uin
     return values;
 }
 
-static std::vector<uint32_t> make_batched_pattern(int batch_count,
-                                                  int n,
-                                                  InputPattern pattern,
-                                                  uint32_t seed_base = 0) {
-    std::vector<uint32_t> values(static_cast<size_t>(batch_count) * static_cast<size_t>(n));
+template <typename Word>
+static std::vector<Word> make_batched_pattern(int batch_count,
+                                              int n,
+                                              InputPattern pattern,
+                                              Word modulus,
+                                              uint64_t seed_base = 0) {
+    std::vector<Word> values(static_cast<size_t>(batch_count) * static_cast<size_t>(n));
     for (int batch = 0; batch < batch_count; batch++) {
-        std::vector<uint32_t> lane =
-            make_input_pattern(n, pattern, seed_base + static_cast<uint32_t>(batch * 17));
+        std::vector<Word> lane = make_input_pattern(n,
+                                                    pattern,
+                                                    modulus,
+                                                    seed_base + static_cast<uint64_t>(batch * 17));
         std::copy(lane.begin(), lane.end(),
                   values.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n));
     }
     return values;
 }
 
-static bool compare_vectors(const std::vector<uint32_t> &expected,
-                            const std::vector<uint32_t> &actual,
+template <typename Word>
+static bool compare_vectors(const std::vector<Word> &expected,
+                            const std::vector<Word> &actual,
                             int n,
                             const char *label) {
     if (expected.size() != actual.size()) {
@@ -461,21 +505,23 @@ static bool compare_vectors(const std::vector<uint32_t> &expected,
     return true;
 }
 
-static std::vector<uint32_t> host_polymul_reference(const std::vector<uint32_t> &lhs,
-                                                    const std::vector<uint32_t> &rhs,
-                                                    const std::vector<uint32_t> &phi_norm,
-                                                    const std::vector<uint32_t> &post_norm,
+template <typename Word>
+static std::vector<Word> host_polymul_reference(const std::vector<Word> &lhs,
+                                                const std::vector<Word> &rhs,
+                                                const std::vector<Word> &phi_norm,
+                                                const std::vector<Word> &post_norm,
+                                                const ModulusConfig<Word> &config,
                                                     int n,
                                                     int log_degree) {
-    std::vector<uint32_t> host_a = lhs;
-    std::vector<uint32_t> host_b = rhs;
-    host_forward_ntt(host_a, phi_norm, n, log_degree);
-    host_forward_ntt(host_b, phi_norm, n, log_degree);
-    std::vector<uint32_t> host_c(n);
+    std::vector<Word> host_a = lhs;
+    std::vector<Word> host_b = rhs;
+    host_forward_ntt(host_a, phi_norm, n, log_degree, config);
+    host_forward_ntt(host_b, phi_norm, n, log_degree, config);
+    std::vector<Word> host_c(n);
     for (int i = 0; i < n; i++) {
-        host_c[i] = mod_mul_host(host_a[i], host_b[i]);
+        host_c[i] = mod_mul_host(host_a[i], host_b[i], config.modulus);
     }
-    host_inverse_ntt(host_c, post_norm, n, log_degree);
+    host_inverse_ntt(host_c, post_norm, n, log_degree, config);
     return host_c;
 }
 
@@ -535,6 +581,32 @@ __device__ __inline__ int32_t MultMontgomeryLazy<uint32_t>(
     int32_t temp = lo * q_inv;
     temp = __mulhi(temp, static_cast<int32_t>(q));
     return hi - temp;
+}
+
+__device__ __inline__ int64_t SignedMulHi64(int64_t a, int64_t b) {
+    uint64_t a_u = static_cast<uint64_t>(a);
+    uint64_t b_u = static_cast<uint64_t>(b);
+    int64_t hi = static_cast<int64_t>(__umul64hi(a_u, b_u));
+    if (a < 0) {
+        hi -= static_cast<int64_t>(b_u);
+    }
+    if (b < 0) {
+        hi -= static_cast<int64_t>(a_u);
+    }
+    return hi;
+}
+
+template <>
+__device__ __inline__ int64_t MultMontgomeryLazy<uint64_t>(
+    int64_t a,
+    int64_t b,
+    uint64_t q,
+    int64_t q_inv) {
+    uint64_t lo = static_cast<uint64_t>(a) * static_cast<uint64_t>(b);
+    int64_t hi = SignedMulHi64(a, b);
+    int64_t temp = static_cast<int64_t>(lo * static_cast<uint64_t>(q_inv));
+    int64_t temp_hi = SignedMulHi64(temp, static_cast<int64_t>(q));
+    return hi - temp_hi;
 }
 
 template <typename word>
@@ -966,16 +1038,17 @@ struct NTTLaunchConfig {
 
 }  // namespace cheddar_extract
 
-template <int log_degree>
-__global__ void NTTPhase1SinglePrime(int32_t *dst,
-                                     const uint32_t *prime_ptr,
-                                     const int32_t *inv_prime_ptr,
-                                     const uint32_t *twiddle_factors,
+template <typename Word, int log_degree>
+__global__ void NTTPhase1SinglePrime(SignedWord<Word> *dst,
+                                     const Word *prime_ptr,
+                                     const SignedWord<Word> *inv_prime_ptr,
+                                     const Word *twiddle_factors,
                                      int batch_count,
-                                     const int32_t *src,
-                                     const uint32_t *src_const) {
+                                     const SignedWord<Word> *src,
+                                     const Word *src_const) {
     extern __shared__ char shared_mem[];
-    int32_t *temp = reinterpret_cast<int32_t *>(shared_mem);
+    using signed_word = SignedWord<Word>;
+    signed_word *temp = reinterpret_cast<signed_word *>(shared_mem);
 
     using Config = cheddar_extract::NTTLaunchConfig<log_degree,
                                                     cheddar_extract::NTTType::NTT,
@@ -991,28 +1064,28 @@ __global__ void NTTPhase1SinglePrime(int32_t *dst,
         return;
     }
 
-    uint32_t prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    int32_t inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const uint32_t *w = twiddle_factors;
-    const int32_t *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    int32_t *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    const Word *w = twiddle_factors;
+    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
 
-    int32_t local[kPerThreadElems];
+    signed_word local[kPerThreadElems];
     int stage_group_idx = threadIdx.x >> kLogWarpBatching;
     int batch_lane = threadIdx.x & ((1 << kLogWarpBatching) - 1);
-    const int32_t *load_ptr = src_limb + batch_lane +
-                              (blockIdx.x << kLogWarpBatching) +
-                              (stage_group_idx << (log_degree - kNumStages));
+    const signed_word *load_ptr = src_limb + batch_lane +
+                                  (blockIdx.x << kLogWarpBatching) +
+                                  (stage_group_idx << (log_degree - kNumStages));
     for (int i = 0; i < kPerThreadElems; i++) {
         local[i] = cheddar_extract::StreamingLoad(load_ptr + (i << (log_degree - kStageMerging)));
     }
 
     if (src_const != nullptr) {
-        uint32_t src_const_value = cheddar_extract::StreamingLoadConst(src_const);
+        Word src_const_value = cheddar_extract::StreamingLoadConst(src_const);
         for (int i = 0; i < kPerThreadElems; i++) {
-            local[i] = cheddar_extract::MultMontgomeryLazy<uint32_t>(
+            local[i] = cheddar_extract::MultMontgomeryLazy<Word>(
                 local[i],
-                static_cast<int32_t>(src_const_value),
+                static_cast<signed_word>(src_const_value),
                 prime,
                 inv_prime);
         }
@@ -1022,7 +1095,7 @@ __global__ void NTTPhase1SinglePrime(int32_t *dst,
     int tw_idx = final_tw_idx >> (kNumStages - kStageMerging);
     int sm_log_stride = kNumStages - kStageMerging + kLogWarpBatching;
 
-    cheddar_extract::MultiRadixNTTFirst<uint32_t, kPerThreadElems, kTailStages>(
+    cheddar_extract::MultiRadixNTTFirst<Word, kPerThreadElems, kTailStages>(
         local, tw_idx, w, prime, inv_prime);
     for (int j = 0; j < kPerThreadElems; j++) {
         temp[threadIdx.x + (j << sm_log_stride)] = local[j];
@@ -1041,7 +1114,7 @@ __global__ void NTTPhase1SinglePrime(int32_t *dst,
         }
 
         int iter_tw_idx = final_tw_idx >> (kStageMerging * i);
-        cheddar_extract::MultiRadixNTT<uint32_t, kPerThreadElems, kStageMerging>(
+        cheddar_extract::MultiRadixNTT<Word, kPerThreadElems, kStageMerging>(
             local, iter_tw_idx, w, prime, inv_prime);
         if (i == 0) {
             break;
@@ -1061,16 +1134,17 @@ __global__ void NTTPhase1SinglePrime(int32_t *dst,
     }
 }
 
-template <int log_degree>
-__global__ void NTTPhase2SinglePrime(int32_t *dst,
-                                     const uint32_t *prime_ptr,
-                                     const int32_t *inv_prime_ptr,
-                                     const uint32_t *twiddle_factors,
-                                     const uint32_t *twiddle_factors_msb,
+template <typename Word, int log_degree>
+__global__ void NTTPhase2SinglePrime(SignedWord<Word> *dst,
+                                     const Word *prime_ptr,
+                                     const SignedWord<Word> *inv_prime_ptr,
+                                     const Word *twiddle_factors,
+                                     const Word *twiddle_factors_msb,
                                      int batch_count,
-                                     const int32_t *src) {
+                                     const SignedWord<Word> *src) {
     extern __shared__ char shared_mem[];
-    int32_t *temp = reinterpret_cast<int32_t *>(shared_mem);
+    using signed_word = SignedWord<Word>;
+    signed_word *temp = reinterpret_cast<signed_word *>(shared_mem);
 
     using Config = cheddar_extract::NTTLaunchConfig<log_degree,
                                                     cheddar_extract::NTTType::NTT,
@@ -1092,16 +1166,16 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
         return;
     }
 
-    uint32_t prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    int32_t inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const int32_t *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    int32_t *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const uint32_t *w = twiddle_factors;
-    const uint32_t *w_msb = twiddle_factors_msb;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
+    const Word *w = twiddle_factors;
+    const Word *w_msb = twiddle_factors_msb;
 
-    int32_t local[kPerThreadElems];
+    signed_word local[kPerThreadElems];
     int log_stride = kNumStages - kStageMerging;
-    const int32_t *load_ptr =
+    const signed_word *load_ptr =
         src_limb + batch_lane + (blockIdx.x << (kNumStages + kLogWarpBatching)) +
         (row_idx << kNumStages);
     for (int i = 0; i < kPerThreadElems; i++) {
@@ -1113,7 +1187,7 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
     int tw_idx = final_tw_idx >> (kNumStages - kStageMerging);
     int sm_log_stride = log_stride;
 
-    cheddar_extract::MultiRadixNTTFirst<uint32_t, kPerThreadElems, kTailStages>(
+    cheddar_extract::MultiRadixNTTFirst<Word, kPerThreadElems, kTailStages>(
         local, tw_idx, w, prime, inv_prime);
     for (int j = 0; j < kPerThreadElems; j++) {
         temp[batch_lane + (j << sm_log_stride)] = local[j];
@@ -1134,7 +1208,7 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
         int iter_tw_idx = final_tw_idx >> (kStageMerging * i);
         if (i == 0) {
             if constexpr (kOFTwiddle) {
-                cheddar_extract::MultiRadixNTT_OT<uint32_t,
+                cheddar_extract::MultiRadixNTT_OT<Word,
                                                   kPerThreadElems,
                                                   kStageMerging,
                                                   kLsbSize>(local,
@@ -1144,12 +1218,12 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
                                                             prime,
                                                             inv_prime);
             } else {
-                cheddar_extract::MultiRadixNTT<uint32_t, kPerThreadElems, kStageMerging>(
+                cheddar_extract::MultiRadixNTT<Word, kPerThreadElems, kStageMerging>(
                     local, iter_tw_idx, w, prime, inv_prime);
             }
         } else {
             if constexpr (kOFTwiddle && !cheddar_extract::kExtendedOT) {
-                cheddar_extract::MultiRadixNTT_OT<uint32_t,
+                cheddar_extract::MultiRadixNTT_OT<Word,
                                                   kPerThreadElems,
                                                   kStageMerging,
                                                   kLsbSize>(local,
@@ -1159,7 +1233,7 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
                                                             prime,
                                                             inv_prime);
             } else {
-                cheddar_extract::MultiRadixNTT<uint32_t, kPerThreadElems, kStageMerging>(
+                cheddar_extract::MultiRadixNTT<Word, kPerThreadElems, kStageMerging>(
                     local, iter_tw_idx, w, prime, inv_prime);
             }
         }
@@ -1180,20 +1254,21 @@ __global__ void NTTPhase2SinglePrime(int32_t *dst,
         }
     }
 
-    int32_t *dst_ptr = dst_limb + (x_idx << kStageMerging);
-    cheddar_extract::VectorizedMove<int32_t, kPerThreadElems>(dst_ptr, local);
+    signed_word *dst_ptr = dst_limb + (x_idx << kStageMerging);
+    cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(dst_ptr, local);
 }
 
-template <int log_degree>
-__global__ void INTTPhase1SinglePrime(int32_t *dst,
-                                      const uint32_t *prime_ptr,
-                                      const int32_t *inv_prime_ptr,
-                                      const uint32_t *twiddle_factors,
-                                      const uint32_t *twiddle_factors_msb,
+template <typename Word, int log_degree>
+__global__ void INTTPhase1SinglePrime(SignedWord<Word> *dst,
+                                      const Word *prime_ptr,
+                                      const SignedWord<Word> *inv_prime_ptr,
+                                      const Word *twiddle_factors,
+                                      const Word *twiddle_factors_msb,
                                       int batch_count,
-                                      const int32_t *src) {
+                                      const SignedWord<Word> *src) {
     extern __shared__ char shared_mem[];
-    int32_t *temp = reinterpret_cast<int32_t *>(shared_mem);
+    using signed_word = SignedWord<Word>;
+    signed_word *temp = reinterpret_cast<signed_word *>(shared_mem);
 
     using Config = cheddar_extract::NTTLaunchConfig<log_degree,
                                                     cheddar_extract::NTTType::INTT,
@@ -1215,17 +1290,17 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
         return;
     }
 
-    uint32_t prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    int32_t inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const int32_t *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    int32_t *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const uint32_t *w = twiddle_factors;
-    const uint32_t *w_msb = twiddle_factors_msb;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
+    const Word *w = twiddle_factors;
+    const Word *w_msb = twiddle_factors_msb;
 
-    int32_t local[kPerThreadElems];
+    signed_word local[kPerThreadElems];
     int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const int32_t *load_ptr = src_limb + (x_idx << kStageMerging);
-    cheddar_extract::VectorizedMove<int32_t, kPerThreadElems>(local, load_ptr);
+    const signed_word *load_ptr = src_limb + (x_idx << kStageMerging);
+    cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(local, load_ptr);
 
     int tw_idx = (1 << (log_degree - kStageMerging)) + x_idx;
     int sm_log_stride = 0;
@@ -1236,7 +1311,7 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
     for (int i = 0; i < num_main_iters; i++) {
         if (i == 0) {
             if constexpr (kOFTwiddle) {
-                cheddar_extract::MultiRadixINTT_OT<uint32_t,
+                cheddar_extract::MultiRadixINTT_OT<Word,
                                                    kPerThreadElems,
                                                    kStageMerging,
                                                    kLsbSize>(local,
@@ -1246,12 +1321,12 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
                                                              prime,
                                                              inv_prime);
             } else {
-                cheddar_extract::MultiRadixINTT<uint32_t, kPerThreadElems, kStageMerging>(
+                cheddar_extract::MultiRadixINTT<Word, kPerThreadElems, kStageMerging>(
                     local, tw_idx, w, prime, inv_prime);
             }
         } else {
             if constexpr (kOFTwiddle && !cheddar_extract::kExtendedOT) {
-                cheddar_extract::MultiRadixINTT_OT<uint32_t,
+                cheddar_extract::MultiRadixINTT_OT<Word,
                                                    kPerThreadElems,
                                                    kStageMerging,
                                                    kLsbSize>(local,
@@ -1261,7 +1336,7 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
                                                              prime,
                                                              inv_prime);
             } else {
-                cheddar_extract::MultiRadixINTT<uint32_t, kPerThreadElems, kStageMerging>(
+                cheddar_extract::MultiRadixINTT<Word, kPerThreadElems, kStageMerging>(
                     local, tw_idx, w, prime, inv_prime);
             }
         }
@@ -1286,7 +1361,7 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
         }
     }
 
-    cheddar_extract::MultiRadixINTTLast<uint32_t, kPerThreadElems, kTailStages>(
+    cheddar_extract::MultiRadixINTTLast<Word, kPerThreadElems, kTailStages>(
         local, tw_idx, w, prime, inv_prime);
 
     int dst_idx = batch_lane + (blockIdx.x << (kNumStages + kLogWarpBatching)) +
@@ -1296,16 +1371,17 @@ __global__ void INTTPhase1SinglePrime(int32_t *dst,
     }
 }
 
-template <int log_degree>
-__global__ void INTTPhase2SinglePrime(int32_t *dst,
-                                      const uint32_t *prime_ptr,
-                                      const int32_t *inv_prime_ptr,
-                                      const uint32_t *twiddle_factors,
+template <typename Word, int log_degree>
+__global__ void INTTPhase2SinglePrime(SignedWord<Word> *dst,
+                                      const Word *prime_ptr,
+                                      const SignedWord<Word> *inv_prime_ptr,
+                                      const Word *twiddle_factors,
                                       int batch_count,
-                                      const int32_t *src,
-                                      const uint32_t *src_const) {
+                                      const SignedWord<Word> *src,
+                                      const Word *src_const) {
     extern __shared__ char shared_mem[];
-    int32_t *temp = reinterpret_cast<int32_t *>(shared_mem);
+    using signed_word = SignedWord<Word>;
+    signed_word *temp = reinterpret_cast<signed_word *>(shared_mem);
 
     using Config = cheddar_extract::NTTLaunchConfig<log_degree,
                                                     cheddar_extract::NTTType::INTT,
@@ -1321,18 +1397,18 @@ __global__ void INTTPhase2SinglePrime(int32_t *dst,
         return;
     }
 
-    uint32_t prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    int32_t inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    uint32_t src_const_value = cheddar_extract::StreamingLoadConst(src_const);
-    const int32_t *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    int32_t *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const uint32_t *w = twiddle_factors;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    Word src_const_value = cheddar_extract::StreamingLoadConst(src_const);
+    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
+    const Word *w = twiddle_factors;
 
-    int32_t local[kPerThreadElems];
+    signed_word local[kPerThreadElems];
     constexpr int initial_log_stride = log_degree - kNumStages;
     int stage_group_idx = threadIdx.x >> kLogWarpBatching;
     int batch_lane = threadIdx.x & ((1 << kLogWarpBatching) - 1);
-    const int32_t *load_ptr =
+    const signed_word *load_ptr =
         src_limb + (stage_group_idx << (initial_log_stride + kStageMerging)) +
         batch_lane + (blockIdx.x << kLogWarpBatching);
     for (int i = 0; i < kPerThreadElems; i++) {
@@ -1347,7 +1423,7 @@ __global__ void INTTPhase2SinglePrime(int32_t *dst,
     constexpr int num_main_iters = (kNumStages - kTailStages) / kStageMerging;
 #pragma unroll
     for (int i = 0; i < num_main_iters; i++) {
-        cheddar_extract::MultiRadixINTT<uint32_t, kPerThreadElems, kStageMerging>(
+        cheddar_extract::MultiRadixINTT<Word, kPerThreadElems, kStageMerging>(
             local, tw_idx, w, prime, inv_prime);
 
         for (int j = 0; j < kPerThreadElems; j++) {
@@ -1370,15 +1446,15 @@ __global__ void INTTPhase2SinglePrime(int32_t *dst,
         }
     }
 
-    cheddar_extract::MultiRadixINTTLast<uint32_t, kPerThreadElems, kTailStages>(
+    cheddar_extract::MultiRadixINTTLast<Word, kPerThreadElems, kTailStages>(
         local, tw_idx, w, prime, inv_prime);
 
     int dst_idx = batch_lane + (stage_group_idx << initial_log_stride) +
                   (blockIdx.x << kLogWarpBatching);
     for (int j = 0; j < kPerThreadElems; j++) {
-        int32_t temp_val = cheddar_extract::MultMontgomeryLazy<uint32_t>(
+        signed_word temp_val = cheddar_extract::MultMontgomeryLazy<Word>(
             local[j],
-            static_cast<int32_t>(src_const_value),
+            static_cast<signed_word>(src_const_value),
             prime,
             inv_prime);
         if (temp_val < 0) {
@@ -1388,31 +1464,33 @@ __global__ void INTTPhase2SinglePrime(int32_t *dst,
     }
 }
 
-__global__ void pointwise_mul_kernel(const uint32_t *a,
-                                     const uint32_t *b,
-                                     uint32_t *out,
+template <typename Word>
+__global__ void pointwise_mul_kernel(const Word *a,
+                                     const Word *b,
+                                     Word *out,
                                      size_t total_coeffs,
-                                     const uint32_t *prime_ptr,
-                                     const int32_t *inv_prime_ptr) {
+                                     const Word *prime_ptr,
+                                     const SignedWord<Word> *inv_prime_ptr) {
     size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (idx >= total_coeffs) {
         return;
     }
-    uint32_t prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    int32_t inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    out[idx] = cheddar_extract::MultMontgomery<uint32_t>(a[idx], b[idx], prime, inv_prime);
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
+    SignedWord<Word> inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    out[idx] = cheddar_extract::MultMontgomery<Word>(a[idx], b[idx], prime, inv_prime);
 }
 
 static unsigned int grid_size(size_t work_items, unsigned int block_size) {
     return static_cast<unsigned int>((work_items + block_size - 1) / block_size);
 }
 
-template <int log_degree>
-static void run_forward_only_impl(uint32_t *d_input,
-                                  uint32_t *d_work,
-                                  const DeviceTables &tables,
+template <typename Word, int log_degree>
+static void run_forward_only_impl(Word *d_input,
+                                  Word *d_work,
+                                  const DeviceTables<Word> &tables,
                                   int batch_count,
                                   bool convert_to_montgomery) {
+    using signed_word = SignedWord<Word>;
     using Config1 = cheddar_extract::NTTLaunchConfig<log_degree,
                                                      cheddar_extract::NTTType::NTT,
                                                      cheddar_extract::Phase::Phase1>;
@@ -1425,39 +1503,40 @@ static void run_forward_only_impl(uint32_t *d_input,
     constexpr int stage_merging_1 = Config1::StageMerging();
     constexpr int block_dim_2 = Config2::BlockDim();
     constexpr int stage_merging_2 = Config2::StageMerging();
-    constexpr int shared_mem_1 = block_dim_1 * (1 << stage_merging_1) * sizeof(uint32_t);
-    constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(uint32_t);
+    constexpr int shared_mem_1 = block_dim_1 * (1 << stage_merging_1) * sizeof(signed_word);
+    constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(signed_word);
 
     dim3 grid_phase1(degree / (1 << stage_merging_1) / block_dim_1,
                      static_cast<unsigned int>(batch_count));
     dim3 grid_phase2(degree / (1 << stage_merging_2) / block_dim_2,
                      static_cast<unsigned int>(batch_count));
-    const uint32_t *src_const = convert_to_montgomery ? tables.d_montgomery_converter : nullptr;
+    const Word *src_const = convert_to_montgomery ? tables.d_montgomery_converter : nullptr;
 
-    NTTPhase1SinglePrime<log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
-        reinterpret_cast<int32_t *>(d_work),
+    NTTPhase1SinglePrime<Word, log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
+        reinterpret_cast<signed_word *>(d_work),
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_fwd_twiddles,
         batch_count,
-        reinterpret_cast<const int32_t *>(d_input),
+        reinterpret_cast<const signed_word *>(d_input),
         src_const);
     check_launch("launch cheddar NTTPhase1SinglePrime");
 
-    NTTPhase2SinglePrime<log_degree><<<grid_phase2, block_dim_2, shared_mem_2>>>(
-        reinterpret_cast<int32_t *>(d_work),
+    NTTPhase2SinglePrime<Word, log_degree><<<grid_phase2, block_dim_2, shared_mem_2>>>(
+        reinterpret_cast<signed_word *>(d_work),
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_fwd_twiddles,
         tables.d_fwd_twiddles_msb,
         batch_count,
-        reinterpret_cast<const int32_t *>(d_work));
+        reinterpret_cast<const signed_word *>(d_work));
     check_launch("launch cheddar NTTPhase2SinglePrime");
 }
 
-static void run_forward_only(uint32_t *d_input,
-                             uint32_t *d_work,
-                             const DeviceTables &tables,
+template <typename Word>
+static void run_forward_only(Word *d_input,
+                             Word *d_work,
+                             const DeviceTables<Word> &tables,
                              int n,
                              int batch_count,
                              int log_degree,
@@ -1467,7 +1546,11 @@ static void run_forward_only(uint32_t *d_input,
         if (log_degree != degree_c) {
             return;
         }
-        run_forward_only_impl<degree_c>(d_input, d_work, tables, batch_count, convert_to_montgomery);
+        run_forward_only_impl<Word, degree_c>(d_input,
+                                              d_work,
+                                              tables,
+                                              batch_count,
+                                              convert_to_montgomery);
         launched = true;
     });
     if (!launched) {
@@ -1476,12 +1559,13 @@ static void run_forward_only(uint32_t *d_input,
     }
 }
 
-template <int log_degree>
-static void run_inverse_only_impl(uint32_t *d_ntt_input,
-                                  uint32_t *d_out,
-                                  const DeviceTables &tables,
+template <typename Word, int log_degree>
+static void run_inverse_only_impl(Word *d_ntt_input,
+                                  Word *d_out,
+                                  const DeviceTables<Word> &tables,
                                   int batch_count,
                                   bool convert_from_montgomery) {
+    using signed_word = SignedWord<Word>;
     using Config1 = cheddar_extract::NTTLaunchConfig<log_degree,
                                                      cheddar_extract::NTTType::INTT,
                                                      cheddar_extract::Phase::Phase1>;
@@ -1494,39 +1578,40 @@ static void run_inverse_only_impl(uint32_t *d_ntt_input,
     constexpr int stage_merging_1 = Config1::StageMerging();
     constexpr int block_dim_2 = Config2::BlockDim();
     constexpr int stage_merging_2 = Config2::StageMerging();
-    constexpr int shared_mem_1 = block_dim_1 * (1 << stage_merging_1) * sizeof(uint32_t);
-    constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(uint32_t);
+    constexpr int shared_mem_1 = block_dim_1 * (1 << stage_merging_1) * sizeof(signed_word);
+    constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(signed_word);
 
     dim3 grid_phase1(degree / (1 << stage_merging_1) / block_dim_1,
                      static_cast<unsigned int>(batch_count));
     dim3 grid_phase2(degree / (1 << stage_merging_2) / block_dim_2,
                      static_cast<unsigned int>(batch_count));
-    const uint32_t *src_const = convert_from_montgomery ? tables.d_inv_degree : tables.d_inv_degree_mont;
+    const Word *src_const = convert_from_montgomery ? tables.d_inv_degree : tables.d_inv_degree_mont;
 
-    INTTPhase1SinglePrime<log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
-        reinterpret_cast<int32_t *>(d_out),
+    INTTPhase1SinglePrime<Word, log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
+        reinterpret_cast<signed_word *>(d_out),
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_inv_twiddles,
         tables.d_inv_twiddles_msb,
         batch_count,
-        reinterpret_cast<const int32_t *>(d_ntt_input));
+        reinterpret_cast<const signed_word *>(d_ntt_input));
     check_launch("launch cheddar INTTPhase1SinglePrime");
 
-    INTTPhase2SinglePrime<log_degree><<<grid_phase2, block_dim_2, shared_mem_2>>>(
-        reinterpret_cast<int32_t *>(d_out),
+    INTTPhase2SinglePrime<Word, log_degree><<<grid_phase2, block_dim_2, shared_mem_2>>>(
+        reinterpret_cast<signed_word *>(d_out),
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_inv_twiddles,
         batch_count,
-        reinterpret_cast<const int32_t *>(d_out),
+        reinterpret_cast<const signed_word *>(d_out),
         src_const);
     check_launch("launch cheddar INTTPhase2SinglePrime");
 }
 
-static void run_inverse_only(uint32_t *d_ntt_input,
-                             uint32_t *d_out,
-                             const DeviceTables &tables,
+template <typename Word>
+static void run_inverse_only(Word *d_ntt_input,
+                             Word *d_out,
+                             const DeviceTables<Word> &tables,
                              int n,
                              int batch_count,
                              int log_degree,
@@ -1536,7 +1621,11 @@ static void run_inverse_only(uint32_t *d_ntt_input,
         if (log_degree != degree_c) {
             return;
         }
-        run_inverse_only_impl<degree_c>(d_ntt_input, d_out, tables, batch_count, convert_from_montgomery);
+        run_inverse_only_impl<Word, degree_c>(d_ntt_input,
+                                              d_out,
+                                              tables,
+                                              batch_count,
+                                              convert_from_montgomery);
         launched = true;
     });
     if (!launched) {
@@ -1545,13 +1634,14 @@ static void run_inverse_only(uint32_t *d_ntt_input,
     }
 }
 
-static void run_full_polymul(uint32_t *d_a,
-                             uint32_t *d_b,
-                             uint32_t *d_a_work,
-                             uint32_t *d_b_work,
-                             uint32_t *d_c_work,
-                             uint32_t *d_out,
-                             const DeviceTables &tables,
+template <typename Word>
+static void run_full_polymul(Word *d_a,
+                             Word *d_b,
+                             Word *d_a_work,
+                             Word *d_b_work,
+                             Word *d_c_work,
+                             Word *d_out,
+                             const DeviceTables<Word> &tables,
                              int n,
                              int batch_count,
                              int log_degree) {
@@ -1561,69 +1651,77 @@ static void run_full_polymul(uint32_t *d_a,
     dim3 block(256);
     size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
     dim3 grid(grid_size(total_coeffs, block.x));
-    pointwise_mul_kernel<<<grid, block>>>(
+    pointwise_mul_kernel<Word><<<grid, block>>>(
         d_a_work, d_b_work, d_c_work, total_coeffs, tables.d_primes, tables.d_inv_primes);
     check_launch("launch cheddar pointwise_mul_kernel");
 
     run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true);
 }
 
+template <typename Word>
 static bool validate_roundtrip_case(const char *label,
-                                    const std::vector<uint32_t> &input,
+                                    const std::vector<Word> &input,
                                     int batch_count,
-                                    uint32_t *d_input,
-                                    uint32_t *d_work,
-                                    uint32_t *d_out,
-                                    const DeviceTables &tables,
+                                    Word *d_input,
+                                    Word *d_work,
+                                    Word *d_out,
+                                    const DeviceTables<Word> &tables,
                                     int n,
                                     int log_degree) {
     check(cudaMemcpy(d_input,
                      input.data(),
-                     sizeof(uint32_t) * input.size(),
+                     sizeof(Word) * input.size(),
                      cudaMemcpyHostToDevice),
           "copy roundtrip input");
     run_forward_only(d_input, d_work, tables, n, batch_count, log_degree, true);
     run_inverse_only(d_work, d_out, tables, n, batch_count, log_degree, true);
     check(cudaDeviceSynchronize(), "sync roundtrip validation");
-    std::vector<uint32_t> output(input.size());
+    std::vector<Word> output(input.size());
     check(cudaMemcpy(output.data(),
                      d_out,
-                     sizeof(uint32_t) * output.size(),
+                     sizeof(Word) * output.size(),
                      cudaMemcpyDeviceToHost),
           "copy roundtrip output");
     return compare_vectors(input, output, n, label);
 }
 
+template <typename Word>
 static bool validate_polymul_case(const char *label,
-                                  const std::vector<uint32_t> &lhs,
-                                  const std::vector<uint32_t> &rhs,
+                                  const std::vector<Word> &lhs,
+                                  const std::vector<Word> &rhs,
                                   int batch_count,
-                                  uint32_t *d_a,
-                                  uint32_t *d_b,
-                                  uint32_t *d_a_work,
-                                  uint32_t *d_b_work,
-                                  uint32_t *d_c_work,
-                                  uint32_t *d_out,
-                                  const DeviceTables &tables,
-                                  const std::vector<uint32_t> &phi_norm,
-                                  const std::vector<uint32_t> &post_norm,
+                                  Word *d_a,
+                                  Word *d_b,
+                                  Word *d_a_work,
+                                  Word *d_b_work,
+                                  Word *d_c_work,
+                                  Word *d_out,
+                                  const DeviceTables<Word> &tables,
+                                  const std::vector<Word> &phi_norm,
+                                  const std::vector<Word> &post_norm,
+                                  const ModulusConfig<Word> &config,
                                   int n,
                                   int log_degree) {
-    std::vector<uint32_t> expected(lhs.size());
+    std::vector<Word> expected(lhs.size());
     for (int batch = 0; batch < batch_count; batch++) {
-        std::vector<uint32_t> lhs_poly(lhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                       lhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<uint32_t> rhs_poly(rhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                       rhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<uint32_t> poly =
-            host_polymul_reference(lhs_poly, rhs_poly, phi_norm, post_norm, n, log_degree);
+        std::vector<Word> lhs_poly(lhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
+                                   lhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
+        std::vector<Word> rhs_poly(rhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
+                                   rhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
+        std::vector<Word> poly = host_polymul_reference(lhs_poly,
+                                                        rhs_poly,
+                                                        phi_norm,
+                                                        post_norm,
+                                                        config,
+                                                        n,
+                                                        log_degree);
         std::copy(poly.begin(), poly.end(),
                   expected.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n));
     }
 
-    check(cudaMemcpy(d_a, lhs.data(), sizeof(uint32_t) * lhs.size(), cudaMemcpyHostToDevice),
+    check(cudaMemcpy(d_a, lhs.data(), sizeof(Word) * lhs.size(), cudaMemcpyHostToDevice),
           "copy polymul lhs");
-    check(cudaMemcpy(d_b, rhs.data(), sizeof(uint32_t) * rhs.size(), cudaMemcpyHostToDevice),
+    check(cudaMemcpy(d_b, rhs.data(), sizeof(Word) * rhs.size(), cudaMemcpyHostToDevice),
           "copy polymul rhs");
     run_full_polymul(d_a,
                      d_b,
@@ -1637,21 +1735,23 @@ static bool validate_polymul_case(const char *label,
                      log_degree);
     check(cudaDeviceSynchronize(), "sync polymul validation");
 
-    std::vector<uint32_t> actual(lhs.size());
-    check(cudaMemcpy(actual.data(), d_out, sizeof(uint32_t) * actual.size(), cudaMemcpyDeviceToHost),
+    std::vector<Word> actual(lhs.size());
+    check(cudaMemcpy(actual.data(), d_out, sizeof(Word) * actual.size(), cudaMemcpyDeviceToHost),
           "copy polymul output");
     return compare_vectors(expected, actual, n, label);
 }
 
-static bool run_validation_suite(uint32_t *d_a,
-                                 uint32_t *d_b,
-                                 uint32_t *d_a_work,
-                                 uint32_t *d_b_work,
-                                 uint32_t *d_c_work,
-                                 uint32_t *d_out,
-                                 const DeviceTables &tables,
-                                 const std::vector<uint32_t> &phi_norm,
-                                 const std::vector<uint32_t> &post_norm,
+template <typename Word>
+static bool run_validation_suite(Word *d_a,
+                                 Word *d_b,
+                                 Word *d_a_work,
+                                 Word *d_b_work,
+                                 Word *d_c_work,
+                                 Word *d_out,
+                                 const DeviceTables<Word> &tables,
+                                 const std::vector<Word> &phi_norm,
+                                 const std::vector<Word> &post_norm,
+                                 const ModulusConfig<Word> &config,
                                  int n,
                                  int batch_size,
                                  int log_degree) {
@@ -1659,7 +1759,10 @@ static bool run_validation_suite(uint32_t *d_a,
     bool ok = true;
 
     ok = validate_roundtrip_case("roundtrip zeros",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Zero),
+                                 make_batched_pattern(validation_batches,
+                                                      n,
+                                                      InputPattern::Zero,
+                                                      config.modulus),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
@@ -1668,7 +1771,10 @@ static bool run_validation_suite(uint32_t *d_a,
                                  n,
                                  log_degree) && ok;
     ok = validate_roundtrip_case("roundtrip ones",
-                                 make_batched_pattern(validation_batches, n, InputPattern::One),
+                                 make_batched_pattern(validation_batches,
+                                                      n,
+                                                      InputPattern::One,
+                                                      config.modulus),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
@@ -1677,7 +1783,10 @@ static bool run_validation_suite(uint32_t *d_a,
                                  n,
                                  log_degree) && ok;
     ok = validate_roundtrip_case("roundtrip impulse",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Impulse),
+                                 make_batched_pattern(validation_batches,
+                                                      n,
+                                                      InputPattern::Impulse,
+                                                      config.modulus),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
@@ -1686,7 +1795,10 @@ static bool run_validation_suite(uint32_t *d_a,
                                  n,
                                  log_degree) && ok;
     ok = validate_roundtrip_case("roundtrip max",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Max),
+                                 make_batched_pattern(validation_batches,
+                                                      n,
+                                                      InputPattern::Max,
+                                                      config.modulus),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
@@ -1695,7 +1807,11 @@ static bool run_validation_suite(uint32_t *d_a,
                                  n,
                                  log_degree) && ok;
     ok = validate_roundtrip_case("roundtrip random",
-                                 make_batched_pattern(validation_batches, n, InputPattern::Random, 12345u),
+                                 make_batched_pattern(validation_batches,
+                                                      n,
+                                                      InputPattern::Random,
+                                                      config.modulus,
+                                                      12345u),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
@@ -1705,8 +1821,14 @@ static bool run_validation_suite(uint32_t *d_a,
                                  log_degree) && ok;
 
     ok = validate_polymul_case("polymul zero*zero",
-                               make_batched_pattern(validation_batches, n, InputPattern::Zero),
-                               make_batched_pattern(validation_batches, n, InputPattern::Zero),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Zero,
+                                                    config.modulus),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Zero,
+                                                    config.modulus),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1717,11 +1839,18 @@ static bool run_validation_suite(uint32_t *d_a,
                                tables,
                                phi_norm,
                                post_norm,
+                               config,
                                n,
                                log_degree) && ok;
     ok = validate_polymul_case("polymul one*one",
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::One,
+                                                    config.modulus),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::One,
+                                                    config.modulus),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1732,11 +1861,18 @@ static bool run_validation_suite(uint32_t *d_a,
                                tables,
                                phi_norm,
                                post_norm,
+                               config,
                                n,
                                log_degree) && ok;
     ok = validate_polymul_case("polymul impulse*ones",
-                               make_batched_pattern(validation_batches, n, InputPattern::Impulse),
-                               make_batched_pattern(validation_batches, n, InputPattern::One),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Impulse,
+                                                    config.modulus),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::One,
+                                                    config.modulus),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1747,11 +1883,18 @@ static bool run_validation_suite(uint32_t *d_a,
                                tables,
                                phi_norm,
                                post_norm,
+                               config,
                                n,
                                log_degree) && ok;
     ok = validate_polymul_case("polymul max*max",
-                               make_batched_pattern(validation_batches, n, InputPattern::Max),
-                               make_batched_pattern(validation_batches, n, InputPattern::Max),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Max,
+                                                    config.modulus),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Max,
+                                                    config.modulus),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1762,11 +1905,20 @@ static bool run_validation_suite(uint32_t *d_a,
                                tables,
                                phi_norm,
                                post_norm,
+                               config,
                                n,
                                log_degree) && ok;
     ok = validate_polymul_case("polymul random",
-                               make_batched_pattern(validation_batches, n, InputPattern::Random, 1u),
-                               make_batched_pattern(validation_batches, n, InputPattern::Random, 2u),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Random,
+                                                    config.modulus,
+                                                    1u),
+                               make_batched_pattern(validation_batches,
+                                                    n,
+                                                    InputPattern::Random,
+                                                    config.modulus,
+                                                    2u),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1777,84 +1929,89 @@ static bool run_validation_suite(uint32_t *d_a,
                                tables,
                                phi_norm,
                                post_norm,
+                             config,
                                n,
                                log_degree) && ok;
 
     return ok;
 }
 
-static void alloc_and_copy(DeviceTables &tables, const HostTables &host_tables) {
-    check(cudaMalloc(&tables.d_primes, sizeof(uint32_t) * host_tables.primes.size()), "malloc primes");
-    check(cudaMalloc(&tables.d_inv_primes, sizeof(int32_t) * host_tables.inv_primes.size()), "malloc inv primes");
-    check(cudaMalloc(&tables.d_fwd_twiddles,
-                     sizeof(uint32_t) * host_tables.fwd_twiddles_mont.size()),
-          "malloc forward twiddles");
-    check(cudaMalloc(&tables.d_fwd_twiddles_msb,
-                     sizeof(uint32_t) * host_tables.fwd_twiddles_msb.size()),
-          "malloc forward twiddles msb");
-    check(cudaMalloc(&tables.d_inv_twiddles,
-                     sizeof(uint32_t) * host_tables.inv_twiddles_mont.size()),
-          "malloc inverse twiddles");
-    check(cudaMalloc(&tables.d_inv_twiddles_msb,
-                     sizeof(uint32_t) * host_tables.inv_twiddles_msb.size()),
-          "malloc inverse twiddles msb");
-    check(cudaMalloc(&tables.d_inv_degree, sizeof(uint32_t) * host_tables.inv_degree.size()),
-          "malloc inverse degree");
-    check(cudaMalloc(&tables.d_inv_degree_mont,
-                     sizeof(uint32_t) * host_tables.inv_degree_mont.size()),
-          "malloc inverse degree mont");
-    check(cudaMalloc(&tables.d_montgomery_converter,
-                     sizeof(uint32_t) * host_tables.montgomery_converter.size()),
-          "malloc montgomery converter");
+        template <typename Word>
+        static void alloc_and_copy(DeviceTables<Word> &tables, const HostTables<Word> &host_tables) {
+            check(cudaMalloc(&tables.d_primes, sizeof(Word) * host_tables.primes.size()), "malloc primes");
+            check(cudaMalloc(&tables.d_inv_primes,
+                       sizeof(SignedWord<Word>) * host_tables.inv_primes.size()),
+                "malloc inv primes");
+            check(cudaMalloc(&tables.d_fwd_twiddles,
+                       sizeof(Word) * host_tables.fwd_twiddles_mont.size()),
+                "malloc forward twiddles");
+            check(cudaMalloc(&tables.d_fwd_twiddles_msb,
+                       sizeof(Word) * host_tables.fwd_twiddles_msb.size()),
+                "malloc forward twiddles msb");
+            check(cudaMalloc(&tables.d_inv_twiddles,
+                       sizeof(Word) * host_tables.inv_twiddles_mont.size()),
+                "malloc inverse twiddles");
+            check(cudaMalloc(&tables.d_inv_twiddles_msb,
+                       sizeof(Word) * host_tables.inv_twiddles_msb.size()),
+                "malloc inverse twiddles msb");
+            check(cudaMalloc(&tables.d_inv_degree, sizeof(Word) * host_tables.inv_degree.size()),
+                "malloc inverse degree");
+            check(cudaMalloc(&tables.d_inv_degree_mont,
+                       sizeof(Word) * host_tables.inv_degree_mont.size()),
+                "malloc inverse degree mont");
+            check(cudaMalloc(&tables.d_montgomery_converter,
+                       sizeof(Word) * host_tables.montgomery_converter.size()),
+                "malloc montgomery converter");
 
-    check(cudaMemcpy(tables.d_primes,
-                     host_tables.primes.data(),
-                     sizeof(uint32_t) * host_tables.primes.size(),
-                     cudaMemcpyHostToDevice),
-          "copy primes");
-    check(cudaMemcpy(tables.d_inv_primes,
-                     host_tables.inv_primes.data(),
-                     sizeof(int32_t) * host_tables.inv_primes.size(),
-                     cudaMemcpyHostToDevice),
-          "copy inv primes");
-    check(cudaMemcpy(tables.d_fwd_twiddles,
-                     host_tables.fwd_twiddles_mont.data(),
-                     sizeof(uint32_t) * host_tables.fwd_twiddles_mont.size(),
-                     cudaMemcpyHostToDevice),
-          "copy forward twiddles");
-    check(cudaMemcpy(tables.d_fwd_twiddles_msb,
-                     host_tables.fwd_twiddles_msb.data(),
-                     sizeof(uint32_t) * host_tables.fwd_twiddles_msb.size(),
-                     cudaMemcpyHostToDevice),
-          "copy forward twiddles msb");
-    check(cudaMemcpy(tables.d_inv_twiddles,
-                     host_tables.inv_twiddles_mont.data(),
-                     sizeof(uint32_t) * host_tables.inv_twiddles_mont.size(),
-                     cudaMemcpyHostToDevice),
-          "copy inverse twiddles");
-    check(cudaMemcpy(tables.d_inv_twiddles_msb,
-                     host_tables.inv_twiddles_msb.data(),
-                     sizeof(uint32_t) * host_tables.inv_twiddles_msb.size(),
-                     cudaMemcpyHostToDevice),
-          "copy inverse twiddles msb");
-    check(cudaMemcpy(tables.d_inv_degree,
-                     host_tables.inv_degree.data(),
-                     sizeof(uint32_t) * host_tables.inv_degree.size(),
-                     cudaMemcpyHostToDevice),
-          "copy inverse degree");
-    check(cudaMemcpy(tables.d_inv_degree_mont,
-                     host_tables.inv_degree_mont.data(),
-                     sizeof(uint32_t) * host_tables.inv_degree_mont.size(),
-                     cudaMemcpyHostToDevice),
-          "copy inverse degree mont");
-    check(cudaMemcpy(tables.d_montgomery_converter,
-                     host_tables.montgomery_converter.data(),
-                     sizeof(uint32_t) * host_tables.montgomery_converter.size(),
-                     cudaMemcpyHostToDevice),
-          "copy montgomery converter");
+            check(cudaMemcpy(tables.d_primes,
+                       host_tables.primes.data(),
+                       sizeof(Word) * host_tables.primes.size(),
+                       cudaMemcpyHostToDevice),
+                "copy primes");
+            check(cudaMemcpy(tables.d_inv_primes,
+                       host_tables.inv_primes.data(),
+                       sizeof(SignedWord<Word>) * host_tables.inv_primes.size(),
+                       cudaMemcpyHostToDevice),
+                "copy inv primes");
+            check(cudaMemcpy(tables.d_fwd_twiddles,
+                       host_tables.fwd_twiddles_mont.data(),
+                       sizeof(Word) * host_tables.fwd_twiddles_mont.size(),
+                       cudaMemcpyHostToDevice),
+                "copy forward twiddles");
+            check(cudaMemcpy(tables.d_fwd_twiddles_msb,
+                       host_tables.fwd_twiddles_msb.data(),
+                       sizeof(Word) * host_tables.fwd_twiddles_msb.size(),
+                       cudaMemcpyHostToDevice),
+                "copy forward twiddles msb");
+            check(cudaMemcpy(tables.d_inv_twiddles,
+                       host_tables.inv_twiddles_mont.data(),
+                       sizeof(Word) * host_tables.inv_twiddles_mont.size(),
+                       cudaMemcpyHostToDevice),
+                "copy inverse twiddles");
+            check(cudaMemcpy(tables.d_inv_twiddles_msb,
+                       host_tables.inv_twiddles_msb.data(),
+                       sizeof(Word) * host_tables.inv_twiddles_msb.size(),
+                       cudaMemcpyHostToDevice),
+                "copy inverse twiddles msb");
+            check(cudaMemcpy(tables.d_inv_degree,
+                       host_tables.inv_degree.data(),
+                       sizeof(Word) * host_tables.inv_degree.size(),
+                       cudaMemcpyHostToDevice),
+                "copy inverse degree");
+            check(cudaMemcpy(tables.d_inv_degree_mont,
+                       host_tables.inv_degree_mont.data(),
+                       sizeof(Word) * host_tables.inv_degree_mont.size(),
+                       cudaMemcpyHostToDevice),
+                "copy inverse degree mont");
+            check(cudaMemcpy(tables.d_montgomery_converter,
+                       host_tables.montgomery_converter.data(),
+                       sizeof(Word) * host_tables.montgomery_converter.size(),
+                       cudaMemcpyHostToDevice),
+                "copy montgomery converter");
 }
 
-static void free_tables(DeviceTables &tables) {
+        template <typename Word>
+        static void free_tables(DeviceTables<Word> &tables) {
     cudaFree(tables.d_primes);
     cudaFree(tables.d_inv_primes);
     cudaFree(tables.d_fwd_twiddles);
@@ -1868,49 +2025,52 @@ static void free_tables(DeviceTables &tables) {
 
 }  // namespace
 
-int main(int argc, char **argv) {
-    Args args = parse_args(argc, argv);
-    if (args.csv_header) {
-        std::cout << "device,n,logn,requested_qbits,actual_qbits,batch_size,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct\n";
+template <typename Word>
+static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
+    if (((static_cast<WideWord<Word>>(config.modulus) - 1) %
+         (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
+        std::cerr << "Unsupported degree for selected prime: need 2n to divide q-1\n";
+        return 1;
     }
 
     const int n = args.n;
     const int log_degree = int_log2(static_cast<uint32_t>(n));
     const size_t total_coeffs = static_cast<size_t>(args.batch_size) * static_cast<size_t>(n);
 
-    HostTables host_tables;
-    compute_cheddar_tables(host_tables, n);
+    HostTables<Word> host_tables;
+    compute_cheddar_tables(host_tables, n, config);
 
-    DeviceTables tables;
+    DeviceTables<Word> tables;
     alloc_and_copy(tables, host_tables);
 
-    std::mt19937 rng(12345);
-    std::uniform_int_distribution<uint32_t> dist(0, kModulus - 1);
-    std::vector<uint32_t> a(total_coeffs);
-    std::vector<uint32_t> b(total_coeffs);
+    using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
+    Rng rng(12345);
+    std::uniform_int_distribution<Word> dist(0, static_cast<Word>(config.modulus - 1));
+    std::vector<Word> a(total_coeffs);
+    std::vector<Word> b(total_coeffs);
     for (size_t i = 0; i < total_coeffs; i++) {
         a[i] = dist(rng);
         b[i] = dist(rng);
     }
 
-    uint32_t *d_a = nullptr;
-    uint32_t *d_b = nullptr;
-    uint32_t *d_a_work = nullptr;
-    uint32_t *d_b_work = nullptr;
-    uint32_t *d_c_work = nullptr;
-    uint32_t *d_out = nullptr;
-    check(cudaMalloc(&d_a, sizeof(uint32_t) * total_coeffs), "malloc d_a");
-    check(cudaMalloc(&d_b, sizeof(uint32_t) * total_coeffs), "malloc d_b");
-    check(cudaMalloc(&d_a_work, sizeof(uint32_t) * total_coeffs), "malloc d_a_work");
-    check(cudaMalloc(&d_b_work, sizeof(uint32_t) * total_coeffs), "malloc d_b_work");
-    check(cudaMalloc(&d_c_work, sizeof(uint32_t) * total_coeffs), "malloc d_c_work");
-    check(cudaMalloc(&d_out, sizeof(uint32_t) * total_coeffs), "malloc d_out");
-    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "copy a");
-    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "copy b");
+    Word *d_a = nullptr;
+    Word *d_b = nullptr;
+    Word *d_a_work = nullptr;
+    Word *d_b_work = nullptr;
+    Word *d_c_work = nullptr;
+    Word *d_out = nullptr;
+    check(cudaMalloc(&d_a, sizeof(Word) * total_coeffs), "malloc d_a");
+    check(cudaMalloc(&d_b, sizeof(Word) * total_coeffs), "malloc d_b");
+    check(cudaMalloc(&d_a_work, sizeof(Word) * total_coeffs), "malloc d_a_work");
+    check(cudaMalloc(&d_b_work, sizeof(Word) * total_coeffs), "malloc d_b_work");
+    check(cudaMalloc(&d_c_work, sizeof(Word) * total_coeffs), "malloc d_c_work");
+    check(cudaMalloc(&d_out, sizeof(Word) * total_coeffs), "malloc d_out");
+    check(cudaMemcpy(d_a, a.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice), "copy a");
+    check(cudaMemcpy(d_b, b.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice), "copy b");
 
-    std::vector<uint32_t> phi_norm;
-    std::vector<uint32_t> post_norm;
-    compute_reference_vectors(phi_norm, post_norm, n);
+    std::vector<Word> phi_norm;
+    std::vector<Word> post_norm;
+    compute_reference_vectors(phi_norm, post_norm, n, config);
 
     bool correct = true;
     if (!args.skip_validation) {
@@ -1923,13 +2083,16 @@ int main(int argc, char **argv) {
                                        tables,
                                        phi_norm,
                                        post_norm,
+                                       config,
                                        n,
                                        args.batch_size,
                                        log_degree);
     }
 
-    check(cudaMemcpy(d_a, a.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "restore benchmark a");
-    check(cudaMemcpy(d_b, b.data(), sizeof(uint32_t) * total_coeffs, cudaMemcpyHostToDevice), "restore benchmark b");
+    check(cudaMemcpy(d_a, a.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice),
+          "restore benchmark a");
+    check(cudaMemcpy(d_b, b.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice),
+          "restore benchmark b");
 
     std::vector<double> ntt_samples;
     std::vector<double> intt_samples;
@@ -2002,7 +2165,7 @@ int main(int argc, char **argv) {
     const int correct_flag = args.skip_validation ? -1 : (correct ? 1 : 0);
 
     std::cout << RINGLPN_DEVICE_LABEL << "," << n << "," << log_degree << ","
-              << args.requested_qbits << "," << kActualQBits << ","
+              << args.requested_qbits << "," << config.actual_qbits << ","
               << args.batch_size << "," << args.iters << ","
               << validation << ","
               << ntt.mean_us << "," << ntt.stddev_us << ","
@@ -2020,4 +2183,16 @@ int main(int argc, char **argv) {
     cudaFree(d_c_work);
     cudaFree(d_out);
     return (args.skip_validation || correct) ? 0 : 2;
+}
+
+int main(int argc, char **argv) {
+    Args args = parse_args(argc, argv);
+    if (args.csv_header) {
+        std::cout << "device,n,logn,requested_qbits,actual_qbits,batch_size,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct\n";
+    }
+
+    if (args.requested_qbits == 64) {
+        return run_benchmark<uint64_t>(args, kConfig62);
+    }
+    return run_benchmark<uint32_t>(args, kConfig30);
 }

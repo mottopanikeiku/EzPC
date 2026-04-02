@@ -1,0 +1,2 @@
+device,n,logn,requested_qbits,actual_qbits,batch_size,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct
+cuda,8192,13,32,30,64,10000,pass,41.7984,0.715327,45.8986,1.15874,129.509,1.57956,1

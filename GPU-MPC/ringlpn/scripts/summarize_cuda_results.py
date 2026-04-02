@@ -42,10 +42,11 @@ def main():
             per_poly_mul = None
             polys_per_s = None
             coeff_gb_s = None
+            coeff_bytes = 4 if actual_qbits <= 32 else 8
             if mul_mean and mul_mean > 0:
                 per_poly_mul = mul_mean / batch_size
                 polys_per_s = batch_size * 1e6 / mul_mean
-                bytes_per_op = batch_size * n * 4 * 2
+                bytes_per_op = batch_size * n * coeff_bytes * 2
                 coeff_gb_s = (bytes_per_op / 1e9) / (mul_mean * 1e-6)
 
             rows.append({
@@ -66,10 +67,11 @@ def main():
                 "per_poly_mul": per_poly_mul,
                 "polys_per_s": polys_per_s,
                 "coeff_gb_s": coeff_gb_s,
+                "coeff_bytes": coeff_bytes,
                 "correct": correct,
             })
 
-    rows.sort(key=lambda row: row["n"])
+    rows.sort(key=lambda row: (row["requested_qbits"], row["n"]))
 
     unsupported_rows = []
     if args.unsupported_csv:
@@ -79,8 +81,12 @@ def main():
                 unsupported_rows.append(r)
 
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    requested_values = sorted({row["requested_qbits"] for row in rows})
+    actual_values = sorted({row["actual_qbits"] for row in rows})
+    requested_label = ", ".join(str(v) for v in requested_values) if requested_values else "?"
+    actual_label = ", ".join(str(v) for v in actual_values) if actual_values else "?"
     with open(args.out_md, "w", encoding="utf-8") as f:
-        f.write("# Ring-LPN GPU NTT Sweep (Requested q=32)\n\n")
+        f.write(f"# Ring-LPN GPU NTT Sweep (Requested q={requested_label})\n\n")
         f.write(f"Generated: {now}\n\n")
         f.write("## Results\n\n")
         f.write("| n | log2(n) | q req | q actual | batch | validate | iters | NTT mean (us) | INTT mean (us) | Full PolyMul mean (us) | Per-poly PolyMul (us) | PolyMul polys/s | Est. coeff GB/s |\n")
@@ -106,11 +112,13 @@ def main():
             f.write("\n")
 
         f.write("## Notes\n\n")
-        f.write("- This CUDA path currently targets requested qbits=32 and realizes it with a single 30-bit prime, so q actual is 30 in every supported run.\n")
+        f.write(
+            f"- This CUDA path currently covers requested qbits {requested_label} and realizes them with actual qbits {actual_label} using a single prime per run.\n"
+        )
         f.write("- The benchmark batches independent polynomials in each launch; Full PolyMul mean is the batch latency, while Per-poly PolyMul divides by batch size.\n")
-        f.write("- Est. coeff GB/s uses bytes_per_op = batch_size * n * 4 * 2 as a rough traffic proxy, not a hardware counter.\n")
+        f.write("- Est. coeff GB/s uses bytes_per_op = batch_size * n * coeff_bytes * 2 as a rough traffic proxy, with coeff_bytes = 4 for q actual <= 32 and 8 otherwise.\n")
         f.write("- Full PolyMul is measured directly as NTT(a) + NTT(b) + pointwise multiply + INTT across the full batch.\n")
-        f.write("- The selected 30-bit prime supports n up to 2^20, so this sweep intentionally extends past the CPU NFLLib uint32_t cutoff.\n")
+        f.write("- The selected single-prime parameter sets support n up to 2^20, so these sweeps intentionally extend past the CPU NFLLib uint32_t cutoff.\n")
 
 
 if __name__ == "__main__":

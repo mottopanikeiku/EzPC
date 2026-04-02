@@ -1,0 +1,2 @@
+n,qbits,iters,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us
+4096,30,10000,24.1716,1.10342,27.6612,1.96564,82.3015,5.04949

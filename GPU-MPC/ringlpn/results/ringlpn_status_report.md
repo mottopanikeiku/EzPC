@@ -14,10 +14,7 @@ The project now has three distinct benchmark layers:
 
 The main engineering result of this phase is that the cheddar-derived implementation is no longer only a side experiment. It has now been integrated into the main Ring-LPN CUDA pipeline as the default implementation behind `bench_ntt_cuda`, while the older CUDA path is preserved as a legacy baseline for comparison and regression tracking.
 
-At the same time, the project remains intentionally staged. The current main GPU path is still a single-prime implementation for requested `q=32`, realized with one 30-bit prime. The remaining major research and engineering steps are:
-
-1. 64-bit Montgomery kernels using `__umul64hi()` for requested `q=64`,
-2. dual-prime CRT composition for requested `q=128`.
+At the same time, the project remains intentionally staged. The current main GPU path is now a single-prime implementation for both requested `q=32` and requested `q=64`, realized with one 30-bit prime or one 62-bit prime depending on the requested configuration. The remaining major research and engineering step is dual-prime CRT composition for requested `q=128`.
 
 ## Project Objective
 
@@ -28,7 +25,8 @@ The immediate objective of the CUDA work has been:
 1. establish a valid CPU baseline,
 2. build a generalized GPU q=32 path over the full degree range from `8192` through `1048576`,
 3. extract the stronger NTT/INTT kernel structure from cheddar-fhe into a self-contained local benchmark,
-4. promote that extracted implementation to the main Ring-LPN GPU path without importing cheddar-fhe's full runtime stack.
+4. promote that extracted implementation to the main Ring-LPN GPU path without importing cheddar-fhe's full runtime stack,
+5. extend that promoted single-prime path from requested `q=32` to requested `q=64`.
 
 ## Current Code and Filesystem State
 
@@ -49,6 +47,7 @@ The current high-signal files are:
 | `scripts/run_cuda_single.sh` | CPU-vs-GPU spot check on CPU-overlap points |
 | `results/ntt_cpu.md` | CPU baseline summary |
 | `results/ntt_gpu_q32.md` | Current main CUDA summary |
+| `results/ntt_gpu_q64.md` | Current main CUDA q=64 summary |
 | `results/ntt_gpu_q32_legacy.md` | Legacy CUDA summary |
 | `results/cheddar_extract_note.md` | Detailed extraction rationale and earlier benchmark comparison |
 
@@ -71,7 +70,7 @@ The current requested-to-actual modulus contract is:
 | 64 | 62 | NFLLib uint64 |
 | 128 | 124 | NFLLib uint64 with two 62-bit limbs |
 
-This CPU baseline is important because it defines the correctness and reporting contract that the GPU side must eventually match for larger bitwidths.
+This CPU baseline is important because it defines the correctness and reporting contract that the GPU side must match for larger bitwidths. That contract is now met for the current single-prime GPU q=64 path, and it remains the comparison anchor for future q=128 work.
 
 ### 2. Legacy CUDA q=32 benchmark
 
@@ -126,7 +125,19 @@ Concretely, the project now provides:
 | `bin/bench_ntt_cuda_cheddar` | `src/bench_ntt_cuda_cheddar.cu` | Explicit standalone cheddar-derived binary |
 | `bin/bench_ntt_cuda_legacy` | `src/bench_ntt_cuda.cu` | Preserved baseline for comparison |
 
-This matters because the extraction is now operationally complete for the q=32 single-prime path. The code is no longer living only as a side file; it is the main GPU path used by the standard sweep script.
+This matters because the extraction is now operationally complete for the promoted single-prime GPU path. The code is no longer living only as a side file; it is the main GPU path used by the standard sweep script.
+
+### 5. q=64 extension on the promoted main path
+
+The promoted cheddar-derived path now also supports requested `q=64`, realized with one 62-bit prime over the full `n = 8192 ... 1048576` range.
+
+The implementation work in this phase added:
+
+1. a 64-bit Montgomery specialization using `__umul64hi()` for the 128-bit intermediate product,
+2. runtime selection between a 30-bit and 62-bit single-prime configuration,
+3. 64-bit twiddle, inverse-twiddle, inverse-degree, and Montgomery-conversion table generation,
+4. 64-bit host reference validation for roundtrip NTT/INTT and negacyclic polynomial multiplication,
+5. q=64 sweep tooling and result generation under the same promoted `bench_ntt_cuda` binary.
 
 ## What We Have Until Now
 
@@ -136,7 +147,7 @@ The CPU sweep in `results/ntt_cpu.md` confirms:
 
 1. requested `q=32` is only feasible up to `n=32768`,
 2. requested `q=64` and `q=128` continue through `n=1048576`,
-3. the CPU baseline remains the correctness and comparison anchor for future GPU q=64 and q=128 work.
+3. the CPU baseline remains the correctness and comparison anchor for the new GPU q=64 path and the future GPU q=128 path.
 
 ### 2. Promoted main CUDA sweep status
 
@@ -146,18 +157,37 @@ Current promoted q=32 results:
 
 | n | Batch | Full PolyMul mean (us) | Per-poly PolyMul (us) | PolyMul polys/s |
 | --- | --- | --- | --- | --- |
-| 8192 | 64 | 79.351 | 1.240 | 806543.08 |
-| 16384 | 64 | 155.850 | 2.435 | 410651.27 |
-| 32768 | 64 | 292.693 | 4.573 | 218659.14 |
-| 65536 | 16 | 42.196 | 2.637 | 379182.86 |
-| 131072 | 16 | 298.689 | 18.668 | 53567.42 |
-| 262144 | 8 | 320.880 | 40.110 | 24931.44 |
-| 524288 | 4 | 320.509 | 80.127 | 12480.15 |
-| 1048576 | 2 | 332.160 | 166.080 | 6021.19 |
+| 8192 | 64 | 79.628 | 1.244 | 803741.62 |
+| 16384 | 64 | 155.992 | 2.437 | 410276.17 |
+| 32768 | 64 | 306.232 | 4.785 | 208996.91 |
+| 65536 | 16 | 42.260 | 2.641 | 378612.86 |
+| 131072 | 16 | 298.463 | 18.654 | 53598.24 |
+| 262144 | 8 | 337.991 | 42.249 | 23669.65 |
+| 524288 | 4 | 320.102 | 80.026 | 12496.02 |
+| 1048576 | 2 | 332.762 | 166.381 | 6010.90 |
 
 All points in the promoted sweep passed validation.
 
-### 3. Preserved legacy CUDA sweep status
+### 3. Promoted main CUDA q=64 sweep status
+
+The promoted main CUDA q=64 sweep now lives in `results/ntt_gpu_q64.md`.
+
+Current promoted q=64 results:
+
+| n | Batch | Full PolyMul mean (us) | Per-poly PolyMul (us) | PolyMul polys/s |
+| --- | --- | --- | --- | --- |
+| 8192 | 64 | 253.654 | 3.963 | 252312.20 |
+| 16384 | 64 | 311.081 | 4.861 | 205734.20 |
+| 32768 | 64 | 465.788 | 7.278 | 137401.56 |
+| 65536 | 16 | 140.357 | 8.772 | 113995.03 |
+| 131072 | 16 | 460.117 | 28.757 | 34773.76 |
+| 262144 | 8 | 456.098 | 57.012 | 17540.09 |
+| 524288 | 4 | 462.271 | 115.568 | 8652.93 |
+| 1048576 | 2 | 488.858 | 244.429 | 4091.17 |
+
+All points in the promoted q=64 sweep also passed validation.
+
+### 4. Preserved legacy CUDA sweep status
 
 The legacy CUDA baseline now lives in `results/ntt_gpu_q32_legacy.md`.
 
@@ -174,24 +204,24 @@ Current legacy q=32 per-polynomial results:
 | 524288 | 4 | 537.118 | 134.280 |
 | 1048576 | 2 | 564.374 | 282.187 |
 
-### 4. Main versus legacy comparison
+### 5. Main versus legacy comparison
 
 The current promoted main path is faster than the legacy baseline across the entire validated sweep.
 
 | n | Main per-poly PolyMul (us) | Legacy per-poly PolyMul (us) | Legacy/Main speedup |
 | --- | --- | --- | --- |
-| 8192 | 1.240 | 2.145 | 1.73x |
-| 16384 | 2.435 | 3.491 | 1.43x |
-| 32768 | 4.573 | 6.798 | 1.49x |
-| 65536 | 2.637 | 15.679 | 5.95x |
-| 131072 | 18.668 | 29.865 | 1.60x |
-| 262144 | 40.110 | 61.915 | 1.54x |
-| 524288 | 80.127 | 134.280 | 1.68x |
-| 1048576 | 166.080 | 282.187 | 1.70x |
+| 8192 | 1.244 | 2.145 | 1.72x |
+| 16384 | 2.437 | 3.491 | 1.43x |
+| 32768 | 4.785 | 6.798 | 1.42x |
+| 65536 | 2.641 | 15.679 | 5.94x |
+| 131072 | 18.654 | 29.865 | 1.60x |
+| 262144 | 42.249 | 61.915 | 1.47x |
+| 524288 | 80.026 | 134.280 | 1.68x |
+| 1048576 | 166.381 | 282.187 | 1.70x |
 
 The strongest gain in the current adaptive sweep appears at `n=65536`, where the promoted main path is nearly `6x` faster per polynomial than the preserved legacy implementation.
 
-### 5. Earlier batch-1 evidence from the extraction study
+### 6. Earlier batch-1 evidence from the extraction study
 
 The earlier study in `results/cheddar_extract_note.md` remains important because it showed that the extracted cheddar-derived path was not only winning because of aggressive batching. In apples-to-apples batch-1 comparisons, the extracted path was already consistently faster than the old implementation.
 
@@ -215,32 +245,22 @@ For clarity, the implemented scope at the end of this phase is:
 1. full CPU benchmark harness with validation,
 2. full legacy CUDA q=32 benchmark harness with validation,
 3. generalized q=32 support over `n = 8192 ... 1048576`,
-4. batch-aware benchmarking and reporting,
-5. standalone cheddar-derived CUDA benchmark with two-phase NTT and inverse NTT,
-6. local twiddle-table reconstruction and local host reference validation for the extracted path,
-7. promotion of the cheddar-derived implementation to the main `bench_ntt_cuda` workflow,
-8. preservation of the older CUDA implementation as a named legacy baseline,
-9. separate sweep artifacts for both the promoted main path and the legacy baseline,
-10. written extraction documentation and this status report.
+4. generalized q=64 single-prime support over `n = 8192 ... 1048576`,
+5. batch-aware benchmarking and reporting,
+6. standalone cheddar-derived CUDA benchmark with two-phase NTT and inverse NTT,
+7. local twiddle-table reconstruction and local host reference validation for the extracted path,
+8. promotion of the cheddar-derived implementation to the main `bench_ntt_cuda` workflow,
+9. preservation of the older CUDA implementation as a named legacy baseline,
+10. separate sweep artifacts for the promoted q=32 path, the promoted q=64 path, and the legacy baseline,
+11. written extraction documentation and this status report.
 
-This is sufficient to say that the q=32 single-prime cheddar extraction has been completed into the project as an operational benchmark path.
+This is sufficient to say that the single-prime cheddar-derived CUDA path has been completed into the project as an operational benchmark path for both requested `q=32` and requested `q=64`.
 
 ## What Is Not Yet Implemented
 
-The major missing pieces are not in the q=32 single-prime extraction anymore. They are in the next generalization phases.
+The major missing pieces are no longer in the promoted single-prime q=32/q=64 path. They are in the next generalization phase.
 
-### 1. 64-bit GPU path
-
-The project does not yet provide a promoted GPU implementation for requested `q=64` corresponding to actual `q=62`. The immediate technical requirement is a templated 64-bit Montgomery implementation using `__umul64hi()` for the 128-bit intermediate product.
-
-This phase will require:
-
-1. 64-bit prime selection for the supported degree range,
-2. 64-bit twiddle and inverse-twiddle table construction,
-3. templated butterfly and pointwise multiply code for 64-bit words,
-4. validation against the CPU `q=64` baseline.
-
-### 2. q=128 via CRT
+### 1. q=128 via CRT
 
 The project does not yet provide a GPU path for requested `q=128`.
 
@@ -253,31 +273,19 @@ The intended path is:
 
 This requires moving from a single-prime batch model to a multi-prime runtime layout.
 
-### 3. Multi-prime scheduling generalization
+### 2. Multi-prime scheduling generalization
 
-The promoted cheddar-derived path is currently specialized to the single-prime case. That is correct for the current q=32 work, but it is not yet the full multi-prime scheduling model needed for q=128.
+The promoted cheddar-derived path is currently specialized to the single-prime case. That is correct for the current q=32/q=64 work, but it is not yet the full multi-prime scheduling model needed for q=128.
 
-### 4. CPU extraction symmetry
+### 3. CPU extraction symmetry
 
 The CPU baseline still depends on NFLLib calls rather than a local extracted CPU implementation. That is acceptable for benchmarking, but it means the project currently compares a locally owned GPU implementation against an externally backed CPU implementation.
 
-This is not an immediate blocker for the q=64 or q=128 GPU roadmap, but it is a conceptual asymmetry worth noting.
+This is not an immediate blocker for the q=128 GPU roadmap, but it is a conceptual asymmetry worth noting.
 
 ## Recommended Next Steps
 
-### Immediate next step: Step 2
-
-Implement templated 64-bit Montgomery kernels on top of the promoted cheddar-derived path.
-
-Recommended sequence:
-
-1. generalize the current single-prime kernel templates to a 64-bit word type,
-2. implement 64-bit Montgomery multiplication using `__umul64hi()`,
-3. add 64-bit table generation,
-4. preserve the current CLI and CSV contract,
-5. validate against the existing CPU `q=64` benchmark.
-
-### After Step 2: Step 3
+### Immediate next step: Step 3
 
 Extend the promoted main path to two-prime CRT for requested `q=128`.
 
@@ -293,17 +301,17 @@ Recommended sequence:
 
 To make the research workflow smoother, the following additions would also be useful:
 
-1. an automated comparison script that renders main-versus-legacy speedups directly from the two sweep CSVs,
-2. explicit summary titles that distinguish promoted main and legacy outputs,
-3. a dedicated q=64 and q=128 sweep pipeline once those implementations land.
+1. an automated comparison script that renders promoted q=32, promoted q=64, and legacy q=32 results side by side,
+2. explicit summary titles that distinguish promoted q=32, promoted q=64, and legacy outputs,
+3. a dedicated q=128 sweep pipeline once that implementation lands.
 
 ## Final Assessment
 
 The current phase should be described as follows:
 
-The Ring-LPN project has completed the extraction of the cheddar-fhe q=32 single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path. The older CUDA benchmark remains preserved as a legacy baseline. The work is therefore complete for the q=32 single-prime extraction objective, but not complete for the broader roadmap of q=64 and q=128 GPU support.
+The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. The work is therefore complete for the current single-prime extraction and 64-bit generalization objectives, but not complete for the broader roadmap of q=128 GPU support.
 
 That distinction is important:
 
-1. extraction into the project is complete for the current target scope,
-2. generalization to larger effective modulus sizes is the next research and engineering phase.
+1. extraction into the project is complete for the current single-prime target scope,
+2. the next research and engineering phase is dual-prime CRT support for requested `q=128`.
