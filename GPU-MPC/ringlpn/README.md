@@ -6,10 +6,13 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
 - src/bench_ntt_cuda.cu: legacy CUDA NTT benchmark for requested q=32 using a 30-bit prime, runtime root derivation, and batching
 - src/bench_ntt_cuda_cheddar.cu: primary CUDA benchmark, extracted from cheddar-fhe and adapted to the Ring-LPN harness
+- src/bench_vole_ringlpn.cu: standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path
 - scripts/setup_nfl.sh: clone + build NFLLib
 - scripts/build_bench.sh: build the benchmark
 - scripts/run_sweep.sh: run 10 configs and generate CSV + Markdown
 - scripts/build_cuda_bench.sh: build the primary CUDA benchmark (cheddar-derived implementation)
+- scripts/build_vole_bench.sh: build the standalone Ring-LPN VOLE prototype benchmark
+- scripts/run_vole_sweep.sh: run the standalone Ring-LPN VOLE prototype sweep and generate CSV + Markdown
 - scripts/build_cuda_bench_cheddar.sh: build an explicit standalone cheddar-derived binary for side-by-side checks
 - scripts/build_cuda_bench_legacy.sh: build the legacy CUDA benchmark path
 - scripts/run_cuda_single.sh: run a CPU vs GPU spot check for requested q=32 at n in {8192, 16384, 32768}
@@ -120,3 +123,27 @@ cd /home/ringlpn
 - The GPU q=32 path deliberately diverges from the CPU NFLLib uint32_t cutoff so larger `n` can be measured before the 64-bit and CRT phases land.
 - The GPU q=64 path now uses a single 62-bit prime and a 64-bit Montgomery specialization built on `__umul64hi()`.
 - The current roadmap is: primary cheddar-derived single-prime q=32 and q=64 paths, then dual-prime CRT support for requested `q=128`.
+
+## Ring-LPN VOLE prototype
+The repository now also includes an initial standalone Ring-LPN VOLE prototype benchmark that reuses the promoted cheddar-derived GPU PolyMul path.
+
+Build inside the CUDA-enabled container:
+```bash
+cd /home/ringlpn
+chmod +x scripts/*.sh
+
+./scripts/build_vole_bench.sh
+./bin/bench_vole_ringlpn --n 8192 --qbits 32 --m 4 --c 2 --iters 10 --warmup 2
+
+# Optional full sweep for abstract/supporting tables
+./scripts/run_vole_sweep.sh
+QBITS=64 ./scripts/run_vole_sweep.sh
+```
+
+Notes:
+- This is a correctness-first prototype for the Section 5.3 Ring-LPN VOLE-style expansion layer, not a full SPFSS-backed degree-1 correlation implementation yet.
+- The current input mode is `synthetic_mpvole`, meaning the benchmark synthesizes MPVOLE-consistent inputs locally and validates the relation `z = y + x * Delta` coefficient-wise.
+- The prototype reuses the promoted GPU polynomial multiplication path from `src/bench_ntt_cuda_cheddar.cu` instead of introducing a separate CUDA implementation.
+- Requested `qbits=32` maps to actual `qbits=30`, and requested `qbits=64` maps to actual `qbits=62`.
+- The prototype is intentionally scoped for bring-up and benchmarking of the algebraic expansion step; SPFSS key generation and evaluation are still external to this harness.
+- The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64 counterparts when run with `QBITS=64`.

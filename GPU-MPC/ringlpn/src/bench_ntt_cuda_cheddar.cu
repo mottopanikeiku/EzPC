@@ -2185,6 +2185,7 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
     return (args.skip_validation || correct) ? 0 : 2;
 }
 
+#ifndef RINGLPN_DISABLE_MAIN
 int main(int argc, char **argv) {
     Args args = parse_args(argc, argv);
     if (args.csv_header) {
@@ -2196,3 +2197,4 @@ int main(int argc, char **argv) {
     }
     return run_benchmark<uint32_t>(args, kConfig30);
 }
+#endif

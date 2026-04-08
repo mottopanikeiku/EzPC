@@ -1,0 +1,9 @@
+device,input_mode,n,logn,requested_qbits,actual_qbits,m,c,noise_weight,iters,validation,x_mean_us,x_std_us,y_mean_us,y_std_us,z_mean_us,z_std_us,expand_mean_us,expand_std_us,correct
+cuda_ringlpn_vole,synthetic_mpvole,8192,13,32,30,32,2,64,200,pass,84.6419,0.873768,84.6261,0.776233,84.6336,0.700098,269.484,5.60676,1
+cuda_ringlpn_vole,synthetic_mpvole,16384,14,32,30,32,2,64,200,pass,162.765,1.07262,162.879,0.980517,162.869,1.06208,504.242,2.05644,1
+cuda_ringlpn_vole,synthetic_mpvole,32768,15,32,30,32,2,64,200,pass,316.019,2.36717,315.774,1.99523,315.135,1.73343,963.231,5.99869,1
+cuda_ringlpn_vole,synthetic_mpvole,65536,16,32,30,32,2,64,100,pass,247.008,3.19844,246.283,2.53567,246.503,2.87627,757.046,10.2449,1
+cuda_ringlpn_vole,synthetic_mpvole,131072,17,32,30,32,2,64,100,pass,1397.88,25.2201,1396.44,25.1009,1395.76,25.4725,4214.56,86.3399,1
+cuda_ringlpn_vole,synthetic_mpvole,262144,18,32,30,32,2,64,40,pass,3692.16,42.6697,3670.15,41.2218,3670.79,43.8332,11058.7,133.21,1
+cuda_ringlpn_vole,synthetic_mpvole,524288,19,32,30,32,2,64,20,pass,7240.82,106.15,7229.13,106.482,7233.72,108.069,21721.1,318.759,1
+cuda_ringlpn_vole,synthetic_mpvole,1048576,20,32,30,32,2,64,10,pass,14468.4,160.623,14450.8,142.994,14438.2,136.283,43392,423.58,1

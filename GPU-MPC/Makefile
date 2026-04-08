@@ -29,6 +29,9 @@ dpf_drelu: tests/fss/dpf_drelu.cu
 dpf_lut: tests/fss/dpf_lut.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/dpf_lut
 
+dpf_online_keygen: tests/fss/dpf_online_keygen_bench.cu
+	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/dpf_online_keygen
+
 gelu: tests/fss/gelu.cu
 	$(CXX) $(FLAGS) $(INCLUDES) $^ $(UTIL_FILES) $(LIBS) -o tests/fss/gelu
 

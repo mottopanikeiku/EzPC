@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONTAINER_NAME="orca-dev"
+IMAGE_NAME="fatih"
+WORKDIR="$SCRIPT_DIR/GPU-MPC"
+
+if [ "$(docker ps -a -q -f name="$CONTAINER_NAME")" ]; then
+    echo "Starting existing container..."
+    docker start -ai "$CONTAINER_NAME"
+else
+    echo "Creating new container..."
+    docker run --name "$CONTAINER_NAME" \
+        --gpus all \
+        --privileged \
+        --network host \
+        -v "$WORKDIR":/home \
+        -it "$IMAGE_NAME" /bin/bash
+fi
