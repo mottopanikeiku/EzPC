@@ -7,6 +7,7 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - src/bench_ntt_cuda.cu: legacy CUDA NTT benchmark for requested q=32 using a 30-bit prime, runtime root derivation, and batching
 - src/bench_ntt_cuda_cheddar.cu: primary CUDA benchmark, extracted from cheddar-fhe and adapted to the Ring-LPN harness
 - src/bench_vole_ringlpn.cu: standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path
+- ../tests/fss/dpf_online_keygen_bench.cu: standalone DPF online key generation benchmark for one-shot versus chunked partial generation
 - scripts/setup_nfl.sh: clone + build NFLLib
 - scripts/build_bench.sh: build the benchmark
 - scripts/run_sweep.sh: run 10 configs and generate CSV + Markdown
@@ -19,6 +20,7 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/run_cuda_sweep.sh: run the requested q=32 or q=64 CUDA sweep with batching and generate CSV + Markdown
 - scripts/run_cuda_sweep_legacy.sh: run the legacy CUDA q=32 sweep for baseline comparison
 - scripts/summarize_cuda_results.py: summarize CUDA sweep outputs
+- ../scripts/run_dpf_online_keygen_sweep.py: run the standalone DPF online key generation sweep and generate CSV + Markdown
 - scripts/run_vtune_hotspots.sh: VTune hotspots wrapper for CPU benchmark
 - scripts/run_vtune_memory.sh: VTune memory-access wrapper for CPU benchmark
 - results/: output files
@@ -147,3 +149,30 @@ Notes:
 - Requested `qbits=32` maps to actual `qbits=30`, and requested `qbits=64` maps to actual `qbits=62`.
 - The prototype is intentionally scoped for bring-up and benchmarking of the algebraic expansion step; SPFSS key generation and evaluation are still external to this harness.
 - The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64 counterparts when run with `QBITS=64`.
+
+## Standalone DPF online key generation benchmark
+The repository also includes a standalone DPF online key generation benchmark for the memory-efficiency track. This benchmark lives outside `ringlpn/src`, but its sweep artifacts are written into `ringlpn/results` so they can be used alongside the Ring-LPN VOLE and NTT results.
+
+Build and run inside the CUDA-enabled container from the project root:
+```bash
+cd /home
+
+# Set GPU_ARCH explicitly if it is not already exported.
+make GPU_ARCH=89 dpf_online_keygen
+
+# Quick smoke test
+./tests/fss/dpf_online_keygen --bin 16 --n 8192 --chunk-size 4096 --iters 3 --warmup 1 --csv-header
+
+# Full abstract-ready sweep
+python3 scripts/run_dpf_online_keygen_sweep.py
+```
+
+Outputs:
+- ringlpn/results/dpf_online_keygen_bin16_chunk8192.csv
+- ringlpn/results/dpf_online_keygen_bin16_chunk8192.md
+
+Notes:
+- This is a standalone systems benchmark, not yet an end-to-end Orca or SPFSS-backed integration.
+- The current abstract-ready sweep uses eval-all keys with `bin=16` and `chunk_size=8192`.
+- The current sweep shows one-shot full pair-key footprint growing from `2.81 MiB` to `360.00 MiB`, while chunked generation holds peak pair-key footprint to `2.81 MiB`, reaching about `128x` peak-footprint reduction at `n=1048576` with about `1.885x` key-generation time overhead.
+- `initGPUMemPool()` prints `reserved memory:` to stdout; the sweep script filters those lines before writing CSV.

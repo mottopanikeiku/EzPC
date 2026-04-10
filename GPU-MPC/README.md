@@ -51,6 +51,23 @@ make orca
 make sigma
 ```
 
+5. Optional: build the standalone DPF online key generation benchmark
+
+```
+make dpf_online_keygen
+```
+
+Inside the CUDA-enabled container, you can generate the current abstract-ready DPF online key generation sweep with:
+
+```
+python3 scripts/run_dpf_online_keygen_sweep.py
+```
+
+This produces:
+
+- `ringlpn/results/dpf_online_keygen_bin16_chunk8192.csv`
+- `ringlpn/results/dpf_online_keygen_bin16_chunk8192.md`
+
 ## Run Orca
 
 Please see the [Orca README](experiments/orca/README.md).

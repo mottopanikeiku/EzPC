@@ -1,20 +1,22 @@
 # Ring-LPN Status Report
 
-Generated: 2026-04-02
+Generated: 2026-04-09
 
 ## Executive Summary
 
-This report summarizes the current implementation status of the Ring-LPN benchmarking track under `GPU-MPC/ringlpn`, with emphasis on the CUDA NTT work derived from cheddar-fhe.
+This report summarizes the current implementation status of the Ring-LPN benchmarking track under `GPU-MPC/ringlpn`, with emphasis on the promoted CUDA NTT work derived from cheddar-fhe and the newer standalone online-phase benchmarks built around it.
 
-The project now has three distinct benchmark layers:
+The project now has five distinct benchmark layers:
 
 1. a CPU baseline built on NFLLib,
 2. a preserved legacy CUDA implementation built around a `phi` preprocessing plus fused-first-8-stage design,
-3. a promoted primary CUDA implementation extracted from cheddar-fhe and adapted into a standalone Ring-LPN benchmark harness.
+3. a promoted primary CUDA implementation extracted from cheddar-fhe and adapted into a standalone Ring-LPN benchmark harness,
+4. a standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path,
+5. a standalone DPF online key generation benchmark that measures one-shot versus chunked partial generation.
 
 The main engineering result of this phase is that the cheddar-derived implementation is no longer only a side experiment. It has now been integrated into the main Ring-LPN CUDA pipeline as the default implementation behind `bench_ntt_cuda`, while the older CUDA path is preserved as a legacy baseline for comparison and regression tracking.
 
-At the same time, the project remains intentionally staged. The current main GPU path is now a single-prime implementation for both requested `q=32` and requested `q=64`, realized with one 30-bit prime or one 62-bit prime depending on the requested configuration. The remaining major research and engineering step is dual-prime CRT composition for requested `q=128`.
+At the same time, the project remains intentionally staged. The current main GPU path is now a single-prime implementation for both requested `q=32` and requested `q=64`, realized with one 30-bit prime or one 62-bit prime depending on the requested configuration. The remaining major research and engineering step on the benchmark-core side is dual-prime CRT composition for requested `q=128`. On the online-phase side, the remaining step is end-to-end integration of the standalone DPF and VOLE prototypes into a real Orca or SPFSS-backed path.
 
 ## Project Objective
 
@@ -26,7 +28,9 @@ The immediate objective of the CUDA work has been:
 2. build a generalized GPU q=32 path over the full degree range from `8192` through `1048576`,
 3. extract the stronger NTT/INTT kernel structure from cheddar-fhe into a self-contained local benchmark,
 4. promote that extracted implementation to the main Ring-LPN GPU path without importing cheddar-fhe's full runtime stack,
-5. extend that promoted single-prime path from requested `q=32` to requested `q=64`.
+5. extend that promoted single-prime path from requested `q=32` to requested `q=64`,
+6. prototype a standalone Ring-LPN VOLE-style expansion layer on top of the promoted GPU PolyMul path,
+7. prototype a standalone DPF online key generation benchmark that quantifies peak staged key-footprint reduction from chunked generation.
 
 ## Current Code and Filesystem State
 
@@ -37,18 +41,27 @@ The current high-signal files are:
 | `src/bench_ntt.cpp` | NFLLib-backed CPU reference benchmark |
 | `src/bench_ntt_cuda.cu` | Legacy CUDA benchmark retained for baseline comparison |
 | `src/bench_ntt_cuda_cheddar.cu` | Primary CUDA benchmark source, extracted from cheddar-fhe and adapted locally |
+| `src/bench_vole_ringlpn.cu` | Standalone Ring-LPN VOLE prototype benchmark |
+| `../tests/fss/dpf_online_keygen_bench.cu` | Standalone DPF online key generation benchmark |
 | `scripts/build_bench.sh` | CPU build entry point |
 | `scripts/build_cuda_bench.sh` | Main CUDA build entry point, now targeting the cheddar-derived implementation |
+| `scripts/build_vole_bench.sh` | VOLE benchmark build entry point |
 | `scripts/build_cuda_bench_cheddar.sh` | Explicit standalone cheddar-derived build |
 | `scripts/build_cuda_bench_legacy.sh` | Legacy CUDA build |
 | `scripts/run_sweep.sh` | CPU sweep driver |
 | `scripts/run_cuda_sweep.sh` | Main CUDA sweep driver |
+| `scripts/run_vole_sweep.sh` | VOLE sweep driver |
 | `scripts/run_cuda_sweep_legacy.sh` | Legacy CUDA sweep driver |
 | `scripts/run_cuda_single.sh` | CPU-vs-GPU spot check on CPU-overlap points |
+| `../scripts/run_dpf_online_keygen_sweep.py` | DPF online key generation sweep driver |
 | `results/ntt_cpu.md` | CPU baseline summary |
 | `results/ntt_gpu_q32.md` | Current main CUDA summary |
 | `results/ntt_gpu_q64.md` | Current main CUDA q=64 summary |
 | `results/ntt_gpu_q32_legacy.md` | Legacy CUDA summary |
+| `results/vole_gpu_q32_m32_c2_w64.md` | Current standalone VOLE q=32 summary |
+| `results/vole_gpu_q64_m32_c2_w64.md` | Current standalone VOLE q=64 summary |
+| `results/dpf_online_keygen_bin16_chunk8192.md` | Current standalone DPF online key generation summary |
+| `results/ringlpn_vole_abstract_support.md` | Current abstract-safe support note for VOLE plus DPF online key generation |
 | `results/cheddar_extract_note.md` | Detailed extraction rationale and earlier benchmark comparison |
 
 ## What We Have Implemented So Far
@@ -138,6 +151,59 @@ The implementation work in this phase added:
 3. 64-bit twiddle, inverse-twiddle, inverse-degree, and Montgomery-conversion table generation,
 4. 64-bit host reference validation for roundtrip NTT/INTT and negacyclic polynomial multiplication,
 5. q=64 sweep tooling and result generation under the same promoted `bench_ntt_cuda` binary.
+
+### 6. Standalone Ring-LPN VOLE prototype
+
+The project now also includes a standalone Ring-LPN VOLE prototype in `src/bench_vole_ringlpn.cu`.
+
+This implementation is intentionally scoped as a correctness-first online-phase prototype rather than a full end-to-end SPFSS-backed system.
+
+What it does today:
+
+1. reuses the promoted CUDA polynomial multiplication backend from `src/bench_ntt_cuda_cheddar.cu`,
+2. synthesizes MPVOLE-consistent inputs locally under the `synthetic_mpvole` mode,
+3. validates the coefficient-wise relation `z = y + x * Delta`,
+4. supports requested `q=32` and `q=64`,
+5. supports `n = 8192 ... 1048576`.
+
+Current result summaries:
+
+- `results/vole_gpu_q32_m32_c2_w64.md`
+- `results/vole_gpu_q64_m32_c2_w64.md`
+
+Key current numbers:
+
+- q=32 full expansion latency ranges from `269.484 us` at `n=8192` to `43.392 ms` at `n=1048576`,
+- q=64 full expansion latency ranges from `772.324 us` at `n=8192` to `67.532 ms` at `n=1048576`,
+- all sweep points passed validation.
+
+### 7. Standalone DPF online key generation benchmark
+
+The project now also includes a standalone DPF online key generation benchmark in `../tests/fss/dpf_online_keygen_bench.cu`.
+
+This benchmark measures eval-all DPF key generation in two modes:
+
+1. one-shot generation of the full pair key material,
+2. chunked generation of only the current partial key material.
+
+The current sweep is driven by `../scripts/run_dpf_online_keygen_sweep.py` and summarized in `results/dpf_online_keygen_bin16_chunk8192.md`.
+
+Current benchmark contract:
+
+1. eval-all keys,
+2. `bin=16`,
+3. `chunk_size=8192`,
+4. `n = 8192 ... 1048576`,
+5. validation of serialized key layout and parsed key metadata for both full and chunked modes.
+
+Key current numbers:
+
+- at `n=8192`, full pair-key footprint is `2.81 MiB`, partial peak pair-key footprint is `2.81 MiB`, and time overhead is about `1.011x`,
+- at `n=16384`, full pair-key footprint is `5.63 MiB`, partial peak pair-key footprint is `2.81 MiB`, peak reduction is `2.00x`, and time overhead is about `1.380x`,
+- at `n=1048576`, full pair-key footprint is `360.00 MiB`, partial peak pair-key footprint stays `2.81 MiB`, peak reduction reaches about `128.00x`, and time overhead is about `1.885x`,
+- all sweep points passed validation.
+
+This is a systems benchmark for online partial key generation, not yet an end-to-end application integration result.
 
 ## What We Have Until Now
 
@@ -252,9 +318,12 @@ For clarity, the implemented scope at the end of this phase is:
 8. promotion of the cheddar-derived implementation to the main `bench_ntt_cuda` workflow,
 9. preservation of the older CUDA implementation as a named legacy baseline,
 10. separate sweep artifacts for the promoted q=32 path, the promoted q=64 path, and the legacy baseline,
-11. written extraction documentation and this status report.
+11. written extraction documentation and this status report,
+12. standalone Ring-LPN VOLE prototype implementation with validated q=32 and q=64 sweep artifacts,
+13. standalone DPF online key generation benchmark with validated chunked-versus-one-shot sweep artifacts,
+14. abstract support notes that connect Orca profiling, DPF online key generation, and Ring-LPN online-phase acceleration.
 
-This is sufficient to say that the single-prime cheddar-derived CUDA path has been completed into the project as an operational benchmark path for both requested `q=32` and requested `q=64`.
+This is sufficient to say that the single-prime cheddar-derived CUDA path has been completed into the project as an operational benchmark path for both requested `q=32` and requested `q=64`, and that the project now also has concrete standalone online-phase evidence for both Ring-LPN VOLE expansion and chunked DPF online key generation.
 
 ## What Is Not Yet Implemented
 
@@ -283,13 +352,23 @@ The CPU baseline still depends on NFLLib calls rather than a local extracted CPU
 
 This is not an immediate blocker for the q=128 GPU roadmap, but it is a conceptual asymmetry worth noting.
 
+### 4. End-to-end online-phase integration
+
+The newer VOLE and DPF results are currently standalone benchmark artifacts, not end-to-end application integrations.
+
+The missing integration work is:
+
+1. wiring chunked DPF generation into a real Orca or SPFSS-backed online execution path,
+2. replacing the `synthetic_mpvole` boundary in the VOLE prototype with a real external input boundary,
+3. measuring full application memory-footprint reduction rather than only standalone peak staged key-footprint reduction.
+
 ## Recommended Next Steps
 
-### Immediate next step: Step 3
+### Immediate next step depends on the task
 
-Extend the promoted main path to two-prime CRT for requested `q=128`.
+If the task is benchmark-core continuation, extend the promoted main path to two-prime CRT for requested `q=128`.
 
-Recommended sequence:
+Recommended sequence for that track:
 
 1. introduce prime-indexed scheduling in addition to batch scheduling,
 2. instantiate two 64-bit NTT paths,
@@ -297,21 +376,33 @@ Recommended sequence:
 4. extend the report scripts to display requested `q=128` GPU results cleanly,
 5. validate against the CPU `q=128` benchmark.
 
+If the task is online-phase or abstract continuation, the next step is end-to-end integration of the standalone DPF and VOLE prototypes.
+
+Recommended sequence for that track:
+
+1. wire chunked DPF generation into a real online execution boundary,
+2. connect the current Ring-LPN VOLE prototype to a real external input boundary instead of `synthetic_mpvole`,
+3. measure application-level peak memory, staging footprint, and runtime impact,
+4. keep the abstract claims limited to whichever parts are actually integrated and measured.
+
 ### Supporting engineering work
 
 To make the research workflow smoother, the following additions would also be useful:
 
 1. an automated comparison script that renders promoted q=32, promoted q=64, and legacy q=32 results side by side,
 2. explicit summary titles that distinguish promoted q=32, promoted q=64, and legacy outputs,
-3. a dedicated q=128 sweep pipeline once that implementation lands.
+3. a dedicated q=128 sweep pipeline once that implementation lands,
+4. an integrated benchmark path that combines chunked DPF generation with the current online-phase acceleration prototype.
 
 ## Final Assessment
 
 The current phase should be described as follows:
 
-The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. The work is therefore complete for the current single-prime extraction and 64-bit generalization objectives, but not complete for the broader roadmap of q=128 GPU support.
+The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. On top of that promoted core, the project now also has a standalone Ring-LPN VOLE prototype and a standalone DPF online key generation benchmark with saved artifacts.
 
 That distinction is important:
 
 1. extraction into the project is complete for the current single-prime target scope,
-2. the next research and engineering phase is dual-prime CRT support for requested `q=128`.
+2. standalone online-phase benchmark evidence now exists for both VOLE expansion and chunked DPF key generation,
+3. the next benchmark-core research and engineering phase is dual-prime CRT support for requested `q=128`,
+4. the next online-phase systems phase is full integration of those standalone prototypes into a real FSS application path.

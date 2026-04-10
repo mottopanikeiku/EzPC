@@ -58,6 +58,39 @@ For requested `q=32` with `m=32`, `c=2`, and noise weight `64`:
 
 Every sweep point passed validation.
 
+## Standalone DPF Online Key Generation Results
+
+To support the broader memory-efficiency storyline, the codebase now also has a standalone DPF online key generation benchmark:
+
+- `tests/fss/dpf_online_keygen_bench.cu`
+
+It is built with:
+
+- `make dpf_online_keygen`
+
+and the current abstract-ready sweep is driven by:
+
+- `scripts/run_dpf_online_keygen_sweep.py`
+
+Current output artifacts:
+
+- `results/dpf_online_keygen_bin16_chunk8192.csv`
+- `results/dpf_online_keygen_bin16_chunk8192.md`
+
+The current sweep measures eval-all DPF key generation at `bin=16` with chunk size `8192` over:
+
+- `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
+
+Every sweep point passed validation.
+
+The most important current numbers are:
+
+- at `n=8192`, the full pair key is `2.81 MiB`, the partial online peak pair key is also `2.81 MiB`, and time overhead is `1.011x`,
+- at `n=16384`, the full pair key is `5.63 MiB`, the partial online peak pair key is `2.81 MiB`, peak reduction is `2.00x`, and time overhead is `1.380x`,
+- at `n=1048576`, the full pair key is `360.00 MiB`, the partial online peak pair key remains `2.81 MiB`, peak reduction reaches `128.00x`, and time overhead is `1.885x`.
+
+The total generated key material remains effectively unchanged across the sweep, so this result supports a peak-memory and staging-footprint reduction claim rather than a total-key-volume reduction claim.
+
 ### q=64
 
 For requested `q=64` with the same `m=32`, `c=2`, and noise weight `64`:
@@ -92,6 +125,8 @@ The following points are supported by the current code and generated artifacts:
 3. The current prototype validates the intended algebraic VOLE relation coefficient-wise across the full tested degree range from `8192` to `1048576` for both requested `q=32` and requested `q=64`.
 4. In the current abstract-ready sweep configuration (`m=32`, `c=2`, noise weight `64`), q=32 full expansion latency ranges from `269.484 us` to `43.392 ms`, and q=64 full expansion latency ranges from `772.324 us` to `67.532 ms`.
 5. The underlying GPU polynomial engine already has strong CPU-vs-GPU evidence, so the VOLE prototype is built on top of a well-supported accelerated core.
+6. We implemented a standalone DPF online key generation benchmark for eval-all keys and measured that chunked generation can cap peak pair-key footprint at `2.81 MiB` across the current sweep while scaling one-shot full pair-key footprint from `2.81 MiB` to `360.00 MiB`.
+7. In that same DPF sweep, peak-footprint reduction grows from `1.00x` at `n=8192` to `128.00x` at `n=1048576`, with current key-generation time overhead rising to about `1.885x` at the largest point.
 
 ## Claims To Avoid
 
@@ -99,7 +134,7 @@ The following statements are not supported yet and should not appear in an abstr
 
 1. Claiming that the full SPFSS-backed OLE-R-LPN or degree-1 correlation pipeline from the figure is complete end-to-end.
 2. Claiming a CPU-vs-GPU speedup number for the current VOLE prototype itself.
-3. Claiming dealer/evaluator integration, key serialization, or online key generation for this Ring-LPN path.
+3. Claiming end-to-end dealer/evaluator integration or a fully integrated online key generation pipeline for the Ring-LPN path.
 4. Claiming q=`128` support for the VOLE prototype.
 
 ## Recommended Abstract Positioning
@@ -129,13 +164,13 @@ That broader storyline is compatible with the current evidence, but only if the 
 - The codebase already provides a concrete GPU FSS and secure-computation library context through `GPU-MPC`, including Orca and related GPU backends.
 - Profiling and instrumentation evidence already exist for memory and key-I/O pressure in the Orca path.
 - Direct I/O support is already present in `utils/gpu_file_utils.cpp` via `O_DIRECT | O_LARGEFILE`, with 4096-byte-aligned buffers.
+- A standalone DPF online key generation benchmark now exists with saved artifacts showing large peak-footprint reduction from chunked partial generation.
 - The new Ring-LPN VOLE prototype provides concrete GPU benchmark data for the algebraic expansion layer.
 
 ### What Must Still Be Framed As Proposed Work
 
-- online key generation based on DPF,
-- a partial-key pipeline that generates only the keys needed for each partial computation,
-- end-to-end memory-footprint reduction from that pipeline,
+- an end-to-end partial-key pipeline wired into the existing Orca or SPFSS-backed online execution path,
+- end-to-end memory-footprint reduction numbers for the full application pipeline,
 - full SPFSS-backed Ring-LPN integration into the online FSS path.
 
 ### Profiling Evidence That Fits The Story
@@ -156,9 +191,10 @@ The strongest abstract-safe version of the professor's storyline is:
 
 - present the paper as improving memory efficiency of GPU-accelerated FSS,
 - use existing profiling to motivate that storage, key I/O, and runtime transfers are the pressure points,
-- describe DPF-based partial key generation as a proposed memory-footprint reduction technique,
+- present the standalone DPF online key generation benchmark as evidence that chunked key generation can sharply reduce peak staged key footprint,
 - present Ring-LPN acceleration as the concrete implemented online-phase prototype result,
-- mention direct I/O as already-present optimization infrastructure rather than a new completed contribution.
+- mention direct I/O as already-present optimization infrastructure rather than a new completed contribution,
+- keep full Orca or SPFSS-backed integration explicitly framed as ongoing work.
 
 ## Next Gap To Close
 

@@ -23,6 +23,8 @@ Unless the user explicitly asks about other subsystems, the practical rule is:
   - Orca training and inference,
   - Orca local loopback and profiling,
   - Ring-LPN CPU/GPU NTT benchmarking,
+  - Ring-LPN VOLE prototype benchmarking and abstract support,
+  - standalone DPF online key generation benchmarking,
   - and occasionally Sigma.
 
 ## 2. Container Model
@@ -113,7 +115,7 @@ Quick meaning of the main paths:
 - [GPU-MPC/experiments/orca](GPU-MPC/experiments/orca): Orca binaries, configs, outputs, datasets, and experiment harness.
 - [GPU-MPC/experiments/sigma](GPU-MPC/experiments/sigma): Sigma binaries and paper path.
 - [GPU-MPC/orca_runner](GPU-MPC/orca_runner): local loopback scripts and logs.
-- [GPU-MPC/ringlpn](GPU-MPC/ringlpn): standalone benchmarking track for Ring-LPN NTT work.
+- [GPU-MPC/ringlpn](GPU-MPC/ringlpn): standalone benchmarking track for Ring-LPN NTT, VOLE, and related abstract-support artifacts.
 - [GPU-MPC/scripts](GPU-MPC/scripts): profiling and summary helpers for Orca.
 - [GPU-MPC/backend](GPU-MPC/backend): backend abstractions such as Orca, Sigma, and Piranha headers.
 - [GPU-MPC/utils](GPU-MPC/utils): shared low-level GPU utilities.
@@ -143,8 +145,13 @@ Quick meaning of the main paths:
 - [GPU-MPC/ringlpn/src/bench_ntt.cpp](GPU-MPC/ringlpn/src/bench_ntt.cpp): CPU NFLLib benchmark.
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu): primary CUDA benchmark source, extracted from cheddar-fhe and adapted locally.
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): preserved legacy CUDA benchmark path.
+- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu): standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path.
+- [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu): standalone DPF online key generation benchmark.
+- [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](GPU-MPC/scripts/run_dpf_online_keygen_sweep.py): DPF online key generation sweep driver.
 - [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md): current Ring-LPN status and roadmap handoff.
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md): extraction rationale and earlier batch-1 comparison study.
+- [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md): current abstract-safe support note for Ring-LPN VOLE plus DPF online key generation.
+- [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md): professor-aligned abstract outline for the current evidence.
 
 ## 6. Build Pipeline
 
@@ -157,6 +164,7 @@ Important facts from the file:
 - the compiler is `nvcc`,
 - the build uses `-std=c++17`,
 - architecture is selected by `GPU_ARCH`,
+- if `GPU_ARCH` is unset, plain `make` can fail with `nvcc fatal: Unsupported gpu architecture 'compute_'`,
 - include/lib paths point into CUTLASS and Sytorch,
 - common runtime utilities come from [GPU-MPC/utils](GPU-MPC/utils).
 
@@ -173,6 +181,7 @@ Important build targets:
 
 - `make orca`: builds `orca_dealer`, `orca_evaluator`, `orca_inference`, `orca_inference_u32`, and `piranha`
 - `make sigma`: builds Sigma
+- `make dpf_online_keygen`: builds the standalone DPF online key generation benchmark under `tests/fss/dpf_online_keygen`
 - individual FSS/NN test binaries under [GPU-MPC/tests](GPU-MPC/tests)
 
 Primary Orca binaries built by the Makefile:
@@ -328,22 +337,27 @@ This harness is separate from Orca. Do not treat it as part of the Orca training
 - [GPU-MPC/ringlpn/src/bench_ntt.cpp](GPU-MPC/ringlpn/src/bench_ntt.cpp): CPU NFLLib benchmark
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu): promoted primary CUDA benchmark
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): preserved legacy CUDA benchmark baseline
+- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu): standalone Ring-LPN VOLE prototype benchmark
+- [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu): standalone DPF online key generation benchmark for one-shot versus chunked partial generation
 
 ### 9.2 Shell Pipeline
 
-Important scripts under [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts):
+Important scripts under [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts) and [GPU-MPC/scripts](GPU-MPC/scripts):
 
 - `setup_nfl.sh`: clone and build NFLlib
 - `build_bench.sh`: build CPU benchmark
 - `run_sweep.sh`: run CPU sweep and generate markdown summary
 - `build_cuda_bench.sh`: build the promoted cheddar-derived main CUDA benchmark
+- `build_vole_bench.sh`: build the standalone Ring-LPN VOLE prototype benchmark
 - `build_cuda_bench_cheddar.sh`: build the same cheddar-derived source under an explicit side-by-side binary name
 - `build_cuda_bench_legacy.sh`: build the preserved legacy CUDA benchmark
 - `run_cuda_sweep.sh`: promoted q=32 or q=64 CUDA sweep
 - `run_cuda_sweep_legacy.sh`: legacy q=32 CUDA sweep
 - `run_cuda_single.sh`: CPU-vs-GPU spot check at CPU-overlap points
+- `run_vole_sweep.sh`: standalone Ring-LPN VOLE prototype sweep
+- `run_dpf_online_keygen_sweep.py`: standalone DPF online key generation sweep and Markdown generation
 - `run_vtune_hotspots.sh` and `run_vtune_memory.sh`: CPU profiling wrappers
-- `summarize_results.py`, `summarize_cuda_results.py`, `summarize_cpu_gpu_4096.py`: reporting scripts
+- `summarize_results.py`, `summarize_cuda_results.py`, `summarize_cpu_gpu_4096.py`, `summarize_dpf_online_keygen.py`: reporting scripts
 
 ### 9.3 Current Validated State
 
@@ -357,6 +371,11 @@ Current active benchmark state:
 - The legacy CUDA path in [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu) is still available for q=32 comparison and regression tracking.
 - The current promoted CUDA benchmark is batched and reports `requested_qbits`, `actual_qbits`, `batch_size`, `validation`, and `correct` in CSV.
 - `run_cuda_single.sh` is intentionally limited to the CPU-overlap points up to `n=32768`.
+- The standalone Ring-LPN VOLE prototype in [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu) is validated for requested `q=32|64` over `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}` using `synthetic_mpvole` inputs.
+- Current VOLE result summaries live in [GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md) and [GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md).
+- The standalone DPF online key generation benchmark in [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) is validated for eval-all keys at `bin=16`, `chunk_size=8192`, and `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
+- Current DPF online key generation summaries live in [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md) and the corresponding CSV.
+- The current DPF sweep shows full pair-key footprint growing from `2.81 MiB` to `360.00 MiB` while chunked online generation holds peak pair-key footprint to `2.81 MiB`, reaching about `128x` peak-footprint reduction at `n=1048576` with about `1.885x` key-generation time overhead.
 - Current promoted result summaries live in [GPU-MPC/ringlpn/results/ntt_gpu_q32.md](GPU-MPC/ringlpn/results/ntt_gpu_q32.md) and [GPU-MPC/ringlpn/results/ntt_gpu_q64.md](GPU-MPC/ringlpn/results/ntt_gpu_q64.md).
 - Legacy comparison results live in [GPU-MPC/ringlpn/results/ntt_gpu_q32_legacy.md](GPU-MPC/ringlpn/results/ntt_gpu_q32_legacy.md).
 - The most complete human handoff for Ring-LPN is [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md).
@@ -370,13 +389,16 @@ Important output locations:
 
 ### 9.4 Benchmark Roadmap Context
 
-The active generalization roadmap for the main CUDA benchmark is:
+The active Ring-LPN roadmap now has two tracks:
 
-1. complete generalized single-prime q=32 support over `8192` to `1048576`,
-2. complete generalized single-prime q=64 support with 64-bit Montgomery kernels using `__umul64hi()`,
-3. add requested `q=128` via two independent 64-bit NTT tracks and CRT composition.
-
-At the moment, steps 1 and 2 are complete on the promoted main path. Step 3 is the next active research and engineering target.
+1. Core NTT and PolyMul benchmark track:
+  - generalized single-prime q=32 support is complete,
+  - generalized single-prime q=64 support is complete,
+  - requested `q=128` via dual-prime CRT is the next benchmark-core target.
+2. Online-phase systems track:
+  - the standalone Ring-LPN VOLE prototype is implemented and benchmarked,
+  - the standalone DPF online key generation benchmark is implemented and benchmarked,
+  - end-to-end integration of chunked DPF generation and Ring-LPN acceleration into a real Orca or SPFSS-backed online path is not implemented yet.
 
 ### 9.5 Current Mission Handoff
 
@@ -385,7 +407,9 @@ If a new agent is asked to continue the current Ring-LPN mission, the practical 
 1. treat the promoted cheddar-derived path as the default GPU implementation,
 2. preserve the legacy CUDA path as a comparison baseline,
 3. avoid reworking the CPU baseline unless a validation issue requires it,
-4. carry the GPU path from single-prime q=32/q=64 to dual-prime CRT q=128.
+4. treat [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu) and [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) as the current online-phase evidence,
+5. if the task is benchmark-core continuation, carry the GPU path from single-prime q=32/q=64 to dual-prime CRT q=128,
+6. if the task is abstract or systems continuation, integrate chunked DPF key generation and Ring-LPN expansion into a real online FSS boundary instead of the current standalone prototypes.
 
 What is already done:
 
@@ -393,42 +417,63 @@ What is already done:
 - Promoted cheddar-derived GPU q=32 sweep is complete and validated.
 - Promoted cheddar-derived GPU q=64 sweep is complete and validated.
 - Legacy GPU q=32 sweep is preserved for comparison.
+- Standalone Ring-LPN VOLE q=32 and q=64 sweeps are complete and validated.
+- Standalone DPF online key generation sweep at `bin=16`, `chunk_size=8192` is complete and validated.
 - The current GPU-vs-CPU comparison is strong: q=32 overlap points show roughly `146x` to `171x` per-polynomial PolyMul speedups over CPU, and q=64 points show roughly `48x` to `220x` per-polynomial PolyMul speedups over CPU.
 - The promoted main path is consistently faster than the legacy baseline, with the largest observed per-polynomial gain near `6x` at `n=65536` in the adaptive sweep.
+- [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md) and [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md) record the current abstract-safe claims and open gaps.
 
 What is not done:
 
 - no promoted GPU path yet exists for requested `q=128`,
 - no multi-prime scheduling layer exists yet in the promoted path,
 - no CRT recomposition path exists yet in the promoted path,
+- no end-to-end Orca or SPFSS-backed integration exists yet for the chunked DPF online key generation benchmark,
+- no end-to-end Orca or SPFSS-backed integration exists yet for the Ring-LPN VOLE prototype,
+- no full application-level memory-footprint reduction measurements exist yet for the combined online path,
 - VTune wrappers exist, but VTune is not guaranteed to be installed in the active container.
 
 Files the next agent should read first for Ring-LPN continuation:
 
 - [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md)
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md)
+- [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md)
+- [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md)
 - [GPU-MPC/ringlpn/README.md](GPU-MPC/ringlpn/README.md)
+- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt.cpp](GPU-MPC/ringlpn/src/bench_ntt.cpp)
+- [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu)
 - [GPU-MPC/ringlpn/scripts/build_cuda_bench.sh](GPU-MPC/ringlpn/scripts/build_cuda_bench.sh)
+- [GPU-MPC/ringlpn/scripts/build_vole_bench.sh](GPU-MPC/ringlpn/scripts/build_vole_bench.sh)
 - [GPU-MPC/ringlpn/scripts/build_cuda_bench_legacy.sh](GPU-MPC/ringlpn/scripts/build_cuda_bench_legacy.sh)
 - [GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh](GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh)
+- [GPU-MPC/ringlpn/scripts/run_vole_sweep.sh](GPU-MPC/ringlpn/scripts/run_vole_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_cuda_sweep_legacy.sh](GPU-MPC/ringlpn/scripts/run_cuda_sweep_legacy.sh)
+- [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](GPU-MPC/scripts/run_dpf_online_keygen_sweep.py)
+- [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md)
 
 Commands worth knowing for continuation work:
 
 - build promoted CPU and GPU benchmarks inside the container by running `./scripts/build_bench.sh` and `./scripts/build_cuda_bench.sh` under `/home/ringlpn`,
 - run the promoted q=32 sweep with `./scripts/run_cuda_sweep.sh`,
 - run the promoted q=64 sweep with `QBITS=64 ./scripts/run_cuda_sweep.sh`,
+- build the standalone VOLE prototype with `./scripts/build_vole_bench.sh` under `/home/ringlpn`,
+- run the standalone VOLE sweep with `./scripts/run_vole_sweep.sh` or `QBITS=64 ./scripts/run_vole_sweep.sh` under `/home/ringlpn`,
 - run the legacy comparison sweep with `./scripts/build_cuda_bench_legacy.sh` and `./scripts/run_cuda_sweep_legacy.sh`,
+- build the standalone DPF online key generation benchmark under `/home` with `make GPU_ARCH=<cc> dpf_online_keygen`,
+- run the standalone DPF sweep under `/home` with `python3 scripts/run_dpf_online_keygen_sweep.py`,
+- use `./tests/fss/dpf_online_keygen --bin 16 --n 8192 --chunk-size 4096 --iters 3 --warmup 1 --csv-header` under `/home` for a quick smoke test,
 - use `./scripts/run_cuda_single.sh 8192 4` or another CPU-overlap point only for quick spot checks.
 
 Operational cautions for continuation work:
 
 - do Ring-LPN runtime work inside the `orca-dev` container under `/home/ringlpn`, not from the host path,
+- do standalone DPF online key generation runtime work inside the same `orca-dev` container under `/home`, not from the host path,
 - remember that the root [.gitignore](.gitignore) ignores `*.sh`, `*.csv`, `*.txt`, and `*.out`, so helper scripts and generated summaries may not be tracked,
 - do not assume the current shell scripts have Git history just because they exist in the working tree,
+- raw stdout from programs that call `initGPUMemPool()` can include `reserved memory:` lines from `gpu_mem.cu`, so use the current sweep scripts or filter those lines before treating stdout as CSV,
 - treat [GPU-MPC/ringlpn/results](GPU-MPC/ringlpn/results) as the authoritative place to confirm what has actually been benchmarked.
 
 ## 10. Backend, Utils, and Tests
@@ -498,6 +543,16 @@ For GPU work, commands that appear to work on the host may still be the wrong en
 
 The Ring-LPN VTune wrappers are valid scripts, but the current container does not necessarily have `vtune` installed.
 
+### 11.5 gpu_mem.cu Prints To Stdout
+
+`initGPUMemPool()` currently prints a `reserved memory:` line to stdout.
+
+Practical consequence:
+
+- raw benchmark stdout is not guaranteed to be clean CSV,
+- the current DPF sweep script filters these lines before writing CSV,
+- if a future agent adds another CSV-emitting benchmark on top of `gpu_mem.cu`, they should handle this explicitly.
+
 ## 12. Where To Start For Common Tasks
 
 If the task mentions Orca training, inference, figures, or tables:
@@ -523,8 +578,17 @@ If the task mentions Ring-LPN, NTT, NFLLib, CUDA sweeps, or benchmark tables:
 - start with [GPU-MPC/ringlpn/README.md](GPU-MPC/ringlpn/README.md)
 - then read [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md)
 - then read [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md)
+- then read [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md) if the task is abstract-facing or online-phase related
 - then inspect [GPU-MPC/ringlpn/src](GPU-MPC/ringlpn/src)
 - then use [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts)
+
+If the task mentions DPF, online key generation, partial keys, or memory-footprint reduction:
+
+- start with [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu)
+- then read [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](GPU-MPC/scripts/run_dpf_online_keygen_sweep.py)
+- then read [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md)
+- then read [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md)
+- then read [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md)
 
 If the task mentions Sigma:
 
@@ -540,7 +604,7 @@ If dropped into this workspace cold, the fastest reliable orientation path is:
 2. Read [GPU-MPC/README.md](GPU-MPC/README.md) and [GPU-MPC/Makefile](GPU-MPC/Makefile).
 3. Decide whether the task is Orca, Sigma, or Ring-LPN.
 4. For Orca, decide whether the task is the formal harness, local loopback, or profiling runner.
-5. For Ring-LPN, decide whether the task is CPU NFLLib, promoted cheddar-derived CUDA, or legacy CUDA baseline.
+5. For Ring-LPN, decide whether the task is CPU NFLLib, promoted cheddar-derived CUDA, standalone VOLE, or standalone DPF online key generation.
 6. Check whether the files you care about are actually tracked, because the root ignore rules hide many script and result files.
 
 ## 14. Highest-Signal Paths For Current Work
@@ -558,11 +622,18 @@ If the task is about the currently active GPU work, these are the first paths to
 - [GPU-MPC/scripts/run_orca_profiling.sh](GPU-MPC/scripts/run_orca_profiling.sh)
 - [GPU-MPC/utils](GPU-MPC/utils)
 - [GPU-MPC/ringlpn](GPU-MPC/ringlpn)
+- [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu)
+- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu)
 - [GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh](GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh)
+- [GPU-MPC/ringlpn/scripts/run_vole_sweep.sh](GPU-MPC/ringlpn/scripts/run_vole_sweep.sh)
+- [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](GPU-MPC/scripts/run_dpf_online_keygen_sweep.py)
 - [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md)
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md)
+- [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md)
+- [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md)
+- [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md)
 - [GPU-MPC/ringlpn/results](GPU-MPC/ringlpn/results)
 
-These paths cover container entry, main build, Orca orchestration, profiling, logs, shared utilities, and the active Ring-LPN benchmark work.
+These paths cover container entry, main build, Orca orchestration, profiling, logs, shared utilities, and the active Ring-LPN plus DPF online key generation work.

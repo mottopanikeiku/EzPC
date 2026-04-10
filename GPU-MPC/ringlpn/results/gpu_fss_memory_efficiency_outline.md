@@ -55,13 +55,29 @@ Supporting implementation details:
 
 Safe message:
 
-- this is currently a proposal motivated by the profiling evidence,
-- the intended idea is to generate partial keys on demand for partial computation rather than materializing all keys offline,
-- the goal is reducing storage footprint and online staging pressure.
+- this now has a standalone measured prototype rather than being only a proposal,
+- the implemented benchmark generates eval-all DPF keys either in one shot or in fixed-size chunks,
+- the chunked mode models online partial key generation for partial computation rather than materializing all keys offline,
+- the measured benefit is a sharp reduction in peak staged key footprint, not a reduction in total generated key bytes.
+
+Concrete supporting benchmark:
+
+- `tests/fss/dpf_online_keygen_bench.cu`
+- `scripts/run_dpf_online_keygen_sweep.py`
+- `ringlpn/results/dpf_online_keygen_bin16_chunk8192.csv`
+- `ringlpn/results/dpf_online_keygen_bin16_chunk8192.md`
+
+Concrete current numbers for `bin=16`, eval-all, chunk size `8192`:
+
+- full pair key footprint grows from `2.81 MiB` at `n=8192` to `360.00 MiB` at `n=1048576`,
+- chunked online generation keeps the peak pair-key footprint at `2.81 MiB` across the whole sweep,
+- peak reduction reaches `128.00x` at `n=1048576`,
+- current key-generation time overhead rises to about `1.885x` at `n=1048576`,
+- all sweep points passed validation.
 
 Unsafe message to avoid:
 
-- claiming that this DPF partial-key pipeline is already implemented or benchmarked.
+- claiming that this is already integrated end-to-end into Orca or a full FSS application pipeline.
 
 ### 4. Accelerating The Online Phase Of FSS With Ring-LPN
 
@@ -87,9 +103,9 @@ Underlying acceleration context already supported by prior benchmark artifacts:
 
 Safe message:
 
-- this is a natural systems direction suggested by the profiling data,
-- it fits the DPF-based online key-generation story,
-- it should currently be described as planned design work rather than completed engineering.
+- a standalone DPF partial-generation benchmark now exists and supports the systems claim that peak staged key footprint can be reduced substantially,
+- the remaining unimplemented step is wiring that idea into the full online execution path,
+- end-to-end memory-footprint reduction for real workloads should still be described as future integration work.
 
 ### 6. Direct I/O Optimization
 
@@ -107,12 +123,13 @@ The abstract should separate contributions into two groups.
 
 1. Profiling of the current GPU FSS and Orca pipeline that identifies key I/O and runtime movement as memory-efficiency bottlenecks.
 2. Direct I/O and overlap infrastructure already present in the system.
-3. A validated GPU Ring-LPN VOLE expansion prototype with saved q=32 and q=64 sweep artifacts.
+3. A standalone DPF online key generation benchmark with saved chunked-vs-one-shot artifacts.
+4. A validated GPU Ring-LPN VOLE expansion prototype with saved q=32 and q=64 sweep artifacts.
 
 ### Proposed Next Techniques
 
-1. Online key generation based on DPF.
-2. Partial-key pipeline generation for partial computation.
+1. End-to-end integration of chunked DPF key generation into the online FSS path.
+2. Partial-key pipeline scheduling for real model execution.
 3. Full integration of Ring-LPN acceleration into the online FSS path.
 
 ## Safe One-Paragraph Abstract Logic
@@ -122,17 +139,17 @@ The most defensible logic chain is:
 - introduce GPU-accelerated FSS as the systems setting,
 - show that profiling reveals memory footprint and key movement as major bottlenecks,
 - note that existing direct I/O and overlap reduce but do not remove the problem,
-- propose on-demand partial key generation as the memory-footprint reduction direction,
+- present the new standalone DPF benchmark as evidence that on-demand chunked key generation can dramatically reduce peak staged key footprint,
 - present the new Ring-LPN GPU VOLE expansion prototype as the concrete online-phase acceleration result,
-- close by positioning full DPF-backed and SPFSS-backed integration as ongoing work.
+- close by positioning full Orca/SPFSS-backed integration as ongoing work.
 
 ## Claims To Avoid
 
 1. Claiming end-to-end memory-footprint reduction numbers unless new experiments are run.
-2. Claiming that the DPF pipeline or partial-key generation path is already implemented.
+2. Claiming that the DPF partial-key generation path is already integrated into the full application pipeline.
 3. Claiming that the current Ring-LPN prototype is a full end-to-end SPFSS-backed degree-1 correlation system.
 4. Claiming CPU-vs-GPU speedup numbers for the VOLE prototype itself without a CPU VOLE baseline.
 
 ## Best Next Step
 
-The best next step is to draft the 250-word abstract directly from this outline and `ringlpn_vole_abstract_support.md`, using the professor's storyline but keeping the DPF and partial-key pipeline pieces explicitly future-facing.
+The best next step is to draft the 250-word abstract directly from this outline and `ringlpn_vole_abstract_support.md`, using the professor's storyline while presenting DPF online key generation as a standalone measured systems result and keeping full pipeline integration explicitly future-facing.
