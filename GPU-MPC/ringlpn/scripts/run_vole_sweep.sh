@@ -12,6 +12,7 @@ NOISE_WEIGHT="${NOISE_WEIGHT:-64}"
 OUT_TAG="${OUT_TAG:-q${QBITS}_m${M}_c${C}_w${NOISE_WEIGHT}}"
 CSV="$OUT_DIR/vole_gpu_${OUT_TAG}.csv"
 MD="$OUT_DIR/vole_gpu_${OUT_TAG}.md"
+LOG="$OUT_DIR/vole_gpu_${OUT_TAG}.log"
 
 mkdir -p "$OUT_DIR"
 
@@ -52,8 +53,9 @@ choose_schedule() {
   echo "10 2"
 }
 
-rm -f "$CSV" "$MD"
+rm -f "$CSV" "$MD" "$LOG"
 
+header_cols=0
 header_written=0
 
 for n in "${N_LIST[@]}"; do
@@ -72,12 +74,25 @@ for n in "${N_LIST[@]}"; do
     --noise-weight "$NOISE_WEIGHT" \
     --iters "$iters" \
     --warmup "$warmup" \
-    "${extra_args[@]}" 2>&1)
+    "${extra_args[@]}" 2>>"$LOG")
 
-  printf '%s\n' "$output" >> "$CSV"
-  header_written=1
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    cols=$(awk -F',' '{print NF}' <<<"$line")
+    if [[ "$header_written" -eq 0 ]]; then
+      header_cols="$cols"
+      printf '%s\n' "$line" >> "$CSV"
+      header_written=1
+      continue
+    fi
+    if [[ "$cols" -ne "$header_cols" ]]; then
+      printf '%s\n' "$line" >> "$LOG"
+      continue
+    fi
+    printf '%s\n' "$line" >> "$CSV"
+  done <<<"$output"
 done
 
 python3 "$BASE_DIR/scripts/summarize_vole_results.py" --csv "$CSV" --out-md "$MD"
 
-printf "\nWrote %s and %s\n" "$CSV" "$MD"
+printf "\nWrote %s and %s (stderr in %s)\n" "$CSV" "$MD" "$LOG"

@@ -1659,6 +1659,29 @@ static void run_full_polymul(Word *d_a,
 }
 
 template <typename Word>
+static void run_polymul_prepared_lhs(const Word *d_a_ntt,
+                                     Word *d_b,
+                                     Word *d_b_work,
+                                     Word *d_c_work,
+                                     Word *d_out,
+                                     const DeviceTables<Word> &tables,
+                                     int n,
+                                     int batch_count,
+                                     int log_degree) {
+    run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true);
+
+    dim3 block(256);
+    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
+    dim3 grid(grid_size(total_coeffs, block.x));
+    pointwise_mul_kernel<Word><<<grid, block>>>(
+        const_cast<Word *>(d_a_ntt), d_b_work, d_c_work, total_coeffs,
+        tables.d_primes, tables.d_inv_primes);
+    check_launch("launch cheddar pointwise_mul_kernel (prepared lhs)");
+
+    run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true);
+}
+
+template <typename Word>
 static bool validate_roundtrip_case(const char *label,
                                     const std::vector<Word> &input,
                                     int batch_count,

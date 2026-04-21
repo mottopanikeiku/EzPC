@@ -25,7 +25,7 @@ struct VoleArgs {
     bool csv_header = false;
     bool skip_validation = false;
 };
-
+// Z = y + x*delta  with delta being the secret scalar and (x,y) being the output pairs. The "a" pairs are the input pairs that get multiplied with the "b" pairs (which are either noise e, or uniform vm/wm) to produce the output pairs before adding the "f/vj/wj" offsets.
 static void vole_usage(const char *prog) {
     std::cerr << "Usage: " << prog
               << " --n <deg> [--qbits 32|64] [--m N] [--c N] [--noise-weight N]"
@@ -232,9 +232,8 @@ __global__ void add_poly_batches_kernel(const Word *lhs,
 }
 
 template <typename Word>
-static void run_inner_product_phase(Word *d_a_pairs,
+static void run_inner_product_phase(const Word *d_a_ntt,
                                     Word *d_rhs_pairs,
-                                    Word *d_a_work,
                                     Word *d_b_work,
                                     Word *d_c_work,
                                     Word *d_pairwise_out,
@@ -248,16 +247,15 @@ static void run_inner_product_phase(Word *d_a_pairs,
                                     int log_degree,
                                     Word modulus) {
     const int pair_batch = outputs * lanes;
-    run_full_polymul(d_a_pairs,
-                     d_rhs_pairs,
-                     d_a_work,
-                     d_b_work,
-                     d_c_work,
-                     d_pairwise_out,
-                     tables,
-                     n,
-                     pair_batch,
-                     log_degree);
+    run_polymul_prepared_lhs(d_a_ntt,
+                             d_rhs_pairs,
+                             d_b_work,
+                             d_c_work,
+                             d_pairwise_out,
+                             tables,
+                             n,
+                             pair_batch,
+                             log_degree);
 
     dim3 block(256);
     dim3 reduce_grid(grid_size(static_cast<size_t>(n), block.x), static_cast<unsigned int>(outputs));
@@ -388,7 +386,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     Word *d_e_pairs = nullptr;
     Word *d_vm_pairs = nullptr;
     Word *d_wm_pairs = nullptr;
-    Word *d_a_work = nullptr;
+    Word *d_a_ntt = nullptr;
     Word *d_b_work = nullptr;
     Word *d_c_work = nullptr;
     Word *d_pairwise_out = nullptr;
@@ -412,7 +410,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     alloc_and_upload(&d_e_pairs, e_pairs, "alloc/copy d_e_pairs");
     alloc_and_upload(&d_vm_pairs, vm_pairs, "alloc/copy d_vm_pairs");
     alloc_and_upload(&d_wm_pairs, wm_pairs, "alloc/copy d_wm_pairs");
-    alloc_only(&d_a_work, pair_coeffs, "alloc d_a_work");
+    alloc_only(&d_a_ntt, pair_coeffs, "alloc d_a_ntt");
     alloc_only(&d_b_work, pair_coeffs, "alloc d_b_work");
     alloc_only(&d_c_work, pair_coeffs, "alloc d_c_work");
     alloc_only(&d_pairwise_out, pair_coeffs, "alloc d_pairwise_out");
@@ -424,10 +422,12 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     alloc_only(&d_y, output_coeffs, "alloc d_y");
     alloc_only(&d_z, output_coeffs, "alloc d_z");
 
+    run_forward_only(d_a_pairs, d_a_ntt, tables, n, pair_batch, log_degree, true);
+    check(cudaDeviceSynchronize(), "sync NTT(a) precompute");
+
     bool correct = true;
-    run_inner_product_phase(d_a_pairs,
+    run_inner_product_phase(d_a_ntt,
                             d_e_pairs,
-                            d_a_work,
                             d_b_work,
                             d_c_work,
                             d_pairwise_out,
@@ -440,9 +440,8 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                             args.lanes,
                             log_degree,
                             config.modulus);
-    run_inner_product_phase(d_a_pairs,
+    run_inner_product_phase(d_a_ntt,
                             d_vm_pairs,
-                            d_a_work,
                             d_b_work,
                             d_c_work,
                             d_pairwise_out,
@@ -455,9 +454,8 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                             args.lanes,
                             log_degree,
                             config.modulus);
-    run_inner_product_phase(d_a_pairs,
+    run_inner_product_phase(d_a_ntt,
                             d_wm_pairs,
-                            d_a_work,
                             d_b_work,
                             d_c_work,
                             d_pairwise_out,
@@ -541,9 +539,8 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     check(cudaEventCreate(&total_stop_evt), "create total stop event");
 
     for (int iter = 0; iter < args.warmup; iter++) {
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_e_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -556,9 +553,8 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.lanes,
                                 log_degree,
                                 config.modulus);
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_vm_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -571,9 +567,8 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.lanes,
                                 log_degree,
                                 config.modulus);
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_wm_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -590,14 +585,13 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     }
 
     for (int iter = 0; iter < args.iters; iter++) {
-        float ms = 0.0f;
+        float elapsed_ms = 0.0f;
 
         check(cudaEventRecord(total_start_evt), "record total start");
 
         check(cudaEventRecord(phase_start_evt), "record x start");
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_e_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -612,13 +606,12 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 config.modulus);
         check(cudaEventRecord(phase_stop_evt), "record x stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync x stop");
-        check(cudaEventElapsedTime(&ms, phase_start_evt, phase_stop_evt), "elapsed x");
-        x_samples.push_back(ms * 1000.0);
+        check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed x");
+        x_samples.push_back(elapsed_ms * 1000.0);
 
         check(cudaEventRecord(phase_start_evt), "record y start");
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_vm_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -633,13 +626,12 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 config.modulus);
         check(cudaEventRecord(phase_stop_evt), "record y stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync y stop");
-        check(cudaEventElapsedTime(&ms, phase_start_evt, phase_stop_evt), "elapsed y");
-        y_samples.push_back(ms * 1000.0);
+        check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed y");
+        y_samples.push_back(elapsed_ms * 1000.0);
 
         check(cudaEventRecord(phase_start_evt), "record z start");
-        run_inner_product_phase(d_a_pairs,
+        run_inner_product_phase(d_a_ntt,
                                 d_wm_pairs,
-                                d_a_work,
                                 d_b_work,
                                 d_c_work,
                                 d_pairwise_out,
@@ -654,13 +646,13 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 config.modulus);
         check(cudaEventRecord(phase_stop_evt), "record z stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync z stop");
-        check(cudaEventElapsedTime(&ms, phase_start_evt, phase_stop_evt), "elapsed z");
-        z_samples.push_back(ms * 1000.0);
+        check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed z");
+        z_samples.push_back(elapsed_ms * 1000.0);
 
         check(cudaEventRecord(total_stop_evt), "record total stop");
         check(cudaEventSynchronize(total_stop_evt), "sync total stop");
-        check(cudaEventElapsedTime(&ms, total_start_evt, total_stop_evt), "elapsed total");
-        total_samples.push_back(ms * 1000.0);
+        check(cudaEventElapsedTime(&elapsed_ms, total_start_evt, total_stop_evt), "elapsed total");
+        total_samples.push_back(elapsed_ms * 1000.0);
     }
 
     Stats x_stats = compute_stats(x_samples);
@@ -689,7 +681,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     cudaFree(d_e_pairs);
     cudaFree(d_vm_pairs);
     cudaFree(d_wm_pairs);
-    cudaFree(d_a_work);
+    cudaFree(d_a_ntt);
     cudaFree(d_b_work);
     cudaFree(d_c_work);
     cudaFree(d_pairwise_out);

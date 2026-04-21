@@ -2,6 +2,7 @@
 import argparse
 import csv
 from datetime import datetime
+from io import StringIO
 
 
 def parse_args():
@@ -22,54 +23,69 @@ def main():
     args = parse_args()
     rows = []
     with open(args.csv, "r", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            n = int(row["n"])
-            logn = int(row["logn"])
-            requested_qbits = int(row["requested_qbits"])
-            actual_qbits = int(row["actual_qbits"])
-            outputs = int(row["m"])
-            lanes = int(row["c"])
-            noise_weight = int(row["noise_weight"])
-            iters = int(row["iters"])
-            x_mean = to_float(row["x_mean_us"])
-            y_mean = to_float(row["y_mean_us"])
-            z_mean = to_float(row["z_mean_us"])
-            expand_mean = to_float(row["expand_mean_us"])
-            expand_std = to_float(row["expand_std_us"])
+        raw_lines = [line.strip() for line in handle if line.strip()]
 
-            per_output_expand = None
-            outputs_per_s = None
-            pair_polymuls_per_s = None
-            if expand_mean and expand_mean > 0:
-                per_output_expand = expand_mean / outputs
-                outputs_per_s = outputs * 1e6 / expand_mean
-                pair_polymuls_per_s = (3 * outputs * lanes) * 1e6 / expand_mean
+    if not raw_lines:
+        raise RuntimeError("CSV file is empty")
 
-            rows.append(
-                {
-                    "device": row["device"],
-                    "input_mode": row["input_mode"],
-                    "n": n,
-                    "logn": logn,
-                    "requested_qbits": requested_qbits,
-                    "actual_qbits": actual_qbits,
-                    "outputs": outputs,
-                    "lanes": lanes,
-                    "noise_weight": noise_weight,
-                    "iters": iters,
-                    "validation": row["validation"],
-                    "x_mean": x_mean,
-                    "y_mean": y_mean,
-                    "z_mean": z_mean,
-                    "expand_mean": expand_mean,
-                    "expand_std": expand_std,
-                    "per_output_expand": per_output_expand,
-                    "outputs_per_s": outputs_per_s,
-                    "pair_polymuls_per_s": pair_polymuls_per_s,
-                    "correct": int(row["correct"]),
-                }
-            )
+    header = raw_lines[0]
+    header_columns = len(header.split(","))
+    filtered_lines = [header]
+    for line in raw_lines[1:]:
+        if line.startswith("reserved memory:"):
+            continue
+        if len(line.split(",")) != header_columns:
+            continue
+        filtered_lines.append(line)
+
+    reader = csv.DictReader(StringIO("\n".join(filtered_lines) + "\n"))
+    for row in reader:
+        n = int(row["n"])
+        logn = int(row["logn"])
+        requested_qbits = int(row["requested_qbits"])
+        actual_qbits = int(row["actual_qbits"])
+        outputs = int(row["m"])
+        lanes = int(row["c"])
+        noise_weight = int(row["noise_weight"])
+        iters = int(row["iters"])
+        x_mean = to_float(row["x_mean_us"])
+        y_mean = to_float(row["y_mean_us"])
+        z_mean = to_float(row["z_mean_us"])
+        expand_mean = to_float(row["expand_mean_us"])
+        expand_std = to_float(row["expand_std_us"])
+
+        per_output_expand = None
+        outputs_per_s = None
+        pair_polymuls_per_s = None
+        if expand_mean and expand_mean > 0:
+            per_output_expand = expand_mean / outputs
+            outputs_per_s = outputs * 1e6 / expand_mean
+            pair_polymuls_per_s = (3 * outputs * lanes) * 1e6 / expand_mean
+
+        rows.append(
+            {
+                "device": row["device"],
+                "input_mode": row["input_mode"],
+                "n": n,
+                "logn": logn,
+                "requested_qbits": requested_qbits,
+                "actual_qbits": actual_qbits,
+                "outputs": outputs,
+                "lanes": lanes,
+                "noise_weight": noise_weight,
+                "iters": iters,
+                "validation": row["validation"],
+                "x_mean": x_mean,
+                "y_mean": y_mean,
+                "z_mean": z_mean,
+                "expand_mean": expand_mean,
+                "expand_std": expand_std,
+                "per_output_expand": per_output_expand,
+                "outputs_per_s": outputs_per_s,
+                "pair_polymuls_per_s": pair_polymuls_per_s,
+                "correct": int(row["correct"]),
+            }
+        )
 
     rows.sort(key=lambda row: (row["requested_qbits"], row["n"]))
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")

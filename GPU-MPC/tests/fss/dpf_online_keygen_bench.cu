@@ -145,11 +145,13 @@ static SummaryStats benchmark(Func &&func, int warmup, int iters) {
     for (int i = 0; i < warmup; i++) {
         func();
     }
+    cudaDeviceSynchronize();
     std::vector<double> samples;
     samples.reserve(iters);
     for (int i = 0; i < iters; i++) {
         auto start = std::chrono::high_resolution_clock::now();
         func();
+        cudaDeviceSynchronize();
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         samples.push_back(static_cast<double>(elapsed.count()));
@@ -178,7 +180,8 @@ static void generate_pair_partial(u8 *chunk_buf0,
                                   T *d_rin,
                                   AESGlobalContext *gaes,
                                   size_t &peak_pair_bytes,
-                                  size_t &total_pair_bytes) {
+                                  size_t &total_pair_bytes,
+                                  bool *validation_ok = nullptr) {
     peak_pair_bytes = 0;
     total_pair_bytes = 0;
     for (int offset = 0; offset < n; offset += chunk_size) {
@@ -187,9 +190,17 @@ static void generate_pair_partial(u8 *chunk_buf0,
         u8 *ptr1 = chunk_buf1;
         gpuKeyGenDPF(&ptr0, SERVER0, bin, cur_n, d_rin + offset, gaes, true);
         gpuKeyGenDPF(&ptr1, SERVER1, bin, cur_n, d_rin + offset, gaes, true);
-        size_t pair_bytes = static_cast<size_t>(ptr0 - chunk_buf0) + static_cast<size_t>(ptr1 - chunk_buf1);
+        size_t bytes0 = static_cast<size_t>(ptr0 - chunk_buf0);
+        size_t bytes1 = static_cast<size_t>(ptr1 - chunk_buf1);
+        size_t pair_bytes = bytes0 + bytes1;
         peak_pair_bytes = std::max(peak_pair_bytes, pair_bytes);
         total_pair_bytes += pair_bytes;
+        if (validation_ok != nullptr) {
+            size_t expected = estimate_dpf_key_bytes_single_party(bin, cur_n, true);
+            *validation_ok = *validation_ok && (expected == bytes0) && (expected == bytes1);
+            *validation_ok = *validation_ok && validate_key_layout(chunk_buf0, bytes0, bin, cur_n);
+            *validation_ok = *validation_ok && validate_key_layout(chunk_buf1, bytes1, bin, cur_n);
+        }
     }
 }
 
@@ -223,20 +234,8 @@ static int run_benchmark(const Args &args) {
                           d_rin,
                           &gaes,
                           partial_peak_pair_bytes,
-                          partial_total_pair_bytes);
-
-    for (int offset = 0; offset < args.n; offset += args.chunk_size) {
-        int cur_n = std::min(args.chunk_size, args.n - offset);
-        size_t cur_bytes = estimate_dpf_key_bytes_single_party(args.bin, cur_n, true);
-        u8 *ptr0 = chunk_buf0;
-        u8 *ptr1 = chunk_buf1;
-        gpuKeyGenDPF(&ptr0, SERVER0, args.bin, cur_n, d_rin + offset, &gaes, true);
-        gpuKeyGenDPF(&ptr1, SERVER1, args.bin, cur_n, d_rin + offset, &gaes, true);
-        valid = valid && validate_key_layout(chunk_buf0, static_cast<size_t>(ptr0 - chunk_buf0), args.bin, cur_n);
-        valid = valid && validate_key_layout(chunk_buf1, static_cast<size_t>(ptr1 - chunk_buf1), args.bin, cur_n);
-        valid = valid && cur_bytes == static_cast<size_t>(ptr0 - chunk_buf0);
-        valid = valid && cur_bytes == static_cast<size_t>(ptr1 - chunk_buf1);
-    }
+                          partial_total_pair_bytes,
+                          &valid);
 
     SummaryStats full_stats = benchmark(
         [&]() {
@@ -288,6 +287,8 @@ static int run_benchmark(const Args &args) {
     cpuFree(chunk_buf1, true);
     gpuFree(d_rin);
     destroyGPURandomness();
+    // TODO: the library does not currently expose a destroyAESContext() for gaes.
+    // Process exit reclaims the GPU memory; add a symmetric teardown when one lands.
     return valid ? 0 : 2;
 }
 

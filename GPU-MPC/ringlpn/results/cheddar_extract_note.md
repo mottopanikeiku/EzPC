@@ -220,3 +220,13 @@ That matters if you want symmetry with the cheddar extraction. Right now the CPU
 ## Practical Next Step
 
 If you want the CPU side to mirror the GPU extraction strategy, the next step is not to change the benchmark formulas. The next step is to replace the current NFLLib-linked CPU harness with a minimal local extraction of the NFLLib CPU NTT path, so both CPU and GPU benchmarks are measured from locally owned implementations rather than one local extraction and one external library call path.
+
+## Addendum: `run_polymul_prepared_lhs` (2026-04-20)
+
+The extracted path now exposes a second polynomial-multiplication entry point, `run_polymul_prepared_lhs(...)`, in addition to `run_full_polymul(...)`. Both live in `src/bench_ntt_cuda_cheddar.cu`.
+
+The new entry point takes a pre-computed NTT of the left operand and only runs the forward NTT on the right operand before the OF-twiddle pointwise multiplication and the inverse NTT. The internal two-phase NTT / INTT structure, the Montgomery conversion, and the bit-reversed `psi` / `psi^{-1}` table use are unchanged.
+
+The VOLE benchmark is the primary consumer of this entry point: `run_inner_product_phase(...)` in `ringlpn/src/bench_vole_ringlpn.cu` now receives `NTT(a)` once and reuses it across the three inner-product phases for `x`, `y`, and `z`. Call sites that do not want to manage the prepared-lhs buffer are unaffected; they continue to call `run_full_polymul(...)` as before.
+
+This addendum is intentionally narrow: the underlying cheddar extraction strategy and the saved NTT / PolyMul measurements in `ntt_gpu_q32.md`, `ntt_gpu_q64.md`, and `cpu_gpu_8192_32_batch64.md` did not depend on this new entry point and are not affected by it.
