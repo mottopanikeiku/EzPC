@@ -1,0 +1,5 @@
+reserved memory: 26843545600 18446744073709551615
+single_point,log_domain=6,points=1,spfss_pass=1
+multiple_points,log_domain=7,points=4,spfss_pass=1
+colliding_alphas,log_domain=7,points=4,spfss_pass=1
+edge_alphas,log_domain=8,points=2,spfss_pass=1

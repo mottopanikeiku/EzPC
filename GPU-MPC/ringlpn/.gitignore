@@ -1,0 +1,51 @@
+# Local-only / eyes-only files for the ringlpn subproject.
+#
+# Note on precedence: the top-level .gitignore whitelists
+# `GPU-MPC/ringlpn/results/*.md` and `GPU-MPC/ringlpn/scripts/*.sh`. This file
+# re-excludes specific private patterns *within* ringlpn, overriding that
+# whitelist for files matching the patterns below. Files already tracked in
+# git are NOT affected by .gitignore; use `git rm --cached <path>` to stop
+# tracking them (keeps the local copy).
+
+# -- Private drafts and correspondence --
+results/email*.md
+results/*_draft.md
+results/*draft*.md
+results/notes*.md
+results/TODO*.md
+results/*_private.md
+
+# -- In-progress abstract / submission / status materials --
+# (These were `git rm --cached`-ed on 2026-04-21; local copies preserved.)
+results/abstract_submission_draft.md
+results/abstract_benchmark_appendix.md
+results/ringlpn_vole_abstract_support.md
+results/ringlpn_status_report.md
+results/ringlpn_linear_integration_plan.md
+
+# -- Given materials (papers / docx / slides provided to you) --
+*.pdf
+*.PDF
+*.docx
+*.DOCX
+*.pptx
+*.PPTX
+papers/
+givens/
+readings/
+
+# -- Private scratch / notes directories --
+private/
+notes/
+scratch/
+.notes/
+
+# -- Build output (host-only artifacts; CUDA bin/ already ignored at top level) --
+host_bin/
+
+# -- Editor / OS cruft --
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

@@ -7,6 +7,10 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - src/bench_ntt_cuda.cu: legacy CUDA NTT benchmark for requested q=32 using a 30-bit prime, runtime root derivation, and batching
 - src/bench_ntt_cuda_cheddar.cu: primary CUDA benchmark, extracted from cheddar-fhe and adapted to the Ring-LPN harness
 - src/bench_vole_ringlpn.cu: standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path
+- src/gpu_spfss_zp.cuh: standalone GPU DPF/SPFSS path with additive Z_p payload shares for the Figure 2 OLE artifact
+- src/test_spfss_zp_cuda.cu: GPU SPFSS payload correctness test
+- src/bench_ole_ringlpn_cuda.cu: standalone GPU Figure 2 SPFSS/OLE benchmark
+- src/bench_linear_ole_ringlpn_cuda.cu: standalone ring-polynomial linear-layer Beaver artifact built from two Figure 2 OLEs per product
 - ../tests/fss/dpf_online_keygen_bench.cu: standalone DPF online key generation benchmark for one-shot versus chunked partial generation
 - scripts/setup_nfl.sh: clone + build NFLLib
 - scripts/build_bench.sh: build the benchmark
@@ -14,6 +18,12 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/build_cuda_bench.sh: build the primary CUDA benchmark (cheddar-derived implementation)
 - scripts/build_vole_bench.sh: build the standalone Ring-LPN VOLE prototype benchmark
 - scripts/run_vole_sweep.sh: run the standalone Ring-LPN VOLE prototype sweep and generate CSV + Markdown
+- scripts/build_ole_cuda_bench.sh: build the standalone GPU Figure 2 OLE benchmark and GPU SPFSS test
+- scripts/run_ole_sweep.sh: run the OLE smoke or bounded sweep and generate CSV + Markdown
+- scripts/summarize_ole_results.py: summarize OLE CSV output
+- scripts/build_linear_ole_bench.sh: build the ring-polynomial linear OLE-to-Beaver benchmark
+- scripts/run_linear_ole_sweep.sh: run the linear OLE smoke benchmark and generate CSV + Markdown
+- scripts/summarize_linear_ole_results.py: summarize linear OLE CSV output
 - scripts/build_cuda_bench_cheddar.sh: build an explicit standalone cheddar-derived binary for side-by-side checks
 - scripts/build_cuda_bench_legacy.sh: build the legacy CUDA benchmark path
 - scripts/run_cuda_single.sh: run a CPU vs GPU spot check for requested q=32 at n in {8192, 16384, 32768}
@@ -24,6 +34,10 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/run_vtune_hotspots.sh: VTune hotspots wrapper for CPU benchmark
 - scripts/run_vtune_memory.sh: VTune memory-access wrapper for CPU benchmark
 - results/: output files
+
+For the current Figure 2 OLE work, read `results/ole_gpu_handoff.md` first. It records the exact validated claim, caveats, reproduction commands, and follow-up path.
+
+For the current linear-layer work, read `results/linear_ole_handoff.md` first. It records the exact two-OLE-to-Beaver ring-polynomial artifact and why Orca scalar integration remains a separate step.
 
 ## Quick start (inside container)
 ```bash
@@ -149,6 +163,54 @@ Notes:
 - Requested `qbits=32` maps to actual `qbits=30`, and requested `qbits=64` maps to actual `qbits=62`.
 - The prototype is intentionally scoped for bring-up and benchmarking of the algebraic expansion step; SPFSS key generation and evaluation are still external to this harness.
 - The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64 counterparts when run with `QBITS=64`.
+
+## Figure 2 GPU OLE artifact
+The repository also includes a standalone GPU artifact for the Figure 2 SPFSS-based Ring-LPN OLE path.
+
+Build and run inside the CUDA-enabled container:
+```bash
+cd /home/ringlpn
+chmod +x scripts/*.sh
+
+./scripts/build_ole_cuda_bench.sh
+
+# Fast correctness smoke: N=8192, c=2, t=8, one timed iteration.
+SMOKE=1 ./scripts/run_ole_sweep.sh
+
+# Bounded first-pass uniform-noise sweep: N in {8192, 16384}, c=2, t=64.
+./scripts/run_ole_sweep.sh
+```
+
+Outputs:
+- `results/ole_gpu_q64_uniform_c2_t8_smoke.csv` and `.md` for the smoke run
+- `results/ole_gpu_q64_uniform_c2_t64.csv` and `.md` for the bounded sweep
+
+Notes:
+- This artifact uses the promoted single 62-bit prime and reports requested `qbits=64`, actual `qbits=62`.
+- Noise is uniform-position sparse noise over `[0, N)`; regular noise is a follow-up for paper-comparable key-size numbers.
+- The SPFSS path uses a new `Z_p` DPF payload path in `src/gpu_spfss_zp.cuh`; the existing packed one-bit `gpu_dpf.cu` callers are unchanged.
+- The benchmark validates `z_0 + z_1 == x_0 * x_1` in `Z_p[X]/(X^N+1)` and intentionally stops before OLE-to-Beaver conversion or Orca FC integration.
+
+## Ring-polynomial linear OLE artifact
+The repository now includes a standalone linear-layer artifact that converts two Figure 2 OLE instances into a Beaver product and sums those products into a matrix multiplication over `Z_p[X]/(X^N+1)`.
+
+Build and run inside the CUDA-enabled container:
+```bash
+cd /home/ringlpn
+chmod +x scripts/*.sh
+
+./scripts/build_linear_ole_bench.sh
+./scripts/run_linear_ole_sweep.sh
+```
+
+Default smoke output:
+- `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.csv`
+- `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md`
+
+Notes:
+- The default smoke validates a `2 x 2` by `2 x 2` ring-polynomial matrix product using 8 ring products and 16 OLE instances.
+- This is the first OLE-to-Beaver linear-layer artifact, but it is not yet Orca FC integration.
+- Orca still needs scalar packing and `Z_p -> Z_{2^bw}` share conversion before this can replace `gpuKeygenMatmul`.
 
 ## Standalone DPF online key generation benchmark
 The repository also includes a standalone DPF online key generation benchmark for the memory-efficiency track. This benchmark lives outside `ringlpn/src`, but its sweep artifacts are written into `ringlpn/results` so they can be used alongside the Ring-LPN VOLE and NTT results.
