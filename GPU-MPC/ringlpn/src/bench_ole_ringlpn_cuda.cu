@@ -33,6 +33,7 @@ struct OleArgs {
     int warmup = 1;
     int chunk_size = 8192;
     uint64_t seed = 1;
+    std::string noise = "uniform";
     bool csv_header = false;
     bool skip_validation = false;
 };
@@ -93,11 +94,26 @@ __global__ void fold_2n_to_n_kernel(const Word *in,
     }
 }
 
+__global__ void scatter_regular_group_kernel(const Word *group,
+                                             Word *full,
+                                             int group_domain,
+                                             int base,
+                                             Word modulus) {
+    size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (idx < static_cast<size_t>(group_domain)) {
+        Word value = group[idx];
+        if (value != 0) {
+            size_t out_idx = static_cast<size_t>(base) + idx;
+            full[out_idx] = mod_add_device(full[out_idx], value, modulus);
+        }
+    }
+}
+
 static void ole_usage(const char *prog) {
     std::cerr << "Usage: " << prog
               << " --n <deg> [--qbits 64] [--c N] [--t N] [--seed N]"
               << " [--iters N] [--warmup N] [--chunk-size N]"
-              << " [--csv-header] [--skip-validation]\n";
+              << " [--noise uniform|regular] [--csv-header] [--skip-validation]\n";
 }
 
 static OleArgs parse_ole_args(int argc, char **argv) {
@@ -113,6 +129,8 @@ static OleArgs parse_ole_args(int argc, char **argv) {
             args.t = std::atoi(argv[++i]);
         } else if (!std::strcmp(argv[i], "--seed") && i + 1 < argc) {
             args.seed = std::strtoull(argv[++i], nullptr, 10);
+        } else if (!std::strcmp(argv[i], "--noise") && i + 1 < argc) {
+            args.noise = argv[++i];
         } else if (!std::strcmp(argv[i], "--iters") && i + 1 < argc) {
             args.iters = std::atoi(argv[++i]);
         } else if (!std::strcmp(argv[i], "--warmup") && i + 1 < argc) {
@@ -138,11 +156,36 @@ static OleArgs parse_ole_args(int argc, char **argv) {
         ole_usage(argv[0]);
         std::exit(1);
     }
+    if (args.noise != "uniform" && args.noise != "regular") {
+        ole_usage(argv[0]);
+        std::exit(1);
+    }
+    if (args.noise == "regular" &&
+        (args.n % args.t != 0 || !is_power_of_two(args.t))) {
+        std::cerr << "Regular noise requires power-of-two t dividing n for the first paper-compatible GPU artifact\n";
+        std::exit(1);
+    }
     if (static_cast<uint64_t>(args.c) * static_cast<uint64_t>(args.c) > 65535ULL) {
         std::cerr << "Unsupported c: c*c must fit CUDA grid.y limit\n";
         std::exit(1);
     }
     return args;
+}
+
+static bool use_regular_noise(const OleArgs &args) {
+    return args.noise == "regular";
+}
+
+static int regular_bucket_size(const OleArgs &args) {
+    return args.n / args.t;
+}
+
+static int spfss_domain_size(const OleArgs &args) {
+    return use_regular_noise(args) ? 2 * regular_bucket_size(args) : 2 * args.n;
+}
+
+static int spfss_group_count(const OleArgs &args) {
+    return use_regular_noise(args) ? 2 * args.t - 1 : 1;
 }
 
 static SummaryStats summarize(const std::vector<double> &samples) {
@@ -189,6 +232,20 @@ static SparsePoly sample_sparse(int n, int t, Word modulus, std::mt19937_64 &rng
             continue;
         }
         out.positions.push_back(pos);
+        out.values.push_back(value_dist(rng));
+    }
+    return out;
+}
+
+static SparsePoly sample_sparse_regular(int n, int t, Word modulus, std::mt19937_64 &rng) {
+    SparsePoly out;
+    out.positions.reserve(t);
+    out.values.reserve(t);
+    int bucket = n / t;
+    std::uniform_int_distribution<Word> value_dist(1, modulus - 1);
+    for (int b = 0; b < t; ++b) {
+        std::uniform_int_distribution<int> offset_dist(0, bucket - 1);
+        out.positions.push_back(b * bucket + offset_dist(rng));
         out.values.push_back(value_dist(rng));
     }
     return out;
@@ -283,6 +340,8 @@ struct OleState {
     Word *d_u1 = nullptr;
     Word *d_u2n0 = nullptr;
     Word *d_u2n1 = nullptr;
+    Word *d_group0 = nullptr;
+    Word *d_group1 = nullptr;
     Word *d_z0 = nullptr;
     Word *d_z1 = nullptr;
     Word *d_zsum = nullptr;
@@ -306,6 +365,8 @@ struct OleState {
         cudaFree(d_u1);
         cudaFree(d_u2n0);
         cudaFree(d_u2n1);
+        cudaFree(d_group0);
+        cudaFree(d_group1);
         cudaFree(d_z0);
         cudaFree(d_z1);
         cudaFree(d_zsum);
@@ -329,7 +390,9 @@ static void build_inputs(OleState &state) {
     state.e.assign(2, std::vector<SparsePoly>(c));
     for (int party = 0; party < 2; ++party) {
         for (int i = 0; i < c; ++i) {
-            state.e[party][i] = sample_sparse(n, state.args.t, modulus, rng);
+            state.e[party][i] = use_regular_noise(state.args)
+                                    ? sample_sparse_regular(n, state.args.t, modulus, rng)
+                                    : sample_sparse(n, state.args.t, modulus, rng);
         }
     }
 
@@ -370,6 +433,10 @@ static void build_inputs(OleState &state) {
     alloc_device(&state.d_u1, cc_coeffs, "alloc u1");
     alloc_device(&state.d_u2n0, static_cast<size_t>(2) * n, "alloc u2n0");
     alloc_device(&state.d_u2n1, static_cast<size_t>(2) * n, "alloc u2n1");
+    if (use_regular_noise(state.args)) {
+        alloc_device(&state.d_group0, spfss_domain_size(state.args), "alloc regular group0");
+        alloc_device(&state.d_group1, spfss_domain_size(state.args), "alloc regular group1");
+    }
     alloc_device(&state.d_z0, n, "alloc z0");
     alloc_device(&state.d_z1, n, "alloc z1");
     alloc_device(&state.d_zsum, n, "alloc zsum");
@@ -393,8 +460,10 @@ static double build_spfss_keys(OleState &state, AESGlobalContext *gaes) {
     const int t = state.args.t;
     const Word modulus = state.modulus;
     const int cc = c * c;
-    state.keys0.resize(cc);
-    state.keys1.resize(cc);
+    const int groups = spfss_group_count(state.args);
+    const int bucket = use_regular_noise(state.args) ? regular_bucket_size(state.args) : 0;
+    state.keys0.resize(static_cast<size_t>(cc) * groups);
+    state.keys1.resize(static_cast<size_t>(cc) * groups);
     state.spfss_pair_key_bytes = 0;
 
     auto start = Clock::now();
@@ -402,29 +471,65 @@ static double build_spfss_keys(OleState &state, AESGlobalContext *gaes) {
         for (int i = 0; i < c; ++i) {
             const SparsePoly &e0 = state.e[0][i];
             const SparsePoly &e1 = state.e[1][j];
-            std::vector<Word> alphas;
-            std::vector<Word> betas;
-            alphas.reserve(static_cast<size_t>(t) * t);
-            betas.reserve(static_cast<size_t>(t) * t);
-            for (int k = 0; k < t; ++k) {
-                for (int l = 0; l < t; ++l) {
-                    alphas.push_back(static_cast<Word>(e0.positions[k] + e1.positions[l]));
-                    betas.push_back(mod_mul_host(e0.values[k], e1.values[l], modulus));
+            size_t matrix_idx = static_cast<size_t>(i) + static_cast<size_t>(j) * c;
+            if (use_regular_noise(state.args)) {
+                for (int group = 0; group < groups; ++group) {
+                    std::vector<Word> alphas;
+                    std::vector<Word> betas;
+                    alphas.reserve(t);
+                    betas.reserve(t);
+                    for (int k = 0; k < t; ++k) {
+                        int l = group - k;
+                        if (l < 0 || l >= t) {
+                            continue;
+                        }
+                        int off0 = e0.positions[k] - k * bucket;
+                        int off1 = e1.positions[l] - l * bucket;
+                        alphas.push_back(static_cast<Word>(off0 + off1));
+                        betas.push_back(mod_mul_host(e0.values[k], e1.values[l], modulus));
+                    }
+                    size_t key_idx = matrix_idx * static_cast<size_t>(groups) +
+                                     static_cast<size_t>(group);
+                    ringlpn_spfss_zp::gpuKeyGenDPFZpPair(
+                        alphas,
+                        betas,
+                        state.log_domain,
+                        modulus,
+                        state.args.seed ^ (0xA24BAED4963EE407ULL +
+                                           key_idx * 0x9E3779B97F4A7C15ULL),
+                        gaes,
+                        state.keys0[key_idx],
+                        state.keys1[key_idx]);
+                    state.spfss_pair_key_bytes +=
+                        ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys0[key_idx]) +
+                        ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys1[key_idx]);
                 }
+            } else {
+                std::vector<Word> alphas;
+                std::vector<Word> betas;
+                alphas.reserve(static_cast<size_t>(t) * t);
+                betas.reserve(static_cast<size_t>(t) * t);
+                for (int k = 0; k < t; ++k) {
+                    for (int l = 0; l < t; ++l) {
+                        alphas.push_back(static_cast<Word>(e0.positions[k] + e1.positions[l]));
+                        betas.push_back(mod_mul_host(e0.values[k], e1.values[l], modulus));
+                    }
+                }
+                size_t key_idx = matrix_idx;
+                ringlpn_spfss_zp::gpuKeyGenDPFZpPair(
+                    alphas,
+                    betas,
+                    state.log_domain,
+                    modulus,
+                    state.args.seed ^ (0xA24BAED4963EE407ULL +
+                                       key_idx * 0x9E3779B97F4A7C15ULL),
+                    gaes,
+                    state.keys0[key_idx],
+                    state.keys1[key_idx]);
+                state.spfss_pair_key_bytes +=
+                    ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys0[key_idx]) +
+                    ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys1[key_idx]);
             }
-            size_t idx = static_cast<size_t>(i) + static_cast<size_t>(j) * c;
-            ringlpn_spfss_zp::gpuKeyGenDPFZpPair(
-                alphas,
-                betas,
-                state.log_domain,
-                modulus,
-                state.args.seed ^ (0xA24BAED4963EE407ULL + idx * 0x9E3779B97F4A7C15ULL),
-                gaes,
-                state.keys0[idx],
-                state.keys1[idx]);
-            state.spfss_pair_key_bytes +=
-                ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys0[idx]) +
-                ringlpn_spfss_zp::serializedSizeGPUDPFZpKey(state.keys1[idx]);
         }
     }
     check(cudaDeviceSynchronize(), "sync SPFSS keygen");
@@ -464,9 +569,33 @@ static void run_x_phase(OleState &state) {
 static void run_spfss_eval_phase(OleState &state, AESGlobalContext *gaes) {
     const int n = state.args.n;
     const int cc = state.args.c * state.args.c;
+    const int groups = spfss_group_count(state.args);
     for (int idx = 0; idx < cc; ++idx) {
-        ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys0[idx], state.d_u2n0, gaes);
-        ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys1[idx], state.d_u2n1, gaes);
+        if (use_regular_noise(state.args)) {
+            const int bucket = regular_bucket_size(state.args);
+            const int group_domain = spfss_domain_size(state.args);
+            check(cudaMemset(state.d_u2n0, 0, static_cast<size_t>(2) * n * sizeof(Word)),
+                  "zero regular full u2n0");
+            check(cudaMemset(state.d_u2n1, 0, static_cast<size_t>(2) * n * sizeof(Word)),
+                  "zero regular full u2n1");
+            for (int group = 0; group < groups; ++group) {
+                size_t key_idx = static_cast<size_t>(idx) * groups + group;
+                ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys0[key_idx], state.d_group0, gaes);
+                ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys1[key_idx], state.d_group1, gaes);
+                dim3 block(256);
+                dim3 grid(grid_size(static_cast<size_t>(group_domain), block.x));
+                int base = group * bucket;
+                scatter_regular_group_kernel<<<grid, block>>>(
+                    state.d_group0, state.d_u2n0, group_domain, base, state.modulus);
+                check(cudaGetLastError(), "launch scatter regular group0");
+                scatter_regular_group_kernel<<<grid, block>>>(
+                    state.d_group1, state.d_u2n1, group_domain, base, state.modulus);
+                check(cudaGetLastError(), "launch scatter regular group1");
+            }
+        } else {
+            ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys0[idx], state.d_u2n0, gaes);
+            ringlpn_spfss_zp::gpuDpfZpFullEvalSum(state.keys1[idx], state.d_u2n1, gaes);
+        }
         fold_2n_to_n(state.d_u2n0, state.d_u0 + static_cast<size_t>(idx) * n, n, state.modulus);
         fold_2n_to_n(state.d_u2n1, state.d_u1 + static_cast<size_t>(idx) * n, n, state.modulus);
     }
@@ -556,7 +685,7 @@ static int run_benchmark(const OleArgs &args) {
     OleState state;
     state.args = args;
     state.log_degree = log2i(args.n);
-    state.log_domain = log2i(2 * args.n);
+    state.log_domain = log2i(spfss_domain_size(args));
     compute_cheddar_tables(state.host_tables, args.n, kConfig62);
     alloc_and_copy(state.tables, state.host_tables);
     compute_reference_vectors(state.phi_norm, state.post_norm, args.n, kConfig62);
@@ -597,9 +726,10 @@ static int run_benchmark(const OleArgs &args) {
     const char *host_validation =
         args.skip_validation ? "skipped" : (host_validation_ran ? "pass" : "skipped");
 
-    std::cout << RINGLPN_DEVICE_LABEL << ",figure2_spfss_uniform,"
+    std::cout << RINGLPN_DEVICE_LABEL << ",figure2_spfss_" << args.noise << ","
               << args.n << "," << state.log_degree << "," << state.log_domain << ","
               << args.qbits << "," << kConfig62.actual_qbits << ","
+              << args.noise << "," << spfss_domain_size(args) << ","
               << args.c << "," << args.t << "," << args.chunk_size << ","
               << args.iters << "," << validation << "," << host_validation << ","
               << state.spfss_pair_key_bytes << "," << keygen_us << ","
@@ -618,7 +748,7 @@ static int run_benchmark(const OleArgs &args) {
 int main(int argc, char **argv) {
     OleArgs args = parse_ole_args(argc, argv);
     if (args.csv_header) {
-        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct\n";
+        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct\n";
     }
     return run_benchmark(args);
 }

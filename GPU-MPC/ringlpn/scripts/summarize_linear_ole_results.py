@@ -19,20 +19,25 @@ def main():
     with open(args.csv, newline="") as f:
         rows = list(csv.DictReader(f))
 
+    noise_modes = sorted({row.get("noise_mode", "uniform") for row in rows})
+    noise_label = ", ".join(noise_modes) if noise_modes else "?"
+
     lines = [
         "# Ring-LPN OLE Linear-Layer Beaver Artifact",
         "",
-        "Configuration: ring-polynomial matrix multiplication over the single 62-bit prime. Each ring product uses two Figure 2 OLE instances to form Beaver shares.",
+        f"Configuration: ring-polynomial matrix multiplication over the single 62-bit prime. Noise mode(s): {noise_label}. Each ring product uses two Figure 2 OLE instances to form Beaver shares.",
         "",
-        "| rows | inner | cols | n | c | t | validation | OLE instances | key bytes MiB | keygen us | linear expand mean us | linear expand std us |",
-        "| ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |",
+        "| rows | inner | cols | n | c | t | noise | SPFSS domain | validation | OLE instances | key bytes MiB | keygen us | linear expand mean us | linear expand std us |",
+        "| ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
 
     for row in rows:
         key_mib = as_float(row["spfss_pair_key_bytes"]) / (1024.0 * 1024.0)
         lines.append(
             f"| {row['rows']} | {row['inner']} | {row['cols']} | {row['n']} | "
-            f"{row['c']} | {row['t']} | {row['validation']} | {row['ole_instances']} | "
+            f"{row['c']} | {row['t']} | {row.get('noise_mode', 'uniform')} | "
+            f"{row.get('spfss_domain', str(2 * int(row['n'])))} | "
+            f"{row['validation']} | {row['ole_instances']} | "
             f"{key_mib:.2f} | {as_float(row['spfss_keygen_us']):,.3f} | "
             f"{as_float(row['linear_expand_mean_us']):,.3f} | "
             f"{as_float(row['linear_expand_std_us']):,.3f} |"

@@ -13,16 +13,22 @@ INNER="${INNER:-2}"
 COLS="${COLS:-2}"
 C="${C:-2}"
 T="${T:-8}"
+NOISE="${NOISE:-uniform}"
 CHUNK_SIZE="${CHUNK_SIZE:-8192}"
 ITERS="${ITERS:-1}"
 WARMUP="${WARMUP:-0}"
 SEED="${SEED:-1}"
-OUT_TAG="${OUT_TAG:-q${QBITS}_uniform_r${ROWS}_k${INNER}_c${COLS}_n${N}_t${T}}"
+OUT_TAG="${OUT_TAG:-q${QBITS}_${NOISE}_r${ROWS}_k${INNER}_c${COLS}_n${N}_t${T}}"
 
 mkdir -p "$OUT_DIR"
 
 if [[ "$QBITS" != "64" ]]; then
   echo "Unsupported QBITS=$QBITS. This first-pass linear OLE artifact supports only QBITS=64."
+  exit 1
+fi
+
+if [[ "$NOISE" != "uniform" && "$NOISE" != "regular" ]]; then
+  echo "Unsupported NOISE=$NOISE. Expected uniform or regular."
   exit 1
 fi
 
@@ -45,6 +51,7 @@ output=$("$BIN" \
   --cols "$COLS" \
   --c "$C" \
   --t "$T" \
+  --noise "$NOISE" \
   --chunk-size "$CHUNK_SIZE" \
   --iters "$ITERS" \
   --warmup "$WARMUP" \

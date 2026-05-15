@@ -1,15 +1,17 @@
 # GPU Figure 2 OLE Handoff
 
-Updated: 2026-05-04
+Updated: 2026-05-06
 
 ## Status
 
-The standalone GPU Figure 2 Ring-LPN OLE artifact is implemented and validated for the first-pass configuration:
+The standalone GPU Figure 2 Ring-LPN OLE artifact is implemented and validated for these configurations:
 
 - modulus: requested `qbits=64`, actual single 62-bit prime `p = 4611686018326724609`,
-- noise: uniform-position `t`-sparse noise over `[0, N)` with nonzero values in `Z_p`,
+- noise: uniform-position sparse noise and regular sparse noise with one position per bucket,
 - SPFSS domain: `[0, 2N)`, folded to degree `< N` using `X^N = -1`,
 - benchmark scope: OLE only, with no Orca Beaver-triple conversion or nonlinear FSS integration.
+
+For regular noise, the implementation groups point functions by bucket-sum and evaluates SPFSS over domain size `2N/t`, then scatters the grouped output back into `[0, 2N)` before folding.
 
 The validated claim is:
 
@@ -30,7 +32,9 @@ Follow-up status: `results/linear_ole_handoff.md` now records the first OLE-to-B
 | `scripts/run_ole_sweep.sh` | Runs smoke or bounded OLE sweep and writes CSV/Markdown |
 | `scripts/summarize_ole_results.py` | Summarizes OLE CSV into Markdown |
 | `results/ole_gpu_q64_uniform_c2_t8_smoke.md` | Smoke result summary |
-| `results/ole_gpu_q64_uniform_c2_t64.md` | Bounded result summary |
+| `results/ole_gpu_q64_uniform_c2_t64.md` | Bounded uniform-noise result summary |
+| `results/ole_gpu_q64_regular_c2_t8_smoke.md` | Regular-noise smoke result summary |
+| `results/ole_gpu_q64_regular_c2_t64.md` | Bounded regular-noise result summary |
 | `results/linear_ole_handoff.md` | OLE-to-Beaver ring-polynomial linear-layer follow-up |
 
 The new arithmetic SPFSS path is intentionally separate from the existing packed one-bit `gpu_dpf.cu` path, so current ReLU, DCF, LUT, and bit-output callers are unchanged.
@@ -45,6 +49,8 @@ Run inside the `orca-dev` container from `/home/ringlpn`:
 
 SMOKE=1 ./scripts/run_ole_sweep.sh
 ./scripts/run_ole_sweep.sh
+SMOKE=1 NOISE=regular ./scripts/run_ole_sweep.sh
+NOISE=regular ./scripts/run_ole_sweep.sh
 ```
 
 Preserved host-side checks for the Figure 2 oracle and host SPFSS path:
@@ -60,16 +66,19 @@ Preserved host-side checks for the Figure 2 oracle and host SPFSS path:
 
 | Run | n | c | t | Validation | Host validation | Pair key bytes | Keygen us | OLE expand mean us |
 | --- | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: |
-| smoke | 8192 | 2 | 8 | pass | pass | 141,504 | 456 | 13,224 |
-| bounded | 8192 | 2 | 64 | pass | pass | 9,044,160 | 4,797 | 865,253 |
-| bounded | 16384 | 2 | 64 | pass | skipped | 9,633,984 | 5,296 | 1,830,210 |
+| uniform smoke | 8192 | 2 | 8 | pass | pass | 141,504 | 448 | 13,316 |
+| regular smoke | 8192 | 2 | 8 | pass | pass | 116,544 | 5,006 | 6,825 |
+| uniform bounded | 8192 | 2 | 64 | pass | pass | 9,044,160 | 4,797 | 865,253 |
+| uniform bounded | 16384 | 2 | 64 | pass | skipped | 9,633,984 | 5,296 | 1,830,210 |
+| regular bounded | 8192 | 2 | 64 | pass | pass | 5,529,408 | 40,828 | 58,462.5 |
+| regular bounded | 16384 | 2 | 64 | pass | skipped | 6,119,232 | 42,331 | 67,733 |
 
 The host oracle validation is enabled for the small bounded case and intentionally skipped at `n=16384` to keep the sweep bounded.
 
 ## Scientific Caveats
 
 - The current modulus is a single 62-bit prime, reported as requested `qbits=64`; it does not match the paper's `log p ~= 128` parameter.
-- The current noise is uniform-position sparse noise. The paper-comparable key-size configuration is regular noise, which reduces the per-point SPFSS domain from `[0, 2N)` to a bucketed domain.
+- Regular-noise bounded numbers are now saved for `n in {8192, 16384}`, `c=2`, `t=64`, but they still use the single 62-bit prime and are therefore not the paper's CRT-sized modulus setting.
 - The direct OLE benchmark stops at OLE. The follow-up linear artifact converts OLEs into ring-polynomial Beaver products, but it does not yet produce Orca-compatible scalar Beaver triples.
 - There is no `Z_p -> Z_{2^bw}` share conversion yet, so this is not ready for `gpuMatmulBeaver`.
 - The current OLE benchmark uses full SPFSS evaluation for clarity and validation. It is correctness-first, not the final optimized scheduling path.
@@ -77,9 +86,8 @@ The host oracle validation is enabled for the small bounded case and intentional
 
 ## Recommended Next Steps
 
-1. Add regular-noise indexing and oracle support, then rerun the bounded OLE sweep for paper-comparable key-size numbers.
-2. Lift the modulus path to dual-prime CRT for requested `qbits=128`.
-3. Extend the new ring-polynomial OLE-to-Beaver artifact with a scalar packing model for Orca tensor entries.
-4. Add a written `Z_p -> Z_{2^bw}` share-conversion argument.
-5. Integrate the resulting triple source behind Orca's linear-layer keygen path and compare against baseline Beaver triples.
-6. Optimize SPFSS scheduling only after the above correctness boundaries are locked.
+1. Lift the modulus path to dual-prime CRT for requested `qbits=128`.
+2. Extend the new ring-polynomial OLE-to-Beaver artifact with a scalar packing model for Orca tensor entries.
+3. Add a written `Z_p -> Z_{2^bw}` share-conversion argument.
+4. Integrate the resulting triple source behind Orca's linear-layer keygen path and compare against baseline Beaver triples.
+5. Optimize SPFSS scheduling only after the above correctness boundaries are locked.

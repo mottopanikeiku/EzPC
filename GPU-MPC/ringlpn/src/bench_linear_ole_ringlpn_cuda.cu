@@ -20,6 +20,7 @@ struct LinearArgs {
     int warmup = 0;
     int chunk_size = 8192;
     uint64_t seed = 1;
+    std::string noise = "uniform";
     bool csv_header = false;
     bool skip_validation = false;
 };
@@ -122,7 +123,8 @@ static void linear_usage(const char *prog) {
     std::cerr << "Usage: " << prog
               << " --n <deg> [--qbits 64] [--rows M] [--inner K] [--cols N]"
               << " [--c N] [--t N] [--seed N] [--iters N] [--warmup N]"
-              << " [--chunk-size N] [--csv-header] [--skip-validation]\n";
+              << " [--chunk-size N] [--noise uniform|regular]"
+              << " [--csv-header] [--skip-validation]\n";
 }
 
 static LinearArgs parse_linear_args(int argc, char **argv) {
@@ -144,6 +146,8 @@ static LinearArgs parse_linear_args(int argc, char **argv) {
             args.t = std::atoi(argv[++i]);
         } else if (!std::strcmp(argv[i], "--seed") && i + 1 < argc) {
             args.seed = std::strtoull(argv[++i], nullptr, 10);
+        } else if (!std::strcmp(argv[i], "--noise") && i + 1 < argc) {
+            args.noise = argv[++i];
         } else if (!std::strcmp(argv[i], "--iters") && i + 1 < argc) {
             args.iters = std::atoi(argv[++i]);
         } else if (!std::strcmp(argv[i], "--warmup") && i + 1 < argc) {
@@ -170,6 +174,15 @@ static LinearArgs parse_linear_args(int argc, char **argv) {
         linear_usage(argv[0]);
         std::exit(1);
     }
+    if (args.noise != "uniform" && args.noise != "regular") {
+        linear_usage(argv[0]);
+        std::exit(1);
+    }
+    if (args.noise == "regular" &&
+        (args.n % args.t != 0 || !is_power_of_two(args.t))) {
+        std::cerr << "Regular noise requires power-of-two t dividing n for the first linear GPU artifact\n";
+        std::exit(1);
+    }
     if (static_cast<uint64_t>(args.c) * static_cast<uint64_t>(args.c) > 65535ULL) {
         std::cerr << "Unsupported c: c*c must fit CUDA grid.y limit\n";
         std::exit(1);
@@ -182,6 +195,10 @@ static uint64_t linear_mix_seed(uint64_t seed, uint64_t tag) {
     z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
     z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
     return z ^ (z >> 31);
+}
+
+static int linear_spfss_domain_size(const LinearArgs &args) {
+    return args.noise == "regular" ? 2 * (args.n / args.t) : 2 * args.n;
 }
 
 static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
@@ -198,9 +215,10 @@ static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
     state->args.warmup = 0;
     state->args.chunk_size = args.chunk_size;
     state->args.seed = seed;
+    state->args.noise = args.noise;
     state->args.skip_validation = true;
     state->log_degree = log2i(args.n);
-    state->log_domain = log2i(2 * args.n);
+    state->log_domain = log2i(spfss_domain_size(state->args));
     compute_cheddar_tables(state->host_tables, args.n, kConfig62);
     alloc_and_copy(state->tables, state->host_tables);
     compute_reference_vectors(state->phi_norm, state->post_norm, args.n, kConfig62);
@@ -408,9 +426,10 @@ static int run_linear_benchmark(const LinearArgs &args) {
     const int ole_instances = 2 * ring_products;
     const char *validation =
         args.skip_validation ? "skipped" : (correct ? "pass" : "fail");
-    std::cout << RINGLPN_DEVICE_LABEL << ",ring_beaver_two_ole_uniform,"
-              << args.n << "," << log2i(args.n) << "," << log2i(2 * args.n) << ","
+    std::cout << RINGLPN_DEVICE_LABEL << ",ring_beaver_two_ole_" << args.noise << ","
+              << args.n << "," << log2i(args.n) << "," << log2i(linear_spfss_domain_size(args)) << ","
               << args.qbits << "," << kConfig62.actual_qbits << ","
+              << args.noise << "," << linear_spfss_domain_size(args) << ","
               << args.rows << "," << args.inner << "," << args.cols << ","
               << args.c << "," << args.t << "," << args.chunk_size << ","
               << ring_products << "," << ole_instances << "," << args.iters << ","
@@ -429,7 +448,7 @@ static int run_linear_benchmark(const LinearArgs &args) {
 int main(int argc, char **argv) {
     LinearArgs args = parse_linear_args(argc, argv);
     if (args.csv_header) {
-        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,correct\n";
+        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,correct\n";
     }
     return run_linear_benchmark(args);
 }

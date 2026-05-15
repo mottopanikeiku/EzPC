@@ -177,17 +177,25 @@ chmod +x scripts/*.sh
 # Fast correctness smoke: N=8192, c=2, t=8, one timed iteration.
 SMOKE=1 ./scripts/run_ole_sweep.sh
 
+# Paper-aligned regular-noise smoke: SPFSS domain is 2N/t.
+SMOKE=1 NOISE=regular ./scripts/run_ole_sweep.sh
+
 # Bounded first-pass uniform-noise sweep: N in {8192, 16384}, c=2, t=64.
 ./scripts/run_ole_sweep.sh
+
+# Bounded regular-noise sweep with grouped SPFSS domains of size 2N/t.
+NOISE=regular ./scripts/run_ole_sweep.sh
 ```
 
 Outputs:
 - `results/ole_gpu_q64_uniform_c2_t8_smoke.csv` and `.md` for the smoke run
+- `results/ole_gpu_q64_regular_c2_t8_smoke.csv` and `.md` for the regular-noise smoke run
+- `results/ole_gpu_q64_regular_c2_t64.csv` and `.md` for the bounded regular-noise run
 - `results/ole_gpu_q64_uniform_c2_t64.csv` and `.md` for the bounded sweep
 
 Notes:
 - This artifact uses the promoted single 62-bit prime and reports requested `qbits=64`, actual `qbits=62`.
-- Noise is uniform-position sparse noise over `[0, N)`; regular noise is a follow-up for paper-comparable key-size numbers.
+- Noise can be `uniform` or `regular`. Regular noise picks one position per bucket and uses grouped SPFSS domains of size `2N/t`.
 - The SPFSS path uses a new `Z_p` DPF payload path in `src/gpu_spfss_zp.cuh`; the existing packed one-bit `gpu_dpf.cu` callers are unchanged.
 - The benchmark validates `z_0 + z_1 == x_0 * x_1` in `Z_p[X]/(X^N+1)` and intentionally stops before OLE-to-Beaver conversion or Orca FC integration.
 
@@ -201,14 +209,18 @@ chmod +x scripts/*.sh
 
 ./scripts/build_linear_ole_bench.sh
 ./scripts/run_linear_ole_sweep.sh
+NOISE=regular ./scripts/run_linear_ole_sweep.sh
 ```
 
 Default smoke output:
 - `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.csv`
 - `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md`
+- `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.csv`
+- `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md`
 
 Notes:
 - The default smoke validates a `2 x 2` by `2 x 2` ring-polynomial matrix product using 8 ring products and 16 OLE instances.
+- The regular-noise smoke uses SPFSS domain `2N/t` and validates the same Beaver relation.
 - This is the first OLE-to-Beaver linear-layer artifact, but it is not yet Orca FC integration.
 - Orca still needs scalar packing and `Z_p -> Z_{2^bw}` share conversion before this can replace `gpuKeygenMatmul`.
 

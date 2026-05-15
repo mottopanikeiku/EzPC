@@ -10,6 +10,7 @@ OUT_DIR="$BASE_DIR/results"
 QBITS="${QBITS:-64}"
 C="${C:-2}"
 T="${T:-64}"
+NOISE="${NOISE:-uniform}"
 CHUNK_SIZE="${CHUNK_SIZE:-8192}"
 SMOKE="${SMOKE:-0}"
 
@@ -17,6 +18,11 @@ mkdir -p "$OUT_DIR"
 
 if [[ "$QBITS" != "64" ]]; then
   echo "Unsupported QBITS=$QBITS. This first-pass OLE artifact supports only QBITS=64."
+  exit 1
+fi
+
+if [[ "$NOISE" != "uniform" && "$NOISE" != "regular" ]]; then
+  echo "Unsupported NOISE=$NOISE. Expected uniform or regular."
   exit 1
 fi
 
@@ -33,9 +39,9 @@ else
 fi
 
 if [[ "$SMOKE" == "1" ]]; then
-  OUT_TAG="${OUT_TAG:-q${QBITS}_uniform_c${C}_t${T}_smoke}"
+  OUT_TAG="${OUT_TAG:-q${QBITS}_${NOISE}_c${C}_t${T}_smoke}"
 else
-  OUT_TAG="${OUT_TAG:-q${QBITS}_uniform_c${C}_t${T}}"
+  OUT_TAG="${OUT_TAG:-q${QBITS}_${NOISE}_c${C}_t${T}}"
 fi
 CSV="$OUT_DIR/ole_gpu_${OUT_TAG}.csv"
 MD="$OUT_DIR/ole_gpu_${OUT_TAG}.md"
@@ -73,6 +79,7 @@ for n in "${N_LIST[@]}"; do
     --qbits "$QBITS" \
     --c "$C" \
     --t "$T" \
+    --noise "$NOISE" \
     --chunk-size "$CHUNK_SIZE" \
     --iters "$iters" \
     --warmup "$warmup" \

@@ -30,16 +30,20 @@ def main() -> None:
     lines: list[str] = []
     lines.append("# GPU Figure 2 OLE over Ring-LPN/SPFSS")
     lines.append("")
-    lines.append("Configuration: single 62-bit prime, uniform sparse noise, SPFSS domain `[0, 2N)`, folded into `Z_p[X]/(X^N+1)`.")
+    noise_modes = sorted({row.get("noise_mode", "uniform") for row in rows})
+    noise_label = ", ".join(noise_modes) if noise_modes else "?"
+    lines.append(f"Configuration: single 62-bit prime, noise mode(s): {noise_label}, folded into `Z_p[X]/(X^N+1)`.")
     lines.append("")
-    lines.append("| n | c | t | validation | host validation | key bytes MiB | keygen us | OLE expand mean us | OLE expand std us |")
-    lines.append("| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: |")
+    lines.append("| n | c | t | noise | SPFSS domain | validation | host validation | key bytes MiB | keygen us | OLE expand mean us | OLE expand std us |")
+    lines.append("| --- | --- | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: |")
     for row in rows:
         lines.append(
-            "| {n} | {c} | {t} | {validation} | {host_validation} | {key_mib} | {keygen} | {mean} | {std} |".format(
+            "| {n} | {c} | {t} | {noise} | {domain} | {validation} | {host_validation} | {key_mib} | {keygen} | {mean} | {std} |".format(
                 n=row["n"],
                 c=row["c"],
                 t=row["t"],
+                noise=row.get("noise_mode", "uniform"),
+                domain=row.get("spfss_domain", str(2 * int(row["n"]))),
                 validation=row["validation"],
                 host_validation=row["host_validation"],
                 key_mib=fmt_mib(row["spfss_pair_key_bytes"]),
@@ -52,8 +56,8 @@ def main() -> None:
     lines.append("")
     lines.append("Notes:")
     lines.append("- `requested_qbits=64` maps to the promoted single 62-bit prime.")
-    lines.append("- This artifact stops at OLE: it validates `z_0 + z_1 == x_0 * x_1`; Beaver triple conversion and Orca FC integration are follow-up work.")
-    lines.append("- Uniform noise is intentionally the first-pass configuration; regular-noise and CRT lifts are separate follow-ups.")
+    lines.append("- This artifact stops at OLE: it validates `z_0 + z_1 == x_0 * x_1`; Orca FC integration is follow-up work.")
+    lines.append("- Regular noise uses one position per bucket and grouped SPFSS domains of size `2N/t`; CRT q128 remains a separate follow-up.")
     args.out_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

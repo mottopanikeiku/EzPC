@@ -4,7 +4,7 @@ Updated: 2026-05-04
 
 ## Status
 
-The standalone Ring-LPN linear-layer artifact is implemented and validated for a small GPU smoke case.
+The standalone Ring-LPN linear-layer artifact is implemented and validated for small GPU smoke cases under both uniform and regular sparse noise.
 
 This artifact applies the standard two-OLE-to-Beaver conversion to a matrix multiplication whose entries are ring polynomials in `Z_p[X]/(X^N+1)`.
 
@@ -28,6 +28,7 @@ For a matrix product, the benchmark sums those ring-product shares across the in
 | `scripts/run_linear_ole_sweep.sh` | Runs the smoke/default linear-layer artifact and writes CSV/Markdown |
 | `scripts/summarize_linear_ole_results.py` | Summarizes the linear artifact CSV |
 | `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md` | Current smoke result summary |
+| `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md` | Current regular-noise smoke result summary |
 
 ## Reproduction
 
@@ -36,6 +37,8 @@ Run inside the `orca-dev` container from `/home/ringlpn`:
 ```bash
 ./scripts/build_linear_ole_bench.sh
 ./scripts/run_linear_ole_sweep.sh
+
+NOISE=regular ./scripts/run_linear_ole_sweep.sh
 ```
 
 The default smoke is:
@@ -48,9 +51,10 @@ The default smoke is:
 
 ## Current Result
 
-| rows | inner | cols | n | c | t | validation | ring products | OLE instances | pair key bytes | keygen us | linear expand mean us |
-| ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 2,264,064 | 6,594 | 222,355 |
+| noise | rows | inner | cols | n | c | t | validation | ring products | OLE instances | pair key bytes | keygen us | linear expand mean us |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 2,264,064 | 6,632 | 223,033 |
+| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 1,864,704 | 82,726 | 115,447 |
 
 The validation checks coefficientwise that `C_0 + C_1` equals the clear matrix product `(A_0 + A_1) * (B_0 + B_1)` over `Z_p[X]/(X^N+1)`.
 
@@ -62,14 +66,14 @@ What is valid:
 
 - two Figure 2 Ring-LPN OLE instances are converted into one Beaver ring product,
 - those ring products are summed into a matrix multiplication layer,
-- GPU validation passes for the current bounded smoke case.
+- GPU validation passes for the current uniform and regular smoke cases.
 
 What is not valid to claim yet:
 
 - no Orca `gpuMatmulBeaver` integration exists yet,
 - no scalar packing from Orca tensor elements into Ring-LPN polynomial slots exists yet,
 - no `Z_p -> Z_{2^bw}` share conversion exists yet,
-- no regular-noise or CRT q128 lift exists yet,
+- no bounded regular-noise or CRT q128 lift exists yet,
 - no trusted-dealer removal claim for Orca is justified yet.
 
 ## Recommended Next Steps
