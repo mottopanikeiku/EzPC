@@ -10,7 +10,7 @@ The repository is in a staged-but-coherent paper path:
 2. The standalone Figure 2 SPFSS/OLE artifact validates `z_0 + z_1 = x_0 * x_1` in `Z_p[X]/(X^N+1)` for single-prime q62, uniform sparse noise, and regular sparse noise.
 3. The standalone linear artifact converts two Figure 2 OLEs into a Beaver ring-polynomial matrix product.
 4. The new host bridge smoke validates the exact dealer/oracle carry correction for exporting `Z_p` shares to Orca's `Z_{2^bw}` ring under a conservative constant-polynomial scalar packing model.
-5. The new tiny Orca FC demo writes raw `A`, `B`, `C_masked` buffers for a bounded `2x2 * 2x2` forward layer and validates the unchanged `gpuMatmulBeaver` online contract.
+5. The new tiny Orca FC demo writes raw `A`, `B`, `C_masked` buffers for a bounded small-shape forward suite, validates the unchanged `gpuMatmulBeaver` online contract, and matches Orca's `gpuKeygenMatmul` baseline under the same masks.
 6. The same bridge smoke intentionally records a q62/full-32-bit counterexample, so the current direction does not overclaim unrestricted Orca scalar products.
 
 ## One-Command Smoke
@@ -68,11 +68,11 @@ docker exec orca-dev bash -lc 'cd /home/ringlpn && RUN_GPU_SMOKE=1 ./scripts/run
 Validated results:
 
 - `test_spfss_zp_cuda`: single point, multiple points, colliding alphas, and edge alphas all passed.
-- Uniform OLE smoke: validation `pass`, host validation `pass`, keygen `590 us`, expand mean `13,885 us`.
-- Regular OLE smoke: validation `pass`, host validation `pass`, keygen `6,342 us`, expand mean `8,535 us`.
-- Uniform linear OLE-to-Beaver smoke: validation `pass`, `shared_operands=1`, 16 OLE instances, keygen `8,491 us`, expand mean `229,748 us`.
-- Regular linear OLE-to-Beaver smoke: validation `pass`, `shared_operands=1`, 16 OLE instances, keygen `98,520 us`, expand mean `137,877 us`.
-- Orca FC demo: online contract `pass`, deterministic replay `1`, second-seed validation `1`, key bytes per party `96`.
+- Uniform OLE smoke: validation `pass`, host validation `pass`, keygen `455 us`, expand mean `13,330 us`.
+- Regular OLE smoke: validation `pass`, host validation `pass`, keygen `5,061 us`, expand mean `6,960 us`.
+- Uniform linear OLE-to-Beaver smoke: validation `pass`, `shared_operands=1`, 16 OLE instances, keygen `6,587 us`, expand mean `223,667 us`.
+- Regular linear OLE-to-Beaver smoke: validation `pass`, `shared_operands=1`, 16 OLE instances, keygen `81,582 us`, expand mean `114,825 us`.
+- Orca FC demo bounded suite: four cases pass (`2x2x2 bw16`, `2x3x2 bw16`, `3x2x2 bw16`, `2x2x3 bw32`), each with online contract `pass`, deterministic replay `1`, second-seed validation `1`, baseline `pass`, and `baseline_matches_ringlpn=1`.
 
 The build emitted only existing third-party Eigen/cryptoTools warnings.
 
@@ -80,16 +80,15 @@ The build emitted only existing third-party Eigen/cryptoTools warnings.
 
 ### Checkpoint 1: Tiny Orca-Compatible Key Writer
 
-Status: v1 complete for the bounded `2x2 * 2x2`, `bw=16`, `value_bound=255` demo.
+Status: complete for the current bounded small-shape suite and baseline comparison.
 
-Goal: broaden `(A, B, C)` key-array testing while keeping online `gpuMatmulBeaver` unchanged.
+Goal: keep this as a regression suite while the next research blockers land.
 
 Scope:
 
 - keep the constant-polynomial bridge,
 - restrict values so `inner * value_bound^2 < p`,
-- add more seeds and small shapes,
-- compare against baseline `gpuKeygenMatmul` on a tiny synthetic FC case,
+- compare future changes against baseline `gpuKeygenMatmul`,
 - keep this as correctness-only, not a performance claim.
 
 ### Checkpoint 2: q128/CRT Lift

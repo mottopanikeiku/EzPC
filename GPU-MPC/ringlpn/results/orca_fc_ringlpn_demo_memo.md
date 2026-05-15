@@ -4,9 +4,11 @@ Updated: 2026-05-15
 
 ## Claim
 
-We now have a complete v1 forward-only Orca FC demo for the conservative Ring-LPN scalar bridge path.
+We now have a complete v1 forward-only Orca FC demo suite for the conservative Ring-LPN scalar bridge path.
 
-The demo generates correlated party key buffers for a `2x2 * 2x2` FC layer with `bw=16`, `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, regular-noise label, `tf=None`, and zero bias. The buffers are serialized in the exact `FCLayer::readForwardKey` / `readGPUMatmulKey` order: `A`, `B`, `C_masked`. The online phase calls the existing `gpuMatmulBeaver` implementation unchanged and reconstructs `clear FC output + output_mask` in `Z_{2^16}`.
+The demo generates correlated party key buffers for small FC layers with `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, regular-noise label, `tf=None`, and zero bias. The buffers are serialized in the exact `FCLayer::readForwardKey` / `readGPUMatmulKey` order: `A`, `B`, `C_masked`. The online phase calls the existing `gpuMatmulBeaver` implementation unchanged and reconstructs `clear FC output + output_mask` in `Z_{2^bw}`.
+
+The suite also generates Orca baseline keys with `gpuKeygenMatmul` using the same masks and deterministic P0/P1 random-share stream, then verifies that baseline online reconstruction matches the Ring-LPN-style raw key writer.
 
 This is professor-presentable as a correctness demo. It is not yet paper-parameter q128, high-density packing, secure distributed conversion, training/backward integration, or trusted-dealer removal.
 
@@ -44,7 +46,7 @@ docker exec orca-dev bash -lc 'cd /home/ringlpn && scripts/build_linear_ole_benc
 docker exec orca-dev bash -lc 'cd /home/ringlpn && scripts/run_linear_ole_sweep.sh && NOISE=regular scripts/run_linear_ole_sweep.sh'
 ```
 
-Orca FC demo:
+Orca FC demo suite:
 
 ```bash
 docker exec orca-dev bash -lc 'cd /home/ringlpn && scripts/build_orca_fc_ringlpn_demo.sh'
@@ -65,14 +67,17 @@ docker exec orca-dev bash -lc 'cd /home/ringlpn && RUN_GPU_SMOKE=1 scripts/run_p
 | Host counterexample | `bw=32`, `value_bound=4294967295` | q62/full-32-bit counterexample remains present |
 | Shared linear OLE, uniform | `n=8192`, `c=2`, `t=8`, `rows=2`, `inner=2`, `cols=2` | validation `pass`, `shared_operands=1`, 16 OLE instances |
 | Shared linear OLE, regular | `n=8192`, `c=2`, `t=8`, `rows=2`, `inner=2`, `cols=2` | validation `pass`, `shared_operands=1`, 16 OLE instances |
-| Orca FC demo | `bw=16`, `poly_n=8192`, `c=2`, `t=8`, seeds `1` and `2` | online contract `pass`, replay `1`, second-seed validation `1` |
+| Orca FC demo | `2x2x2`, `bw=16`, seeds `1,2` | online `pass`, baseline `pass`, baseline matches `1` |
+| Orca FC demo | `2x3x2`, `bw=16`, seeds `3,4` | online `pass`, baseline `pass`, baseline matches `1` |
+| Orca FC demo | `3x2x2`, `bw=16`, seeds `5,6` | online `pass`, baseline `pass`, baseline matches `1` |
+| Orca FC demo | `2x2x3`, `bw=32`, seeds `7,8` | online `pass`, baseline `pass`, baseline matches `1` |
 
 Primary output files:
 
 - `results/orca_zp_bridge_constant_scalar.md`
 - `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md`
 - `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md`
-- `results/orca_fc_ringlpn_demo_seed1_seed2.md`
+- `results/orca_fc_ringlpn_demo_bounded_suite.md`
 
 ## Correctness Boundary
 
@@ -80,7 +85,8 @@ Valid to say:
 
 - the ring-polynomial linear artifact now validates a true shared matrix product, because each `A[row,k]` and `B[k,col]` operand share is generated once and reused across products,
 - the scalar bridge correctly exports bounded q62 Beaver-product shares into `Z_{2^16}`,
-- the tiny Orca FC demo writes raw correlated party buffers and uses the unchanged `gpuMatmulBeaver` online path successfully.
+- the tiny Orca FC demo suite writes raw correlated party buffers and uses the unchanged `gpuMatmulBeaver` online path successfully,
+- the suite cross-checks against Orca's `gpuKeygenMatmul` baseline for the same masks and online path.
 
 Not valid to say yet:
 

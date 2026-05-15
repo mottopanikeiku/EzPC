@@ -11,6 +11,7 @@
 
 #include "fss/gpu_matmul.h"
 #include "utils/gpu_mem.h"
+#include "utils/gpu_random.h"
 
 namespace {
 
@@ -30,6 +31,7 @@ struct Args {
     int t = 8;
     uint64_t seed = 1;
     uint64_t second_seed = 2;
+    bool compare_baseline = true;
     bool csv_header = false;
 };
 
@@ -51,6 +53,16 @@ struct DemoResult {
     DealerOutput dealer;
     std::vector<T> reconstructed;
     bool online_ok = false;
+    bool key_order_ok = false;
+};
+
+struct BaselineResult {
+    std::vector<uint8_t> key0;
+    std::vector<uint8_t> key1;
+    std::vector<T> reconstructed;
+    bool keygen_ok = false;
+    bool online_ok = false;
+    bool matches_ringlpn = false;
 };
 
 static uint64_t ring_mask(int bw) {
@@ -74,6 +86,10 @@ static uint64_t ring_add(uint64_t a, uint64_t b, int bw) {
 
 static uint64_t ring_sub(uint64_t a, uint64_t b, int bw) {
     return ring_reduce128(u128(a) + (u128(1) << bw) - ring_reduce(b, bw), bw);
+}
+
+static bool no_prime_wrap_bound(const Args &args) {
+    return u128(args.inner) * args.value_bound * args.value_bound < kPrime62;
 }
 
 static uint64_t mod_sub(uint64_t a, uint64_t b, uint64_t p) {
@@ -141,6 +157,16 @@ static void serialize_fc_key(const std::vector<T> &a,
     append_raw(out, c);
 }
 
+static MatmulParams make_matmul_params(const Args &args) {
+    MatmulParams p;
+    p.batchSz = 1;
+    p.M = args.rows;
+    p.K = args.inner;
+    p.N = args.cols;
+    stdInit(p, args.bw, 0);
+    return p;
+}
+
 static uint64_t clear_matmul_entry(const std::vector<T> &a,
                                    const std::vector<T> &b,
                                    int rows,
@@ -159,9 +185,17 @@ static uint64_t clear_matmul_entry(const std::vector<T> &a,
 }
 
 static bool validate_args(const Args &args) {
-    return args.rows == 2 && args.inner == 2 && args.cols == 2 &&
-           args.bw == 16 && args.value_bound == 255 && args.poly_n == 8192 &&
-           args.c == 2 && args.t == 8;
+    if (args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
+        args.rows > 8 || args.inner > 8 || args.cols > 8 ||
+        args.bw <= 0 || args.bw > 32 || args.value_bound >= kPrime62 ||
+        args.poly_n != 8192 || args.c != 2 || args.t != 8 ||
+        args.seed == args.second_seed) {
+        return false;
+    }
+    if (args.bw < 64 && args.value_bound >= (uint64_t(1) << args.bw)) {
+        return false;
+    }
+    return no_prime_wrap_bound(args);
 }
 
 static DealerOutput generate_dealer_output(const Args &args, uint64_t seed) {
@@ -231,6 +265,10 @@ static DealerOutput generate_dealer_output(const Args &args, uint64_t seed) {
     return out;
 }
 
+static std::vector<T> key_span_to_vector(T *ptr, int count) {
+    return std::vector<T>(ptr, ptr + count);
+}
+
 static void copy_to_gpu(const std::vector<T> &src, T **dst) {
     cudaError_t err = cudaMalloc(reinterpret_cast<void **>(dst), src.size() * sizeof(T));
     if (err != cudaSuccess) {
@@ -254,24 +292,21 @@ static std::vector<T> copy_from_gpu(T *src, size_t count) {
     return out;
 }
 
-static DemoResult run_demo_case(const Args &args, uint64_t seed) {
+static DemoResult run_online_case(const Args &args,
+                                  const DealerOutput &dealer,
+                                  const std::vector<uint8_t> &key_buf0,
+                                  const std::vector<uint8_t> &key_buf1) {
     DemoResult result;
-    result.dealer = generate_dealer_output(args, seed);
+    result.dealer = dealer;
+    MatmulParams p = make_matmul_params(args);
 
-    MatmulParams p;
-    p.batchSz = 1;
-    p.M = args.rows;
-    p.K = args.inner;
-    p.N = args.cols;
-    stdInit(p, args.bw, 0);
-
-    uint8_t *key_ptr0 = result.dealer.key0.data();
-    uint8_t *key_ptr1 = result.dealer.key1.data();
+    uint8_t *key_ptr0 = const_cast<uint8_t *>(key_buf0.data());
+    uint8_t *key_ptr1 = const_cast<uint8_t *>(key_buf1.data());
     GPUMatmulKey<T> key0 = readGPUMatmulKey<T>(p, TruncateType::None, &key_ptr0);
     GPUMatmulKey<T> key1 = readGPUMatmulKey<T>(p, TruncateType::None, &key_ptr1);
-    const bool key_order_ok =
-        key_ptr0 == result.dealer.key0.data() + result.dealer.key0.size() &&
-        key_ptr1 == result.dealer.key1.data() + result.dealer.key1.size();
+    result.key_order_ok =
+        key_ptr0 == key_buf0.data() + key_buf0.size() &&
+        key_ptr1 == key_buf1.data() + key_buf1.size();
 
     T *d_x = nullptr;
     T *d_w = nullptr;
@@ -281,10 +316,10 @@ static DemoResult run_demo_case(const Args &args, uint64_t seed) {
     T *d_b1 = nullptr;
     copy_to_gpu(result.dealer.masked_input, &d_x);
     copy_to_gpu(result.dealer.masked_weight, &d_w);
-    copy_to_gpu(std::vector<T>(key0.A, key0.A + p.size_A), &d_a0);
-    copy_to_gpu(std::vector<T>(key1.A, key1.A + p.size_A), &d_a1);
-    copy_to_gpu(std::vector<T>(key0.B, key0.B + p.size_B), &d_b0);
-    copy_to_gpu(std::vector<T>(key1.B, key1.B + p.size_B), &d_b1);
+    copy_to_gpu(key_span_to_vector(key0.A, p.size_A), &d_a0);
+    copy_to_gpu(key_span_to_vector(key1.A, p.size_A), &d_a1);
+    copy_to_gpu(key_span_to_vector(key0.B, p.size_B), &d_b0);
+    copy_to_gpu(key_span_to_vector(key1.B, p.size_B), &d_b1);
 
     Stats stats0;
     Stats stats1;
@@ -297,7 +332,7 @@ static DemoResult run_demo_case(const Args &args, uint64_t seed) {
         result.reconstructed[i] = ring_add(o0[i], o1[i], args.bw);
     }
 
-    result.online_ok = key_order_ok && result.dealer.conversion_ok &&
+    result.online_ok = result.key_order_ok && result.dealer.conversion_ok &&
                        result.reconstructed == result.dealer.expected_masked_output;
 
     cudaFree(d_x);
@@ -311,18 +346,92 @@ static DemoResult run_demo_case(const Args &args, uint64_t seed) {
     return result;
 }
 
+static DemoResult run_demo_case(const Args &args, uint64_t seed) {
+    DealerOutput dealer = generate_dealer_output(args, seed);
+    return run_online_case(args, dealer, dealer.key0, dealer.key1);
+}
+
+static BaselineResult run_baseline_case(const Args &args,
+                                        const DemoResult &ringlpn_result) {
+    BaselineResult baseline;
+    const DealerOutput &dealer = ringlpn_result.dealer;
+    MatmulParams p = make_matmul_params(args);
+    const size_t key_bytes =
+        (static_cast<size_t>(p.size_A) + p.size_B + p.size_C) * sizeof(T);
+    baseline.key0.assign(key_bytes, 0);
+    baseline.key1.assign(key_bytes, 0);
+
+    T *d_mask_a = nullptr;
+    T *d_mask_b = nullptr;
+    T *d_output_mask = nullptr;
+    copy_to_gpu(dealer.mask_a, &d_mask_a);
+    copy_to_gpu(dealer.mask_b, &d_mask_b);
+    copy_to_gpu(dealer.output_mask, &d_output_mask);
+
+    uint8_t *ptr0 = baseline.key0.data();
+    initGPURandomness();
+    T *d_return0 = gpuKeygenMatmul<T>(
+        &ptr0, SERVER0, p, d_mask_a, d_mask_b, nullptr,
+        TruncateType::None, nullptr, true, d_output_mask);
+    destroyGPURandomness();
+
+    uint8_t *ptr1 = baseline.key1.data();
+    initGPURandomness();
+    T *d_return1 = gpuKeygenMatmul<T>(
+        &ptr1, SERVER1, p, d_mask_a, d_mask_b, nullptr,
+        TruncateType::None, nullptr, true, d_output_mask);
+    destroyGPURandomness();
+
+    baseline.keygen_ok =
+        ptr0 == baseline.key0.data() + baseline.key0.size() &&
+        ptr1 == baseline.key1.data() + baseline.key1.size() &&
+        d_return0 == d_output_mask && d_return1 == d_output_mask;
+
+    DemoResult online = run_online_case(args, dealer, baseline.key0, baseline.key1);
+    baseline.reconstructed = online.reconstructed;
+    baseline.online_ok = baseline.keygen_ok && online.online_ok;
+    baseline.matches_ringlpn = baseline.online_ok &&
+                               baseline.reconstructed == ringlpn_result.reconstructed;
+
+    cudaFree(d_mask_a);
+    cudaFree(d_mask_b);
+    cudaFree(d_output_mask);
+    return baseline;
+}
+
 static void usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " [--seed N] [--second-seed N] [--csv-header]\n";
+              << " [--rows M] [--inner K] [--cols N] [--bw N]"
+              << " [--value-bound B] [--poly-n N] [--c N] [--t N]"
+              << " [--seed N] [--second-seed N] [--skip-baseline]"
+              << " [--csv-header]\n";
 }
 
 static Args parse_args(int argc, char **argv) {
     Args args;
     for (int i = 1; i < argc; ++i) {
-        if (!std::strcmp(argv[i], "--seed") && i + 1 < argc) {
+        if (!std::strcmp(argv[i], "--rows") && i + 1 < argc) {
+            args.rows = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--inner") && i + 1 < argc) {
+            args.inner = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--cols") && i + 1 < argc) {
+            args.cols = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--bw") && i + 1 < argc) {
+            args.bw = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--value-bound") && i + 1 < argc) {
+            args.value_bound = std::strtoull(argv[++i], nullptr, 10);
+        } else if (!std::strcmp(argv[i], "--poly-n") && i + 1 < argc) {
+            args.poly_n = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--c") && i + 1 < argc) {
+            args.c = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--t") && i + 1 < argc) {
+            args.t = std::atoi(argv[++i]);
+        } else if (!std::strcmp(argv[i], "--seed") && i + 1 < argc) {
             args.seed = std::strtoull(argv[++i], nullptr, 10);
         } else if (!std::strcmp(argv[i], "--second-seed") && i + 1 < argc) {
             args.second_seed = std::strtoull(argv[++i], nullptr, 10);
+        } else if (!std::strcmp(argv[i], "--skip-baseline")) {
+            args.compare_baseline = false;
         } else if (!std::strcmp(argv[i], "--csv-header")) {
             args.csv_header = true;
         } else {
@@ -330,7 +439,7 @@ static Args parse_args(int argc, char **argv) {
             std::exit(1);
         }
     }
-    if (!validate_args(args) || args.seed == args.second_seed) {
+    if (!validate_args(args)) {
         usage(argv[0]);
         std::exit(1);
     }
@@ -346,6 +455,10 @@ int main(int argc, char **argv) {
     DemoResult first = run_demo_case(args, args.seed);
     DemoResult replay = run_demo_case(args, args.seed);
     DemoResult second = run_demo_case(args, args.second_seed);
+    BaselineResult baseline;
+    if (args.compare_baseline) {
+        baseline = run_baseline_case(args, first);
+    }
 
     const bool replay_ok =
         first.online_ok && replay.online_ok &&
@@ -356,26 +469,38 @@ int main(int argc, char **argv) {
     const bool second_differs =
         first.dealer.key0 != second.dealer.key0 || first.dealer.key1 != second.dealer.key1;
     const bool validation = replay_ok && second_ok && second_differs;
+    const bool baseline_ok =
+        !args.compare_baseline ||
+        (baseline.online_ok && baseline.matches_ringlpn &&
+         baseline.key0.size() == first.dealer.key0.size() &&
+         baseline.key1.size() == first.dealer.key1.size());
+    const bool all_ok = validation && baseline_ok;
 
     if (args.csv_header) {
         std::cout << "device,input_mode,seed,second_seed,rows,inner,cols,bw,value_bound,"
-                  << "poly_n,c,t,noise,tf,key_bytes_per_party,corrected_carry_conversion,"
+                  << "no_prime_wrap_bound,poly_n,c,t,noise,tf,key_bytes_per_party,"
+                  << "baseline_key_bytes_per_party,corrected_carry_conversion,"
                   << "deterministic_replay,second_seed_validation,second_seed_distinct,"
-                  << "online_contract,validation\n";
+                  << "online_contract,baseline_online_contract,baseline_matches_ringlpn,"
+                  << "validation\n";
     }
     std::cout << "cuda_orca_fc_ringlpn_demo,bounded_q62_constant_polynomial,"
               << args.seed << "," << args.second_seed << ","
               << args.rows << "," << args.inner << "," << args.cols << ","
               << args.bw << "," << args.value_bound << ","
+              << (no_prime_wrap_bound(args) ? 1 : 0) << ","
               << args.poly_n << "," << args.c << "," << args.t << ","
               << "regular,None,"
               << first.dealer.key0.size() << ","
+              << (args.compare_baseline ? baseline.key0.size() : 0) << ","
               << (first.dealer.conversion_ok ? 1 : 0) << ","
               << (replay_ok ? 1 : 0) << ","
               << (second_ok ? 1 : 0) << ","
               << (second_differs ? 1 : 0) << ","
               << (first.online_ok ? "pass" : "fail") << ","
-              << (validation ? "pass" : "fail") << "\n";
+              << (!args.compare_baseline ? "skipped" : (baseline.online_ok ? "pass" : "fail")) << ","
+              << (!args.compare_baseline ? -1 : (baseline.matches_ringlpn ? 1 : 0)) << ","
+              << (all_ok ? "pass" : "fail") << "\n";
 
-    return validation ? 0 : 2;
+    return all_ok ? 0 : 2;
 }

@@ -91,7 +91,7 @@ The current high-signal files are:
 | `results/linear_ole_handoff.md` | Current linear-layer OLE-to-Beaver handoff, claims, caveats, and commands |
 | `results/orca_zp_bridge_handoff.md` | Current Orca-facing scalar bridge handoff and counterexample |
 | `results/orca_fc_ringlpn_demo_memo.md` | Professor-facing v1 Orca FC demo memo |
-| `results/orca_fc_ringlpn_demo_seed1_seed2.md` | Current tiny Orca FC demo result summary |
+| `results/orca_fc_ringlpn_demo_bounded_suite.md` | Current tiny Orca FC bounded-suite result summary |
 | `results/paper_execution_next_steps.md` | One-command smoke, hygiene notes, and paper-oriented next checkpoints |
 | `results/ole_gpu_q64_uniform_c2_t8_smoke.md` | Figure 2 OLE smoke result summary |
 | `results/ole_gpu_q64_uniform_c2_t64.md` | Figure 2 OLE bounded result summary |
@@ -275,8 +275,8 @@ Current smoke result:
 
 | noise | rows | inner | cols | n | c | t | Validation | Shared operands | Ring products | OLE instances | Pair key bytes | Keygen us | Linear expand mean us |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 2,264,064 | 8,491 | 229,748 |
-| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 1,864,704 | 98,520 | 137,877 |
+| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 2,264,064 | 6,587 | 223,667 |
+| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 1,864,704 | 81,582 | 114,825 |
 
 This is the first implemented linear-layer OLE-to-Beaver bridge, but it is still a ring-polynomial layer. The Orca FC demo below validates a tiny bounded scalar key-writer path, while high-density scalar packing, secure distributed `Z_p -> Z_{2^bw}` conversion, and q128/CRT remain open.
 
@@ -312,19 +312,23 @@ This checkpoint validates:
 
 1. raw key-buffer serialization in `A`, `B`, `C_masked` order with no truncation bytes for `tf=None`,
 2. bounded q62 constant-polynomial masks exported to `Z_{2^16}` with the carry-corrected bridge,
-3. the unchanged `gpuMatmulBeaver` online contract for a `2x2 * 2x2` FC layer,
-4. deterministic seed replay and a distinct second seed.
+3. the unchanged `gpuMatmulBeaver` online contract for small FC layers,
+4. deterministic seed replay and a distinct second seed,
+5. agreement with Orca's `gpuKeygenMatmul` baseline under the same masks and deterministic P0/P1 random-share stream.
 
 Current result summary:
 
-- `results/orca_fc_ringlpn_demo_seed1_seed2.md`
+- `results/orca_fc_ringlpn_demo_bounded_suite.md`
 - `results/orca_fc_ringlpn_demo_memo.md`
 
 Current smoke result:
 
-| seed | second seed | shape | bw | value bound | Key bytes per party | Carry conversion | Replay | Second seed | Online contract | Validation |
-| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| 1 | 2 | 2x2x2 | 16 | 255 | 96 | 1 | 1 | 1 | pass | pass |
+| seed | second seed | shape | bw | value bound | Key bytes per party | Baseline bytes per party | Carry conversion | Replay | Second seed | Online contract | Baseline | Validation |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
+| 1 | 2 | 2x2x2 | 16 | 255 | 96 | 96 | 1 | 1 | 1 | pass | pass | pass |
+| 3 | 4 | 2x3x2 | 16 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
+| 5 | 6 | 3x2x2 | 16 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
+| 7 | 8 | 2x2x3 | 32 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
 
 This is a correctness demo for forward FC keys only. It is not q128/CRT, dense packing, secure distributed conversion, backward/training key integration, or trusted-dealer removal.
 
@@ -555,11 +559,11 @@ Recommended sequence for paper-comparable Figure 2 numbers:
 
 Recommended sequence for Orca integration:
 
-1. start with the conservative constant-polynomial scalar bridge and wire a tiny Orca-compatible triple writer,
+1. keep the conservative constant-polynomial scalar bridge and tiny Orca-compatible triple writer as the regression baseline,
 2. add q128/CRT support or prove concrete layer-wise value bounds for q62,
 3. replace or justify the dealer/oracle `Z_p -> Z_{2^bw}` conversion with a secure conversion protocol if trusted-dealer removal remains the claim,
-4. connect the triple source to Orca linear-layer keygen without changing online `gpuMatmulBeaver`,
-5. compare against baseline Orca Beaver triples.
+4. connect the triple source to broader Orca linear-layer keygen without changing online `gpuMatmulBeaver`,
+5. continue comparing against baseline Orca Beaver triples.
 
 If the task is online-phase or abstract continuation outside Figure 2, the next step is end-to-end integration of the standalone DPF and VOLE prototypes.
 
@@ -584,12 +588,12 @@ To make the research workflow smoother, the following additions would also be us
 
 The current phase should be described as follows:
 
-The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. On top of that promoted core, the project now also has a standalone Ring-LPN VOLE prototype, a standalone GPU Figure 2 SPFSS/OLE artifact, a standalone ring-polynomial OLE-to-Beaver linear-layer artifact, a host-only Orca scalar bridge smoke, and a standalone DPF online key generation benchmark with saved artifacts.
+The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. On top of that promoted core, the project now also has a standalone Ring-LPN VOLE prototype, a standalone GPU Figure 2 SPFSS/OLE artifact, a standalone ring-polynomial OLE-to-Beaver linear-layer artifact, a host-only Orca scalar bridge smoke, a tiny bounded Orca FC key-writer demo with baseline comparison, and a standalone DPF online key generation benchmark with saved artifacts.
 
 That distinction is important:
 
 1. extraction into the project is complete for the current single-prime target scope,
-2. standalone online-phase benchmark evidence now exists for VOLE expansion, Figure 2 OLE assembly, ring-polynomial linear OLE-to-Beaver conversion, Orca scalar bridge arithmetic, and chunked DPF key generation,
+2. standalone online-phase benchmark evidence now exists for VOLE expansion, Figure 2 OLE assembly, ring-polynomial linear OLE-to-Beaver conversion, Orca scalar bridge arithmetic, tiny FC key writing, and chunked DPF key generation,
 3. the next benchmark-core research and engineering phase is dual-prime CRT support for requested `q=128`,
 4. the next Figure 2 phase is CRT q128 if the goal is paper comparability,
-5. the next Orca systems phase is an Orca-compatible key writer plus q128/CRT or concrete value-bound evidence before full integration into the existing `gpuMatmulBeaver` linear-layer path.
+5. the next Orca systems phase is q128/CRT or concrete value-bound evidence, dense packing, and secure conversion before full integration into broader Orca linear-layer keygen.

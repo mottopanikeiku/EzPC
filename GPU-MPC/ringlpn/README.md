@@ -271,14 +271,15 @@ chmod +x scripts/*.sh
 ```
 
 Outputs:
-- `results/orca_fc_ringlpn_demo_seed1_seed2.csv`
-- `results/orca_fc_ringlpn_demo_seed1_seed2.md`
+- `results/orca_fc_ringlpn_demo_bounded_suite.csv`
+- `results/orca_fc_ringlpn_demo_bounded_suite.md`
 - `results/orca_fc_ringlpn_demo_memo.md`
 
 Notes:
-- The demo uses `rows=2`, `inner=2`, `cols=2`, `bw=16`, `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, `tf=None`, and zero bias.
+- The default suite covers `2x2x2`, `2x3x2`, and `3x2x2` at `bw=16`, plus a bounded `2x2x3` case at `bw=32`; all use `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, `tf=None`, and zero bias.
 - It generates both party buffers in one dealer call and serializes raw additive shares in `A`, `B`, `C_masked` order, with no truncation bytes.
 - It calls the existing `gpuMatmulBeaver` path unchanged and validates the reconstruction against clear FC output plus the output mask.
+- It also generates Orca baseline keys with `gpuKeygenMatmul` under the same masks and checks that baseline online reconstruction matches the Ring-LPN-style raw key writer.
 - This is forward FC only. q128/CRT, high-density packing, secure distributed share conversion, and training/backward keys remain follow-up work.
 
 ## Paper checkpoint smoke

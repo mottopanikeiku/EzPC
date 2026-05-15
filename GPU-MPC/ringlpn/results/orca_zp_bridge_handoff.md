@@ -17,7 +17,7 @@ The implemented test is:
 - `src/bench_orca_fc_ringlpn_demo.cu`
 - `scripts/build_orca_fc_ringlpn_demo.sh`
 - `scripts/run_orca_fc_ringlpn_demo.sh`
-- `results/orca_fc_ringlpn_demo_seed1_seed2.md`
+- `results/orca_fc_ringlpn_demo_bounded_suite.md`
 - `results/orca_fc_ringlpn_demo_memo.md`
 - `results/paper_execution_next_steps.md`
 
@@ -97,7 +97,7 @@ What is valid now:
 
 - the exact prime-carry correction for dealer/oracle conversion from `Z_p` shares to `Z_{2^bw}` shares is implemented and tested,
 - constant-polynomial scalar packing is validated under an explicit no-prime-wrap bound,
-- a tiny forward-only Orca FC key-writer demo consumes bounded converted shares and validates unchanged `gpuMatmulBeaver`,
+- a tiny forward-only Orca FC key-writer demo consumes bounded converted shares, validates unchanged `gpuMatmulBeaver`, and matches Orca's `gpuKeygenMatmul` baseline on the current bounded suite,
 - the harness includes a q62/full-32-bit counterexample to prevent an invalid claim.
 
 What is still not valid to claim:
@@ -110,6 +110,5 @@ What is still not valid to claim:
 ## Next Steps
 
 1. Add q128/CRT support or prove the concrete Orca value bounds make q62 sufficient for the targeted layer.
-2. Compare the tiny FC-only key writer against baseline Beaver triples on additional seeds and small shapes.
-3. Replace the conservative one-scalar-per-polynomial packing with a denser packing scheme only after the scalar conversion boundary is locked.
-4. If trusted-dealer removal is still the claim, implement or cite a secure conversion from `Z_p` shares to `Z_{2^bw}` shares; the current correction is a dealer/oracle operation.
+2. Replace the conservative one-scalar-per-polynomial packing with a denser packing scheme only after the scalar conversion boundary is locked.
+3. If trusted-dealer removal is still the claim, implement or cite a secure conversion from `Z_p` shares to `Z_{2^bw}` shares; the current correction is a dealer/oracle operation.

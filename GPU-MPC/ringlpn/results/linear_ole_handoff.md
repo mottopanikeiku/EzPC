@@ -33,7 +33,7 @@ For a matrix product, the benchmark sums those ring-product shares across the in
 | `scripts/run_orca_zp_bridge_test.sh` | Runs the scalar bridge smoke and negative q62/full-32-bit counterexample |
 | `src/bench_orca_fc_ringlpn_demo.cu` | Tiny Orca FC key-writer demo for bounded q62 constant-polynomial masks |
 | `scripts/build_orca_fc_ringlpn_demo.sh` | Builds `bin/bench_orca_fc_ringlpn_demo` |
-| `scripts/run_orca_fc_ringlpn_demo.sh` | Runs deterministic replay plus a second-seed FC demo and writes CSV/Markdown |
+| `scripts/run_orca_fc_ringlpn_demo.sh` | Runs bounded FC demo cases, Orca baseline comparison, deterministic replay, and second-seed checks |
 | `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md` | Current smoke result summary |
 | `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md` | Current regular-noise smoke result summary |
 | `results/orca_zp_bridge_handoff.md` | Current Orca-facing scalar bridge handoff |
@@ -65,8 +65,8 @@ The default smoke is:
 
 | noise | rows | inner | cols | n | c | t | validation | shared operands | ring products | OLE instances | pair key bytes | keygen us | linear expand mean us |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 2,264,064 | 8,491 | 229,748 |
-| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 1,864,704 | 98,520 | 137,877 |
+| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 2,264,064 | 6,587 | 223,667 |
+| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 1 | 8 | 16 | 1,864,704 | 81,582 | 114,825 |
 
 The validation checks coefficientwise that `C_0 + C_1` equals the clear matrix product `(A_0 + A_1) * (B_0 + B_1)` over `Z_p[X]/(X^N+1)`. The `shared operands` column is a regression check that would fail if products independently resampled `A[row,k]` or `B[k,col]` instead of reusing matrix operands.
 
@@ -81,11 +81,14 @@ This records the exact prime-carry correction needed when exporting `Z_p` shares
 
 The FC demo separately validates:
 
-| seed | second seed | shape | bw | value bound | key bytes per party | carry conversion | replay | second seed | online contract | validation |
-| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| 1 | 2 | 2x2x2 | 16 | 255 | 96 | 1 | 1 | 1 | pass | pass |
+| seed | second seed | shape | bw | value bound | key bytes per party | baseline bytes per party | carry conversion | replay | second seed | online contract | baseline | validation |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
+| 1 | 2 | 2x2x2 | 16 | 255 | 96 | 96 | 1 | 1 | 1 | pass | pass | pass |
+| 3 | 4 | 2x3x2 | 16 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
+| 5 | 6 | 3x2x2 | 16 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
+| 7 | 8 | 2x2x3 | 32 | 255 | 128 | 128 | 1 | 1 | 1 | pass | pass | pass |
 
-This demo writes raw `A`, `B`, `C_masked` party buffers and reconstructs `clear FC output + output_mask` through the unchanged Orca `gpuMatmulBeaver` implementation.
+This demo writes raw `A`, `B`, `C_masked` party buffers and reconstructs `clear FC output + output_mask` through the unchanged Orca `gpuMatmulBeaver` implementation. The baseline column is generated with Orca's `gpuKeygenMatmul` under the same masks and deterministic P0/P1 share stream, and it matches the Ring-LPN-style writer in every current case.
 
 ## Scientific Boundary
 
@@ -112,7 +115,6 @@ What is not valid to claim yet:
 ## Recommended Next Steps
 
 1. Add q128/CRT support or prove concrete layer-wise bounds that make q62 sufficient.
-2. Compare the tiny FC key-writer demo against baseline `gpuKeygenMatmul` key material on additional seeds and shapes.
-3. Replace the one-scalar-per-polynomial packing with a denser packing scheme only after the conversion boundary is locked.
-4. If the claim is trusted-dealer removal, implement or cite a secure distributed `Z_p -> Z_{2^bw}` conversion protocol.
-5. Only after that, measure P-LeNet/P-AlexNet.
+2. Replace the one-scalar-per-polynomial packing with a denser packing scheme only after the conversion boundary is locked.
+3. If the claim is trusted-dealer removal, implement or cite a secure distributed `Z_p -> Z_{2^bw}` conversion protocol.
+4. Only after that, measure P-LeNet/P-AlexNet.
