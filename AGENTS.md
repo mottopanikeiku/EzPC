@@ -163,6 +163,7 @@ Quick meaning of the main paths:
 - [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md): current GPU Figure 2 OLE handoff, claims, caveats, commands, and next steps.
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md): current OLE-to-Beaver ring-polynomial linear-layer handoff and remaining Orca integration gaps.
 - [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md): current Orca scalar bridge handoff, carry-correction argument, and q62/full-32-bit counterexample.
+- [GPU-MPC/ringlpn/results/paper_execution_next_steps.md](GPU-MPC/ringlpn/results/paper_execution_next_steps.md): current one-command smoke, hygiene notes, and paper-oriented next checkpoints.
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md): bounded GPU Figure 2 OLE result summary.
 - [GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md](GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md): current ring-polynomial linear-layer OLE-to-Beaver smoke result.
 - [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md): current abstract-safe support note for Ring-LPN VOLE plus DPF online key generation.
@@ -383,6 +384,7 @@ Important scripts under [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts) and [
 - `summarize_linear_ole_results.py`: summarize ring-polynomial linear-layer OLE CSV output
 - `build_orca_zp_bridge_test.sh`: build the host-only Orca scalar bridge test under `host_bin`
 - `run_orca_zp_bridge_test.sh`: run the bridge smoke and q62/full-32-bit counterexample
+- `run_paper_checkpoint_smoke.sh`: one-command host smoke plus optional CUDA OLE/linear smoke inside the container
 - `run_dpf_online_keygen_sweep.py`: standalone DPF online key generation sweep and Markdown generation
 - `run_vtune_hotspots.sh` and `run_vtune_memory.sh`: CPU profiling wrappers
 - `summarize_results.py`, `summarize_cuda_results.py`, `summarize_cpu_gpu_4096.py`, `summarize_dpf_online_keygen.py`: reporting scripts
@@ -492,6 +494,7 @@ Files the next agent should read first for Ring-LPN continuation:
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
 - [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
 - [GPU-MPC/ringlpn/results/orca_zp_bridge_constant_scalar.md](GPU-MPC/ringlpn/results/orca_zp_bridge_constant_scalar.md)
+- [GPU-MPC/ringlpn/results/paper_execution_next_steps.md](GPU-MPC/ringlpn/results/paper_execution_next_steps.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md)
@@ -533,6 +536,8 @@ Commands worth knowing for continuation work:
 - build the ring-polynomial linear-layer OLE-to-Beaver artifact with `./scripts/build_linear_ole_bench.sh` under `/home/ringlpn`,
 - run the linear-layer smoke with `./scripts/run_linear_ole_sweep.sh` under `/home/ringlpn`,
 - build and run the host-only Orca scalar bridge from the host with `GPU-MPC/ringlpn/scripts/build_orca_zp_bridge_test.sh` and `GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh`,
+- run the consolidated host checkpoint smoke with `GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh`,
+- run the consolidated CUDA checkpoint smoke inside `/home/ringlpn` with `RUN_GPU_SMOKE=1 ./scripts/run_paper_checkpoint_smoke.sh`,
 - run the legacy comparison sweep with `./scripts/build_cuda_bench_legacy.sh` and `./scripts/run_cuda_sweep_legacy.sh`,
 - build the standalone DPF online key generation benchmark under `/home` with `make GPU_ARCH=<cc> dpf_online_keygen`,
 - run the standalone DPF sweep under `/home` with `python3 scripts/run_dpf_online_keygen_sweep.py`,
@@ -659,6 +664,7 @@ If the task mentions Figure 2, SPFSS, OLE, DPF payloads over `Z_p`, or trusted-d
 - start with [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - then read [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
 - then read [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
+- then read [GPU-MPC/ringlpn/results/paper_execution_next_steps.md](GPU-MPC/ringlpn/results/paper_execution_next_steps.md)
 - then read [GPU-MPC/ringlpn/results/ole_figure2_host_results.md](GPU-MPC/ringlpn/results/ole_figure2_host_results.md)
 - then inspect [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh)
 - then inspect [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu)
@@ -716,6 +722,7 @@ If the task is about the currently active GPU work, these are the first paths to
 - [GPU-MPC/ringlpn/scripts/run_ole_sweep.sh](GPU-MPC/ringlpn/scripts/run_ole_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_linear_ole_sweep.sh](GPU-MPC/ringlpn/scripts/run_linear_ole_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh](GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh)
+- [GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh](GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh)
 - [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu)
 - [GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh](GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_vole_sweep.sh](GPU-MPC/ringlpn/scripts/run_vole_sweep.sh)
@@ -724,6 +731,7 @@ If the task is about the currently active GPU work, these are the first paths to
 - [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
 - [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
+- [GPU-MPC/ringlpn/results/paper_execution_next_steps.md](GPU-MPC/ringlpn/results/paper_execution_next_steps.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md)
 - [GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md](GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md)
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md)

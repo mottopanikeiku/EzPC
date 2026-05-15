@@ -11,8 +11,10 @@ The implemented test is:
 - `src/test_orca_zp_bridge.cpp`
 - `scripts/build_orca_zp_bridge_test.sh`
 - `scripts/run_orca_zp_bridge_test.sh`
+- `scripts/run_paper_checkpoint_smoke.sh`
 - `results/orca_zp_bridge_constant_scalar.csv`
 - `results/orca_zp_bridge_constant_scalar.md`
+- `results/paper_execution_next_steps.md`
 
 It validates two narrow facts needed before any Orca FC integration claim:
 
@@ -75,6 +77,14 @@ GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh
 ```
 
 The host binary is written to `GPU-MPC/ringlpn/host_bin/test_orca_zp_bridge` because `GPU-MPC/ringlpn/bin` is normally container-owned by the CUDA benchmark builds.
+
+For the full current checkpoint smoke:
+
+```bash
+GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh
+```
+
+Inside the container from `/home/ringlpn`, set `RUN_GPU_SMOKE=1` on that script to include the CUDA OLE and linear smokes.
 
 ## Scientific Boundary
 
