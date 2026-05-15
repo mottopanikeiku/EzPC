@@ -58,8 +58,8 @@ The default smoke is:
 
 | noise | rows | inner | cols | n | c | t | validation | ring products | OLE instances | pair key bytes | keygen us | linear expand mean us |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 2,264,064 | 6,632 | 223,033 |
-| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 1,864,704 | 82,726 | 115,447 |
+| uniform | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 2,264,064 | 6,502 | 222,718 |
+| regular | 2 | 2 | 2 | 8192 | 2 | 8 | pass | 8 | 16 | 1,864,704 | 79,162 | 114,014 |
 
 The validation checks coefficientwise that `C_0 + C_1` equals the clear matrix product `(A_0 + A_1) * (B_0 + B_1)` over `Z_p[X]/(X^N+1)`.
 

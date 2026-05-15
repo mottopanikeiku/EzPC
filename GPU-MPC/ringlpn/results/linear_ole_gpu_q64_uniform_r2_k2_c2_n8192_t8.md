@@ -1,10 +1,10 @@
 # Ring-LPN OLE Linear-Layer Beaver Artifact
 
-Configuration: ring-polynomial matrix multiplication over the single 62-bit prime. Each ring product uses two Figure 2 OLE instances to form Beaver shares.
+Configuration: ring-polynomial matrix multiplication over the single 62-bit prime. Noise mode(s): uniform. Each ring product uses two Figure 2 OLE instances to form Beaver shares.
 
-| rows | inner | cols | n | c | t | validation | OLE instances | key bytes MiB | keygen us | linear expand mean us | linear expand std us |
-| ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 2 | 2 | 2 | 8192 | 2 | 8 | pass | 16 | 2.16 | 6,594.000 | 222,355.000 | 0.000 |
+| rows | inner | cols | n | c | t | noise | SPFSS domain | validation | OLE instances | key bytes MiB | keygen us | linear expand mean us | linear expand std us |
+| ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 2 | 2 | 2 | 8192 | 2 | 8 | uniform | 16384 | pass | 16 | 2.16 | 6,502.000 | 222,718.000 | 0.000 |
 
 Notes:
 - This is the two-OLE-to-Beaver conversion applied to a linear layer whose entries are Ring-LPN polynomials.

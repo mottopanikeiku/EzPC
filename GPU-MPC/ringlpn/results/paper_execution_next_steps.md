@@ -45,7 +45,33 @@ Set `REQUIRE_GPU_SMOKE=1` if CI should fail when CUDA/NVCC is unavailable.
 - Generated host binaries live under `ringlpn/host_bin/`, which is ignored.
 - CUDA binaries under `ringlpn/bin/` are container-owned build artifacts and remain ignored.
 - Existing dirty submodule worktrees under Orca datasets/weights, CUTLASS, and NFLlib are dependency/cache state; they are intentionally left untouched by this checkpoint.
-- The pushed GitHub fork `origin/master` currently resolves to the latest bridge checkpoint commit.
+- Verify GitHub state with `git ls-remote origin refs/heads/master`; local cleanup checkpoints may be ahead if HTTPS credentials are unavailable.
+
+## Latest Verification
+
+On 2026-05-15, the consolidated smoke passed on the host and inside the running `orca-dev` container.
+
+Host command:
+
+```bash
+GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh
+```
+
+Container command:
+
+```bash
+docker exec orca-dev bash -lc 'cd /home/ringlpn && RUN_GPU_SMOKE=1 ./scripts/run_paper_checkpoint_smoke.sh'
+```
+
+Validated results:
+
+- `test_spfss_zp_cuda`: single point, multiple points, colliding alphas, and edge alphas all passed.
+- Uniform OLE smoke: validation `pass`, host validation `pass`, keygen `443 us`, expand mean `13,278 us`.
+- Regular OLE smoke: validation `pass`, host validation `pass`, keygen `4,977 us`, expand mean `6,823 us`.
+- Uniform linear OLE-to-Beaver smoke: validation `pass`, 16 OLE instances, keygen `6,502 us`, expand mean `222,718 us`.
+- Regular linear OLE-to-Beaver smoke: validation `pass`, 16 OLE instances, keygen `79,162 us`, expand mean `114,014 us`.
+
+The build emitted only existing third-party Eigen/cryptoTools warnings.
 
 ## Immediate Next Implementation Checkpoints
 

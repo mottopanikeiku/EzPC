@@ -67,8 +67,8 @@ Preserved host-side checks for the Figure 2 oracle and host SPFSS path:
 
 | Run | n | c | t | Validation | Host validation | Pair key bytes | Keygen us | OLE expand mean us |
 | --- | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: |
-| uniform smoke | 8192 | 2 | 8 | pass | pass | 141,504 | 448 | 13,316 |
-| regular smoke | 8192 | 2 | 8 | pass | pass | 116,544 | 5,006 | 6,825 |
+| uniform smoke | 8192 | 2 | 8 | pass | pass | 141,504 | 443 | 13,278 |
+| regular smoke | 8192 | 2 | 8 | pass | pass | 116,544 | 4,977 | 6,823 |
 | uniform bounded | 8192 | 2 | 64 | pass | pass | 9,044,160 | 4,797 | 865,253 |
 | uniform bounded | 16384 | 2 | 64 | pass | skipped | 9,633,984 | 5,296 | 1,830,210 |
 | regular bounded | 8192 | 2 | 64 | pass | pass | 5,529,408 | 40,828 | 58,462.5 |
