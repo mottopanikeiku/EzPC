@@ -274,6 +274,7 @@ Outputs:
 - `results/orca_fc_ringlpn_demo_bounded_suite.csv`
 - `results/orca_fc_ringlpn_demo_bounded_suite.md`
 - `results/orca_fc_ringlpn_demo_memo.md`
+- `results/professor_ringlpn_orca_fc_deliverable_2026_05_15.md`
 
 Notes:
 - The default suite covers `2x2x2`, `2x3x2`, and `3x2x2` at `bw=16`, plus a bounded `2x2x3` case at `bw=32`; all use `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, `tf=None`, and zero bias.
