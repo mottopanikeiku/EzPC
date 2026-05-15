@@ -11,6 +11,7 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - src/test_spfss_zp_cuda.cu: GPU SPFSS payload correctness test
 - src/bench_ole_ringlpn_cuda.cu: standalone GPU Figure 2 SPFSS/OLE benchmark
 - src/bench_linear_ole_ringlpn_cuda.cu: standalone ring-polynomial linear-layer Beaver artifact built from two Figure 2 OLEs per product
+- src/test_orca_zp_bridge.cpp: host-only Orca bridge test for carry-corrected `Z_p -> Z_{2^bw}` share conversion and constant-polynomial scalar packing
 - ../tests/fss/dpf_online_keygen_bench.cu: standalone DPF online key generation benchmark for one-shot versus chunked partial generation
 - scripts/setup_nfl.sh: clone + build NFLLib
 - scripts/build_bench.sh: build the benchmark
@@ -24,6 +25,8 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/build_linear_ole_bench.sh: build the ring-polynomial linear OLE-to-Beaver benchmark
 - scripts/run_linear_ole_sweep.sh: run the linear OLE smoke benchmark and generate CSV + Markdown
 - scripts/summarize_linear_ole_results.py: summarize linear OLE CSV output
+- scripts/build_orca_zp_bridge_test.sh: build the host-only Orca `Z_p -> Z_{2^bw}` bridge test
+- scripts/run_orca_zp_bridge_test.sh: run the bridge smoke and write CSV + Markdown
 - scripts/build_cuda_bench_cheddar.sh: build an explicit standalone cheddar-derived binary for side-by-side checks
 - scripts/build_cuda_bench_legacy.sh: build the legacy CUDA benchmark path
 - scripts/run_cuda_single.sh: run a CPU vs GPU spot check for requested q=32 at n in {8192, 16384, 32768}
@@ -38,6 +41,8 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 For the current Figure 2 OLE work, read `results/ole_gpu_handoff.md` first. It records the exact validated claim, caveats, reproduction commands, and follow-up path.
 
 For the current linear-layer work, read `results/linear_ole_handoff.md` first. It records the exact two-OLE-to-Beaver ring-polynomial artifact and why Orca scalar integration remains a separate step.
+
+For the current Orca scalar bridge boundary, read `results/orca_zp_bridge_handoff.md`. It records the carry correction needed for `Z_p` shares, the conservative constant-polynomial scalar packing smoke, and the q62/full-32-bit counterexample.
 
 ## Quick start (inside container)
 ```bash
@@ -222,7 +227,27 @@ Notes:
 - The default smoke validates a `2 x 2` by `2 x 2` ring-polynomial matrix product using 8 ring products and 16 OLE instances.
 - The regular-noise smoke uses SPFSS domain `2N/t` and validates the same Beaver relation.
 - This is the first OLE-to-Beaver linear-layer artifact, but it is not yet Orca FC integration.
-- Orca still needs scalar packing and `Z_p -> Z_{2^bw}` share conversion before this can replace `gpuKeygenMatmul`.
+- Orca still needs a key writer and either q128/CRT or concrete value-bound evidence before this can replace `gpuKeygenMatmul`.
+
+## Orca Zp-to-Z2k bridge smoke
+The repository includes a host-only bridge test for the first Orca-facing scalar conversion boundary after the ring-polynomial OLE-to-Beaver artifact.
+
+Build and run from the host repository root:
+```bash
+GPU-MPC/ringlpn/scripts/build_orca_zp_bridge_test.sh
+GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh
+```
+
+Outputs:
+- `results/orca_zp_bridge_constant_scalar.csv`
+- `results/orca_zp_bridge_constant_scalar.md`
+- `results/orca_zp_bridge_handoff.md`
+
+Notes:
+- Reducing each `Z_p` share independently modulo `2^bw` is wrong when the hidden prime carry is one.
+- The exact dealer/oracle correction is `r0 = z0 mod 2^bw`, `r1 = z1 - m*p mod 2^bw`, where `m = floor((z0 + z1) / p)`.
+- Constant-polynomial scalar packing is validated only under the explicit no-prime-wrap bound `inner * value_bound^2 < p`.
+- The smoke intentionally records a q62/full-32-bit counterexample, so unrestricted 32-bit Orca products are not claimed under the current single-prime path.
 
 ## Standalone DPF online key generation benchmark
 The repository also includes a standalone DPF online key generation benchmark for the memory-efficiency track. This benchmark lives outside `ringlpn/src`, but its sweep artifacts are written into `ringlpn/results` so they can be used alongside the Ring-LPN VOLE and NTT results.

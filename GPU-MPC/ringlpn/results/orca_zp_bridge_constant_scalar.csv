@@ -1,0 +1,3 @@
+device,input_mode,prime,bw,rows,inner,cols,value_bound,share_trials,forced_wrap_trials,naive_share_failures,corrected_share_failures,no_prime_wrap_bound,constant_scalar_matmul_validation,counterexample_found
+host_orca_zp_bridge,constant_polynomial_scalar,4611686018326724609,16,2,2,2,255,1000,128,633,0,1,pass,0
+host_orca_zp_bridge,constant_polynomial_scalar,4611686018326724609,32,1,1,1,4294967295,1000,128,633,0,0,not_claimed,1

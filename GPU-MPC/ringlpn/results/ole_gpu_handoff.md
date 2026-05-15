@@ -1,6 +1,6 @@
 # GPU Figure 2 OLE Handoff
 
-Updated: 2026-05-06
+Updated: 2026-05-15
 
 ## Status
 
@@ -19,7 +19,7 @@ The validated claim is:
 
 This is a correctness and systems artifact for Figure 2's SPFSS-based OLE assembly. It is not yet a paper-parameter reproduction, a trusted-dealer removal for Orca, or an end-to-end linear-layer integration.
 
-Follow-up status: `results/linear_ole_handoff.md` now records the first OLE-to-Beaver linear-layer artifact over ring-polynomial matrix entries. That follow-up still does not constitute Orca FC integration because scalar packing and `Z_p -> Z_{2^bw}` share conversion are not implemented yet.
+Follow-up status: `results/linear_ole_handoff.md` now records the first OLE-to-Beaver linear-layer artifact over ring-polynomial matrix entries. `results/orca_zp_bridge_handoff.md` records a host-only scalar bridge smoke for constant-polynomial packing and carry-corrected dealer/oracle conversion from `Z_p` shares to `Z_{2^bw}` shares. These follow-ups still do not constitute Orca FC integration because there is no Orca key writer, q128/CRT path, high-density packing, or secure distributed share conversion yet.
 
 ## Source Map
 
@@ -36,6 +36,7 @@ Follow-up status: `results/linear_ole_handoff.md` now records the first OLE-to-B
 | `results/ole_gpu_q64_regular_c2_t8_smoke.md` | Regular-noise smoke result summary |
 | `results/ole_gpu_q64_regular_c2_t64.md` | Bounded regular-noise result summary |
 | `results/linear_ole_handoff.md` | OLE-to-Beaver ring-polynomial linear-layer follow-up |
+| `results/orca_zp_bridge_handoff.md` | Orca-facing scalar bridge boundary and q62/full-32-bit counterexample |
 
 The new arithmetic SPFSS path is intentionally separate from the existing packed one-bit `gpu_dpf.cu` path, so current ReLU, DCF, LUT, and bit-output callers are unchanged.
 
@@ -80,14 +81,14 @@ The host oracle validation is enabled for the small bounded case and intentional
 - The current modulus is a single 62-bit prime, reported as requested `qbits=64`; it does not match the paper's `log p ~= 128` parameter.
 - Regular-noise bounded numbers are now saved for `n in {8192, 16384}`, `c=2`, `t=64`, but they still use the single 62-bit prime and are therefore not the paper's CRT-sized modulus setting.
 - The direct OLE benchmark stops at OLE. The follow-up linear artifact converts OLEs into ring-polynomial Beaver products, but it does not yet produce Orca-compatible scalar Beaver triples.
-- There is no `Z_p -> Z_{2^bw}` share conversion yet, so this is not ready for `gpuMatmulBeaver`.
+- A host-only dealer/oracle `Z_p -> Z_{2^bw}` share conversion smoke now exists, but there is no secure distributed conversion protocol or Orca key writer yet, so this is not ready for `gpuMatmulBeaver`.
 - The current OLE benchmark uses full SPFSS evaluation for clarity and validation. It is correctness-first, not the final optimized scheduling path.
 - SPFSS tree expansion uses the AES PRG path, while initial key seeds are deterministically derived from the benchmark seed for reproducible experiments.
 
 ## Recommended Next Steps
 
 1. Lift the modulus path to dual-prime CRT for requested `qbits=128`.
-2. Extend the new ring-polynomial OLE-to-Beaver artifact with a scalar packing model for Orca tensor entries.
-3. Add a written `Z_p -> Z_{2^bw}` share-conversion argument.
+2. Extend the new ring-polynomial OLE-to-Beaver artifact with an Orca key writer, starting with the conservative constant-polynomial scalar bridge.
+3. Replace or justify the dealer/oracle `Z_p -> Z_{2^bw}` conversion with a secure conversion protocol if trusted-dealer removal remains the claim.
 4. Integrate the resulting triple source behind Orca's linear-layer keygen path and compare against baseline Beaver triples.
 5. Optimize SPFSS scheduling only after the above correctness boundaries are locked.

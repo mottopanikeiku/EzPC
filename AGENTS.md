@@ -26,6 +26,7 @@ Unless the user explicitly asks about other subsystems, the practical rule is:
   - Ring-LPN VOLE prototype benchmarking and abstract support,
   - Ring-LPN Figure 2 SPFSS/OLE GPU artifact benchmarking,
   - Ring-LPN OLE-to-Beaver ring-polynomial linear-layer benchmarking,
+  - Ring-LPN Orca `Z_p -> Z_{2^bw}` scalar bridge validation,
   - standalone DPF online key generation benchmarking,
   - and occasionally Sigma.
 
@@ -153,6 +154,7 @@ Quick meaning of the main paths:
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh): standalone GPU DPF/SPFSS path with `Z_p` payloads for the Figure 2 OLE artifact.
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu): standalone GPU Figure 2 SPFSS/OLE benchmark over the promoted q=64 single-prime PolyMul path.
 - [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu): standalone ring-polynomial linear-layer Beaver benchmark built from two Figure 2 OLEs per ring product.
+- [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp): host-only Orca bridge smoke for carry-corrected `Z_p -> Z_{2^bw}` share conversion and constant-polynomial scalar packing.
 - [GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu](GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu): GPU SPFSS payload correctness test.
 - [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu): standalone DPF online key generation benchmark.
 - [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](GPU-MPC/scripts/run_dpf_online_keygen_sweep.py): DPF online key generation sweep driver.
@@ -160,6 +162,7 @@ Quick meaning of the main paths:
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md): extraction rationale and earlier batch-1 comparison study.
 - [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md): current GPU Figure 2 OLE handoff, claims, caveats, commands, and next steps.
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md): current OLE-to-Beaver ring-polynomial linear-layer handoff and remaining Orca integration gaps.
+- [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md): current Orca scalar bridge handoff, carry-correction argument, and q62/full-32-bit counterexample.
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md): bounded GPU Figure 2 OLE result summary.
 - [GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md](GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md): current ring-polynomial linear-layer OLE-to-Beaver smoke result.
 - [GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md](GPU-MPC/ringlpn/results/ringlpn_vole_abstract_support.md): current abstract-safe support note for Ring-LPN VOLE plus DPF online key generation.
@@ -353,6 +356,7 @@ This harness is separate from Orca. Do not treat it as part of the Orca training
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh): standalone GPU DPF/SPFSS path with `Z_p` payloads for Figure 2 OLE
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu): standalone GPU Figure 2 SPFSS/OLE benchmark
 - [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu): standalone ring-polynomial linear-layer OLE-to-Beaver benchmark
+- [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp): host-only Orca `Z_p -> Z_{2^bw}` scalar bridge smoke
 - [GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu](GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu): GPU SPFSS payload correctness test
 - [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu): standalone DPF online key generation benchmark for one-shot versus chunked partial generation
 
@@ -377,6 +381,8 @@ Important scripts under [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts) and [
 - `build_linear_ole_bench.sh`: build the ring-polynomial linear-layer OLE-to-Beaver benchmark
 - `run_linear_ole_sweep.sh`: run the linear-layer OLE-to-Beaver smoke and generate CSV/Markdown summaries
 - `summarize_linear_ole_results.py`: summarize ring-polynomial linear-layer OLE CSV output
+- `build_orca_zp_bridge_test.sh`: build the host-only Orca scalar bridge test under `host_bin`
+- `run_orca_zp_bridge_test.sh`: run the bridge smoke and q62/full-32-bit counterexample
 - `run_dpf_online_keygen_sweep.py`: standalone DPF online key generation sweep and Markdown generation
 - `run_vtune_hotspots.sh` and `run_vtune_memory.sh`: CPU profiling wrappers
 - `summarize_results.py`, `summarize_cuda_results.py`, `summarize_cpu_gpu_4096.py`, `summarize_dpf_online_keygen.py`: reporting scripts
@@ -401,7 +407,8 @@ Current active benchmark state:
 - The standalone ring-polynomial linear-layer OLE-to-Beaver artifact in [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu) validates the two-OLE-to-Beaver conversion for matrix multiplication over `Z_p[X]/(X^N+1)`.
 - The current uniform linear-layer smoke uses `rows=2`, `inner=2`, `cols=2`, `n=8192`, `c=2`, `t=8`, 8 ring products, and 16 OLE instances. It passed validation with `linear_expand_mean_us=223033` and `spfss_pair_key_bytes=2264064`.
 - The current regular-noise linear-layer smoke uses the same shape and passed validation with `linear_expand_mean_us=115447`, `spfss_pair_key_bytes=1864704`, and SPFSS domain `2048`.
-- The linear-layer artifact is not yet Orca FC integration: scalar packing and `Z_p -> Z_{2^bw}` share conversion are still missing.
+- The host-only Orca scalar bridge in [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp) validates the exact dealer/oracle carry correction for converting `Z_p` shares to `Z_{2^bw}` shares and a conservative constant-polynomial scalar packing model under the bound `inner * value_bound^2 < p`.
+- The bridge smoke records `633` naive share-conversion failures, `0` corrected failures, a passing bounded `bw=16` scalar case, and an intentional q62/full-32-bit counterexample. It is not a secure distributed conversion protocol, high-density packing scheme, q128 path, or Orca key writer.
 - The standalone DPF online key generation benchmark in [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) is validated for eval-all keys at `bin=16`, `chunk_size=8192`, and `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
 - Current DPF online key generation summaries live in [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md) and the corresponding CSV.
 - The current DPF sweep shows full pair-key footprint growing from `2.81 MiB` to `360.00 MiB` while chunked online generation holds peak pair-key footprint to `2.81 MiB`, reaching about `128x` peak-footprint reduction at `n=1048576` with about `1.885x` key-generation time overhead.
@@ -428,8 +435,9 @@ The active Ring-LPN roadmap now has two tracks:
   - the standalone Ring-LPN VOLE prototype is implemented and benchmarked,
   - the standalone GPU Figure 2 SPFSS/OLE artifact is implemented and benchmarked for single-prime q=62, uniform sparse noise, and regular sparse noise,
   - the standalone ring-polynomial linear-layer OLE-to-Beaver artifact is implemented and smoke-tested,
+  - the host-only Orca scalar bridge smoke is implemented for carry-corrected dealer/oracle `Z_p -> Z_{2^bw}` conversion and conservative constant-polynomial packing,
   - the standalone DPF online key generation benchmark is implemented and benchmarked,
-  - CRT/q128, Orca scalar packing, `Z_p -> Z_{2^bw}` conversion, and end-to-end Orca/SPFSS integration are not implemented yet.
+  - CRT/q128, high-density Orca scalar packing, secure distributed `Z_p -> Z_{2^bw}` conversion, an Orca key writer, and end-to-end Orca/SPFSS integration are not implemented yet.
 
 ### 9.5 Current Mission Handoff
 
@@ -438,10 +446,10 @@ If a new agent is asked to continue the current Ring-LPN mission, the practical 
 1. treat the promoted cheddar-derived path as the default GPU implementation,
 2. preserve the legacy CUDA path as a comparison baseline,
 3. avoid reworking the CPU baseline unless a validation issue requires it,
-4. treat [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu), [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu), and [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) as the current online-phase evidence,
+4. treat [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu), [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu), [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp), [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu), and [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) as the current online-phase evidence,
 5. if the task is benchmark-core continuation, carry the GPU path from single-prime q=32/q=64 to dual-prime CRT q=128,
 6. if the task is Figure 2/OLE continuation, add CRT before claiming paper-comparable numbers,
-7. if the task is linear-layer continuation, treat the current ring-polynomial OLE-to-Beaver artifact as the bridge layer and add scalar packing plus `Z_p -> Z_{2^bw}` conversion before touching `gpuMatmulBeaver`,
+7. if the task is linear-layer continuation, treat the current ring-polynomial OLE-to-Beaver artifact and host scalar bridge as the bridge layer; the next implementation step is an Orca-compatible key writer plus q128/CRT or concrete layer bounds before touching `gpuMatmulBeaver`,
 8. if the task is Orca integration, keep online `gpuMatmulBeaver` unchanged and make the generated key shares match its existing `(A, B, C)` Beaver contract.
 
 What is already done:
@@ -454,6 +462,7 @@ What is already done:
 - Standalone GPU Figure 2 SPFSS/OLE artifact is complete and validated for single-prime q=62, uniform sparse noise and regular sparse noise, `c=2`, `t=64`, bounded `n={8192,16384}`.
 - GPU SPFSS payload tests cover single point, multiple points, alpha collisions, and edge alphas.
 - Standalone ring-polynomial linear-layer OLE-to-Beaver artifact is complete and validated for the smoke case `rows=2`, `inner=2`, `cols=2`, `n=8192`, `c=2`, `t=8`.
+- Host-only Orca scalar bridge smoke is complete for the dealer/oracle carry correction from `Z_p` shares to `Z_{2^bw}` shares, validates bounded constant-polynomial scalar packing, and records a q62/full-32-bit counterexample.
 - Standalone DPF online key generation sweep at `bin=16`, `chunk_size=8192` is complete and validated.
 - The current GPU-vs-CPU comparison is strong: q=32 overlap points show roughly `146x` to `171x` per-polynomial PolyMul speedups over CPU, and q=64 points show roughly `48x` to `220x` per-polynomial PolyMul speedups over CPU.
 - The promoted main path is consistently faster than the legacy baseline, with the largest observed per-polynomial gain near `6x` at `n=65536` in the adaptive sweep.
@@ -465,8 +474,9 @@ What is not done:
 - no multi-prime scheduling layer exists yet in the promoted path,
 - no CRT recomposition path exists yet in the promoted path,
 - no Orca-scalar OLE-to-Beaver triple conversion exists yet,
-- no scalar packing layer exists yet from Orca tensor elements into Ring-LPN polynomial entries,
-- no `Z_p -> Z_{2^bw}` share conversion exists yet for Orca's linear-layer ring,
+- no high-density scalar packing layer exists yet from Orca tensor elements into Ring-LPN polynomial entries,
+- no secure distributed `Z_p -> Z_{2^bw}` share conversion exists yet for Orca parties that do not know both prime-field shares,
+- no Orca-compatible key writer exists yet for the conservative constant-polynomial bridge,
 - no end-to-end Orca or SPFSS-backed integration exists yet for the chunked DPF online key generation benchmark,
 - no end-to-end Orca or SPFSS-backed integration exists yet for the Ring-LPN VOLE prototype,
 - no full application-level memory-footprint reduction measurements exist yet for the combined online path,
@@ -480,6 +490,8 @@ Files the next agent should read first for Ring-LPN continuation:
 - [GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md](GPU-MPC/ringlpn/results/gpu_fss_memory_efficiency_outline.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
+- [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
+- [GPU-MPC/ringlpn/results/orca_zp_bridge_constant_scalar.md](GPU-MPC/ringlpn/results/orca_zp_bridge_constant_scalar.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md)
@@ -488,6 +500,7 @@ Files the next agent should read first for Ring-LPN continuation:
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh)
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu)
 - [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu)
+- [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp)
 - [GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu](GPU-MPC/ringlpn/src/test_spfss_zp_cuda.cu)
 - [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu)
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu)
@@ -519,6 +532,7 @@ Commands worth knowing for continuation work:
 - run the bounded GPU Figure 2 OLE sweep with `./scripts/run_ole_sweep.sh` under `/home/ringlpn`,
 - build the ring-polynomial linear-layer OLE-to-Beaver artifact with `./scripts/build_linear_ole_bench.sh` under `/home/ringlpn`,
 - run the linear-layer smoke with `./scripts/run_linear_ole_sweep.sh` under `/home/ringlpn`,
+- build and run the host-only Orca scalar bridge from the host with `GPU-MPC/ringlpn/scripts/build_orca_zp_bridge_test.sh` and `GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh`,
 - run the legacy comparison sweep with `./scripts/build_cuda_bench_legacy.sh` and `./scripts/run_cuda_sweep_legacy.sh`,
 - build the standalone DPF online key generation benchmark under `/home` with `make GPU_ARCH=<cc> dpf_online_keygen`,
 - run the standalone DPF sweep under `/home` with `python3 scripts/run_dpf_online_keygen_sweep.py`,
@@ -644,10 +658,12 @@ If the task mentions Figure 2, SPFSS, OLE, DPF payloads over `Z_p`, or trusted-d
 
 - start with [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - then read [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
+- then read [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
 - then read [GPU-MPC/ringlpn/results/ole_figure2_host_results.md](GPU-MPC/ringlpn/results/ole_figure2_host_results.md)
 - then inspect [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh)
 - then inspect [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu)
 - then inspect [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu)
+- then inspect [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp)
 - then read [GPU-MPC/ringlpn/results/ringlpn_linear_integration_plan.md](GPU-MPC/ringlpn/results/ringlpn_linear_integration_plan.md)
 
 If the task mentions DPF, online key generation, partial keys, or memory-footprint reduction:
@@ -672,7 +688,7 @@ If dropped into this workspace cold, the fastest reliable orientation path is:
 2. Read [GPU-MPC/README.md](GPU-MPC/README.md) and [GPU-MPC/Makefile](GPU-MPC/Makefile).
 3. Decide whether the task is Orca, Sigma, or Ring-LPN.
 4. For Orca, decide whether the task is the formal harness, local loopback, or profiling runner.
-5. For Ring-LPN, decide whether the task is CPU NFLLib, promoted cheddar-derived CUDA, standalone VOLE, GPU Figure 2 OLE/SPFSS, ring-polynomial linear OLE-to-Beaver, or standalone DPF online key generation.
+5. For Ring-LPN, decide whether the task is CPU NFLLib, promoted cheddar-derived CUDA, standalone VOLE, GPU Figure 2 OLE/SPFSS, ring-polynomial linear OLE-to-Beaver, Orca scalar bridge, or standalone DPF online key generation.
 6. Check whether the files you care about are actually tracked, because the root ignore rules hide many script and result files.
 
 ## 14. Highest-Signal Paths For Current Work
@@ -696,8 +712,10 @@ If the task is about the currently active GPU work, these are the first paths to
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh)
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu)
 - [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu)
+- [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp)
 - [GPU-MPC/ringlpn/scripts/run_ole_sweep.sh](GPU-MPC/ringlpn/scripts/run_ole_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_linear_ole_sweep.sh](GPU-MPC/ringlpn/scripts/run_linear_ole_sweep.sh)
+- [GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh](GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh)
 - [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu)
 - [GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh](GPU-MPC/ringlpn/scripts/run_cuda_sweep.sh)
 - [GPU-MPC/ringlpn/scripts/run_vole_sweep.sh](GPU-MPC/ringlpn/scripts/run_vole_sweep.sh)
@@ -705,6 +723,7 @@ If the task is about the currently active GPU work, these are the first paths to
 - [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
+- [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)
 - [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md)
 - [GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md](GPU-MPC/ringlpn/results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md)
 - [GPU-MPC/ringlpn/results/cheddar_extract_note.md](GPU-MPC/ringlpn/results/cheddar_extract_note.md)
