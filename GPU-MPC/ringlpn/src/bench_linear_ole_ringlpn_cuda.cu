@@ -4,6 +4,7 @@
 #endif
 #include "bench_ole_ringlpn_cuda.cu"
 
+#include <algorithm>
 #include <memory>
 
 namespace {
@@ -26,9 +27,23 @@ struct LinearArgs {
 };
 
 struct LinearProduct {
+    int row = 0;
+    int inner_idx = 0;
+    int col = 0;
     int out_slot = 0;
     std::unique_ptr<OleState> a0_b1;
     std::unique_ptr<OleState> a1_b0;
+};
+
+struct LinearOperandShare {
+    std::vector<SparsePoly> p0;
+    std::vector<SparsePoly> p1;
+};
+
+struct LinearSharedInputs {
+    std::vector<std::vector<Word>> a;
+    std::vector<LinearOperandShare> a_entries;
+    std::vector<LinearOperandShare> b_entries;
 };
 
 struct LinearRunState {
@@ -36,6 +51,7 @@ struct LinearRunState {
     std::vector<LinearProduct> products;
     size_t spfss_pair_key_bytes = 0;
     double keygen_us = 0.0;
+    bool shared_operand_check = false;
 
     Word *d_c0 = nullptr;
     Word *d_c1 = nullptr;
@@ -201,8 +217,143 @@ static int linear_spfss_domain_size(const LinearArgs &args) {
     return args.noise == "regular" ? 2 * (args.n / args.t) : 2 * args.n;
 }
 
+static std::vector<SparsePoly> sample_operand_share(const LinearArgs &args,
+                                                    Word modulus,
+                                                    std::mt19937_64 &rng) {
+    std::vector<SparsePoly> out(args.c);
+    for (int i = 0; i < args.c; ++i) {
+        out[i] = args.noise == "regular"
+                     ? sample_sparse_regular(args.n, args.t, modulus, rng)
+                     : sample_sparse(args.n, args.t, modulus, rng);
+    }
+    return out;
+}
+
+static LinearSharedInputs build_shared_inputs(const LinearArgs &args) {
+    LinearSharedInputs shared;
+    std::mt19937_64 rng(args.seed);
+    const Word modulus = kConfig62.modulus;
+
+    shared.a.resize(args.c);
+    shared.a[0].assign(args.n, 0);
+    shared.a[0][0] = 1;
+    for (int i = 1; i < args.c; ++i) {
+        shared.a[i] = sample_dense(args.n, modulus, rng);
+    }
+
+    shared.a_entries.resize(static_cast<size_t>(args.rows) * args.inner);
+    for (auto &entry : shared.a_entries) {
+        entry.p0 = sample_operand_share(args, modulus, rng);
+        entry.p1 = sample_operand_share(args, modulus, rng);
+    }
+
+    shared.b_entries.resize(static_cast<size_t>(args.inner) * args.cols);
+    for (auto &entry : shared.b_entries) {
+        entry.p0 = sample_operand_share(args, modulus, rng);
+        entry.p1 = sample_operand_share(args, modulus, rng);
+    }
+    return shared;
+}
+
+static bool same_sparse_poly(const SparsePoly &a, const SparsePoly &b) {
+    return a.positions == b.positions && a.values == b.values;
+}
+
+static bool same_sparse_vec(const std::vector<SparsePoly> &a,
+                            const std::vector<SparsePoly> &b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (!same_sparse_poly(a[i], b[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void build_inputs_from_shared(OleState &state,
+                                     const std::vector<std::vector<Word>> &a,
+                                     const std::vector<SparsePoly> &e0,
+                                     const std::vector<SparsePoly> &e1) {
+    const int n = state.args.n;
+    const int c = state.args.c;
+    const Word modulus = state.modulus;
+    if (static_cast<int>(a.size()) != c || static_cast<int>(e0.size()) != c ||
+        static_cast<int>(e1.size()) != c) {
+        std::cerr << "shared linear input shape mismatch\n";
+        std::exit(1);
+    }
+
+    state.a = a;
+    state.e.assign(2, std::vector<SparsePoly>(c));
+    state.e[0] = e0;
+    state.e[1] = e1;
+
+    std::vector<std::vector<Word>> e0_dense(c, std::vector<Word>(n, 0));
+    std::vector<std::vector<Word>> e1_dense(c, std::vector<Word>(n, 0));
+    for (int i = 0; i < c; ++i) {
+        add_sparse_to_dense(state.e[0][i], e0_dense[i], n, modulus);
+        add_sparse_to_dense(state.e[1][i], e1_dense[i], n, modulus);
+    }
+
+    copy_to_device(&state.d_a, flatten_dense(state.a, n), "copy shared a");
+    copy_to_device(&state.d_e0, flatten_dense(e0_dense, n), "copy shared e0");
+    copy_to_device(&state.d_e1, flatten_dense(e1_dense, n), "copy shared e1");
+
+    const int cc = c * c;
+    std::vector<std::vector<Word>> aa_lhs(cc);
+    std::vector<std::vector<Word>> aa_rhs(cc);
+    for (int j = 0; j < c; ++j) {
+        for (int i = 0; i < c; ++i) {
+            size_t idx = static_cast<size_t>(i) + static_cast<size_t>(j) * c;
+            aa_lhs[idx] = state.a[i];
+            aa_rhs[idx] = state.a[j];
+        }
+    }
+    copy_to_device(&state.d_aa_lhs, flatten_dense(aa_lhs, n), "copy shared aa lhs");
+    copy_to_device(&state.d_aa_rhs, flatten_dense(aa_rhs, n), "copy shared aa rhs");
+
+    size_t c_coeffs = static_cast<size_t>(c) * n;
+    size_t cc_coeffs = static_cast<size_t>(cc) * n;
+    alloc_device(&state.d_aw, std::max(c_coeffs, cc_coeffs), "alloc shared work a");
+    alloc_device(&state.d_bw, std::max(c_coeffs, cc_coeffs), "alloc shared work b");
+    alloc_device(&state.d_cw, std::max(c_coeffs, cc_coeffs), "alloc shared work c");
+    alloc_device(&state.d_terms, cc_coeffs, "alloc shared terms");
+    alloc_device(&state.d_aa, cc_coeffs, "alloc shared aa");
+    alloc_device(&state.d_x0, n, "alloc shared x0");
+    alloc_device(&state.d_x1, n, "alloc shared x1");
+    alloc_device(&state.d_u0, cc_coeffs, "alloc shared u0");
+    alloc_device(&state.d_u1, cc_coeffs, "alloc shared u1");
+    alloc_device(&state.d_u2n0, static_cast<size_t>(2) * n, "alloc shared u2n0");
+    alloc_device(&state.d_u2n1, static_cast<size_t>(2) * n, "alloc shared u2n1");
+    if (use_regular_noise(state.args)) {
+        alloc_device(&state.d_group0, spfss_domain_size(state.args), "alloc shared regular group0");
+        alloc_device(&state.d_group1, spfss_domain_size(state.args), "alloc shared regular group1");
+    }
+    alloc_device(&state.d_z0, n, "alloc shared z0");
+    alloc_device(&state.d_z1, n, "alloc shared z1");
+    alloc_device(&state.d_zsum, n, "alloc shared zsum");
+    alloc_device(&state.d_expected, n, "alloc shared expected");
+
+    run_full_polymul(state.d_aa_lhs,
+                     state.d_aa_rhs,
+                     state.d_aw,
+                     state.d_bw,
+                     state.d_cw,
+                     state.d_aa,
+                     state.tables,
+                     n,
+                     cc,
+                     state.log_degree);
+    check(cudaDeviceSynchronize(), "sync shared aa precompute");
+}
+
 static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
                                                 uint64_t seed,
+                                                const std::vector<std::vector<Word>> &a,
+                                                const std::vector<SparsePoly> &e0,
+                                                const std::vector<SparsePoly> &e1,
                                                 AESGlobalContext *gaes,
                                                 double &keygen_us,
                                                 size_t &key_bytes) {
@@ -222,11 +373,54 @@ static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
     compute_cheddar_tables(state->host_tables, args.n, kConfig62);
     alloc_and_copy(state->tables, state->host_tables);
     compute_reference_vectors(state->phi_norm, state->post_norm, args.n, kConfig62);
-    build_inputs(*state);
+    build_inputs_from_shared(*state, a, e0, e1);
     double us = build_spfss_keys(*state, gaes);
     keygen_us += us;
     key_bytes += state->spfss_pair_key_bytes;
     return state;
+}
+
+static bool check_shared_operand_reuse(const LinearRunState &linear) {
+    const LinearArgs &args = linear.args;
+    std::vector<const std::vector<SparsePoly> *> a0_ref(
+        static_cast<size_t>(args.rows) * args.inner, nullptr);
+    std::vector<const std::vector<SparsePoly> *> a1_ref(
+        static_cast<size_t>(args.rows) * args.inner, nullptr);
+    std::vector<const std::vector<SparsePoly> *> b0_ref(
+        static_cast<size_t>(args.inner) * args.cols, nullptr);
+    std::vector<const std::vector<SparsePoly> *> b1_ref(
+        static_cast<size_t>(args.inner) * args.cols, nullptr);
+
+    for (const auto &product : linear.products) {
+        const size_t a_idx =
+            static_cast<size_t>(product.row) * args.inner + product.inner_idx;
+        const size_t b_idx =
+            static_cast<size_t>(product.inner_idx) * args.cols + product.col;
+        const auto &a0 = product.a0_b1->e[0];
+        const auto &a1 = product.a1_b0->e[0];
+        const auto &b0 = product.a1_b0->e[1];
+        const auto &b1 = product.a0_b1->e[1];
+
+        if (!a0_ref[a_idx]) {
+            a0_ref[a_idx] = &a0;
+            a1_ref[a_idx] = &a1;
+        } else if (!same_sparse_vec(*a0_ref[a_idx], a0) ||
+                   !same_sparse_vec(*a1_ref[a_idx], a1)) {
+            return false;
+        }
+
+        if (!b0_ref[b_idx]) {
+            b0_ref[b_idx] = &b0;
+            b1_ref[b_idx] = &b1;
+        } else if (!same_sparse_vec(*b0_ref[b_idx], b0) ||
+                   !same_sparse_vec(*b1_ref[b_idx], b1)) {
+            return false;
+        }
+    }
+    return std::all_of(a0_ref.begin(), a0_ref.end(), [](const auto *p) { return p != nullptr; }) &&
+           std::all_of(a1_ref.begin(), a1_ref.end(), [](const auto *p) { return p != nullptr; }) &&
+           std::all_of(b0_ref.begin(), b0_ref.end(), [](const auto *p) { return p != nullptr; }) &&
+           std::all_of(b1_ref.begin(), b1_ref.end(), [](const auto *p) { return p != nullptr; });
 }
 
 static void alloc_linear_buffers(LinearRunState &state) {
@@ -376,22 +570,29 @@ static bool validate_linear_outputs(LinearRunState &linear) {
 static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes) {
     const LinearArgs &args = linear.args;
     linear.products.reserve(static_cast<size_t>(args.rows) * args.inner * args.cols);
+    LinearSharedInputs shared = build_shared_inputs(args);
     uint64_t tag = 0;
     for (int r = 0; r < args.rows; ++r) {
         for (int k = 0; k < args.inner; ++k) {
             for (int col = 0; col < args.cols; ++col) {
+                const auto &a_entry = shared.a_entries[static_cast<size_t>(r) * args.inner + k];
+                const auto &b_entry = shared.b_entries[static_cast<size_t>(k) * args.cols + col];
                 LinearProduct product;
+                product.row = r;
+                product.inner_idx = k;
+                product.col = col;
                 product.out_slot = r * args.cols + col;
                 product.a0_b1 = make_ole_state(
-                    args, linear_mix_seed(args.seed, tag++), gaes,
+                    args, linear_mix_seed(args.seed, tag++), shared.a, a_entry.p0, b_entry.p1, gaes,
                     linear.keygen_us, linear.spfss_pair_key_bytes);
                 product.a1_b0 = make_ole_state(
-                    args, linear_mix_seed(args.seed, tag++), gaes,
+                    args, linear_mix_seed(args.seed, tag++), shared.a, a_entry.p1, b_entry.p0, gaes,
                     linear.keygen_us, linear.spfss_pair_key_bytes);
                 linear.products.push_back(std::move(product));
             }
         }
     }
+    linear.shared_operand_check = check_shared_operand_reuse(linear);
 }
 
 static int run_linear_benchmark(const LinearArgs &args) {
@@ -405,7 +606,7 @@ static int run_linear_benchmark(const LinearArgs &args) {
     build_linear_products(linear, &gaes);
 
     run_linear_expand(linear, &gaes, !args.skip_validation);
-    bool correct = validate_linear_outputs(linear);
+    bool correct = linear.shared_operand_check && validate_linear_outputs(linear);
 
     for (int iter = 0; iter < args.warmup; ++iter) {
         run_linear_expand(linear, &gaes, false);
@@ -435,6 +636,7 @@ static int run_linear_benchmark(const LinearArgs &args) {
               << ring_products << "," << ole_instances << "," << args.iters << ","
               << validation << "," << linear.spfss_pair_key_bytes << ","
               << linear.keygen_us << "," << stats.mean_us << "," << stats.stddev_us << ","
+              << (linear.shared_operand_check ? 1 : 0) << ","
               << (args.skip_validation ? -1 : (correct ? 1 : 0)) << "\n";
 
     linear.cleanup();
@@ -448,7 +650,7 @@ static int run_linear_benchmark(const LinearArgs &args) {
 int main(int argc, char **argv) {
     LinearArgs args = parse_linear_args(argc, argv);
     if (args.csv_header) {
-        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,correct\n";
+        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,shared_operands,correct\n";
     }
     return run_linear_benchmark(args);
 }

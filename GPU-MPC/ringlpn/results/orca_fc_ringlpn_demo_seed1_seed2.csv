@@ -1,0 +1,2 @@
+device,input_mode,seed,second_seed,rows,inner,cols,bw,value_bound,poly_n,c,t,noise,tf,key_bytes_per_party,corrected_carry_conversion,deterministic_replay,second_seed_validation,second_seed_distinct,online_contract,validation
+cuda_orca_fc_ringlpn_demo,bounded_q62_constant_polynomial,1,2,2,2,2,16,255,8192,2,8,regular,None,96,1,1,1,1,pass,pass

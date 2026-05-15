@@ -42,4 +42,8 @@ if [[ "$RUN_REGULAR_SMOKE" == "1" ]]; then
   NOISE=regular "$ROOT/scripts/run_linear_ole_sweep.sh"
 fi
 
+echo "[paper-smoke] building and running Orca FC Ring-LPN key-writer demo"
+"$ROOT/scripts/build_orca_fc_ringlpn_demo.sh"
+"$ROOT/scripts/run_orca_fc_ringlpn_demo.sh"
+
 echo "[paper-smoke] complete"

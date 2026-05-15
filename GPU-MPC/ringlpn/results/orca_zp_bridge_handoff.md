@@ -4,7 +4,7 @@ Updated: 2026-05-15
 
 ## Status
 
-This checkpoint adds a host-only correctness harness for the first Orca-facing arithmetic bridge after the ring-polynomial OLE-to-Beaver artifact.
+This checkpoint adds a host-only correctness harness for the first Orca-facing arithmetic bridge after the ring-polynomial OLE-to-Beaver artifact. A follow-on tiny FC demo now consumes the same bounded bridge in raw Orca `A`, `B`, `C_masked` key-buffer order.
 
 The implemented test is:
 
@@ -14,6 +14,11 @@ The implemented test is:
 - `scripts/run_paper_checkpoint_smoke.sh`
 - `results/orca_zp_bridge_constant_scalar.csv`
 - `results/orca_zp_bridge_constant_scalar.md`
+- `src/bench_orca_fc_ringlpn_demo.cu`
+- `scripts/build_orca_fc_ringlpn_demo.sh`
+- `scripts/run_orca_fc_ringlpn_demo.sh`
+- `results/orca_fc_ringlpn_demo_seed1_seed2.md`
+- `results/orca_fc_ringlpn_demo_memo.md`
 - `results/paper_execution_next_steps.md`
 
 It validates two narrow facts needed before any Orca FC integration claim:
@@ -84,7 +89,7 @@ For the full current checkpoint smoke:
 GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh
 ```
 
-Inside the container from `/home/ringlpn`, set `RUN_GPU_SMOKE=1` on that script to include the CUDA OLE and linear smokes.
+Inside the container from `/home/ringlpn`, set `RUN_GPU_SMOKE=1` on that script to include the CUDA OLE, linear, and tiny FC smokes.
 
 ## Scientific Boundary
 
@@ -92,6 +97,7 @@ What is valid now:
 
 - the exact prime-carry correction for dealer/oracle conversion from `Z_p` shares to `Z_{2^bw}` shares is implemented and tested,
 - constant-polynomial scalar packing is validated under an explicit no-prime-wrap bound,
+- a tiny forward-only Orca FC key-writer demo consumes bounded converted shares and validates unchanged `gpuMatmulBeaver`,
 - the harness includes a q62/full-32-bit counterexample to prevent an invalid claim.
 
 What is still not valid to claim:
@@ -99,11 +105,11 @@ What is still not valid to claim:
 - no secure distributed conversion protocol is implemented for parties that do not know both `Z_p` shares,
 - no high-density scalar packing into ring-polynomial slots is implemented,
 - no q128/CRT bridge exists yet,
-- no Orca `gpuMatmulBeaver` key writer consumes these converted shares yet.
+- no full Orca training/backward/optimizer integration consumes these converted shares yet.
 
 ## Next Steps
 
 1. Add q128/CRT support or prove the concrete Orca value bounds make q62 sufficient for the targeted layer.
-2. Wire a constant-polynomial scalar bridge into a tiny FC-only key writer for correctness comparison against baseline Beaver triples.
+2. Compare the tiny FC-only key writer against baseline Beaver triples on additional seeds and small shapes.
 3. Replace the conservative one-scalar-per-polynomial packing with a denser packing scheme only after the scalar conversion boundary is locked.
 4. If trusted-dealer removal is still the claim, implement or cite a secure conversion from `Z_p` shares to `Z_{2^bw}` shares; the current correction is a dealer/oracle operation.
