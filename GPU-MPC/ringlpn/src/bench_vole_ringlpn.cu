@@ -28,7 +28,7 @@ struct VoleArgs {
 // Z = y + x*delta  with delta being the secret scalar and (x,y) being the output pairs. The "a" pairs are the input pairs that get multiplied with the "b" pairs (which are either noise e, or uniform vm/wm) to produce the output pairs before adding the "f/vj/wj" offsets.
 static void vole_usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 32|64] [--m N] [--c N] [--noise-weight N]"
+              << " --n <deg> [--qbits 32|64|128] [--m N] [--c N] [--noise-weight N]"
               << " [--iters N] [--warmup N] [--seed N] [--csv-header] [--skip-validation]\n";
 }
 
@@ -78,8 +78,9 @@ static VoleArgs parse_vole_args(int argc, char **argv) {
         std::exit(1);
     }
 
-    if (args.requested_qbits != 32 && args.requested_qbits != 64) {
-        std::cerr << "Unsupported qbits request: expected one of 32 or 64\n";
+    if (args.requested_qbits != 32 && args.requested_qbits != 64 &&
+        args.requested_qbits != 128) {
+        std::cerr << "Unsupported qbits request: expected one of 32, 64, or 128\n";
         std::exit(1);
     }
 
@@ -89,8 +90,11 @@ static VoleArgs parse_vole_args(int argc, char **argv) {
         std::exit(1);
     }
 
-    if (static_cast<uint64_t>(args.outputs) * static_cast<uint64_t>(args.lanes) > 65535ULL) {
-        std::cerr << "Unsupported m*c: pair batch must fit within the extracted kernel grid.y limit\n";
+    int requested_prime_count = args.requested_qbits == 128 ? 2 : 1;
+    if (static_cast<uint64_t>(args.outputs) * static_cast<uint64_t>(args.lanes) *
+            static_cast<uint64_t>(requested_prime_count) >
+        65535ULL) {
+        std::cerr << "Unsupported m*c*prime_count: flattened Cheddar grid.y must fit within 65535\n";
         std::exit(1);
     }
 
@@ -103,11 +107,14 @@ static VoleArgs parse_vole_args(int argc, char **argv) {
 }
 
 template <typename Word>
-static size_t estimate_required_device_bytes(const VoleArgs &args) {
+static size_t estimate_required_device_bytes(const VoleArgs &args, int prime_count) {
     const size_t pair_coeffs = static_cast<size_t>(args.outputs) *
                                static_cast<size_t>(args.lanes) *
+                               static_cast<size_t>(prime_count) *
                                static_cast<size_t>(args.n);
-    const size_t output_coeffs = static_cast<size_t>(args.outputs) * static_cast<size_t>(args.n);
+    const size_t output_coeffs = static_cast<size_t>(args.outputs) *
+                                 static_cast<size_t>(prime_count) *
+                                 static_cast<size_t>(args.n);
     const size_t pair_arrays = 8;
     const size_t output_arrays = 7;
     return sizeof(Word) * (pair_arrays * pair_coeffs + output_arrays * output_coeffs);
@@ -123,15 +130,27 @@ static bool has_device_capacity(size_t required_bytes) {
 template <typename Word>
 static std::vector<Word> sample_uniform_polys(int poly_count,
                                               int n,
-                                              Word modulus,
+                                              const std::vector<ModulusConfig<Word>> &configs,
                                               uint64_t seed) {
     using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
     Rng rng(static_cast<typename Rng::result_type>(seed));
-    std::uniform_int_distribution<Word> dist(0, static_cast<Word>(modulus - 1));
+    const int prime_count = static_cast<int>(configs.size());
 
-    std::vector<Word> out(static_cast<size_t>(poly_count) * static_cast<size_t>(n));
-    for (Word &value : out) {
-        value = dist(rng);
+    std::vector<Word> out(static_cast<size_t>(poly_count) *
+                          static_cast<size_t>(prime_count) *
+                          static_cast<size_t>(n));
+    for (int poly_idx = 0; poly_idx < poly_count; poly_idx++) {
+        for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+            std::uniform_int_distribution<Word> dist(
+                0, static_cast<Word>(configs[prime_idx].modulus - 1));
+            const size_t base =
+                (static_cast<size_t>(poly_idx) * static_cast<size_t>(prime_count) +
+                 static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n);
+            for (int coeff_idx = 0; coeff_idx < n; coeff_idx++) {
+                out[base + static_cast<size_t>(coeff_idx)] = dist(rng);
+            }
+        }
     }
     return out;
 }
@@ -139,7 +158,7 @@ static std::vector<Word> sample_uniform_polys(int poly_count,
 template <typename Word>
 static std::vector<Word> sample_sparse_noise_polys(int poly_count,
                                                    int n,
-                                                   Word modulus,
+                                                   const std::vector<ModulusConfig<Word>> &configs,
                                                    int weight,
                                                    uint64_t seed) {
     using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
@@ -148,7 +167,11 @@ static std::vector<Word> sample_sparse_noise_polys(int poly_count,
     std::uniform_int_distribution<int> sign_dist(0, 1);
 
     const int capped_weight = std::min(weight, n);
-    std::vector<Word> out(static_cast<size_t>(poly_count) * static_cast<size_t>(n), 0);
+    const int prime_count = static_cast<int>(configs.size());
+    std::vector<Word> out(static_cast<size_t>(poly_count) *
+                          static_cast<size_t>(prime_count) *
+                          static_cast<size_t>(n),
+                          0);
     for (int poly_idx = 0; poly_idx < poly_count; poly_idx++) {
         std::unordered_set<int> used;
         used.reserve(static_cast<size_t>(capped_weight) * 2 + 1);
@@ -157,8 +180,16 @@ static std::vector<Word> sample_sparse_noise_polys(int poly_count,
             if (!used.insert(pos).second) {
                 continue;
             }
-            out[static_cast<size_t>(poly_idx) * static_cast<size_t>(n) + static_cast<size_t>(pos)] =
-                sign_dist(rng) == 0 ? static_cast<Word>(1) : static_cast<Word>(modulus - 1);
+            bool positive = sign_dist(rng) == 0;
+            for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+                const size_t base =
+                    (static_cast<size_t>(poly_idx) * static_cast<size_t>(prime_count) +
+                     static_cast<size_t>(prime_idx)) *
+                    static_cast<size_t>(n);
+                Word modulus = configs[prime_idx].modulus;
+                out[base + static_cast<size_t>(pos)] =
+                    positive ? static_cast<Word>(1) : static_cast<Word>(modulus - 1);
+            }
         }
     }
     return out;
@@ -167,11 +198,16 @@ static std::vector<Word> sample_sparse_noise_polys(int poly_count,
 template <typename Word>
 static std::vector<Word> scalar_mul_add_batches(const std::vector<Word> &base,
                                                 const std::vector<Word> &noise,
-                                                Word scalar,
-                                                Word modulus) {
+                                                const std::vector<Word> &scalar,
+                                                const std::vector<ModulusConfig<Word>> &configs,
+                                                int n) {
+    const int prime_count = static_cast<int>(configs.size());
     std::vector<Word> out(base.size(), 0);
     for (size_t idx = 0; idx < base.size(); idx++) {
-        out[idx] = mod_add(base[idx], mod_mul_host(noise[idx], scalar, modulus), modulus);
+        int prime_idx = static_cast<int>((idx / static_cast<size_t>(n)) %
+                                         static_cast<size_t>(prime_count));
+        Word modulus = configs[prime_idx].modulus;
+        out[idx] = mod_add(base[idx], mod_mul_host(noise[idx], scalar[prime_idx], modulus), modulus);
     }
     return out;
 }
@@ -180,10 +216,14 @@ template <typename Word>
 static std::vector<Word> repeat_rhs_for_outputs(const std::vector<Word> &rhs,
                                                 int outputs,
                                                 int lanes,
+                                                int prime_count,
                                                 int n) {
     std::vector<Word> out(static_cast<size_t>(outputs) * static_cast<size_t>(lanes) *
+                          static_cast<size_t>(prime_count) *
                           static_cast<size_t>(n));
-    const size_t block_size = static_cast<size_t>(lanes) * static_cast<size_t>(n);
+    const size_t block_size = static_cast<size_t>(lanes) *
+                              static_cast<size_t>(prime_count) *
+                              static_cast<size_t>(n);
     for (int output_idx = 0; output_idx < outputs; output_idx++) {
         std::copy(rhs.begin(), rhs.end(), out.begin() + static_cast<size_t>(output_idx) * block_size);
     }
@@ -200,22 +240,34 @@ __global__ void reduce_poly_batches_kernel(const Word *pairwise,
                                            Word *reduced,
                                            int n,
                                            int lanes,
-                                           Word modulus) {
+                                           int prime_count,
+                                           const Word *primes) {
     size_t coeff_idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-    int output_idx = static_cast<int>(blockIdx.y);
+    int flat_limb = static_cast<int>(blockIdx.y);
+    int output_idx = flat_limb / prime_count;
+    int prime_idx = flat_limb - output_idx * prime_count;
     if (coeff_idx >= static_cast<size_t>(n)) {
         return;
     }
 
-    size_t base = static_cast<size_t>(output_idx) * static_cast<size_t>(lanes) *
-                  static_cast<size_t>(n) + coeff_idx;
+    Word modulus = primes[prime_idx];
     Word acc = 0;
     for (int lane_idx = 0; lane_idx < lanes; lane_idx++) {
-        acc = mod_add_device(acc,
-                             pairwise[base + static_cast<size_t>(lane_idx) * static_cast<size_t>(n)],
-                             modulus);
+        size_t pair_poly =
+            static_cast<size_t>(output_idx) * static_cast<size_t>(lanes) +
+            static_cast<size_t>(lane_idx);
+        size_t offset =
+            (pair_poly * static_cast<size_t>(prime_count) + static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n) +
+            coeff_idx;
+        acc = mod_add_device(acc, pairwise[offset], modulus);
     }
-    reduced[static_cast<size_t>(output_idx) * static_cast<size_t>(n) + coeff_idx] = acc;
+    size_t out_offset =
+        (static_cast<size_t>(output_idx) * static_cast<size_t>(prime_count) +
+         static_cast<size_t>(prime_idx)) *
+            static_cast<size_t>(n) +
+        coeff_idx;
+    reduced[out_offset] = acc;
 }
 
 template <typename Word>
@@ -223,11 +275,16 @@ __global__ void add_poly_batches_kernel(const Word *lhs,
                                         const Word *rhs,
                                         Word *out,
                                         size_t total_coeffs,
-                                        Word modulus) {
+                                        int n,
+                                        int prime_count,
+                                        const Word *primes) {
     size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (idx >= total_coeffs) {
         return;
     }
+    int prime_idx = static_cast<int>((idx / static_cast<size_t>(n)) %
+                                     static_cast<size_t>(prime_count));
+    Word modulus = primes[prime_idx];
     out[idx] = mod_add_device(lhs[idx], rhs[idx], modulus);
 }
 
@@ -245,7 +302,7 @@ static void run_inner_product_phase(const Word *d_a_ntt,
                                     int outputs,
                                     int lanes,
                                     int log_degree,
-                                    Word modulus) {
+                                    int prime_count) {
     const int pair_batch = outputs * lanes;
     run_polymul_prepared_lhs(d_a_ntt,
                              d_rhs_pairs,
@@ -255,18 +312,22 @@ static void run_inner_product_phase(const Word *d_a_ntt,
                              tables,
                              n,
                              pair_batch,
-                             log_degree);
+                             log_degree,
+                             prime_count);
 
     dim3 block(256);
-    dim3 reduce_grid(grid_size(static_cast<size_t>(n), block.x), static_cast<unsigned int>(outputs));
+    dim3 reduce_grid(grid_size(static_cast<size_t>(n), block.x),
+                     static_cast<unsigned int>(outputs * prime_count));
     reduce_poly_batches_kernel<Word><<<reduce_grid, block>>>(
-        d_pairwise_out, d_reduced, n, lanes, modulus);
+        d_pairwise_out, d_reduced, n, lanes, prime_count, tables.d_primes);
     check_launch("launch reduce_poly_batches_kernel");
 
-    const size_t total_output_coeffs = static_cast<size_t>(outputs) * static_cast<size_t>(n);
+    const size_t total_output_coeffs = static_cast<size_t>(outputs) *
+                                       static_cast<size_t>(prime_count) *
+                                       static_cast<size_t>(n);
     dim3 add_grid(grid_size(total_output_coeffs, block.x));
     add_poly_batches_kernel<Word><<<add_grid, block>>>(
-        d_reduced, d_offset, d_result, total_output_coeffs, modulus);
+        d_reduced, d_offset, d_result, total_output_coeffs, n, prime_count, tables.d_primes);
     check_launch("launch add_poly_batches_kernel");
 }
 
@@ -274,37 +335,60 @@ template <typename Word>
 static std::vector<Word> host_expand_phase(const std::vector<Word> &a_pairs,
                                            const std::vector<Word> &rhs,
                                            const std::vector<Word> &offset,
-                                           const std::vector<Word> &phi_norm,
-                                           const std::vector<Word> &post_norm,
-                                           const ModulusConfig<Word> &config,
+                                           const std::vector<std::vector<Word>> &phi_norms,
+                                           const std::vector<std::vector<Word>> &post_norms,
+                                           const std::vector<ModulusConfig<Word>> &configs,
                                            int outputs,
                                            int lanes,
                                            int n,
                                            int log_degree) {
-    std::vector<Word> out(static_cast<size_t>(outputs) * static_cast<size_t>(n), 0);
+    const int prime_count = static_cast<int>(configs.size());
+    std::vector<Word> out(static_cast<size_t>(outputs) *
+                          static_cast<size_t>(prime_count) *
+                          static_cast<size_t>(n),
+                          0);
     for (int output_idx = 0; output_idx < outputs; output_idx++) {
-        std::vector<Word> acc(n, 0);
-        for (int lane_idx = 0; lane_idx < lanes; lane_idx++) {
-            const size_t pair_base =
-                (static_cast<size_t>(output_idx) * static_cast<size_t>(lanes) +
-                 static_cast<size_t>(lane_idx)) *
-                static_cast<size_t>(n);
-            const size_t rhs_base = static_cast<size_t>(lane_idx) * static_cast<size_t>(n);
-            std::vector<Word> lhs_poly(a_pairs.begin() + pair_base,
-                                       a_pairs.begin() + pair_base + static_cast<size_t>(n));
-            std::vector<Word> rhs_poly(rhs.begin() + rhs_base,
-                                       rhs.begin() + rhs_base + static_cast<size_t>(n));
-            std::vector<Word> product = host_polymul_reference(
-                lhs_poly, rhs_poly, phi_norm, post_norm, config, n, log_degree);
-            for (int coeff_idx = 0; coeff_idx < n; coeff_idx++) {
-                acc[coeff_idx] = mod_add(acc[coeff_idx], product[coeff_idx], config.modulus);
+        for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+            const ModulusConfig<Word> &config = configs[prime_idx];
+            std::vector<Word> acc(n, 0);
+            for (int lane_idx = 0; lane_idx < lanes; lane_idx++) {
+                const size_t pair_base =
+                    ((static_cast<size_t>(output_idx) * static_cast<size_t>(lanes) +
+                      static_cast<size_t>(lane_idx)) *
+                         static_cast<size_t>(prime_count) +
+                     static_cast<size_t>(prime_idx)) *
+                    static_cast<size_t>(n);
+                const size_t rhs_base =
+                    (static_cast<size_t>(lane_idx) * static_cast<size_t>(prime_count) +
+                     static_cast<size_t>(prime_idx)) *
+                    static_cast<size_t>(n);
+                std::vector<Word> lhs_poly(a_pairs.begin() + pair_base,
+                                           a_pairs.begin() + pair_base + static_cast<size_t>(n));
+                std::vector<Word> rhs_poly(rhs.begin() + rhs_base,
+                                           rhs.begin() + rhs_base + static_cast<size_t>(n));
+                std::vector<Word> product = host_polymul_reference(
+                    lhs_poly,
+                    rhs_poly,
+                    phi_norms[prime_idx],
+                    post_norms[prime_idx],
+                    config,
+                    n,
+                    log_degree);
+                for (int coeff_idx = 0; coeff_idx < n; coeff_idx++) {
+                    acc[coeff_idx] = mod_add(acc[coeff_idx], product[coeff_idx], config.modulus);
+                }
             }
-        }
 
-        const size_t out_base = static_cast<size_t>(output_idx) * static_cast<size_t>(n);
-        for (int coeff_idx = 0; coeff_idx < n; coeff_idx++) {
-            out[out_base + static_cast<size_t>(coeff_idx)] =
-                mod_add(acc[coeff_idx], offset[out_base + static_cast<size_t>(coeff_idx)], config.modulus);
+            const size_t out_base =
+                (static_cast<size_t>(output_idx) * static_cast<size_t>(prime_count) +
+                 static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n);
+            for (int coeff_idx = 0; coeff_idx < n; coeff_idx++) {
+                out[out_base + static_cast<size_t>(coeff_idx)] =
+                    mod_add(acc[coeff_idx],
+                            offset[out_base + static_cast<size_t>(coeff_idx)],
+                            config.modulus);
+            }
         }
     }
     return out;
@@ -314,13 +398,19 @@ template <typename Word>
 static bool validate_vole_relation(const std::vector<Word> &x,
                                    const std::vector<Word> &y,
                                    const std::vector<Word> &z,
-                                   Word delta,
+                                   const std::vector<Word> &delta,
                                    int n,
-                                   Word modulus) {
+                                   const std::vector<ModulusConfig<Word>> &configs) {
+    const int prime_count = static_cast<int>(configs.size());
     for (size_t idx = 0; idx < z.size(); idx++) {
-        Word rhs = mod_add(y[idx], mod_mul_host(x[idx], delta, modulus), modulus);
+        int prime_idx = static_cast<int>((idx / static_cast<size_t>(n)) %
+                                         static_cast<size_t>(prime_count));
+        Word modulus = configs[prime_idx].modulus;
+        Word rhs = mod_add(y[idx], mod_mul_host(x[idx], delta[prime_idx], modulus), modulus);
         if (rhs != z[idx]) {
-            std::cerr << "VOLE relation mismatch at output " << (idx / static_cast<size_t>(n))
+            std::cerr << "VOLE relation mismatch at output "
+                      << (idx / (static_cast<size_t>(prime_count) * static_cast<size_t>(n)))
+                      << ", prime " << prime_idx
                       << ", index " << (idx % static_cast<size_t>(n))
                       << ": expected " << rhs << ", got " << z[idx] << "\n";
             return false;
@@ -330,14 +420,19 @@ static bool validate_vole_relation(const std::vector<Word> &x,
 }
 
 template <typename Word>
-static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &config) {
-    if (((static_cast<WideWord<Word>>(config.modulus) - 1ULL) %
-         (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
-        std::cerr << "Unsupported degree for selected prime: need 2n to divide q-1\n";
-        return 1;
+static int run_vole_benchmark(const VoleArgs &args,
+                              const std::vector<ModulusConfig<Word>> &configs,
+                              int actual_qbits) {
+    for (const auto &config : configs) {
+        if (((static_cast<WideWord<Word>>(config.modulus) - 1ULL) %
+             (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
+            std::cerr << "Unsupported degree for selected prime: need 2n to divide q-1\n";
+            return 1;
+        }
     }
 
-    const size_t required_bytes = estimate_required_device_bytes<Word>(args);
+    const int prime_count = static_cast<int>(configs.size());
+    const size_t required_bytes = estimate_required_device_bytes<Word>(args, prime_count);
     if (!has_device_capacity(required_bytes)) {
         std::cerr << "Insufficient GPU memory for requested configuration; need about "
                   << required_bytes << " bytes\n";
@@ -347,40 +442,50 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     const int n = args.n;
     const int log_degree = int_log2(static_cast<uint32_t>(n));
     const int pair_batch = args.outputs * args.lanes;
-    const size_t pair_coeffs = static_cast<size_t>(pair_batch) * static_cast<size_t>(n);
-    const size_t output_coeffs = static_cast<size_t>(args.outputs) * static_cast<size_t>(n);
+    const size_t pair_coeffs = static_cast<size_t>(pair_batch) *
+                               static_cast<size_t>(prime_count) *
+                               static_cast<size_t>(n);
+    const size_t output_coeffs = static_cast<size_t>(args.outputs) *
+                                 static_cast<size_t>(prime_count) *
+                                 static_cast<size_t>(n);
 
     HostTables<Word> host_tables;
-    compute_cheddar_tables(host_tables, n, config);
+    compute_cheddar_tables(host_tables, n, configs);
 
     DeviceTables<Word> tables;
     alloc_and_copy(tables, host_tables);
 
-    std::vector<Word> phi_norm;
-    std::vector<Word> post_norm;
-    compute_reference_vectors(phi_norm, post_norm, n, config);
+    std::vector<std::vector<Word>> phi_norms(prime_count);
+    std::vector<std::vector<Word>> post_norms(prime_count);
+    for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+        compute_reference_vectors(phi_norms[prime_idx], post_norms[prime_idx], n, configs[prime_idx]);
+    }
 
     using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
     Rng delta_rng(static_cast<typename Rng::result_type>(args.seed + 1000));
-    std::uniform_int_distribution<Word> delta_dist(1, static_cast<Word>(config.modulus - 1));
-    Word delta = delta_dist(delta_rng);
+    std::vector<Word> delta(prime_count);
+    for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+        std::uniform_int_distribution<Word> delta_dist(
+            1, static_cast<Word>(configs[prime_idx].modulus - 1));
+        delta[prime_idx] = delta_dist(delta_rng);
+    }
 
     std::vector<Word> a_pairs = sample_uniform_polys(
-        pair_batch, n, config.modulus, args.seed + 11);
+        pair_batch, n, configs, args.seed + 11);
     std::vector<Word> e = sample_sparse_noise_polys(
-        args.lanes, n, config.modulus, args.noise_weight, args.seed + 21);
+        args.lanes, n, configs, args.noise_weight, args.seed + 21);
     std::vector<Word> vm = sample_uniform_polys(
-        args.lanes, n, config.modulus, args.seed + 31);
+        args.lanes, n, configs, args.seed + 31);
     std::vector<Word> f = sample_sparse_noise_polys(
-        args.outputs, n, config.modulus, args.noise_weight, args.seed + 41);
+        args.outputs, n, configs, args.noise_weight, args.seed + 41);
     std::vector<Word> vj = sample_uniform_polys(
-        args.outputs, n, config.modulus, args.seed + 51);
-    std::vector<Word> wm = scalar_mul_add_batches(vm, e, delta, config.modulus);
-    std::vector<Word> wj = scalar_mul_add_batches(vj, f, delta, config.modulus);
+        args.outputs, n, configs, args.seed + 51);
+    std::vector<Word> wm = scalar_mul_add_batches(vm, e, delta, configs, n);
+    std::vector<Word> wj = scalar_mul_add_batches(vj, f, delta, configs, n);
 
-    std::vector<Word> e_pairs = repeat_rhs_for_outputs(e, args.outputs, args.lanes, n);
-    std::vector<Word> vm_pairs = repeat_rhs_for_outputs(vm, args.outputs, args.lanes, n);
-    std::vector<Word> wm_pairs = repeat_rhs_for_outputs(wm, args.outputs, args.lanes, n);
+    std::vector<Word> e_pairs = repeat_rhs_for_outputs(e, args.outputs, args.lanes, prime_count, n);
+    std::vector<Word> vm_pairs = repeat_rhs_for_outputs(vm, args.outputs, args.lanes, prime_count, n);
+    std::vector<Word> wm_pairs = repeat_rhs_for_outputs(wm, args.outputs, args.lanes, prime_count, n);
 
     Word *d_a_pairs = nullptr;
     Word *d_e_pairs = nullptr;
@@ -422,7 +527,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     alloc_only(&d_y, output_coeffs, "alloc d_y");
     alloc_only(&d_z, output_coeffs, "alloc d_z");
 
-    run_forward_only(d_a_pairs, d_a_ntt, tables, n, pair_batch, log_degree, true);
+    run_forward_only(d_a_pairs, d_a_ntt, tables, n, pair_batch, log_degree, true, prime_count);
     check(cudaDeviceSynchronize(), "sync NTT(a) precompute");
 
     bool correct = true;
@@ -439,7 +544,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                             args.outputs,
                             args.lanes,
                             log_degree,
-                            config.modulus);
+                            prime_count);
     run_inner_product_phase(d_a_ntt,
                             d_vm_pairs,
                             d_b_work,
@@ -453,7 +558,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                             args.outputs,
                             args.lanes,
                             log_degree,
-                            config.modulus);
+                            prime_count);
     run_inner_product_phase(d_a_ntt,
                             d_wm_pairs,
                             d_b_work,
@@ -467,12 +572,14 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                             args.outputs,
                             args.lanes,
                             log_degree,
-                            config.modulus);
+                            prime_count);
     check(cudaDeviceSynchronize(), "sync initial VOLE run");
 
     if (!args.skip_validation) {
         const int validation_outputs = std::min(args.outputs, kMaxValidationBatches);
-        const size_t validation_coeffs = static_cast<size_t>(validation_outputs) * static_cast<size_t>(n);
+        const size_t validation_coeffs = static_cast<size_t>(validation_outputs) *
+                                         static_cast<size_t>(prime_count) *
+                                         static_cast<size_t>(n);
         std::vector<Word> gpu_x(validation_coeffs);
         std::vector<Word> gpu_y(validation_coeffs);
         std::vector<Word> gpu_z(validation_coeffs);
@@ -486,9 +593,9 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
         std::vector<Word> host_x = host_expand_phase(a_pairs,
                                                      e,
                                                      f,
-                                                     phi_norm,
-                                                     post_norm,
-                                                     config,
+                                                     phi_norms,
+                                                     post_norms,
+                                                     configs,
                                                      validation_outputs,
                                                      args.lanes,
                                                      n,
@@ -496,9 +603,9 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
         std::vector<Word> host_y = host_expand_phase(a_pairs,
                                                      vm,
                                                      vj,
-                                                     phi_norm,
-                                                     post_norm,
-                                                     config,
+                                                     phi_norms,
+                                                     post_norms,
+                                                     configs,
                                                      validation_outputs,
                                                      args.lanes,
                                                      n,
@@ -506,18 +613,18 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
         std::vector<Word> host_z = host_expand_phase(a_pairs,
                                                      wm,
                                                      wj,
-                                                     phi_norm,
-                                                     post_norm,
-                                                     config,
+                                                     phi_norms,
+                                                     post_norms,
+                                                     configs,
                                                      validation_outputs,
                                                      args.lanes,
                                                      n,
                                                      log_degree);
 
-        correct = compare_vectors(host_x, gpu_x, n, "VOLE x") && correct;
-        correct = compare_vectors(host_y, gpu_y, n, "VOLE y") && correct;
-        correct = compare_vectors(host_z, gpu_z, n, "VOLE z") && correct;
-        correct = validate_vole_relation(gpu_x, gpu_y, gpu_z, delta, n, config.modulus) && correct;
+        correct = compare_vectors(host_x, gpu_x, n, "VOLE x", prime_count) && correct;
+        correct = compare_vectors(host_y, gpu_y, n, "VOLE y", prime_count) && correct;
+        correct = compare_vectors(host_z, gpu_z, n, "VOLE z", prime_count) && correct;
+        correct = validate_vole_relation(gpu_x, gpu_y, gpu_z, delta, n, configs) && correct;
     }
 
     std::vector<double> x_samples;
@@ -552,7 +659,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         run_inner_product_phase(d_a_ntt,
                                 d_vm_pairs,
                                 d_b_work,
@@ -566,7 +673,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         run_inner_product_phase(d_a_ntt,
                                 d_wm_pairs,
                                 d_b_work,
@@ -580,7 +687,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         check(cudaDeviceSynchronize(), "sync VOLE warmup");
     }
 
@@ -603,7 +710,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         check(cudaEventRecord(phase_stop_evt), "record x stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync x stop");
         check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed x");
@@ -623,7 +730,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         check(cudaEventRecord(phase_stop_evt), "record y stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync y stop");
         check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed y");
@@ -643,7 +750,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
                                 args.outputs,
                                 args.lanes,
                                 log_degree,
-                                config.modulus);
+                                prime_count);
         check(cudaEventRecord(phase_stop_evt), "record z stop");
         check(cudaEventSynchronize(phase_stop_evt), "sync z stop");
         check(cudaEventElapsedTime(&elapsed_ms, phase_start_evt, phase_stop_evt), "elapsed z");
@@ -663,7 +770,7 @@ static int run_vole_benchmark(const VoleArgs &args, const ModulusConfig<Word> &c
     const int correct_flag = args.skip_validation ? -1 : (correct ? 1 : 0);
 
     std::cout << RINGLPN_DEVICE_LABEL << ",synthetic_mpvole," << n << "," << log_degree << ","
-              << args.requested_qbits << "," << config.actual_qbits << ","
+              << args.requested_qbits << "," << actual_qbits << ","
               << args.outputs << "," << args.lanes << "," << args.noise_weight << ","
               << args.iters << "," << validation << ","
               << x_stats.mean_us << "," << x_stats.stddev_us << ","
@@ -703,8 +810,14 @@ int main(int argc, char **argv) {
         std::cout << "device,input_mode,n,logn,requested_qbits,actual_qbits,m,c,noise_weight,iters,validation,x_mean_us,x_std_us,y_mean_us,y_std_us,z_mean_us,z_std_us,expand_mean_us,expand_std_us,correct\n";
     }
 
-    if (args.requested_qbits == 64) {
-        return run_vole_benchmark<uint64_t>(args, kConfig62);
+    if (args.requested_qbits == 128) {
+        return run_vole_benchmark<uint64_t>(
+            args, std::vector<ModulusConfig<uint64_t>>{kConfig62, kConfig62Crt2}, 124);
     }
-    return run_vole_benchmark<uint32_t>(args, kConfig30);
+    if (args.requested_qbits == 64) {
+        return run_vole_benchmark<uint64_t>(
+            args, std::vector<ModulusConfig<uint64_t>>{kConfig62}, kConfig62.actual_qbits);
+    }
+    return run_vole_benchmark<uint32_t>(
+        args, std::vector<ModulusConfig<uint32_t>>{kConfig30}, kConfig30.actual_qbits);
 }

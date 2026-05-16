@@ -11,6 +11,12 @@ MD="$OUT_DIR/ntt_gpu_q32_legacy.md"
 
 mkdir -p "$OUT_DIR"
 
+if [[ "${ALLOW_LEGACY_CUDA_NTT:-0}" != "1" ]]; then
+  echo "The legacy CUDA NTT sweep is archived and is no longer part of the active Ring-LPN GPU pipeline."
+  echo "Use scripts/run_cuda_sweep.sh for the Cheddar backend, or set ALLOW_LEGACY_CUDA_NTT=1 for historical comparison."
+  exit 1
+fi
+
 if [[ ! -x "$BIN" ]]; then
   echo "bench_ntt_cuda_legacy not built. Run scripts/build_cuda_bench_legacy.sh first."
   exit 1

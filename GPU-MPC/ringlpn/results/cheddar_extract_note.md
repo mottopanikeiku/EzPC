@@ -46,7 +46,7 @@ References:
 
 4. Decide what not to import.
 
-The extracted path deliberately does not pull over cheddar-fhe's `DeviceVector`, `DvView`, `InputPtrList`, `Parameter`, `NPInfo`, `PopulateConstantMemory`, or the multi-prime modulus scheduling. Those pieces are framework/runtime glue, not the core kernel logic needed for Ring-LPN's single-prime benchmark.
+The extracted path deliberately does not pull over cheddar-fhe's `DeviceVector`, `DvView`, `InputPtrList`, `Parameter`, `NPInfo`, or `PopulateConstantMemory`. Those pieces are framework/runtime glue, not the core kernel logic needed for Ring-LPN's standalone benchmark. The initial extraction also avoided cheddar-fhe's multi-prime modulus scheduling; the later q128 addendum below adds a minimal local prime-indexed schedule without importing cheddar's runtime stack.
 
 The adapter boundary is visible in the difference between cheddar's wrappers and the standalone Ring-LPN wrappers.
 
@@ -64,9 +64,9 @@ References:
 - Original layout source: `cheddar-fhe/src/core/NTT.cu:1234-1298`
 - Standalone adapter: `src/bench_ntt_cuda_cheddar.cu:295-332`
 
-6. Keep the two-phase kernel structure, but specialize the runtime to one prime and many batches.
+6. Keep the two-phase kernel structure, initially specializing the runtime to one prime and many batches.
 
-The extracted file keeps the two-phase NTT and INTT structure and the same launch-config template logic, but converts cheddar-fhe's multi-prime `grid.y` indexing into a simpler `batch_count` dimension. That is why the standalone kernels are named `NTTPhase1SinglePrime`, `NTTPhase2SinglePrime`, `INTTPhase1SinglePrime`, and `INTTPhase2SinglePrime`.
+The extracted file keeps the two-phase NTT and INTT structure and the same launch-config template logic. The first standalone version converted cheddar-fhe's multi-prime `grid.y` indexing into a simpler `batch_count` dimension, which is why the standalone kernels are historically named `NTTPhase1SinglePrime`, `NTTPhase2SinglePrime`, `INTTPhase1SinglePrime`, and `INTTPhase2SinglePrime`. The q128 extension now reuses those kernels with a flattened `(batch, prime)` `grid.y` layout.
 
 References:
 
@@ -106,7 +106,7 @@ Directly preserved from cheddar-fhe:
 
 Adapted for Ring-LPN:
 
-- Single-prime runtime instead of cheddar-fhe's multi-prime `NPInfo` path.
+- Local raw-pointer runtime instead of cheddar-fhe's `NPInfo` path; q32/q64 use one prime limb, and q128 now uses two q62 CRT prime limbs through a local flattened schedule.
 - Plain CUDA allocations and raw pointers instead of cheddar-fhe device containers.
 - A standalone pointwise multiply kernel.
 - A host reference path for validation.
@@ -230,3 +230,45 @@ The new entry point takes a pre-computed NTT of the left operand and only runs t
 The VOLE benchmark is the primary consumer of this entry point: `run_inner_product_phase(...)` in `ringlpn/src/bench_vole_ringlpn.cu` now receives `NTT(a)` once and reuses it across the three inner-product phases for `x`, `y`, and `z`. Call sites that do not want to manage the prepared-lhs buffer are unaffected; they continue to call `run_full_polymul(...)` as before.
 
 This addendum is intentionally narrow: the underlying cheddar extraction strategy and the saved NTT / PolyMul measurements in `ntt_gpu_q32.md`, `ntt_gpu_q64.md`, and `cpu_gpu_8192_32_batch64.md` did not depend on this new entry point and are not affected by it.
+
+## Addendum: q128 CRT prime-limb support (2026-05-16)
+
+The promoted Cheddar-derived benchmark now accepts `--qbits 128`. Requested q128 maps to actual `qbits=124` using two 62-bit NTT primes:
+
+- `4611686018326724609`
+- `4611686018309947393`
+
+Both primes support `2n | p-1` through `n=2^20`. The second prime uses primitive `2^21` root `542331589372957056`.
+
+Implementation summary:
+
+- `compute_cheddar_tables(...)` now builds prime-indexed twiddle, inverse-twiddle, MSB twiddle, inverse-degree, and Montgomery constants.
+- The four Cheddar phase kernels now interpret `grid.y` as flattened `(batch, prime)` work. q32/q64 keep `prime_count=1`; q128 uses `prime_count=2`.
+- The pointwise multiply kernel selects the modulus from the coefficient's prime limb.
+- Validation now constructs batched CRT residue patterns and checks each limb against the host reference NTT/INTT and negacyclic multiplication.
+- `scripts/run_cuda_sweep.sh` accepts `QBITS=128`, and `scripts/summarize_cuda_results.py` reports the two-limb coefficient traffic proxy correctly.
+
+Validated result:
+
+- `results/ntt_gpu_q128.md` and `results/ntt_gpu_q128.csv` record a full promoted q128 sweep over `n in {8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
+- Every q128 sweep point passed validation.
+
+Scope caveat: the promoted benchmark validates q128 in CRT/RNS residue form. It does not currently expose a separate canonical CRT-recombined coefficient output path, and q128 has not yet been wired into the Figure 2 OLE, linear-layer OLE-to-Beaver, or Orca key-writer artifacts.
+
+## Addendum: Cheddar-only active GPU NTT pipeline and VOLE q128 wiring (2026-05-16)
+
+The active Ring-LPN GPU NTT pipeline now treats `src/bench_ntt_cuda_cheddar.cu` as the backend of record. `scripts/build_cuda_bench.sh` builds that source into `bin/bench_ntt_cuda`, `scripts/run_cuda_sweep.sh` drives q32/q64/q128 through it, and the old `src/bench_ntt_cuda.cu` path is archived behind `ALLOW_LEGACY_CUDA_NTT=1` in the legacy build/sweep scripts.
+
+The VOLE prototype has also been wired to the q128 Cheddar residue-limb path. `src/bench_vole_ringlpn.cu` now accepts `--qbits 128`, lays out tensors as flattened `(poly, prime, coeff)` buffers, reuses a prepared `NTT(a)` across the three inner-product phases, and reduces/adds per prime limb using the modulus array copied with the Cheddar tables. Validation checks both q62 limbs against the host polynomial oracle and then verifies `z = y + x * Delta` coefficient-wise.
+
+Validated smoke commands:
+
+```bash
+cd /home/ringlpn
+bash scripts/build_vole_bench.sh
+./bin/bench_vole_ringlpn --csv-header --n 8192 --qbits 32 --m 2 --c 2 --noise-weight 8 --iters 1 --warmup 0
+./bin/bench_vole_ringlpn --csv-header --n 8192 --qbits 64 --m 2 --c 2 --noise-weight 8 --iters 1 --warmup 0
+./bin/bench_vole_ringlpn --csv-header --n 8192 --qbits 128 --m 2 --c 2 --noise-weight 8 --iters 1 --warmup 0
+```
+
+All three direct smoke runs passed validation. A smaller full-degree q128 CRT VOLE smoke sweep is saved in `results/vole_gpu_q128_smoke.md` / `.csv` using `m=2`, `c=2`, and noise weight `8`; every row passed validation. `scripts/run_vole_sweep.sh` now accepts `QBITS=128` for the full default CRT VOLE sweep.

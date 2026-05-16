@@ -4,9 +4,9 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 
 ## Layout
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
-- src/bench_ntt_cuda.cu: legacy CUDA NTT benchmark for requested q=32 using a 30-bit prime, runtime root derivation, and batching
 - src/bench_ntt_cuda_cheddar.cu: primary CUDA benchmark, extracted from cheddar-fhe and adapted to the Ring-LPN harness
-- src/bench_vole_ringlpn.cu: standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path
+- src/bench_ntt_cuda.cu: archived legacy CUDA NTT benchmark retained only for opt-in historical comparison
+- src/bench_vole_ringlpn.cu: standalone Ring-LPN VOLE prototype benchmark built on the promoted Cheddar CUDA PolyMul path
 - src/gpu_spfss_zp.cuh: standalone GPU DPF/SPFSS path with additive Z_p payload shares for the Figure 2 OLE artifact
 - src/test_spfss_zp_cuda.cu: GPU SPFSS payload correctness test
 - src/bench_ole_ringlpn_cuda.cu: standalone GPU Figure 2 SPFSS/OLE benchmark
@@ -32,11 +32,11 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/run_orca_fc_ringlpn_demo.sh: run the tiny Orca FC demo and write CSV + Markdown
 - scripts/summarize_orca_fc_demo.py: summarize the FC demo CSV output
 - scripts/run_paper_checkpoint_smoke.sh: one-command host smoke, with optional CUDA/OLE/linear/FC smoke inside the container
-- scripts/build_cuda_bench_cheddar.sh: build an explicit standalone cheddar-derived binary for side-by-side checks
-- scripts/build_cuda_bench_legacy.sh: build the legacy CUDA benchmark path
+- scripts/build_cuda_bench_cheddar.sh: build an explicit standalone cheddar-derived alias binary
+- scripts/build_cuda_bench_legacy.sh: archived opt-in build for the old CUDA benchmark path
 - scripts/run_cuda_single.sh: run a CPU vs GPU spot check for requested q=32 at n in {8192, 16384, 32768}
-- scripts/run_cuda_sweep.sh: run the requested q=32 or q=64 CUDA sweep with batching and generate CSV + Markdown
-- scripts/run_cuda_sweep_legacy.sh: run the legacy CUDA q=32 sweep for baseline comparison
+- scripts/run_cuda_sweep.sh: run the requested q=32, q=64, or q=128 CUDA sweep with batching and generate CSV + Markdown
+- scripts/run_cuda_sweep_legacy.sh: archived opt-in legacy CUDA q=32 sweep for historical comparison
 - scripts/summarize_cuda_results.py: summarize CUDA sweep outputs
 - ../scripts/run_dpf_online_keygen_sweep.py: run the standalone DPF online key generation sweep and generate CSV + Markdown
 - scripts/run_vtune_hotspots.sh: VTune hotspots wrapper for CPU benchmark
@@ -71,8 +71,8 @@ cd /home/ringlpn
 - results/ntt_cpu.csv
 - results/ntt_cpu.md
 
-## CUDA q=32 / q=64 sweeps
-The current primary GPU deliverable is a batched CUDA NTT path for requested `q=32` and `q=64`, realized with one 30-bit or one 62-bit prime that supports `n` through `2^20`.
+## CUDA q=32 / q=64 / q=128 sweeps
+The current primary GPU deliverable is a batched CUDA NTT path for requested `q=32`, `q=64`, and `q=128`. The q=32 and q=64 modes use one 30-bit or 62-bit prime, while q=128 uses two 62-bit CRT prime limbs, all supporting `n` through `2^20`.
 
 Build inside the CUDA-enabled container:
 ```bash
@@ -85,6 +85,9 @@ chmod +x scripts/*.sh
 
 # Optional q=64 sweep
 QBITS=64 ./scripts/run_cuda_sweep.sh
+
+# Optional q=128 CRT sweep
+QBITS=128 ./scripts/run_cuda_sweep.sh
 ```
 
 Outputs:
@@ -94,25 +97,28 @@ Outputs:
 - results/ntt_gpu_q64.csv
 - results/ntt_gpu_q64_unsupported.csv
 - results/ntt_gpu_q64.md
+- results/ntt_gpu_q128.csv
+- results/ntt_gpu_q128_unsupported.csv
+- results/ntt_gpu_q128.md
 
 Notes:
 - The primary CUDA path is now the cheddar-derived implementation in `src/bench_ntt_cuda_cheddar.cu`, built into `bin/bench_ntt_cuda` by `scripts/build_cuda_bench.sh`.
 - The promoted path keeps the existing CLI and CSV contract while replacing the internal kernel implementation with the cheddar-derived two-phase NTT / INTT structure.
-- `bench_ntt_cuda` accepts `--n`, `--qbits 30|32|64`, `--batch`, `--iters`, and `--warmup`.
-- Requested `qbits=32` maps to actual `qbits=30` on GPU, and requested `qbits=64` maps to actual `qbits=62`.
-- The selected single-prime parameter sets support the full `n in {8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}` sweep.
+- `bench_ntt_cuda` accepts `--n`, `--qbits 30|32|64|128`, `--batch`, `--iters`, and `--warmup`.
+- Requested `qbits=32` maps to actual `qbits=30`, requested `qbits=64` maps to actual `qbits=62`, and requested `qbits=128` maps to actual `qbits=124` via two q62 CRT limbs.
+- The selected NTT prime sets support the full `n in {8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}` sweep.
 - `run_cuda_single.sh` remains available for spot CPU-vs-GPU comparisons at the CPU-supported points up to `n=32768`.
 
-## Legacy CUDA baseline
-The original hand-written CUDA path is retained for comparison and regression tracking.
+## Archived Legacy CUDA Baseline
+The original hand-written CUDA path is retained for historical comparison only. It is not part of the active GPU NTT pipeline; the active `bench_ntt_cuda` binary is the Cheddar-derived implementation.
 
-Build and sweep the legacy path inside the CUDA-enabled container:
+Build and sweep the legacy path inside the CUDA-enabled container by opting in explicitly:
 ```bash
 cd /home/ringlpn
 chmod +x scripts/*.sh
 
-./scripts/build_cuda_bench_legacy.sh
-./scripts/run_cuda_sweep_legacy.sh
+ALLOW_LEGACY_CUDA_NTT=1 ./scripts/build_cuda_bench_legacy.sh
+ALLOW_LEGACY_CUDA_NTT=1 ./scripts/run_cuda_sweep_legacy.sh
 ```
 
 Legacy outputs:
@@ -120,8 +126,8 @@ Legacy outputs:
 - results/ntt_gpu_q32_legacy_unsupported.csv
 - results/ntt_gpu_q32_legacy.md
 
-## CUDA q=32 cheddar extract
-The repository also includes an explicit standalone cheddar-derived binary, `bench_ntt_cuda_cheddar`, which uses the same promoted source implementation but builds it under a separate name for side-by-side testing.
+## Cheddar Backend Alias
+The canonical GPU NTT binary is `bench_ntt_cuda`, built from `src/bench_ntt_cuda_cheddar.cu`. The repository also includes an explicit standalone alias, `bench_ntt_cuda_cheddar`, which builds the same source under a separate name for manual checks.
 
 Build inside the CUDA-enabled container:
 ```bash
@@ -133,7 +139,7 @@ chmod +x scripts/*.sh
 ```
 
 Notes:
-- The extracted kernels are adapted for the single-prime Ring-LPN benchmark layout, so they reuse one modulus across many batches instead of cheddar-fhe's original prime-limb dimension.
+- The extracted kernels use a flattened `(batch, prime)` Ring-LPN layout. q32/q64 run one prime limb, and q128 runs two q62 limbs in the same Cheddar phase kernels.
 - The build uses `-std=c++17`, which matches the cheddar-fhe kernel templates.
 - The same source also backs the default `bench_ntt_cuda` binary used by `run_cuda_sweep.sh`.
 
@@ -150,9 +156,9 @@ cd /home/ringlpn
 - Default sweep: n in {1024, 2048, 4096, 8192, 16384}, qbits in {30, 60}
 - Iterations: 10,000; Warmup: 1,000
 - Coefficients use uint32_t with 30-bit primes; qbits=60 aggregates two moduli.
-- The GPU q=32 path deliberately diverges from the CPU NFLLib uint32_t cutoff so larger `n` can be measured before the 64-bit and CRT phases land.
+- The GPU q=32 path deliberately diverges from the CPU NFLLib uint32_t cutoff so larger `n` can be measured.
 - The GPU q=64 path now uses a single 62-bit prime and a 64-bit Montgomery specialization built on `__umul64hi()`.
-- The current roadmap is: primary cheddar-derived single-prime q=32 and q=64 paths, then dual-prime CRT support for requested `q=128`.
+- The GPU q=128 path now uses two 62-bit primes and validates the CRT residue lanes; CPU-side NFLLib remains the comparison anchor for cross-checking q128 timings.
 
 ## Ring-LPN VOLE prototype
 The repository now also includes an initial standalone Ring-LPN VOLE prototype benchmark that reuses the promoted cheddar-derived GPU PolyMul path.
@@ -168,15 +174,16 @@ chmod +x scripts/*.sh
 # Optional full sweep for abstract/supporting tables
 ./scripts/run_vole_sweep.sh
 QBITS=64 ./scripts/run_vole_sweep.sh
+QBITS=128 ./scripts/run_vole_sweep.sh
 ```
 
 Notes:
 - This is a correctness-first prototype for the Section 5.3 Ring-LPN VOLE-style expansion layer, not a full SPFSS-backed degree-1 correlation implementation yet.
 - The current input mode is `synthetic_mpvole`, meaning the benchmark synthesizes MPVOLE-consistent inputs locally and validates the relation `z = y + x * Delta` coefficient-wise.
 - The prototype reuses the promoted GPU polynomial multiplication path from `src/bench_ntt_cuda_cheddar.cu` instead of introducing a separate CUDA implementation.
-- Requested `qbits=32` maps to actual `qbits=30`, and requested `qbits=64` maps to actual `qbits=62`.
+- Requested `qbits=32` maps to actual `qbits=30`, requested `qbits=64` maps to actual `qbits=62`, and requested `qbits=128` maps to actual `qbits=124` with two q62 CRT limbs in the same flattened Cheddar launch schedule.
 - The prototype is intentionally scoped for bring-up and benchmarking of the algebraic expansion step; SPFSS key generation and evaluation are still external to this harness.
-- The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64 counterparts when run with `QBITS=64`.
+- The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64/q128 counterparts when run with `QBITS=64` or `QBITS=128`. A smaller q128 CRT smoke sweep is saved as `results/vole_gpu_q128_smoke.md`.
 
 ## Figure 2 GPU OLE artifact
 The repository also includes a standalone GPU artifact for the Figure 2 SPFSS-based Ring-LPN OLE path.

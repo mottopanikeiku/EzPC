@@ -1,7 +1,7 @@
 # Ring-LPN Status Report
 
 Generated: 2026-04-09
-Updated: 2026-05-15 for the shared-matrix linear artifact and v1 Orca FC demo
+Updated: 2026-05-16 for the promoted q128 CRT NTT/PolyMul path and VOLE wiring
 
 ## Executive Summary
 
@@ -10,18 +10,18 @@ This report summarizes the current implementation status of the Ring-LPN benchma
 The project now has nine distinct benchmark/demo layers:
 
 1. a CPU baseline built on NFLLib,
-2. a preserved legacy CUDA implementation built around a `phi` preprocessing plus fused-first-8-stage design,
+2. an archived legacy CUDA implementation built around a `phi` preprocessing plus fused-first-8-stage design,
 3. a promoted primary CUDA implementation extracted from cheddar-fhe and adapted into a standalone Ring-LPN benchmark harness,
-4. a standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path,
+4. a standalone Ring-LPN VOLE prototype benchmark built on the promoted Cheddar CUDA PolyMul path,
 5. a standalone GPU Figure 2 SPFSS/OLE artifact that validates `z_0 + z_1 == x_0 * x_1` over the promoted single 62-bit prime path,
 6. a standalone ring-polynomial linear-layer OLE-to-Beaver artifact that validates matrix multiplication over `Z_p[X]/(X^N+1)`,
 7. a host-only Orca scalar bridge smoke for constant-polynomial packing and exact `Z_p -> Z_{2^bw}` dealer/oracle share conversion,
 8. a tiny forward-only Orca FC key-writer demo that emits raw `A`, `B`, `C_masked` buffers and validates unchanged `gpuMatmulBeaver`,
 9. a standalone DPF online key generation benchmark that measures one-shot versus chunked partial generation.
 
-The main engineering result of this phase is that the cheddar-derived implementation is no longer only a side experiment. It has now been integrated into the main Ring-LPN CUDA pipeline as the default implementation behind `bench_ntt_cuda`, while the older CUDA path is preserved as a legacy baseline for comparison and regression tracking.
+The main engineering result of this phase is that the cheddar-derived implementation is no longer only a side experiment. It has now been integrated into the main Ring-LPN CUDA pipeline as the default implementation behind `bench_ntt_cuda`, while the older CUDA path is archived and requires `ALLOW_LEGACY_CUDA_NTT=1` for historical comparison runs.
 
-At the same time, the project remains intentionally staged. The current main GPU path is now a single-prime implementation for both requested `q=32` and requested `q=64`, realized with one 30-bit prime or one 62-bit prime depending on the requested configuration. The remaining major research and engineering step on the benchmark-core side is dual-prime CRT composition for requested `q=128`. On the online-phase side, regular-noise OLE is now implemented and benchmarked for the bounded Figure 2 sweep. A conservative scalar bridge now validates constant-polynomial packing and the prime-carry correction needed for dealer/oracle conversion into Orca's `Z_{2^bw}` ring, and a tiny bounded FC demo validates Orca's unchanged online Beaver contract. High-density packing, q128/CRT, secure distributed conversion, and full Orca training/backward integration remain open.
+At the same time, the project remains intentionally staged. The current main GPU path now supports requested `q=32`, `q=64`, and `q=128`: q=32 and q=64 use one 30-bit or 62-bit prime, while q=128 uses two q62 CRT prime limbs in the flattened Cheddar launch schedule and reports actual `qbits=124`. The standalone VOLE prototype now uses that same Cheddar residue-limb path for q128. The Figure 2 OLE, linear-layer, and Orca-facing artifacts are still single-prime q62 unless stated otherwise. High-density packing, q128 wiring into those SPFSS/OLE and Orca artifacts, secure distributed conversion, and full Orca training/backward integration remain open.
 
 ## Project Objective
 
@@ -33,13 +33,14 @@ The immediate objective of the CUDA work has been:
 2. build a generalized GPU q=32 path over the full degree range from `8192` through `1048576`,
 3. extract the stronger NTT/INTT kernel structure from cheddar-fhe into a self-contained local benchmark,
 4. promote that extracted implementation to the main Ring-LPN GPU path without importing cheddar-fhe's full runtime stack,
-5. extend that promoted single-prime path from requested `q=32` to requested `q=64`,
-6. prototype a standalone Ring-LPN VOLE-style expansion layer on top of the promoted GPU PolyMul path,
-7. prototype a standalone GPU Figure 2 SPFSS/OLE artifact over `Z_p[X]/(X^N+1)`,
-8. prototype a standalone ring-polynomial linear-layer OLE-to-Beaver artifact,
-9. prototype and validate the first Orca-facing scalar bridge boundary from `Z_p` OLE/Beaver shares to `Z_{2^bw}`,
-10. prototype a tiny forward-only Orca FC key-writer demo using raw `A`, `B`, `C_masked` buffers and unchanged `gpuMatmulBeaver`,
-11. prototype a standalone DPF online key generation benchmark that quantifies peak staged key-footprint reduction from chunked generation.
+5. extend that promoted path from requested `q=32` to requested `q=64`,
+6. extend the promoted Cheddar kernel schedule to requested `q=128` with two q62 CRT prime limbs,
+7. prototype a standalone Ring-LPN VOLE-style expansion layer on top of the promoted GPU PolyMul path,
+8. prototype a standalone GPU Figure 2 SPFSS/OLE artifact over `Z_p[X]/(X^N+1)`,
+9. prototype a standalone ring-polynomial linear-layer OLE-to-Beaver artifact,
+10. prototype and validate the first Orca-facing scalar bridge boundary from `Z_p` OLE/Beaver shares to `Z_{2^bw}`,
+11. prototype a tiny forward-only Orca FC key-writer demo using raw `A`, `B`, `C_masked` buffers and unchanged `gpuMatmulBeaver`,
+12. prototype a standalone DPF online key generation benchmark that quantifies peak staged key-footprint reduction from chunked generation.
 
 ## Current Code and Filesystem State
 
@@ -48,7 +49,7 @@ The current high-signal files are:
 | Path | Role |
 | --- | --- |
 | `src/bench_ntt.cpp` | NFLLib-backed CPU reference benchmark |
-| `src/bench_ntt_cuda.cu` | Legacy CUDA benchmark retained for baseline comparison |
+| `src/bench_ntt_cuda.cu` | Archived legacy CUDA benchmark retained for opt-in historical comparison |
 | `src/bench_ntt_cuda_cheddar.cu` | Primary CUDA benchmark source, extracted from cheddar-fhe and adapted locally |
 | `src/bench_vole_ringlpn.cu` | Standalone Ring-LPN VOLE prototype benchmark |
 | `src/gpu_spfss_zp.cuh` | Standalone GPU DPF/SPFSS path with additive `Z_p` payload shares |
@@ -63,8 +64,8 @@ The current high-signal files are:
 | `scripts/build_vole_bench.sh` | VOLE benchmark build entry point |
 | `scripts/build_ole_cuda_bench.sh` | Figure 2 OLE benchmark and GPU SPFSS test build entry point |
 | `scripts/build_linear_ole_bench.sh` | Ring-polynomial linear OLE-to-Beaver build entry point |
-| `scripts/build_cuda_bench_cheddar.sh` | Explicit standalone cheddar-derived build |
-| `scripts/build_cuda_bench_legacy.sh` | Legacy CUDA build |
+| `scripts/build_cuda_bench_cheddar.sh` | Explicit standalone cheddar-derived alias build |
+| `scripts/build_cuda_bench_legacy.sh` | Archived opt-in legacy CUDA build |
 | `scripts/run_sweep.sh` | CPU sweep driver |
 | `scripts/run_cuda_sweep.sh` | Main CUDA sweep driver |
 | `scripts/run_vole_sweep.sh` | VOLE sweep driver |
@@ -78,15 +79,17 @@ The current high-signal files are:
 | `scripts/run_orca_fc_ringlpn_demo.sh` | Orca FC demo run driver |
 | `scripts/summarize_orca_fc_demo.py` | Orca FC demo CSV-to-Markdown summarizer |
 | `scripts/run_paper_checkpoint_smoke.sh` | Consolidated host smoke with optional CUDA OLE/linear/FC smoke inside the container |
-| `scripts/run_cuda_sweep_legacy.sh` | Legacy CUDA sweep driver |
+| `scripts/run_cuda_sweep_legacy.sh` | Archived opt-in legacy CUDA sweep driver |
 | `scripts/run_cuda_single.sh` | CPU-vs-GPU spot check on CPU-overlap points |
 | `../scripts/run_dpf_online_keygen_sweep.py` | DPF online key generation sweep driver |
 | `results/ntt_cpu.md` | CPU baseline summary |
 | `results/ntt_gpu_q32.md` | Current main CUDA summary |
 | `results/ntt_gpu_q64.md` | Current main CUDA q=64 summary |
+| `results/ntt_gpu_q128.md` | Current main CUDA q=128 CRT summary |
 | `results/ntt_gpu_q32_legacy.md` | Legacy CUDA summary |
 | `results/vole_gpu_q32_m32_c2_w64.md` | Current standalone VOLE q=32 summary |
 | `results/vole_gpu_q64_m32_c2_w64.md` | Current standalone VOLE q=64 summary |
+| `results/vole_gpu_q128_smoke.md` | Current standalone VOLE q=128 CRT smoke summary |
 | `results/ole_gpu_handoff.md` | Current Figure 2 OLE handoff, claims, caveats, and commands |
 | `results/linear_ole_handoff.md` | Current linear-layer OLE-to-Beaver handoff, claims, caveats, and commands |
 | `results/orca_zp_bridge_handoff.md` | Current Orca-facing scalar bridge handoff and counterexample |
@@ -119,7 +122,7 @@ The current requested-to-actual modulus contract is:
 | 64 | 62 | NFLLib uint64 |
 | 128 | 124 | NFLLib uint64 with two 62-bit limbs |
 
-This CPU baseline is important because it defines the correctness and reporting contract that the GPU side must match for larger bitwidths. That contract is now met for the current single-prime GPU q=64 path, and it remains the comparison anchor for future q=128 work.
+This CPU baseline is important because it defines the correctness and reporting contract that the GPU side must match for larger bitwidths. That contract is now met by the promoted GPU q=64 path and the promoted q=128 CRT residue-limb path; CPU q=128 remains the comparison anchor for deeper cross-checking.
 
 ### 2. Legacy CUDA q=32 benchmark
 
@@ -154,8 +157,8 @@ What was brought over conceptually from cheddar-fhe:
 What was adapted locally for Ring-LPN:
 
 1. replacement of cheddar-fhe container abstractions with raw CUDA allocations and local host tables,
-2. specialization to a single-prime benchmark layout,
-3. use of the batch dimension for independent polynomials rather than cheddar-fhe's multi-prime scheduling dimension,
+2. a local flattened `(batch, prime)` benchmark layout,
+3. use of one prime limb for q=32/q=64 and two q62 CRT limbs for q=128,
 4. a local pointwise multiplication kernel,
 5. local validation against host reference code,
 6. support widened to `log2(n)` in `[13, 20]`, corresponding to `n` in `[8192, 1048576]`.
@@ -172,11 +175,11 @@ Concretely, the project now provides:
 | --- | --- | --- |
 | `bin/bench_ntt_cuda` | `src/bench_ntt_cuda_cheddar.cu` | Primary Ring-LPN CUDA benchmark |
 | `bin/bench_ntt_cuda_cheddar` | `src/bench_ntt_cuda_cheddar.cu` | Explicit standalone cheddar-derived binary |
-| `bin/bench_ntt_cuda_legacy` | `src/bench_ntt_cuda.cu` | Preserved baseline for comparison |
+| `bin/bench_ntt_cuda_legacy` | `src/bench_ntt_cuda.cu` | Archived baseline for opt-in historical comparison |
 
-This matters because the extraction is now operationally complete for the promoted single-prime GPU path. The code is no longer living only as a side file; it is the main GPU path used by the standard sweep script.
+This matters because the extraction is now operationally complete for the promoted GPU path, including q128 CRT residue-limb scheduling. The code is no longer living only as a side file; it is the main GPU path used by the standard sweep script.
 
-### 5. q=64 extension on the promoted main path
+### 5. q=64 and q=128 extensions on the promoted main path
 
 The promoted cheddar-derived path now also supports requested `q=64`, realized with one 62-bit prime over the full `n = 8192 ... 1048576` range.
 
@@ -187,6 +190,14 @@ The implementation work in this phase added:
 3. 64-bit twiddle, inverse-twiddle, inverse-degree, and Montgomery-conversion table generation,
 4. 64-bit host reference validation for roundtrip NTT/INTT and negacyclic polynomial multiplication,
 5. q=64 sweep tooling and result generation under the same promoted `bench_ntt_cuda` binary.
+
+The same promoted source now supports requested `q=128`, realized as actual `qbits=124` with two q62 CRT prime limbs. The implementation work for q128 added:
+
+1. a second 62-bit NTT prime with a primitive `2^21` root for degrees through `2^20`,
+2. prime-indexed Cheddar table construction for twiddles, inverse twiddles, inverse-degree constants, Montgomery conversion constants, and inverse-prime constants,
+3. flattened `(batch, prime)` scheduling through `grid.y` for all four Cheddar phase kernels,
+4. pointwise multiplication that selects the correct modulus per residue limb,
+5. validation over zero, one, impulse, max, and random CRT residue patterns, plus q128 sweep tooling and result generation.
 
 ### 6. Standalone Ring-LPN VOLE prototype
 
@@ -199,13 +210,16 @@ What it does today:
 1. reuses the promoted CUDA polynomial multiplication backend from `src/bench_ntt_cuda_cheddar.cu`,
 2. synthesizes MPVOLE-consistent inputs locally under the `synthetic_mpvole` mode,
 3. validates the coefficient-wise relation `z = y + x * Delta`,
-4. supports requested `q=32` and `q=64`,
+4. supports requested `q=32`, `q=64`, and `q=128`,
 5. supports `n = 8192 ... 1048576`.
 
 Current result summaries:
 
 - `results/vole_gpu_q32_m32_c2_w64.md`
 - `results/vole_gpu_q64_m32_c2_w64.md`
+- `results/vole_gpu_q128_smoke.md`
+
+The q128 path uses the same flattened two-limb q62 Cheddar CRT layout as the core NTT/PolyMul benchmark. The saved smoke sweep uses `m=2`, `c=2`, noise weight `8`, covers the full degree set through `n=1048576`, and passes every validation row. Run `QBITS=128 ./scripts/run_vole_sweep.sh` to generate the full default q128 VOLE sweep artifact.
 
 Key current numbers:
 
@@ -368,7 +382,7 @@ The CPU sweep in `results/ntt_cpu.md` confirms:
 
 1. requested `q=32` is only feasible up to `n=32768`,
 2. requested `q=64` and `q=128` continue through `n=1048576`,
-3. the CPU baseline remains the correctness and comparison anchor for the new GPU q=64 path and the future GPU q=128 path.
+3. the CPU baseline remains the correctness and comparison anchor for the promoted GPU q=64 and q=128 paths.
 
 ### 2. Promoted main CUDA sweep status
 
@@ -408,7 +422,26 @@ Current promoted q=64 results:
 
 All points in the promoted q=64 sweep also passed validation.
 
-### 4. Preserved legacy CUDA sweep status
+### 4. Promoted main CUDA q=128 CRT sweep status
+
+The promoted main CUDA q=128 sweep now lives in `results/ntt_gpu_q128.md`.
+
+Current promoted q=128 results:
+
+| n | Batch | Full PolyMul mean (us) | Per-poly PolyMul (us) | PolyMul polys/s |
+| --- | --- | --- | --- | --- |
+| 8192 | 64 | 491.715 | 7.683 | 130156.70 |
+| 16384 | 64 | 664.390 | 10.381 | 96328.96 |
+| 32768 | 64 | 1076.000 | 16.812 | 59479.55 |
+| 65536 | 16 | 278.679 | 17.417 | 57413.73 |
+| 131072 | 16 | 1052.880 | 65.805 | 15196.41 |
+| 262144 | 8 | 1058.820 | 132.352 | 7555.58 |
+| 524288 | 4 | 1016.860 | 254.215 | 3933.68 |
+| 1048576 | 2 | 1047.250 | 523.625 | 1909.76 |
+
+All points in the promoted q=128 sweep passed validation over two q62 CRT residue limbs.
+
+### 5. Archived legacy CUDA sweep status
 
 The legacy CUDA baseline now lives in `results/ntt_gpu_q32_legacy.md`.
 
@@ -425,7 +458,7 @@ Current legacy q=32 per-polynomial results:
 | 524288 | 4 | 537.118 | 134.280 |
 | 1048576 | 2 | 564.374 | 282.187 |
 
-### 5. Main versus legacy comparison
+### 6. Main versus legacy comparison
 
 The current promoted main path is faster than the legacy baseline across the entire validated sweep.
 
@@ -440,9 +473,9 @@ The current promoted main path is faster than the legacy baseline across the ent
 | 524288 | 80.026 | 134.280 | 1.68x |
 | 1048576 | 166.381 | 282.187 | 1.70x |
 
-The strongest gain in the current adaptive sweep appears at `n=65536`, where the promoted main path is nearly `6x` faster per polynomial than the preserved legacy implementation.
+The strongest gain in the current adaptive sweep appears at `n=65536`, where the promoted main path is nearly `6x` faster per polynomial than the archived legacy implementation.
 
-### 6. Earlier batch-1 evidence from the extraction study
+### 7. Earlier batch-1 evidence from the extraction study
 
 The earlier study in `results/cheddar_extract_note.md` remains important because it showed that the extracted cheddar-derived path was not only winning because of aggressive batching. In apples-to-apples batch-1 comparisons, the extracted path was already consistently faster than the old implementation.
 
@@ -464,58 +497,52 @@ This earlier result is the strongest evidence that the architectural advantage o
 For clarity, the implemented scope at the end of this phase is:
 
 1. full CPU benchmark harness with validation,
-2. full legacy CUDA q=32 benchmark harness with validation,
+2. archived legacy CUDA q=32 benchmark harness with validation,
 3. generalized q=32 support over `n = 8192 ... 1048576`,
 4. generalized q=64 single-prime support over `n = 8192 ... 1048576`,
-5. batch-aware benchmarking and reporting,
-6. standalone cheddar-derived CUDA benchmark with two-phase NTT and inverse NTT,
-7. local twiddle-table reconstruction and local host reference validation for the extracted path,
-8. promotion of the cheddar-derived implementation to the main `bench_ntt_cuda` workflow,
-9. preservation of the older CUDA implementation as a named legacy baseline,
-10. separate sweep artifacts for the promoted q=32 path, the promoted q=64 path, and the legacy baseline,
-11. written extraction documentation and this status report,
-12. standalone Ring-LPN VOLE prototype implementation with validated q=32 and q=64 sweep artifacts,
-13. standalone GPU Figure 2 SPFSS/OLE artifact with validated q=62 uniform-noise smoke and bounded sweep artifacts,
-14. standalone GPU SPFSS payload tests for single point, multiple points, alpha collisions, and edge alphas,
-15. standalone ring-polynomial linear-layer OLE-to-Beaver artifact with a validated 2x2 by 2x2 smoke case,
-16. standalone DPF online key generation benchmark with validated chunked-versus-one-shot sweep artifacts,
-17. abstract support notes that connect Orca profiling, DPF online key generation, Figure 2 OLE, linear-layer OLE-to-Beaver, and Ring-LPN online-phase acceleration.
+5. generalized q=128 CRT residue-limb support over `n = 8192 ... 1048576`,
+6. batch-aware benchmarking and reporting,
+7. standalone cheddar-derived CUDA benchmark with two-phase NTT and inverse NTT,
+8. local twiddle-table reconstruction and local host reference validation for the extracted path,
+9. promotion of the cheddar-derived implementation to the main `bench_ntt_cuda` workflow,
+10. archival of the older CUDA implementation as a named opt-in legacy baseline,
+11. separate sweep artifacts for the promoted q=32 path, the promoted q=64 path, the promoted q=128 path, and the legacy baseline,
+12. written extraction documentation and this status report,
+13. standalone Ring-LPN VOLE prototype implementation with validated q=32 and q=64 sweep artifacts plus a passing q=128 CRT smoke path,
+14. standalone GPU Figure 2 SPFSS/OLE artifact with validated q=62 uniform-noise smoke and bounded sweep artifacts,
+15. standalone GPU SPFSS payload tests for single point, multiple points, alpha collisions, and edge alphas,
+16. standalone ring-polynomial linear-layer OLE-to-Beaver artifact with a validated 2x2 by 2x2 smoke case,
+17. standalone DPF online key generation benchmark with validated chunked-versus-one-shot sweep artifacts,
+18. abstract support notes that connect Orca profiling, DPF online key generation, Figure 2 OLE, linear-layer OLE-to-Beaver, and Ring-LPN online-phase acceleration.
 
-This is sufficient to say that the single-prime cheddar-derived CUDA path has been completed into the project as an operational benchmark path for both requested `q=32` and requested `q=64`, and that the project now also has concrete standalone online-phase evidence for Ring-LPN VOLE expansion, Figure 2 SPFSS/OLE assembly, ring-polynomial OLE-to-Beaver linear layers, and chunked DPF online key generation.
+This is sufficient to say that the cheddar-derived CUDA path has been completed into the project as an operational benchmark path for requested `q=32`, requested `q=64`, and requested `q=128` at the NTT/PolyMul layer, and that the project now also has concrete standalone online-phase evidence for Ring-LPN VOLE expansion, Figure 2 SPFSS/OLE assembly, ring-polynomial OLE-to-Beaver linear layers, and chunked DPF online key generation.
 
 ## What Is Not Yet Implemented
 
-The major missing pieces are no longer in the promoted single-prime q=32/q=64 path. They are in the next generalization phase.
+The major missing pieces are no longer in the promoted q=32/q=64/q=128 NTT/PolyMul benchmark. They are in explicit CRT recomposition for downstream consumers and in integration with the online-phase artifacts.
 
-### 1. q=128 via CRT
+### 1. CRT recomposition and downstream q128 consumers
 
-The project does not yet provide a GPU path for requested `q=128`.
+The promoted benchmark validates q128 as two q62 CRT residue limbs. It does not yet expose a separate recomposed coefficient output path because the benchmark and Cheddar-style RNS arithmetic naturally operate limb-wise.
 
-The intended path is:
+Remaining q128 follow-up work is:
 
-1. run two independent 64-bit NTT tracks over separate primes,
-2. perform pointwise multiplication in each prime domain,
-3. apply inverse NTT for each prime domain,
-4. recombine results through CRT.
+1. add explicit CRT recomposition only if a downstream consumer needs canonical host coefficients,
+2. compare promoted q128 timings against the CPU q128 sweep in a dedicated report,
+3. wire q128 into Figure 2/OLE, linear-layer OLE-to-Beaver, and Orca key-writer artifacts before making paper-comparable or Orca-wide q128 claims.
 
-This requires moving from a single-prime batch model to a multi-prime runtime layout.
-
-### 2. Multi-prime scheduling generalization
-
-The promoted cheddar-derived path is currently specialized to the single-prime case. That is correct for the current q=32/q=64 work, but it is not yet the full multi-prime scheduling model needed for q=128.
-
-### 3. CPU extraction symmetry
+### 2. CPU extraction symmetry
 
 The CPU baseline still depends on NFLLib calls rather than a local extracted CPU implementation. That is acceptable for benchmarking, but it means the project currently compares a locally owned GPU implementation against an externally backed CPU implementation.
 
-This is not an immediate blocker for the q=128 GPU roadmap, but it is a conceptual asymmetry worth noting.
+This is not an immediate blocker for the GPU q128 path, but it is a conceptual asymmetry worth noting.
 
-### 4. Figure 2 paper-parameter and Orca conversion gaps
+### 3. Figure 2 paper-parameter and Orca conversion gaps
 
 The GPU Figure 2 OLE artifact is intentionally staged:
 
 1. regular sparse noise is implemented and benchmarked for the bounded `t=64` sweep, but only over the current single-prime modulus,
-2. it uses one 62-bit prime rather than CRT-sized `log p ~= 128`,
+2. it has not yet been rerun over the promoted q128 CRT NTT/PolyMul backend,
 3. its direct OLE benchmark stops at OLE,
 4. the new linear-layer benchmark converts OLEs into Beaver products only for ring-polynomial matrix entries,
 5. it only has a conservative one-scalar-per-polynomial packing smoke, not a high-density Orca tensor packing scheme,
@@ -523,7 +550,7 @@ The GPU Figure 2 OLE artifact is intentionally staged:
 
 These gaps must be closed before claiming paper-comparable Figure 2 numbers or Orca trusted-dealer removal.
 
-### 5. End-to-end online-phase integration
+### 4. End-to-end online-phase integration
 
 The newer VOLE, OLE, and DPF results are currently standalone benchmark artifacts, not end-to-end application integrations.
 
@@ -538,29 +565,28 @@ The missing integration work is:
 
 ### Immediate next step depends on the task
 
-If the task is benchmark-core continuation, extend the promoted main path to two-prime CRT for requested `q=128`.
+If the task is benchmark-core continuation, use the promoted q128 CRT path as the baseline.
 
 Recommended sequence for that track:
 
-1. introduce prime-indexed scheduling in addition to batch scheduling,
-2. instantiate two 64-bit NTT paths,
-3. add CRT recomposition code,
-4. extend the report scripts to display requested `q=128` GPU results cleanly,
-5. validate against the CPU `q=128` benchmark.
+1. add a CPU-vs-GPU q128 comparison report using the existing CPU q128 sweep,
+2. profile and tune the flattened `(batch, prime)` q128 schedule,
+3. add explicit CRT recomposition code only if a consumer needs canonical coefficients outside RNS form,
+4. keep q32/q64 regression sweeps in the loop when tuning q128.
 
 If the task is Figure 2/OLE continuation, first decide whether the goal is paper comparability or Orca integration.
 
 Recommended sequence for paper-comparable Figure 2 numbers:
 
 1. compare the grouped `2N/t` regular-noise output against the existing uniform baseline in the report narrative,
-2. add dual-prime CRT for requested `q=128`,
+2. port the OLE artifact onto the promoted q128 CRT NTT/PolyMul backend,
 3. rerun uniform and regular OLE sweeps under the CRT path,
 4. update `results/ole_gpu_handoff.md` with which claims are now valid.
 
 Recommended sequence for Orca integration:
 
 1. keep the conservative constant-polynomial scalar bridge and tiny Orca-compatible triple writer as the regression baseline,
-2. add q128/CRT support or prove concrete layer-wise value bounds for q62,
+2. wire in the promoted q128 CRT backend or prove concrete layer-wise value bounds for q62,
 3. replace or justify the dealer/oracle `Z_p -> Z_{2^bw}` conversion with a secure conversion protocol if trusted-dealer removal remains the claim,
 4. connect the triple source to broader Orca linear-layer keygen without changing online `gpuMatmulBeaver`,
 5. continue comparing against baseline Orca Beaver triples.
@@ -578,22 +604,22 @@ Recommended sequence for that track:
 
 To make the research workflow smoother, the following additions would also be useful:
 
-1. an automated comparison script that renders promoted q=32, promoted q=64, and legacy q=32 results side by side,
-2. explicit summary titles that distinguish promoted q=32, promoted q=64, and legacy outputs,
-3. a dedicated q=128 sweep pipeline once that implementation lands,
+1. an automated comparison script that renders promoted q=32, promoted q=64, promoted q=128, and legacy q=32 results side by side,
+2. explicit summary titles that distinguish promoted q=32, promoted q=64, promoted q=128, and legacy outputs,
+3. a CPU-vs-GPU q128 comparison page,
 4. an integrated benchmark path that combines chunked DPF generation with the current online-phase acceleration prototype,
-5. an OLE report appendix that shows smoke, bounded uniform-noise, bounded regular-noise, and future CRT results in one place.
+5. an OLE report appendix that shows smoke, bounded uniform-noise, bounded regular-noise, and future OLE-over-q128 results in one place.
 
 ## Final Assessment
 
 The current phase should be described as follows:
 
-The Ring-LPN project has completed the extraction of the cheddar-fhe single-prime NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for both requested `q=32` and requested `q=64`. The older CUDA benchmark remains preserved as a legacy baseline. On top of that promoted core, the project now also has a standalone Ring-LPN VOLE prototype, a standalone GPU Figure 2 SPFSS/OLE artifact, a standalone ring-polynomial OLE-to-Beaver linear-layer artifact, a host-only Orca scalar bridge smoke, a tiny bounded Orca FC key-writer demo with baseline comparison, and a standalone DPF online key generation benchmark with saved artifacts.
+The Ring-LPN project has completed the extraction of the cheddar-fhe NTT/INTT kernel architecture into a standalone local benchmark implementation, and that extracted implementation has now been promoted to the main Ring-LPN CUDA path for requested `q=32`, requested `q=64`, and requested `q=128`. The older CUDA benchmark remains archived as an opt-in legacy baseline. On top of that promoted core, the project now also has a standalone Ring-LPN VOLE prototype wired through the same Cheddar q128 CRT limb path, a standalone GPU Figure 2 SPFSS/OLE artifact, a standalone ring-polynomial OLE-to-Beaver linear-layer artifact, a host-only Orca scalar bridge smoke, a tiny bounded Orca FC key-writer demo with baseline comparison, and a standalone DPF online key generation benchmark with saved artifacts.
 
 That distinction is important:
 
-1. extraction into the project is complete for the current single-prime target scope,
+1. extraction into the project is complete for the current q32/q64/q128 benchmark-core target scope,
 2. standalone online-phase benchmark evidence now exists for VOLE expansion, Figure 2 OLE assembly, ring-polynomial linear OLE-to-Beaver conversion, Orca scalar bridge arithmetic, tiny FC key writing, and chunked DPF key generation,
-3. the next benchmark-core research and engineering phase is dual-prime CRT support for requested `q=128`,
-4. the next Figure 2 phase is CRT q128 if the goal is paper comparability,
-5. the next Orca systems phase is q128/CRT or concrete value-bound evidence, dense packing, and secure conversion before full integration into broader Orca linear-layer keygen.
+3. the next benchmark-core phase is q128 comparison, profiling, and optional explicit CRT recomposition for downstream consumers,
+4. the next Figure 2 phase is porting the OLE artifacts onto q128 CRT if the goal is paper comparability,
+5. the next Orca systems phase is q128 integration or concrete value-bound evidence, dense packing, and secure conversion before full integration into broader Orca linear-layer keygen.

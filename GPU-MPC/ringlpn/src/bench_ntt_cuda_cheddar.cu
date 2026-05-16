@@ -54,6 +54,13 @@ constexpr ModulusConfig<uint64_t> kConfig62 = {
     62,
 };
 
+constexpr ModulusConfig<uint64_t> kConfig62Crt2 = {
+    4611686018309947393ULL,
+    0ULL,
+    542331589372957056ULL,
+    62,
+};
+
 struct Stats {
     double mean_us;
     double stddev_us;
@@ -112,7 +119,7 @@ static bool is_power_of_two(int n) {
 
 static void usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 30|32|64] [--batch N] [--iters N] [--warmup N]"
+              << " --n <deg> [--qbits 30|32|64|128] [--batch N] [--iters N] [--warmup N]"
               << " [--csv-header] [--skip-validation]\n";
 }
 
@@ -156,8 +163,9 @@ static Args parse_args(int argc, char **argv) {
         std::exit(1);
     }
 
-    if (args.requested_qbits != 30 && args.requested_qbits != 32 && args.requested_qbits != 64) {
-        std::cerr << "Unsupported qbits request: expected one of 30, 32, or 64\n";
+    if (args.requested_qbits != 30 && args.requested_qbits != 32 &&
+        args.requested_qbits != 64 && args.requested_qbits != 128) {
+        std::cerr << "Unsupported qbits request: expected one of 30, 32, 64, or 128\n";
         std::exit(1);
     }
 
@@ -325,43 +333,67 @@ static void compute_reference_vectors(std::vector<Word> &phi_norm,
 template <typename Word>
 static void compute_cheddar_tables(HostTables<Word> &tables,
                                    int n,
-                                   const ModulusConfig<Word> &config) {
+                                   const std::vector<ModulusConfig<Word>> &configs) {
     const int msb_size = n / kLsbSize;
-    Word psi = compute_phi_for_n(config, n);
-    Word psi_inv = mod_inv(psi, config.modulus);
-    Word inv_n = mod_inv(static_cast<Word>(n), config.modulus);
-    Word one_mont = to_montgomery_host(static_cast<Word>(1), config.modulus);
+    const size_t prime_count = configs.size();
 
-    std::vector<Word> psi_rev(n);
-    std::vector<Word> psi_inv_rev(n);
-    psi_rev[0] = 1;
-    psi_inv_rev[0] = 1;
-    for (int i = 1; i < n; i++) {
-        psi_rev[i] = mod_mul_host(psi_rev[i - 1], psi, config.modulus);
-        psi_inv_rev[i] = mod_mul_host(psi_inv_rev[i - 1], psi_inv, config.modulus);
+    tables.primes.resize(prime_count);
+    tables.inv_primes.resize(prime_count);
+    tables.fwd_twiddles_mont.resize(prime_count * static_cast<size_t>(n));
+    tables.inv_twiddles_mont.resize(prime_count * static_cast<size_t>(n));
+    tables.fwd_twiddles_msb.resize(prime_count * static_cast<size_t>(msb_size));
+    tables.inv_twiddles_msb.resize(prime_count * static_cast<size_t>(msb_size));
+    tables.inv_degree.resize(prime_count);
+    tables.inv_degree_mont.resize(prime_count);
+    tables.montgomery_converter.resize(prime_count);
+
+    for (size_t prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+        const ModulusConfig<Word> &config = configs[prime_idx];
+        Word psi = compute_phi_for_n(config, n);
+        Word psi_inv = mod_inv(psi, config.modulus);
+        Word inv_n = mod_inv(static_cast<Word>(n), config.modulus);
+        Word one_mont = to_montgomery_host(static_cast<Word>(1), config.modulus);
+
+        std::vector<Word> psi_rev(n);
+        std::vector<Word> psi_inv_rev(n);
+        psi_rev[0] = 1;
+        psi_inv_rev[0] = 1;
+        for (int i = 1; i < n; i++) {
+            psi_rev[i] = mod_mul_host(psi_rev[i - 1], psi, config.modulus);
+            psi_inv_rev[i] = mod_mul_host(psi_inv_rev[i - 1], psi_inv, config.modulus);
+        }
+        bit_reverse_vector(psi_rev);
+        bit_reverse_vector(psi_inv_rev);
+
+        tables.primes[prime_idx] = config.modulus;
+        tables.inv_primes[prime_idx] = inv_mod_base(config.modulus);
+        tables.inv_degree[prime_idx] = inv_n;
+        tables.inv_degree_mont[prime_idx] = to_montgomery_host(inv_n, config.modulus);
+        tables.montgomery_converter[prime_idx] = to_montgomery_host(one_mont, config.modulus);
+
+        const size_t twiddle_base = prime_idx * static_cast<size_t>(n);
+        const size_t msb_base = prime_idx * static_cast<size_t>(msb_size);
+        for (int i = 0; i < n; i++) {
+            tables.fwd_twiddles_mont[twiddle_base + static_cast<size_t>(i)] =
+                to_montgomery_host(psi_rev[i], config.modulus);
+            tables.inv_twiddles_mont[twiddle_base + static_cast<size_t>(i)] =
+                to_montgomery_host(psi_inv_rev[i], config.modulus);
+        }
+
+        for (int i = 0; i < msb_size; i++) {
+            tables.fwd_twiddles_msb[msb_base + static_cast<size_t>(i)] =
+                tables.fwd_twiddles_mont[twiddle_base + static_cast<size_t>(i * kLsbSize)];
+            tables.inv_twiddles_msb[msb_base + static_cast<size_t>(i)] =
+                tables.inv_twiddles_mont[twiddle_base + static_cast<size_t>(i * kLsbSize)];
+        }
     }
-    bit_reverse_vector(psi_rev);
-    bit_reverse_vector(psi_inv_rev);
+}
 
-    tables.primes = {config.modulus};
-    tables.inv_primes = {inv_mod_base(config.modulus)};
-    tables.fwd_twiddles_mont.resize(n);
-    tables.inv_twiddles_mont.resize(n);
-    tables.fwd_twiddles_msb.resize(msb_size);
-    tables.inv_twiddles_msb.resize(msb_size);
-    tables.inv_degree = {inv_n};
-    tables.inv_degree_mont = {to_montgomery_host(inv_n, config.modulus)};
-    tables.montgomery_converter = {to_montgomery_host(one_mont, config.modulus)};
-
-    for (int i = 0; i < n; i++) {
-        tables.fwd_twiddles_mont[i] = to_montgomery_host(psi_rev[i], config.modulus);
-        tables.inv_twiddles_mont[i] = to_montgomery_host(psi_inv_rev[i], config.modulus);
-    }
-
-    for (int i = 0; i < msb_size; i++) {
-        tables.fwd_twiddles_msb[i] = tables.fwd_twiddles_mont[i * kLsbSize];
-        tables.inv_twiddles_msb[i] = tables.inv_twiddles_mont[i * kLsbSize];
-    }
+template <typename Word>
+static void compute_cheddar_tables(HostTables<Word> &tables,
+                                   int n,
+                                   const ModulusConfig<Word> &config) {
+    compute_cheddar_tables(tables, n, std::vector<ModulusConfig<Word>>{config});
 }
 
 template <typename Word>
@@ -484,10 +516,40 @@ static std::vector<Word> make_batched_pattern(int batch_count,
 }
 
 template <typename Word>
+static std::vector<Word> make_batched_pattern_moduli(
+    int batch_count,
+    int n,
+    InputPattern pattern,
+    const std::vector<ModulusConfig<Word>> &configs,
+    uint64_t seed_base = 0) {
+    const int prime_count = static_cast<int>(configs.size());
+    std::vector<Word> values(static_cast<size_t>(batch_count) *
+                             static_cast<size_t>(prime_count) *
+                             static_cast<size_t>(n));
+    for (int batch = 0; batch < batch_count; batch++) {
+        for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+            std::vector<Word> lane =
+                make_input_pattern(n,
+                                   pattern,
+                                   configs[prime_idx].modulus,
+                                   seed_base + static_cast<uint64_t>(batch * 17) +
+                                       static_cast<uint64_t>(prime_idx * 1009));
+            const size_t offset =
+                (static_cast<size_t>(batch) * static_cast<size_t>(prime_count) +
+                 static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n);
+            std::copy(lane.begin(), lane.end(), values.begin() + offset);
+        }
+    }
+    return values;
+}
+
+template <typename Word>
 static bool compare_vectors(const std::vector<Word> &expected,
                             const std::vector<Word> &actual,
                             int n,
-                            const char *label) {
+                            const char *label,
+                            int prime_count = 1) {
     if (expected.size() != actual.size()) {
         std::cerr << label << " size mismatch: expected " << expected.size()
                   << " got " << actual.size() << "\n";
@@ -495,7 +557,10 @@ static bool compare_vectors(const std::vector<Word> &expected,
     }
     for (size_t i = 0; i < expected.size(); i++) {
         if (expected[i] != actual[i]) {
-            std::cerr << label << " mismatch at batch " << (i / static_cast<size_t>(n))
+            size_t limb_idx = i / static_cast<size_t>(n);
+            std::cerr << label << " mismatch at batch "
+                      << (limb_idx / static_cast<size_t>(prime_count))
+                      << ", prime " << (limb_idx % static_cast<size_t>(prime_count))
                       << ", index " << (i % static_cast<size_t>(n))
                       << ": expected " << expected[i]
                       << ", got " << actual[i] << "\n";
@@ -1043,6 +1108,7 @@ __global__ void NTTPhase1SinglePrime(SignedWord<Word> *dst,
                                      const Word *prime_ptr,
                                      const SignedWord<Word> *inv_prime_ptr,
                                      const Word *twiddle_factors,
+                                     int prime_count,
                                      int batch_count,
                                      const SignedWord<Word> *src,
                                      const Word *src_const) {
@@ -1058,17 +1124,21 @@ __global__ void NTTPhase1SinglePrime(SignedWord<Word> *dst,
     constexpr int kPerThreadElems = 1 << kStageMerging;
     constexpr int kTailStages = (kNumStages - 1) % kStageMerging + 1;
     constexpr int kLogWarpBatching = Config::LogWarpBatching();
+    constexpr int degree = 1 << log_degree;
 
-    int poly_idx = blockIdx.y;
+    // grid.y is flattened as logical_batch * prime_count + prime_limb.
+    int limb_idx = blockIdx.y;
+    int prime_idx = limb_idx % prime_count;
+    int poly_idx = limb_idx / prime_count;
     if (poly_idx >= batch_count) {
         return;
     }
 
-    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const Word *w = twiddle_factors;
-    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr + prime_idx);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr + prime_idx);
+    const Word *w = twiddle_factors + static_cast<size_t>(prime_idx) * degree;
+    const signed_word *src_limb = src + (static_cast<size_t>(limb_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(limb_idx) << log_degree);
 
     signed_word local[kPerThreadElems];
     int stage_group_idx = threadIdx.x >> kLogWarpBatching;
@@ -1081,7 +1151,7 @@ __global__ void NTTPhase1SinglePrime(SignedWord<Word> *dst,
     }
 
     if (src_const != nullptr) {
-        Word src_const_value = cheddar_extract::StreamingLoadConst(src_const);
+        Word src_const_value = cheddar_extract::StreamingLoadConst(src_const + prime_idx);
         for (int i = 0; i < kPerThreadElems; i++) {
             local[i] = cheddar_extract::MultMontgomeryLazy<Word>(
                 local[i],
@@ -1140,6 +1210,7 @@ __global__ void NTTPhase2SinglePrime(SignedWord<Word> *dst,
                                      const SignedWord<Word> *inv_prime_ptr,
                                      const Word *twiddle_factors,
                                      const Word *twiddle_factors_msb,
+                                     int prime_count,
                                      int batch_count,
                                      const SignedWord<Word> *src) {
     extern __shared__ char shared_mem[];
@@ -1156,22 +1227,26 @@ __global__ void NTTPhase2SinglePrime(SignedWord<Word> *dst,
     constexpr int kLsbSize = Config::LsbSize();
     constexpr int kOFTwiddle = Config::OFTwiddle();
     constexpr int kLogWarpBatching = Config::LogWarpBatching();
+    constexpr int degree = 1 << log_degree;
 
     int row_idx = threadIdx.x >> (kNumStages - kStageMerging);
     int batch_lane = threadIdx.x & ((1 << (kNumStages - kStageMerging)) - 1);
     temp += row_idx << kNumStages;
 
-    int poly_idx = blockIdx.y;
+    int limb_idx = blockIdx.y;
+    int prime_idx = limb_idx % prime_count;
+    int poly_idx = limb_idx / prime_count;
     if (poly_idx >= batch_count) {
         return;
     }
 
-    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const Word *w = twiddle_factors;
-    const Word *w_msb = twiddle_factors_msb;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr + prime_idx);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr + prime_idx);
+    const signed_word *src_limb = src + (static_cast<size_t>(limb_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(limb_idx) << log_degree);
+    const Word *w = twiddle_factors + static_cast<size_t>(prime_idx) * degree;
+    const Word *w_msb =
+        twiddle_factors_msb + static_cast<size_t>(prime_idx) * (degree / kLsbSize);
 
     signed_word local[kPerThreadElems];
     int log_stride = kNumStages - kStageMerging;
@@ -1264,6 +1339,7 @@ __global__ void INTTPhase1SinglePrime(SignedWord<Word> *dst,
                                       const SignedWord<Word> *inv_prime_ptr,
                                       const Word *twiddle_factors,
                                       const Word *twiddle_factors_msb,
+                                      int prime_count,
                                       int batch_count,
                                       const SignedWord<Word> *src) {
     extern __shared__ char shared_mem[];
@@ -1280,22 +1356,26 @@ __global__ void INTTPhase1SinglePrime(SignedWord<Word> *dst,
     constexpr int kLsbSize = Config::LsbSize();
     constexpr int kOFTwiddle = Config::OFTwiddle();
     constexpr int kLogWarpBatching = Config::LogWarpBatching();
+    constexpr int degree = 1 << log_degree;
 
     int row_idx = threadIdx.x >> (kNumStages - kStageMerging);
     int batch_lane = threadIdx.x & ((1 << (kNumStages - kStageMerging)) - 1);
     temp += row_idx << kNumStages;
 
-    int poly_idx = blockIdx.y;
+    int limb_idx = blockIdx.y;
+    int prime_idx = limb_idx % prime_count;
+    int poly_idx = limb_idx / prime_count;
     if (poly_idx >= batch_count) {
         return;
     }
 
-    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const Word *w = twiddle_factors;
-    const Word *w_msb = twiddle_factors_msb;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr + prime_idx);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr + prime_idx);
+    const signed_word *src_limb = src + (static_cast<size_t>(limb_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(limb_idx) << log_degree);
+    const Word *w = twiddle_factors + static_cast<size_t>(prime_idx) * degree;
+    const Word *w_msb =
+        twiddle_factors_msb + static_cast<size_t>(prime_idx) * (degree / kLsbSize);
 
     signed_word local[kPerThreadElems];
     int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1376,6 +1456,7 @@ __global__ void INTTPhase2SinglePrime(SignedWord<Word> *dst,
                                       const Word *prime_ptr,
                                       const SignedWord<Word> *inv_prime_ptr,
                                       const Word *twiddle_factors,
+                                      int prime_count,
                                       int batch_count,
                                       const SignedWord<Word> *src,
                                       const Word *src_const) {
@@ -1391,18 +1472,21 @@ __global__ void INTTPhase2SinglePrime(SignedWord<Word> *dst,
     constexpr int kPerThreadElems = 1 << kStageMerging;
     constexpr int kTailStages = (kNumStages - 1) % kStageMerging + 1;
     constexpr int kLogWarpBatching = Config::LogWarpBatching();
+    constexpr int degree = 1 << log_degree;
 
-    int poly_idx = blockIdx.y;
+    int limb_idx = blockIdx.y;
+    int prime_idx = limb_idx % prime_count;
+    int poly_idx = limb_idx / prime_count;
     if (poly_idx >= batch_count) {
         return;
     }
 
-    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
-    Word src_const_value = cheddar_extract::StreamingLoadConst(src_const);
-    const signed_word *src_limb = src + (static_cast<size_t>(poly_idx) << log_degree);
-    signed_word *dst_limb = dst + (static_cast<size_t>(poly_idx) << log_degree);
-    const Word *w = twiddle_factors;
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr + prime_idx);
+    signed_word inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr + prime_idx);
+    Word src_const_value = cheddar_extract::StreamingLoadConst(src_const + prime_idx);
+    const signed_word *src_limb = src + (static_cast<size_t>(limb_idx) << log_degree);
+    signed_word *dst_limb = dst + (static_cast<size_t>(limb_idx) << log_degree);
+    const Word *w = twiddle_factors + static_cast<size_t>(prime_idx) * degree;
 
     signed_word local[kPerThreadElems];
     constexpr int initial_log_stride = log_degree - kNumStages;
@@ -1469,14 +1553,18 @@ __global__ void pointwise_mul_kernel(const Word *a,
                                      const Word *b,
                                      Word *out,
                                      size_t total_coeffs,
+                                     int n,
+                                     int prime_count,
                                      const Word *prime_ptr,
                                      const SignedWord<Word> *inv_prime_ptr) {
     size_t idx = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (idx >= total_coeffs) {
         return;
     }
-    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr);
-    SignedWord<Word> inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr);
+    int prime_idx = static_cast<int>((idx / static_cast<size_t>(n)) %
+                                     static_cast<size_t>(prime_count));
+    Word prime = cheddar_extract::StreamingLoadConst(prime_ptr + prime_idx);
+    SignedWord<Word> inv_prime = cheddar_extract::StreamingLoadConst(inv_prime_ptr + prime_idx);
     out[idx] = cheddar_extract::MultMontgomery<Word>(a[idx], b[idx], prime, inv_prime);
 }
 
@@ -1489,6 +1577,7 @@ static void run_forward_only_impl(Word *d_input,
                                   Word *d_work,
                                   const DeviceTables<Word> &tables,
                                   int batch_count,
+                                  int prime_count,
                                   bool convert_to_montgomery) {
     using signed_word = SignedWord<Word>;
     using Config1 = cheddar_extract::NTTLaunchConfig<log_degree,
@@ -1507,9 +1596,9 @@ static void run_forward_only_impl(Word *d_input,
     constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(signed_word);
 
     dim3 grid_phase1(degree / (1 << stage_merging_1) / block_dim_1,
-                     static_cast<unsigned int>(batch_count));
+                     static_cast<unsigned int>(batch_count * prime_count));
     dim3 grid_phase2(degree / (1 << stage_merging_2) / block_dim_2,
-                     static_cast<unsigned int>(batch_count));
+                     static_cast<unsigned int>(batch_count * prime_count));
     const Word *src_const = convert_to_montgomery ? tables.d_montgomery_converter : nullptr;
 
     NTTPhase1SinglePrime<Word, log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
@@ -1517,6 +1606,7 @@ static void run_forward_only_impl(Word *d_input,
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_fwd_twiddles,
+        prime_count,
         batch_count,
         reinterpret_cast<const signed_word *>(d_input),
         src_const);
@@ -1528,6 +1618,7 @@ static void run_forward_only_impl(Word *d_input,
         tables.d_inv_primes,
         tables.d_fwd_twiddles,
         tables.d_fwd_twiddles_msb,
+        prime_count,
         batch_count,
         reinterpret_cast<const signed_word *>(d_work));
     check_launch("launch cheddar NTTPhase2SinglePrime");
@@ -1540,7 +1631,8 @@ static void run_forward_only(Word *d_input,
                              int n,
                              int batch_count,
                              int log_degree,
-                             bool convert_to_montgomery = true) {
+                             bool convert_to_montgomery = true,
+                             int prime_count = 1) {
     bool launched = false;
     constexpr_for<kMinLogDegree, kMaxLogDegree + 1>([&](auto degree_c) {
         if (log_degree != degree_c) {
@@ -1550,6 +1642,7 @@ static void run_forward_only(Word *d_input,
                                               d_work,
                                               tables,
                                               batch_count,
+                                              prime_count,
                                               convert_to_montgomery);
         launched = true;
     });
@@ -1564,6 +1657,7 @@ static void run_inverse_only_impl(Word *d_ntt_input,
                                   Word *d_out,
                                   const DeviceTables<Word> &tables,
                                   int batch_count,
+                                  int prime_count,
                                   bool convert_from_montgomery) {
     using signed_word = SignedWord<Word>;
     using Config1 = cheddar_extract::NTTLaunchConfig<log_degree,
@@ -1582,9 +1676,9 @@ static void run_inverse_only_impl(Word *d_ntt_input,
     constexpr int shared_mem_2 = block_dim_2 * (1 << stage_merging_2) * sizeof(signed_word);
 
     dim3 grid_phase1(degree / (1 << stage_merging_1) / block_dim_1,
-                     static_cast<unsigned int>(batch_count));
+                     static_cast<unsigned int>(batch_count * prime_count));
     dim3 grid_phase2(degree / (1 << stage_merging_2) / block_dim_2,
-                     static_cast<unsigned int>(batch_count));
+                     static_cast<unsigned int>(batch_count * prime_count));
     const Word *src_const = convert_from_montgomery ? tables.d_inv_degree : tables.d_inv_degree_mont;
 
     INTTPhase1SinglePrime<Word, log_degree><<<grid_phase1, block_dim_1, shared_mem_1>>>(
@@ -1593,6 +1687,7 @@ static void run_inverse_only_impl(Word *d_ntt_input,
         tables.d_inv_primes,
         tables.d_inv_twiddles,
         tables.d_inv_twiddles_msb,
+        prime_count,
         batch_count,
         reinterpret_cast<const signed_word *>(d_ntt_input));
     check_launch("launch cheddar INTTPhase1SinglePrime");
@@ -1602,6 +1697,7 @@ static void run_inverse_only_impl(Word *d_ntt_input,
         tables.d_primes,
         tables.d_inv_primes,
         tables.d_inv_twiddles,
+        prime_count,
         batch_count,
         reinterpret_cast<const signed_word *>(d_out),
         src_const);
@@ -1615,7 +1711,8 @@ static void run_inverse_only(Word *d_ntt_input,
                              int n,
                              int batch_count,
                              int log_degree,
-                             bool convert_from_montgomery = true) {
+                             bool convert_from_montgomery = true,
+                             int prime_count = 1) {
     bool launched = false;
     constexpr_for<kMinLogDegree, kMaxLogDegree + 1>([&](auto degree_c) {
         if (log_degree != degree_c) {
@@ -1625,6 +1722,7 @@ static void run_inverse_only(Word *d_ntt_input,
                                               d_out,
                                               tables,
                                               batch_count,
+                                              prime_count,
                                               convert_from_montgomery);
         launched = true;
     });
@@ -1644,18 +1742,21 @@ static void run_full_polymul(Word *d_a,
                              const DeviceTables<Word> &tables,
                              int n,
                              int batch_count,
-                             int log_degree) {
-    run_forward_only(d_a, d_a_work, tables, n, batch_count, log_degree, true);
-    run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true);
+                             int log_degree,
+                             int prime_count = 1) {
+    run_forward_only(d_a, d_a_work, tables, n, batch_count, log_degree, true, prime_count);
+    run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true, prime_count);
 
     dim3 block(256);
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
+    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(prime_count) *
+                          static_cast<size_t>(n);
     dim3 grid(grid_size(total_coeffs, block.x));
     pointwise_mul_kernel<Word><<<grid, block>>>(
-        d_a_work, d_b_work, d_c_work, total_coeffs, tables.d_primes, tables.d_inv_primes);
+        d_a_work, d_b_work, d_c_work, total_coeffs, n, prime_count,
+        tables.d_primes, tables.d_inv_primes);
     check_launch("launch cheddar pointwise_mul_kernel");
 
-    run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true);
+    run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true, prime_count);
 }
 
 template <typename Word>
@@ -1667,18 +1768,20 @@ static void run_polymul_prepared_lhs(const Word *d_a_ntt,
                                      const DeviceTables<Word> &tables,
                                      int n,
                                      int batch_count,
-                                     int log_degree) {
-    run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true);
+                                     int log_degree,
+                                     int prime_count = 1) {
+    run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true, prime_count);
 
     dim3 block(256);
-    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(n);
+    size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(prime_count) *
+                          static_cast<size_t>(n);
     dim3 grid(grid_size(total_coeffs, block.x));
     pointwise_mul_kernel<Word><<<grid, block>>>(
-        const_cast<Word *>(d_a_ntt), d_b_work, d_c_work, total_coeffs,
+        const_cast<Word *>(d_a_ntt), d_b_work, d_c_work, total_coeffs, n, prime_count,
         tables.d_primes, tables.d_inv_primes);
     check_launch("launch cheddar pointwise_mul_kernel (prepared lhs)");
 
-    run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true);
+    run_inverse_only(d_c_work, d_out, tables, n, batch_count, log_degree, true, prime_count);
 }
 
 template <typename Word>
@@ -1690,14 +1793,15 @@ static bool validate_roundtrip_case(const char *label,
                                     Word *d_out,
                                     const DeviceTables<Word> &tables,
                                     int n,
-                                    int log_degree) {
+                                    int log_degree,
+                                    int prime_count) {
     check(cudaMemcpy(d_input,
                      input.data(),
                      sizeof(Word) * input.size(),
                      cudaMemcpyHostToDevice),
           "copy roundtrip input");
-    run_forward_only(d_input, d_work, tables, n, batch_count, log_degree, true);
-    run_inverse_only(d_work, d_out, tables, n, batch_count, log_degree, true);
+    run_forward_only(d_input, d_work, tables, n, batch_count, log_degree, true, prime_count);
+    run_inverse_only(d_work, d_out, tables, n, batch_count, log_degree, true, prime_count);
     check(cudaDeviceSynchronize(), "sync roundtrip validation");
     std::vector<Word> output(input.size());
     check(cudaMemcpy(output.data(),
@@ -1705,7 +1809,7 @@ static bool validate_roundtrip_case(const char *label,
                      sizeof(Word) * output.size(),
                      cudaMemcpyDeviceToHost),
           "copy roundtrip output");
-    return compare_vectors(input, output, n, label);
+    return compare_vectors(input, output, n, label, prime_count);
 }
 
 template <typename Word>
@@ -1720,26 +1824,32 @@ static bool validate_polymul_case(const char *label,
                                   Word *d_c_work,
                                   Word *d_out,
                                   const DeviceTables<Word> &tables,
-                                  const std::vector<Word> &phi_norm,
-                                  const std::vector<Word> &post_norm,
-                                  const ModulusConfig<Word> &config,
+                                  const std::vector<std::vector<Word>> &phi_norms,
+                                  const std::vector<std::vector<Word>> &post_norms,
+                                  const std::vector<ModulusConfig<Word>> &configs,
                                   int n,
-                                  int log_degree) {
+                                  int log_degree,
+                                  int prime_count) {
     std::vector<Word> expected(lhs.size());
     for (int batch = 0; batch < batch_count; batch++) {
-        std::vector<Word> lhs_poly(lhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                   lhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<Word> rhs_poly(rhs.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n),
-                                   rhs.begin() + static_cast<size_t>(batch + 1) * static_cast<size_t>(n));
-        std::vector<Word> poly = host_polymul_reference(lhs_poly,
-                                                        rhs_poly,
-                                                        phi_norm,
-                                                        post_norm,
-                                                        config,
-                                                        n,
-                                                        log_degree);
-        std::copy(poly.begin(), poly.end(),
-                  expected.begin() + static_cast<size_t>(batch) * static_cast<size_t>(n));
+        for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+            const size_t offset =
+                (static_cast<size_t>(batch) * static_cast<size_t>(prime_count) +
+                 static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n);
+            std::vector<Word> lhs_poly(lhs.begin() + offset,
+                                       lhs.begin() + offset + static_cast<size_t>(n));
+            std::vector<Word> rhs_poly(rhs.begin() + offset,
+                                       rhs.begin() + offset + static_cast<size_t>(n));
+            std::vector<Word> poly = host_polymul_reference(lhs_poly,
+                                                            rhs_poly,
+                                                            phi_norms[prime_idx],
+                                                            post_norms[prime_idx],
+                                                            configs[prime_idx],
+                                                            n,
+                                                            log_degree);
+            std::copy(poly.begin(), poly.end(), expected.begin() + offset);
+        }
     }
 
     check(cudaMemcpy(d_a, lhs.data(), sizeof(Word) * lhs.size(), cudaMemcpyHostToDevice),
@@ -1755,13 +1865,14 @@ static bool validate_polymul_case(const char *label,
                      tables,
                      n,
                      batch_count,
-                     log_degree);
+                     log_degree,
+                     prime_count);
     check(cudaDeviceSynchronize(), "sync polymul validation");
 
     std::vector<Word> actual(lhs.size());
     check(cudaMemcpy(actual.data(), d_out, sizeof(Word) * actual.size(), cudaMemcpyDeviceToHost),
           "copy polymul output");
-    return compare_vectors(expected, actual, n, label);
+    return compare_vectors(expected, actual, n, label, prime_count);
 }
 
 template <typename Word>
@@ -1772,86 +1883,92 @@ static bool run_validation_suite(Word *d_a,
                                  Word *d_c_work,
                                  Word *d_out,
                                  const DeviceTables<Word> &tables,
-                                 const std::vector<Word> &phi_norm,
-                                 const std::vector<Word> &post_norm,
-                                 const ModulusConfig<Word> &config,
+                                 const std::vector<std::vector<Word>> &phi_norms,
+                                 const std::vector<std::vector<Word>> &post_norms,
+                                 const std::vector<ModulusConfig<Word>> &configs,
                                  int n,
                                  int batch_size,
-                                 int log_degree) {
+                                 int log_degree,
+                                 int prime_count) {
     const int validation_batches = std::min(batch_size, kMaxValidationBatches);
     bool ok = true;
 
     ok = validate_roundtrip_case("roundtrip zeros",
-                                 make_batched_pattern(validation_batches,
-                                                      n,
-                                                      InputPattern::Zero,
-                                                      config.modulus),
+                                 make_batched_pattern_moduli(validation_batches,
+                                                             n,
+                                                             InputPattern::Zero,
+                                                             configs),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
                                  d_out,
                                  tables,
                                  n,
-                                 log_degree) && ok;
+                                 log_degree,
+                                 prime_count) && ok;
     ok = validate_roundtrip_case("roundtrip ones",
-                                 make_batched_pattern(validation_batches,
-                                                      n,
-                                                      InputPattern::One,
-                                                      config.modulus),
+                                 make_batched_pattern_moduli(validation_batches,
+                                                             n,
+                                                             InputPattern::One,
+                                                             configs),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
                                  d_out,
                                  tables,
                                  n,
-                                 log_degree) && ok;
+                                 log_degree,
+                                 prime_count) && ok;
     ok = validate_roundtrip_case("roundtrip impulse",
-                                 make_batched_pattern(validation_batches,
-                                                      n,
-                                                      InputPattern::Impulse,
-                                                      config.modulus),
+                                 make_batched_pattern_moduli(validation_batches,
+                                                             n,
+                                                             InputPattern::Impulse,
+                                                             configs),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
                                  d_out,
                                  tables,
                                  n,
-                                 log_degree) && ok;
+                                 log_degree,
+                                 prime_count) && ok;
     ok = validate_roundtrip_case("roundtrip max",
-                                 make_batched_pattern(validation_batches,
-                                                      n,
-                                                      InputPattern::Max,
-                                                      config.modulus),
+                                 make_batched_pattern_moduli(validation_batches,
+                                                             n,
+                                                             InputPattern::Max,
+                                                             configs),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
                                  d_out,
                                  tables,
                                  n,
-                                 log_degree) && ok;
+                                 log_degree,
+                                 prime_count) && ok;
     ok = validate_roundtrip_case("roundtrip random",
-                                 make_batched_pattern(validation_batches,
-                                                      n,
-                                                      InputPattern::Random,
-                                                      config.modulus,
-                                                      12345u),
+                                 make_batched_pattern_moduli(validation_batches,
+                                                             n,
+                                                             InputPattern::Random,
+                                                             configs,
+                                                             12345u),
                                  validation_batches,
                                  d_a,
                                  d_a_work,
                                  d_out,
                                  tables,
                                  n,
-                                 log_degree) && ok;
+                                 log_degree,
+                                 prime_count) && ok;
 
     ok = validate_polymul_case("polymul zero*zero",
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Zero,
-                                                    config.modulus),
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Zero,
-                                                    config.modulus),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Zero,
+                                                           configs),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Zero,
+                                                           configs),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1860,20 +1977,21 @@ static bool run_validation_suite(Word *d_a,
                                d_c_work,
                                d_out,
                                tables,
-                               phi_norm,
-                               post_norm,
-                               config,
+                               phi_norms,
+                               post_norms,
+                               configs,
                                n,
-                               log_degree) && ok;
+                               log_degree,
+                               prime_count) && ok;
     ok = validate_polymul_case("polymul one*one",
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::One,
-                                                    config.modulus),
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::One,
-                                                    config.modulus),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::One,
+                                                           configs),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::One,
+                                                           configs),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1882,20 +2000,21 @@ static bool run_validation_suite(Word *d_a,
                                d_c_work,
                                d_out,
                                tables,
-                               phi_norm,
-                               post_norm,
-                               config,
+                               phi_norms,
+                               post_norms,
+                               configs,
                                n,
-                               log_degree) && ok;
+                               log_degree,
+                               prime_count) && ok;
     ok = validate_polymul_case("polymul impulse*ones",
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Impulse,
-                                                    config.modulus),
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::One,
-                                                    config.modulus),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Impulse,
+                                                           configs),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::One,
+                                                           configs),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1904,20 +2023,21 @@ static bool run_validation_suite(Word *d_a,
                                d_c_work,
                                d_out,
                                tables,
-                               phi_norm,
-                               post_norm,
-                               config,
+                               phi_norms,
+                               post_norms,
+                               configs,
                                n,
-                               log_degree) && ok;
+                               log_degree,
+                               prime_count) && ok;
     ok = validate_polymul_case("polymul max*max",
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Max,
-                                                    config.modulus),
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Max,
-                                                    config.modulus),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Max,
+                                                           configs),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Max,
+                                                           configs),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1926,22 +2046,23 @@ static bool run_validation_suite(Word *d_a,
                                d_c_work,
                                d_out,
                                tables,
-                               phi_norm,
-                               post_norm,
-                               config,
+                               phi_norms,
+                               post_norms,
+                               configs,
                                n,
-                               log_degree) && ok;
+                               log_degree,
+                               prime_count) && ok;
     ok = validate_polymul_case("polymul random",
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Random,
-                                                    config.modulus,
-                                                    1u),
-                               make_batched_pattern(validation_batches,
-                                                    n,
-                                                    InputPattern::Random,
-                                                    config.modulus,
-                                                    2u),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Random,
+                                                           configs,
+                                                           1u),
+                               make_batched_pattern_moduli(validation_batches,
+                                                           n,
+                                                           InputPattern::Random,
+                                                           configs,
+                                                           2u),
                                validation_batches,
                                d_a,
                                d_b,
@@ -1950,11 +2071,12 @@ static bool run_validation_suite(Word *d_a,
                                d_c_work,
                                d_out,
                                tables,
-                               phi_norm,
-                               post_norm,
-                             config,
+                               phi_norms,
+                               post_norms,
+                               configs,
                                n,
-                               log_degree) && ok;
+                               log_degree,
+                               prime_count) && ok;
 
     return ok;
 }
@@ -2049,31 +2171,57 @@ static bool run_validation_suite(Word *d_a,
 }  // namespace
 
 template <typename Word>
-static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
-    if (((static_cast<WideWord<Word>>(config.modulus) - 1) %
-         (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
-        std::cerr << "Unsupported degree for selected prime: need 2n to divide q-1\n";
+static int run_benchmark(const Args &args,
+                         const std::vector<ModulusConfig<Word>> &configs,
+                         int actual_qbits) {
+    const int prime_count = static_cast<int>(configs.size());
+    if (prime_count <= 0) {
+        std::cerr << "No modulus configs selected\n";
         return 1;
+    }
+
+    if (static_cast<uint64_t>(args.batch_size) * static_cast<uint64_t>(prime_count) > 65535ULL) {
+        std::cerr << "Unsupported logical batch/prime count: grid.y is capped at 65535\n";
+        return 1;
+    }
+
+    for (const ModulusConfig<Word> &config : configs) {
+        if (((static_cast<WideWord<Word>>(config.modulus) - 1) %
+             (2ULL * static_cast<uint64_t>(args.n))) != 0ULL) {
+            std::cerr << "Unsupported degree for selected prime: need 2n to divide q-1\n";
+            return 1;
+        }
     }
 
     const int n = args.n;
     const int log_degree = int_log2(static_cast<uint32_t>(n));
-    const size_t total_coeffs = static_cast<size_t>(args.batch_size) * static_cast<size_t>(n);
+    const size_t total_coeffs = static_cast<size_t>(args.batch_size) *
+                                static_cast<size_t>(prime_count) * static_cast<size_t>(n);
 
     HostTables<Word> host_tables;
-    compute_cheddar_tables(host_tables, n, config);
+    compute_cheddar_tables(host_tables, n, configs);
 
     DeviceTables<Word> tables;
     alloc_and_copy(tables, host_tables);
 
     using Rng = std::conditional_t<(sizeof(Word) <= 4), std::mt19937, std::mt19937_64>;
     Rng rng(12345);
-    std::uniform_int_distribution<Word> dist(0, static_cast<Word>(config.modulus - 1));
     std::vector<Word> a(total_coeffs);
     std::vector<Word> b(total_coeffs);
-    for (size_t i = 0; i < total_coeffs; i++) {
-        a[i] = dist(rng);
-        b[i] = dist(rng);
+    for (int batch = 0; batch < args.batch_size; batch++) {
+        for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+            std::uniform_int_distribution<Word> dist(
+                0,
+                static_cast<Word>(configs[prime_idx].modulus - 1));
+            const size_t offset =
+                (static_cast<size_t>(batch) * static_cast<size_t>(prime_count) +
+                 static_cast<size_t>(prime_idx)) *
+                static_cast<size_t>(n);
+            for (int i = 0; i < n; i++) {
+                a[offset + static_cast<size_t>(i)] = dist(rng);
+                b[offset + static_cast<size_t>(i)] = dist(rng);
+            }
+        }
     }
 
     Word *d_a = nullptr;
@@ -2091,9 +2239,11 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
     check(cudaMemcpy(d_a, a.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice), "copy a");
     check(cudaMemcpy(d_b, b.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice), "copy b");
 
-    std::vector<Word> phi_norm;
-    std::vector<Word> post_norm;
-    compute_reference_vectors(phi_norm, post_norm, n, config);
+    std::vector<std::vector<Word>> phi_norms(prime_count);
+    std::vector<std::vector<Word>> post_norms(prime_count);
+    for (int prime_idx = 0; prime_idx < prime_count; prime_idx++) {
+        compute_reference_vectors(phi_norms[prime_idx], post_norms[prime_idx], n, configs[prime_idx]);
+    }
 
     bool correct = true;
     if (!args.skip_validation) {
@@ -2104,12 +2254,13 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
                                        d_c_work,
                                        d_out,
                                        tables,
-                                       phi_norm,
-                                       post_norm,
-                                       config,
+                                       phi_norms,
+                                       post_norms,
+                                       configs,
                                        n,
                                        args.batch_size,
-                                       log_degree);
+                                       log_degree,
+                                       prime_count);
     }
 
     check(cudaMemcpy(d_a, a.data(), sizeof(Word) * total_coeffs, cudaMemcpyHostToDevice),
@@ -2129,12 +2280,12 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
     check(cudaEventCreate(&start_evt), "create start event");
     check(cudaEventCreate(&stop_evt), "create stop event");
 
-    run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true);
+    run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true, prime_count);
     check(cudaDeviceSynchronize(), "sync prep forward");
 
     for (int i = 0; i < args.warmup; i++) {
-        run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true);
-        run_inverse_only(d_a_work, d_out, tables, n, args.batch_size, log_degree, true);
+        run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true, prime_count);
+        run_inverse_only(d_a_work, d_out, tables, n, args.batch_size, log_degree, true, prime_count);
         run_full_polymul(d_a,
                          d_b,
                          d_a_work,
@@ -2144,13 +2295,14 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
                          tables,
                          n,
                          args.batch_size,
-                         log_degree);
+                         log_degree,
+                         prime_count);
         check(cudaDeviceSynchronize(), "sync warmup");
     }
 
     for (int i = 0; i < args.iters; i++) {
         check(cudaEventRecord(start_evt), "record start ntt");
-        run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true);
+        run_forward_only(d_a, d_a_work, tables, n, args.batch_size, log_degree, true, prime_count);
         check(cudaEventRecord(stop_evt), "record stop ntt");
         check(cudaEventSynchronize(stop_evt), "sync stop ntt");
         float ms = 0.0f;
@@ -2158,7 +2310,7 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
         ntt_samples.push_back(ms * 1000.0);
 
         check(cudaEventRecord(start_evt), "record start intt");
-        run_inverse_only(d_a_work, d_out, tables, n, args.batch_size, log_degree, true);
+        run_inverse_only(d_a_work, d_out, tables, n, args.batch_size, log_degree, true, prime_count);
         check(cudaEventRecord(stop_evt), "record stop intt");
         check(cudaEventSynchronize(stop_evt), "sync stop intt");
         check(cudaEventElapsedTime(&ms, start_evt, stop_evt), "elapsed intt");
@@ -2174,7 +2326,8 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
                          tables,
                          n,
                          args.batch_size,
-                         log_degree);
+                         log_degree,
+                         prime_count);
         check(cudaEventRecord(stop_evt), "record stop polymul");
         check(cudaEventSynchronize(stop_evt), "sync stop polymul");
         check(cudaEventElapsedTime(&ms, start_evt, stop_evt), "elapsed polymul");
@@ -2188,7 +2341,7 @@ static int run_benchmark(const Args &args, const ModulusConfig<Word> &config) {
     const int correct_flag = args.skip_validation ? -1 : (correct ? 1 : 0);
 
     std::cout << RINGLPN_DEVICE_LABEL << "," << n << "," << log_degree << ","
-              << args.requested_qbits << "," << config.actual_qbits << ","
+              << args.requested_qbits << "," << actual_qbits << ","
               << args.batch_size << "," << args.iters << ","
               << validation << ","
               << ntt.mean_us << "," << ntt.stddev_us << ","
@@ -2215,9 +2368,21 @@ int main(int argc, char **argv) {
         std::cout << "device,n,logn,requested_qbits,actual_qbits,batch_size,iters,validation,ntt_mean_us,ntt_std_us,intt_mean_us,intt_std_us,poly_mul_mean_us,poly_mul_std_us,correct\n";
     }
 
-    if (args.requested_qbits == 64) {
-        return run_benchmark<uint64_t>(args, kConfig62);
+    if (args.requested_qbits == 128) {
+        return run_benchmark<uint64_t>(
+            args,
+            std::vector<ModulusConfig<uint64_t>>{kConfig62, kConfig62Crt2},
+            124);
     }
-    return run_benchmark<uint32_t>(args, kConfig30);
+    if (args.requested_qbits == 64) {
+        return run_benchmark<uint64_t>(
+            args,
+            std::vector<ModulusConfig<uint64_t>>{kConfig62},
+            kConfig62.actual_qbits);
+    }
+    return run_benchmark<uint32_t>(
+        args,
+        std::vector<ModulusConfig<uint32_t>>{kConfig30},
+        kConfig30.actual_qbits);
 }
 #endif

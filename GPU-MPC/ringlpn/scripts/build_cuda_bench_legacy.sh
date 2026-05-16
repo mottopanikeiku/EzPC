@@ -16,4 +16,10 @@ if ! command -v "$NVCC" >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ "${ALLOW_LEGACY_CUDA_NTT:-0}" != "1" ]]; then
+  echo "The legacy CUDA NTT benchmark is archived and is no longer part of the active Ring-LPN GPU pipeline."
+  echo "Use scripts/build_cuda_bench.sh for the Cheddar backend, or set ALLOW_LEGACY_CUDA_NTT=1 for historical comparison."
+  exit 1
+fi
+
 "$NVCC" -O3 -std=c++14 -arch="sm_${CUDA_ARCH}" -DRINGLPN_DEVICE_LABEL="\"${DEVICE_LABEL}\"" "$SRC" -o "$OUT_DIR/bench_ntt_cuda_legacy"

@@ -122,7 +122,7 @@ def main():
         handle.write("\n")
         handle.write("## Notes\n\n")
         handle.write(
-            f"- This sweep covers requested qbits {requested_label} and realizes them with actual qbits {actual_label} on the promoted single-prime GPU path.\n"
+            f"- This sweep covers requested qbits {requested_label} and realizes them with actual qbits {actual_label} on the promoted Cheddar GPU path; q=128 uses two q62 CRT prime limbs.\n"
         )
         handle.write(
             f"- Input mode for this benchmark is {input_label}; the harness synthesizes MPVOLE-consistent inputs locally and validates the relation z = y + x * Delta coefficient-wise.\n"

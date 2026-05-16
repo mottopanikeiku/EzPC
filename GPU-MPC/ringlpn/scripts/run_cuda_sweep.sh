@@ -13,8 +13,8 @@ MD="$OUT_DIR/ntt_gpu_${OUT_TAG}.md"
 
 mkdir -p "$OUT_DIR"
 
-if [[ "$QBITS" != "32" && "$QBITS" != "64" ]]; then
-  echo "Unsupported QBITS=$QBITS. Expected 32 or 64."
+if [[ "$QBITS" != "32" && "$QBITS" != "64" && "$QBITS" != "128" ]]; then
+  echo "Unsupported QBITS=$QBITS. Expected 32, 64, or 128."
   exit 1
 fi
 

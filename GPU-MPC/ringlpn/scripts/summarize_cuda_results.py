@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def parse_args():
@@ -42,7 +42,7 @@ def main():
             per_poly_mul = None
             polys_per_s = None
             coeff_gb_s = None
-            coeff_bytes = 4 if actual_qbits <= 32 else 8
+            coeff_bytes = 4 if actual_qbits <= 32 else ((actual_qbits + 63) // 64) * 8
             if mul_mean and mul_mean > 0:
                 per_poly_mul = mul_mean / batch_size
                 polys_per_s = batch_size * 1e6 / mul_mean
@@ -80,7 +80,7 @@ def main():
             for r in reader:
                 unsupported_rows.append(r)
 
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     requested_values = sorted({row["requested_qbits"] for row in rows})
     actual_values = sorted({row["actual_qbits"] for row in rows})
     requested_label = ", ".join(str(v) for v in requested_values) if requested_values else "?"
@@ -113,12 +113,12 @@ def main():
 
         f.write("## Notes\n\n")
         f.write(
-            f"- This CUDA path currently covers requested qbits {requested_label} and realizes them with actual qbits {actual_label} using a single prime per run.\n"
+            f"- This CUDA path covers requested qbits {requested_label} and realizes them with actual qbits {actual_label}; q=128 uses two q62 CRT prime limbs in one flattened Cheddar launch schedule.\n"
         )
         f.write("- The benchmark batches independent polynomials in each launch; Full PolyMul mean is the batch latency, while Per-poly PolyMul divides by batch size.\n")
-        f.write("- Est. coeff GB/s uses bytes_per_op = batch_size * n * coeff_bytes * 2 as a rough traffic proxy, with coeff_bytes = 4 for q actual <= 32 and 8 otherwise.\n")
+        f.write("- Est. coeff GB/s uses bytes_per_op = batch_size * n * coeff_bytes * 2 as a rough traffic proxy, with coeff_bytes = 4 for q actual <= 32 and 8 bytes per 64-bit CRT limb otherwise.\n")
         f.write("- Full PolyMul is measured directly as NTT(a) + NTT(b) + pointwise multiply + INTT across the full batch.\n")
-        f.write("- The selected single-prime parameter sets support n up to 2^20, so these sweeps intentionally extend past the CPU NFLLib uint32_t cutoff.\n")
+        f.write("- The selected NTT prime sets support n up to 2^20, so these sweeps intentionally extend past the CPU NFLLib uint32_t cutoff.\n")
 
 
 if __name__ == "__main__":
