@@ -1,10 +1,9 @@
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <limits>
 #include <random>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -13,9 +12,11 @@ namespace {
 using u128 = unsigned __int128;
 
 constexpr uint64_t kPrime62 = 4611686018326724609ULL;
+constexpr uint64_t kPrime62Crt2 = 4611686018309947393ULL;
 
 struct Args {
-    uint64_t prime = kPrime62;
+    int qbits = 64;
+    u128 modulus = kPrime62;
     int bw = 16;
     int rows = 2;
     int inner = 2;
@@ -39,6 +40,32 @@ struct MatmulStats {
     bool validation_ok = false;
     bool counterexample_found = false;
 };
+
+static u128 q128_modulus() {
+    return u128(kPrime62) * u128(kPrime62Crt2);
+}
+
+static std::string u128_to_string(u128 x) {
+    if (x == 0) {
+        return "0";
+    }
+    std::string out;
+    while (x > 0) {
+        out.push_back(static_cast<char>('0' + x % 10));
+        x /= 10;
+    }
+    std::reverse(out.begin(), out.end());
+    return out;
+}
+
+static int modulus_bits(u128 x) {
+    int bits = 0;
+    while (x > 0) {
+        ++bits;
+        x >>= 1;
+    }
+    return bits;
+}
 
 static u128 ring_modulus(int bw) {
     if (bw <= 0 || bw > 64) {
@@ -64,38 +91,38 @@ static uint64_t ring_sub(uint64_t a, uint64_t b, int bw) {
     return ring_reduce(u128(a) + r - ring_reduce(b, bw), bw);
 }
 
-static uint64_t mod_add(uint64_t a, uint64_t b, uint64_t p) {
-    u128 s = u128(a) + b;
-    if (s >= p) {
-        s -= p;
+static u128 mod_add(u128 a, u128 b, u128 modulus) {
+    u128 s = a + b;
+    if (s >= modulus) {
+        s -= modulus;
     }
-    return static_cast<uint64_t>(s);
+    return s;
 }
 
-static uint64_t mod_sub(uint64_t a, uint64_t b, uint64_t p) {
-    return a >= b ? a - b : static_cast<uint64_t>(u128(a) + p - b);
+static u128 mod_sub(u128 a, u128 b, u128 modulus) {
+    return a >= b ? a - b : a + modulus - b;
 }
 
-static uint64_t mod_mul(uint64_t a, uint64_t b, uint64_t p) {
-    return static_cast<uint64_t>((u128(a) * b) % p);
+static u128 mod_mul(u128 a, u128 b, u128 modulus) {
+    return (a * b) % modulus;
 }
 
-static uint64_t uniform_mod(uint64_t p, std::mt19937_64 &rng) {
-    std::uniform_int_distribution<uint64_t> dist(0, p - 1);
-    return dist(rng);
+static u128 uniform_mod(u128 modulus, std::mt19937_64 &rng) {
+    u128 x = (u128(rng()) << 64) ^ u128(rng());
+    return x % modulus;
 }
 
-static void exact_zp_to_ring_shares(uint64_t z0,
-                                    uint64_t z1,
-                                    uint64_t p,
+static void exact_zm_to_ring_shares(u128 z0,
+                                    u128 z1,
+                                    u128 modulus,
                                     int bw,
                                     uint64_t &r0,
                                     uint64_t &r1) {
-    const bool carry = u128(z0) + z1 >= p;
+    const bool carry = z0 + z1 >= modulus;
     r0 = ring_reduce(z0, bw);
     r1 = ring_reduce(z1, bw);
     if (carry) {
-        r1 = ring_sub(r1, ring_reduce(p, bw), bw);
+        r1 = ring_sub(r1, ring_reduce(modulus, bw), bw);
     }
 }
 
@@ -106,14 +133,9 @@ static ConversionStats run_conversion_trials(const Args &args) {
     stats.forced_wraps = args.forced_wraps;
 
     for (int i = 0; i < args.trials + args.forced_wraps; ++i) {
-        uint64_t clear = uniform_mod(args.prime - 1, rng);
-        uint64_t z0 = 0;
-        if (i < args.forced_wraps) {
-            z0 = clear + 1;
-        } else {
-            z0 = uniform_mod(args.prime, rng);
-        }
-        uint64_t z1 = mod_sub(clear, z0, args.prime);
+        u128 clear = uniform_mod(args.modulus - 1, rng);
+        u128 z0 = i < args.forced_wraps ? clear + 1 : uniform_mod(args.modulus, rng);
+        u128 z1 = mod_sub(clear, z0, args.modulus);
 
         uint64_t target = ring_reduce(clear, args.bw);
         uint64_t naive = ring_add(ring_reduce(z0, args.bw), ring_reduce(z1, args.bw), args.bw);
@@ -123,7 +145,7 @@ static ConversionStats run_conversion_trials(const Args &args) {
 
         uint64_t r0 = 0;
         uint64_t r1 = 0;
-        exact_zp_to_ring_shares(z0, z1, args.prime, args.bw, r0, r1);
+        exact_zm_to_ring_shares(z0, z1, args.modulus, args.bw, r0, r1);
         uint64_t corrected = ring_add(r0, r1, args.bw);
         if (corrected != target) {
             ++stats.corrected_failures;
@@ -132,14 +154,14 @@ static ConversionStats run_conversion_trials(const Args &args) {
     return stats;
 }
 
-static bool no_prime_wrap_bound(const Args &args) {
+static bool no_modulus_wrap_bound(const Args &args) {
     u128 bound = u128(args.inner) * args.value_bound * args.value_bound;
-    return bound < args.prime;
+    return bound < args.modulus;
 }
 
 static MatmulStats run_constant_polynomial_scalar_matmul(const Args &args) {
     MatmulStats stats;
-    stats.bound_ok = no_prime_wrap_bound(args);
+    stats.bound_ok = no_modulus_wrap_bound(args);
 
     std::mt19937_64 rng(args.seed ^ 0xD1B54A32D192ED03ULL);
     std::uniform_int_distribution<uint64_t> dist(0, args.value_bound);
@@ -156,20 +178,21 @@ static MatmulStats run_constant_polynomial_scalar_matmul(const Args &args) {
     for (int r = 0; r < args.rows; ++r) {
         for (int c = 0; c < args.cols; ++c) {
             u128 integer_dot = 0;
-            uint64_t field_dot = 0;
+            u128 field_dot = 0;
             for (int k = 0; k < args.inner; ++k) {
                 uint64_t av = a[static_cast<size_t>(r) * args.inner + k];
                 uint64_t bv = b[static_cast<size_t>(k) * args.cols + c];
                 integer_dot += u128(av) * bv;
-                field_dot = mod_add(field_dot, mod_mul(av, bv, args.prime), args.prime);
+                field_dot = mod_add(
+                    field_dot, mod_mul(u128(av), u128(bv), args.modulus), args.modulus);
             }
 
             uint64_t target = ring_reduce(integer_dot, args.bw);
-            uint64_t z0 = uniform_mod(args.prime, rng);
-            uint64_t z1 = mod_sub(field_dot, z0, args.prime);
+            u128 z0 = uniform_mod(args.modulus, rng);
+            u128 z1 = mod_sub(field_dot, z0, args.modulus);
             uint64_t r0 = 0;
             uint64_t r1 = 0;
-            exact_zp_to_ring_shares(z0, z1, args.prime, args.bw, r0, r1);
+            exact_zm_to_ring_shares(z0, z1, args.modulus, args.bw, r0, r1);
             uint64_t converted = ring_add(r0, r1, args.bw);
             if (stats.bound_ok && converted != target) {
                 ok = false;
@@ -181,7 +204,7 @@ static MatmulStats run_constant_polynomial_scalar_matmul(const Args &args) {
     if (!stats.bound_ok) {
         uint64_t v = args.value_bound;
         uint64_t direct = ring_reduce(u128(v) * v, args.bw);
-        uint64_t field = mod_mul(v % args.prime, v % args.prime, args.prime);
+        u128 field = mod_mul(u128(v) % args.modulus, u128(v) % args.modulus, args.modulus);
         stats.counterexample_found = ring_reduce(field, args.bw) != direct;
     }
     return stats;
@@ -189,7 +212,8 @@ static MatmulStats run_constant_polynomial_scalar_matmul(const Args &args) {
 
 static void usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " [--prime P] [--bw N] [--rows M] [--inner K] [--cols N]"
+              << " [--qbits 64|128] [--prime P] [--bw N]"
+              << " [--rows M] [--inner K] [--cols N]"
               << " [--value-bound B] [--trials N] [--forced-wraps N]"
               << " [--seed N] [--csv-header]\n";
 }
@@ -198,7 +222,18 @@ static Args parse_args(int argc, char **argv) {
     Args args;
     for (int i = 1; i < argc; ++i) {
         if (!std::strcmp(argv[i], "--prime") && i + 1 < argc) {
-            args.prime = std::strtoull(argv[++i], nullptr, 10);
+            args.modulus = std::strtoull(argv[++i], nullptr, 10);
+            args.qbits = 64;
+        } else if (!std::strcmp(argv[i], "--qbits") && i + 1 < argc) {
+            args.qbits = std::atoi(argv[++i]);
+            if (args.qbits == 64) {
+                args.modulus = kPrime62;
+            } else if (args.qbits == 128) {
+                args.modulus = q128_modulus();
+            } else {
+                usage(argv[0]);
+                std::exit(1);
+            }
         } else if (!std::strcmp(argv[i], "--bw") && i + 1 < argc) {
             args.bw = std::atoi(argv[++i]);
         } else if (!std::strcmp(argv[i], "--rows") && i + 1 < argc) {
@@ -223,9 +258,10 @@ static Args parse_args(int argc, char **argv) {
         }
     }
 
-    if (args.prime < 3 || args.prime >= (uint64_t(1) << 63) || args.bw <= 0 ||
-        args.bw > 64 || args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
-        args.trials < 0 || args.forced_wraps < 0 || args.value_bound >= args.prime ||
+    if (args.modulus < 3 || args.bw <= 0 || args.bw > 64 ||
+        args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
+        args.trials < 0 || args.forced_wraps < 0 ||
+        u128(args.value_bound) >= args.modulus ||
         u128(args.value_bound) >= ring_modulus(args.bw)) {
         usage(argv[0]);
         std::exit(1);
@@ -241,13 +277,15 @@ int main(int argc, char **argv) {
     MatmulStats matmul = run_constant_polynomial_scalar_matmul(args);
 
     if (args.csv_header) {
-        std::cout << "device,input_mode,prime,bw,rows,inner,cols,value_bound,"
-                  << "share_trials,forced_wrap_trials,naive_share_failures,"
-                  << "corrected_share_failures,no_prime_wrap_bound,"
-                  << "constant_scalar_matmul_validation,counterexample_found\n";
+        std::cout << "device,input_mode,requested_qbits,actual_qbits,modulus,bw,"
+                  << "rows,inner,cols,value_bound,share_trials,forced_wrap_trials,"
+                  << "naive_share_failures,corrected_share_failures,"
+                  << "no_modulus_wrap_bound,constant_scalar_matmul_validation,"
+                  << "counterexample_found\n";
     }
     std::cout << "host_orca_zp_bridge,constant_polynomial_scalar,"
-              << args.prime << "," << args.bw << ","
+              << args.qbits << "," << modulus_bits(args.modulus) << ","
+              << u128_to_string(args.modulus) << "," << args.bw << ","
               << args.rows << "," << args.inner << "," << args.cols << ","
               << args.value_bound << "," << conv.trials << ","
               << conv.forced_wraps << "," << conv.naive_failures << ","
