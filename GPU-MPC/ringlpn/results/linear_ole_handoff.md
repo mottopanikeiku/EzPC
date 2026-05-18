@@ -114,6 +114,8 @@ What is not valid to claim yet:
 
 ## Recommended Next Steps
 
+The detailed Orca integration pipeline now lives in `results/orca_ringlpn_linear_integration_plan.md`.
+
 1. Add q128/CRT support or prove concrete layer-wise bounds that make q62 sufficient.
 2. Replace the one-scalar-per-polynomial packing with a denser packing scheme only after the conversion boundary is locked.
 3. If the claim is trusted-dealer removal, implement or cite a secure distributed `Z_p -> Z_{2^bw}` conversion protocol.

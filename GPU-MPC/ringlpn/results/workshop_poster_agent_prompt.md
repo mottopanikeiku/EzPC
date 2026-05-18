@@ -1,5 +1,7 @@
 # Workshop Poster Agent Prompt
 
+Historical snapshot: this prompt predates the current q128 NTT/VOLE and Orca FC v1 transition plan. For current claims, use `ringlpn_status_report.md` and `orca_ringlpn_linear_integration_plan.md`.
+
 Use this prompt to create a research-workshop poster for the GPU-MPC / Ring-LPN project.
 
 ## Main Prompt

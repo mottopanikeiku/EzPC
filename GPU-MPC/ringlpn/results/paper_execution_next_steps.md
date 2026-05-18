@@ -78,6 +78,8 @@ The build emitted only existing third-party Eigen/cryptoTools warnings.
 
 ## Immediate Next Implementation Checkpoints
 
+The canonical q128 Orca FC v1 execution plan is now `results/orca_ringlpn_linear_integration_plan.md`. The target is FC train/infer compatibility behind `ORCA_RINGLPN_FC_KEYS=1`, not a trusted-dealer-removal claim.
+
 ### Checkpoint 1: Tiny Orca-Compatible Key Writer
 
 Status: complete for the current bounded small-shape suite and baseline comparison.

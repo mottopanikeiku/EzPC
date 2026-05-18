@@ -1,6 +1,6 @@
 # GPU Figure 2 OLE Handoff
 
-Updated: 2026-05-15
+Updated: 2026-05-18 for the q128 Orca FC v1 transition plan
 
 ## Status
 
@@ -19,7 +19,7 @@ The validated claim is:
 
 This is a correctness and systems artifact for Figure 2's SPFSS-based OLE assembly. It is not yet a paper-parameter reproduction, a trusted-dealer removal for Orca, or an end-to-end linear-layer integration.
 
-Follow-up status: `results/linear_ole_handoff.md` now records the first OLE-to-Beaver linear-layer artifact over ring-polynomial matrix entries. `results/orca_zp_bridge_handoff.md` records a host-only scalar bridge smoke for constant-polynomial packing and carry-corrected dealer/oracle conversion from `Z_p` shares to `Z_{2^bw}` shares. These follow-ups still do not constitute Orca FC integration because there is no Orca key writer, q128/CRT path, high-density packing, or secure distributed share conversion yet.
+Follow-up status: `results/linear_ole_handoff.md` records the first OLE-to-Beaver linear-layer artifact over ring-polynomial matrix entries. `results/orca_zp_bridge_handoff.md` records a host-only scalar bridge smoke for constant-polynomial packing and carry-corrected dealer/oracle conversion from `Z_p` shares to `Z_{2^bw}` shares. `results/orca_ringlpn_linear_integration_plan.md` is now the canonical plan for the q128 Orca FC v1 transition. Until that plan lands in code, this OLE artifact is still single-prime q62 and not an Orca FC integration.
 
 ## Source Map
 
@@ -87,7 +87,7 @@ The host oracle validation is enabled for the small bounded case and intentional
 
 ## Recommended Next Steps
 
-1. Lift the modulus path to dual-prime CRT for requested `qbits=128`.
+1. Execute `results/orca_ringlpn_linear_integration_plan.md`, starting by lifting this OLE artifact to dual-prime CRT for requested `qbits=128`.
 2. Extend the new ring-polynomial OLE-to-Beaver artifact with an Orca key writer, starting with the conservative constant-polynomial scalar bridge.
 3. Replace or justify the dealer/oracle `Z_p -> Z_{2^bw}` conversion with a secure conversion protocol if trusted-dealer removal remains the claim.
 4. Integrate the resulting triple source behind Orca's linear-layer keygen path and compare against baseline Beaver triples.

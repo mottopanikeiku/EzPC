@@ -1,6 +1,6 @@
 # Orca Zp-to-Z2k Bridge Handoff
 
-Updated: 2026-05-15
+Updated: 2026-05-18 for the q128 Orca FC v1 transition plan
 
 ## Status
 
@@ -108,6 +108,8 @@ What is still not valid to claim:
 - no full Orca training/backward/optimizer integration consumes these converted shares yet.
 
 ## Next Steps
+
+The canonical execution plan for q128 CRT export and Orca FC train/infer integration is `results/orca_ringlpn_linear_integration_plan.md`.
 
 1. Add q128/CRT support or prove the concrete Orca value bounds make q62 sufficient for the targeted layer.
 2. Replace the conservative one-scalar-per-polynomial packing with a denser packing scheme only after the scalar conversion boundary is locked.

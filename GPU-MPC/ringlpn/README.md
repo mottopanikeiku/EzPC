@@ -51,6 +51,8 @@ For the current Orca scalar bridge boundary, read `results/orca_zp_bridge_handof
 
 For the current v1 Orca FC demo, read `results/orca_fc_ringlpn_demo_memo.md`. It records the bounded q62 FC claim, proof sketch, exact command log, result table, and remaining paper gaps.
 
+For the current q128 Orca FC integration plan, read `results/orca_ringlpn_linear_integration_plan.md`. It is the canonical transition document for q128/CRT OLE, linear OLE-to-Beaver, dealer/oracle CRT export, and feature-flagged FC train/infer integration. Older poster/professor-facing files in `results/` are historical snapshots and can contain stale q128 wording.
+
 For execution order and paper-oriented next steps, read `results/paper_execution_next_steps.md`.
 
 ## Quick start (inside container)

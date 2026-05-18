@@ -150,8 +150,8 @@ Quick meaning of the main paths:
 - [GPU-MPC/ringlpn/README.md](GPU-MPC/ringlpn/README.md): benchmark harness guide.
 - [GPU-MPC/ringlpn/src/bench_ntt.cpp](GPU-MPC/ringlpn/src/bench_ntt.cpp): CPU NFLLib benchmark.
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu): primary CUDA benchmark source, extracted from cheddar-fhe and adapted locally.
-- [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): preserved legacy CUDA benchmark path.
-- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu): standalone Ring-LPN VOLE prototype benchmark built on the promoted CUDA PolyMul path.
+- [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): archived legacy CUDA benchmark path, opt-in only.
+- [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu): standalone Ring-LPN VOLE prototype benchmark built on the promoted Cheddar CUDA PolyMul path.
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh): standalone GPU DPF/SPFSS path with `Z_p` payloads for the Figure 2 OLE artifact.
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu): standalone GPU Figure 2 SPFSS/OLE benchmark over the promoted q=64 single-prime PolyMul path.
 - [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu): standalone ring-polynomial linear-layer Beaver benchmark built from two Figure 2 OLEs per ring product.
@@ -355,7 +355,7 @@ This harness is separate from Orca. Do not treat it as part of the Orca training
 
 - [GPU-MPC/ringlpn/src/bench_ntt.cpp](GPU-MPC/ringlpn/src/bench_ntt.cpp): CPU NFLLib benchmark
 - [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu): promoted primary CUDA benchmark
-- [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): preserved legacy CUDA benchmark baseline
+- [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu): archived legacy CUDA benchmark baseline, opt-in only
 - [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu): standalone Ring-LPN VOLE prototype benchmark
 - [GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh](GPU-MPC/ringlpn/src/gpu_spfss_zp.cuh): standalone GPU DPF/SPFSS path with `Z_p` payloads for Figure 2 OLE
 - [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu): standalone GPU Figure 2 SPFSS/OLE benchmark
@@ -375,9 +375,9 @@ Important scripts under [GPU-MPC/ringlpn/scripts](GPU-MPC/ringlpn/scripts) and [
 - `build_cuda_bench.sh`: build the promoted cheddar-derived main CUDA benchmark
 - `build_vole_bench.sh`: build the standalone Ring-LPN VOLE prototype benchmark
 - `build_cuda_bench_cheddar.sh`: build the same cheddar-derived source under an explicit side-by-side binary name
-- `build_cuda_bench_legacy.sh`: build the preserved legacy CUDA benchmark
-- `run_cuda_sweep.sh`: promoted q=32 or q=64 CUDA sweep
-- `run_cuda_sweep_legacy.sh`: legacy q=32 CUDA sweep
+- `build_cuda_bench_legacy.sh`: archived opt-in legacy CUDA benchmark build
+- `run_cuda_sweep.sh`: promoted q=32, q=64, or q=128 CUDA sweep
+- `run_cuda_sweep_legacy.sh`: archived opt-in legacy q=32 CUDA sweep
 - `run_cuda_single.sh`: CPU-vs-GPU spot check at CPU-overlap points
 - `run_vole_sweep.sh`: standalone Ring-LPN VOLE prototype sweep
 - `build_ole_cuda_bench.sh`: build the standalone GPU Figure 2 SPFSS/OLE benchmark and GPU SPFSS test
@@ -403,13 +403,13 @@ Current active benchmark state:
 - CPU benchmark supports requested `qbits` 32, 64, and 128 by mapping to actual NFLLib sizes 30, 62, and 124.
 - CPU requested `qbits=32` is only feasible up to `n=32768` because NFLLib uint32 mode stops there.
 - The promoted main GPU benchmark is now [GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu), built by [GPU-MPC/ringlpn/scripts/build_cuda_bench.sh](GPU-MPC/ringlpn/scripts/build_cuda_bench.sh) into `bin/bench_ntt_cuda`.
-- The promoted GPU benchmark supports requested `qbits=32|64`, mapping them to actual `qbits=30|62` with one prime per run.
-- The promoted GPU q=32 and q=64 paths both support `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
-- The legacy CUDA path in [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu) is still available for q=32 comparison and regression tracking.
+- The promoted GPU benchmark supports requested `qbits=32|64|128`, mapping them to actual `qbits=30|62|124`; q=32/q=64 use one prime limb, and q=128 uses two q62 CRT prime limbs in the flattened Cheddar schedule.
+- The promoted GPU q=32, q=64, and q=128 paths support `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
+- The legacy CUDA path in [GPU-MPC/ringlpn/src/bench_ntt_cuda.cu](GPU-MPC/ringlpn/src/bench_ntt_cuda.cu) is archived for q=32 historical comparison and requires `ALLOW_LEGACY_CUDA_NTT=1` in the legacy build/sweep scripts.
 - The current promoted CUDA benchmark is batched and reports `requested_qbits`, `actual_qbits`, `batch_size`, `validation`, and `correct` in CSV.
 - `run_cuda_single.sh` is intentionally limited to the CPU-overlap points up to `n=32768`.
-- The standalone Ring-LPN VOLE prototype in [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu) is validated for requested `q=32|64` over `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}` using `synthetic_mpvole` inputs.
-- Current VOLE result summaries live in [GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md) and [GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md).
+- The standalone Ring-LPN VOLE prototype in [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu) is wired to the promoted Cheddar backend for requested `q=32|64|128`; q128 uses the same two q62 CRT limb layout as the core NTT/PolyMul benchmark. q32/q64 full sweeps are saved, and q128 has a validated smoke path.
+- Current VOLE result summaries live in [GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q32_m32_c2_w64.md), [GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md](GPU-MPC/ringlpn/results/vole_gpu_q64_m32_c2_w64.md), and the smaller q128 CRT smoke sweep [GPU-MPC/ringlpn/results/vole_gpu_q128_smoke.md](GPU-MPC/ringlpn/results/vole_gpu_q128_smoke.md); run `QBITS=128 ./scripts/run_vole_sweep.sh` for the full default q128 CRT sweep.
 - The standalone GPU Figure 2 OLE artifact in [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu) is validated for requested `q=64` over single-prime actual `q=62`, uniform sparse noise and regular sparse noise, `c=2`, `t=64`, and bounded `n` in `{8192, 16384}`. Regular noise uses grouped SPFSS domains `2N/t`, so the bounded `t=64` domains are `256` and `512`.
 - The GPU Figure 2 OLE artifact validates `z_0 + z_1 == x_0 * x_1` in `Z_p[X]/(X^N+1)` and stops at OLE. It is not yet an Orca Beaver-triple integration or trusted-dealer removal.
 - Current GPU Figure 2 OLE summaries live in [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t8_smoke.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t8_smoke.md), [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t8_smoke.md), [GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_uniform_c2_t64.md), and [GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md](GPU-MPC/ringlpn/results/ole_gpu_q64_regular_c2_t64.md). The detailed handoff is [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md).
@@ -422,7 +422,7 @@ Current active benchmark state:
 - The standalone DPF online key generation benchmark in [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) is validated for eval-all keys at `bin=16`, `chunk_size=8192`, and `n` in `{8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576}`.
 - Current DPF online key generation summaries live in [GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md](GPU-MPC/ringlpn/results/dpf_online_keygen_bin16_chunk8192.md) and the corresponding CSV.
 - The current DPF sweep shows full pair-key footprint growing from `2.81 MiB` to `360.00 MiB` while chunked online generation holds peak pair-key footprint to `2.81 MiB`, reaching about `128x` peak-footprint reduction at `n=1048576` with about `1.885x` key-generation time overhead.
-- Current promoted result summaries live in [GPU-MPC/ringlpn/results/ntt_gpu_q32.md](GPU-MPC/ringlpn/results/ntt_gpu_q32.md) and [GPU-MPC/ringlpn/results/ntt_gpu_q64.md](GPU-MPC/ringlpn/results/ntt_gpu_q64.md).
+- Current promoted result summaries live in [GPU-MPC/ringlpn/results/ntt_gpu_q32.md](GPU-MPC/ringlpn/results/ntt_gpu_q32.md), [GPU-MPC/ringlpn/results/ntt_gpu_q64.md](GPU-MPC/ringlpn/results/ntt_gpu_q64.md), and [GPU-MPC/ringlpn/results/ntt_gpu_q128.md](GPU-MPC/ringlpn/results/ntt_gpu_q128.md).
 - Legacy comparison results live in [GPU-MPC/ringlpn/results/ntt_gpu_q32_legacy.md](GPU-MPC/ringlpn/results/ntt_gpu_q32_legacy.md).
 - The most complete human handoff for Ring-LPN is [GPU-MPC/ringlpn/results/ringlpn_status_report.md](GPU-MPC/ringlpn/results/ringlpn_status_report.md).
 
@@ -440,7 +440,7 @@ The active Ring-LPN roadmap now has two tracks:
 1. Core NTT and PolyMul benchmark track:
   - generalized single-prime q=32 support is complete,
   - generalized single-prime q=64 support is complete,
-  - requested `q=128` via dual-prime CRT is the next benchmark-core target.
+  - requested `q=128` via two q62 CRT prime limbs is complete for the promoted GPU NTT/PolyMul benchmark.
 2. Online-phase systems track:
   - the standalone Ring-LPN VOLE prototype is implemented and benchmarked,
   - the standalone GPU Figure 2 SPFSS/OLE artifact is implemented and benchmarked for single-prime q=62, uniform sparse noise, and regular sparse noise,
@@ -448,17 +448,17 @@ The active Ring-LPN roadmap now has two tracks:
   - the host-only Orca scalar bridge smoke is implemented for carry-corrected dealer/oracle `Z_p -> Z_{2^bw}` conversion and conservative constant-polynomial packing,
   - the tiny forward-only Orca FC key-writer demo is implemented for bounded q62 constant-polynomial masks and unchanged `gpuMatmulBeaver`,
   - the standalone DPF online key generation benchmark is implemented and benchmarked,
-  - CRT/q128, high-density Orca scalar packing, secure distributed `Z_p -> Z_{2^bw}` conversion, full Orca training/backward integration, and end-to-end Orca/SPFSS integration are not implemented yet.
+  - q128 has landed for the standalone NTT/PolyMul benchmark, but q128 is not yet wired into the Figure 2/OLE artifacts, Orca scalar packing, secure distributed `Z_p -> Z_{2^bw}` conversion, full Orca training/backward integration, or end-to-end Orca/SPFSS integration.
 
 ### 9.5 Current Mission Handoff
 
 If a new agent is asked to continue the current Ring-LPN mission, the practical mission is:
 
 1. treat the promoted cheddar-derived path as the default GPU implementation,
-2. preserve the legacy CUDA path as a comparison baseline,
+2. keep the archived legacy CUDA path out of active scripts unless `ALLOW_LEGACY_CUDA_NTT=1` is explicitly set for historical comparison,
 3. avoid reworking the CPU baseline unless a validation issue requires it,
 4. treat [GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_ole_ringlpn_cuda.cu), [GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu](GPU-MPC/ringlpn/src/bench_linear_ole_ringlpn_cuda.cu), [GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp](GPU-MPC/ringlpn/src/test_orca_zp_bridge.cpp), [GPU-MPC/ringlpn/src/bench_orca_fc_ringlpn_demo.cu](GPU-MPC/ringlpn/src/bench_orca_fc_ringlpn_demo.cu), [GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu](GPU-MPC/ringlpn/src/bench_vole_ringlpn.cu), and [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](GPU-MPC/tests/fss/dpf_online_keygen_bench.cu) as the current online-phase evidence,
-5. if the task is benchmark-core continuation, carry the GPU path from single-prime q=32/q=64 to dual-prime CRT q=128,
+5. if the task is benchmark-core continuation, use the promoted q128 CRT path as the baseline and focus on CPU comparison, performance tuning, or exposing explicit CRT recomposition only if a downstream consumer needs it,
 6. if the task is Figure 2/OLE continuation, add CRT before claiming paper-comparable numbers,
 7. if the task is linear-layer continuation, treat the current ring-polynomial OLE-to-Beaver artifact, host scalar bridge, and tiny FC key-writer demo as the bridge layer; the next implementation step is q128/CRT or concrete layer bounds plus denser packing before attempting broader Orca replacement,
 8. if the task is Orca integration, keep online `gpuMatmulBeaver` unchanged and make the generated key shares match its existing `(A, B, C)` Beaver contract.
@@ -468,8 +468,9 @@ What is already done:
 - CPU NFLLib benchmark and full sweep are complete.
 - Promoted cheddar-derived GPU q=32 sweep is complete and validated.
 - Promoted cheddar-derived GPU q=64 sweep is complete and validated.
-- Legacy GPU q=32 sweep is preserved for comparison.
-- Standalone Ring-LPN VOLE q=32 and q=64 sweeps are complete and validated.
+- Promoted cheddar-derived GPU q=128 sweep is complete and validated using two q62 CRT prime limbs, reported as actual `qbits=124`.
+- Legacy GPU q=32 sweep is archived for opt-in historical comparison.
+- Standalone Ring-LPN VOLE q=32 and q=64 sweeps are complete and validated; q=128 is wired through the Cheddar CRT limb layout and has a passing smoke validation.
 - Standalone GPU Figure 2 SPFSS/OLE artifact is complete and validated for single-prime q=62, uniform sparse noise and regular sparse noise, `c=2`, `t=64`, bounded `n={8192,16384}`.
 - GPU SPFSS payload tests cover single point, multiple points, alpha collisions, and edge alphas.
 - Standalone ring-polynomial linear-layer OLE-to-Beaver artifact is complete and validated for the smoke case `rows=2`, `inner=2`, `cols=2`, `n=8192`, `c=2`, `t=8`, with `shared_operands=1`.
@@ -482,9 +483,8 @@ What is already done:
 
 What is not done:
 
-- no promoted GPU path yet exists for requested `q=128`,
-- no multi-prime scheduling layer exists yet in the promoted path,
-- no CRT recomposition path exists yet in the promoted path,
+- no explicit CRT recomposition output path exists yet beyond validated residue-limb q128 benchmarking,
+- no q128 wiring exists yet for Figure 2/OLE, linear-layer OLE-to-Beaver, or Orca key-writer artifacts,
 - no full Orca-scalar OLE-to-Beaver replacement exists yet beyond the tiny forward FC demo,
 - no high-density scalar packing layer exists yet from Orca tensor elements into Ring-LPN polynomial entries,
 - no secure distributed `Z_p -> Z_{2^bw}` share conversion exists yet for Orca parties that do not know both prime-field shares,
@@ -540,8 +540,9 @@ Commands worth knowing for continuation work:
 - build promoted CPU and GPU benchmarks inside the container by running `./scripts/build_bench.sh` and `./scripts/build_cuda_bench.sh` under `/home/ringlpn`,
 - run the promoted q=32 sweep with `./scripts/run_cuda_sweep.sh`,
 - run the promoted q=64 sweep with `QBITS=64 ./scripts/run_cuda_sweep.sh`,
+- run the promoted q=128 sweep with `QBITS=128 ./scripts/run_cuda_sweep.sh`,
 - build the standalone VOLE prototype with `./scripts/build_vole_bench.sh` under `/home/ringlpn`,
-- run the standalone VOLE sweep with `./scripts/run_vole_sweep.sh` or `QBITS=64 ./scripts/run_vole_sweep.sh` under `/home/ringlpn`,
+- run the standalone VOLE sweep with `./scripts/run_vole_sweep.sh`, `QBITS=64 ./scripts/run_vole_sweep.sh`, or `QBITS=128 ./scripts/run_vole_sweep.sh` under `/home/ringlpn`,
 - build the standalone GPU Figure 2 OLE artifact with `./scripts/build_ole_cuda_bench.sh` under `/home/ringlpn`,
 - run the quick GPU Figure 2 OLE smoke with `SMOKE=1 ./scripts/run_ole_sweep.sh` under `/home/ringlpn`,
 - run the bounded GPU Figure 2 OLE sweep with `./scripts/run_ole_sweep.sh` under `/home/ringlpn`,
@@ -550,7 +551,7 @@ Commands worth knowing for continuation work:
 - build and run the host-only Orca scalar bridge from the host with `GPU-MPC/ringlpn/scripts/build_orca_zp_bridge_test.sh` and `GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh`,
 - run the consolidated host checkpoint smoke with `GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh`,
 - run the consolidated CUDA checkpoint smoke inside `/home/ringlpn` with `RUN_GPU_SMOKE=1 ./scripts/run_paper_checkpoint_smoke.sh`,
-- run the legacy comparison sweep with `./scripts/build_cuda_bench_legacy.sh` and `./scripts/run_cuda_sweep_legacy.sh`,
+- run the archived legacy comparison sweep only when needed with `ALLOW_LEGACY_CUDA_NTT=1 ./scripts/build_cuda_bench_legacy.sh` and `ALLOW_LEGACY_CUDA_NTT=1 ./scripts/run_cuda_sweep_legacy.sh`,
 - build the standalone DPF online key generation benchmark under `/home` with `make GPU_ARCH=<cc> dpf_online_keygen`,
 - run the standalone DPF sweep under `/home` with `python3 scripts/run_dpf_online_keygen_sweep.py`,
 - use `./tests/fss/dpf_online_keygen --bin 16 --n 8192 --chunk-size 4096 --iters 3 --warmup 1 --csv-header` under `/home` for a quick smoke test,
@@ -673,6 +674,7 @@ If the task mentions Ring-LPN, NTT, NFLLib, CUDA sweeps, or benchmark tables:
 
 If the task mentions Figure 2, SPFSS, OLE, DPF payloads over `Z_p`, or trusted-dealer removal for linear layers:
 
+- start with [GPU-MPC/ringlpn/results/orca_ringlpn_linear_integration_plan.md](GPU-MPC/ringlpn/results/orca_ringlpn_linear_integration_plan.md) if the task is Orca FC integration or q128 linear-layer continuation
 - start with [GPU-MPC/ringlpn/results/ole_gpu_handoff.md](GPU-MPC/ringlpn/results/ole_gpu_handoff.md)
 - then read [GPU-MPC/ringlpn/results/linear_ole_handoff.md](GPU-MPC/ringlpn/results/linear_ole_handoff.md)
 - then read [GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md](GPU-MPC/ringlpn/results/orca_zp_bridge_handoff.md)

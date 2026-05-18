@@ -1,5 +1,7 @@
 # GPU-FSS / Ring-LPN Implementation Status Report
 
+Historical snapshot: this file preserves the 2026-05-11 professor-facing status. For current q128/CRT and Orca FC integration state, use `ringlpn_status_report.md` and `orca_ringlpn_linear_integration_plan.md`.
+
 Date: 2026-05-11
 
 Project: `GPU-MPC`
@@ -367,4 +369,3 @@ Avoid:
 - `GPU-MPC/ringlpn/results/ringlpn_status_report.md`
 - `GPU-MPC/ringlpn/results/ole_gpu_handoff.md`
 - `GPU-MPC/ringlpn/results/linear_ole_handoff.md`
-
