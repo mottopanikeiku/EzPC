@@ -48,6 +48,7 @@ struct LinearSharedInputs {
 
 struct LinearRunState {
     LinearArgs args;
+    ModulusConfig<Word> config = kConfig62;
     std::vector<LinearProduct> products;
     size_t spfss_pair_key_bytes = 0;
     double keygen_us = 0.0;
@@ -82,6 +83,14 @@ struct LinearRunState {
         cudaFree(d_local1);
         cudaFree(d_expected_term);
     }
+};
+
+struct LinearLimbResult {
+    bool correct = false;
+    bool shared_operand_check = false;
+    size_t key_bytes = 0;
+    double keygen_us = 0.0;
+    SummaryStats expand;
 };
 
 __device__ __forceinline__ Word linear_mod_add_device(Word a, Word b, Word modulus) {
@@ -137,7 +146,7 @@ __global__ void linear_accumulate_three_kernel(Word *slot,
 
 static void linear_usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 64] [--rows M] [--inner K] [--cols N]"
+              << " --n <deg> [--qbits 64|128] [--rows M] [--inner K] [--cols N]"
               << " [--c N] [--t N] [--seed N] [--iters N] [--warmup N]"
               << " [--chunk-size N] [--noise uniform|regular]"
               << " [--csv-header] [--skip-validation]\n";
@@ -183,7 +192,8 @@ static LinearArgs parse_linear_args(int argc, char **argv) {
     const int max_products = 64;
     int ring_products = args.rows * args.inner * args.cols;
     if (!is_power_of_two(args.n) || args.n < kMinDegree || args.n > kMaxDegree ||
-        args.qbits != 64 || args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
+        (args.qbits != 64 && args.qbits != 128) ||
+        args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
         args.c <= 0 || args.t <= 0 || args.t > args.n || args.iters <= 0 ||
         args.warmup < 0 || args.chunk_size <= 0 || ring_products <= 0 ||
         ring_products > max_products) {
@@ -229,10 +239,11 @@ static std::vector<SparsePoly> sample_operand_share(const LinearArgs &args,
     return out;
 }
 
-static LinearSharedInputs build_shared_inputs(const LinearArgs &args) {
+static LinearSharedInputs build_shared_inputs(const LinearArgs &args,
+                                              const ModulusConfig<Word> &config) {
     LinearSharedInputs shared;
     std::mt19937_64 rng(args.seed);
-    const Word modulus = kConfig62.modulus;
+    const Word modulus = config.modulus;
 
     shared.a.resize(args.c);
     shared.a[0].assign(args.n, 0);
@@ -350,6 +361,7 @@ static void build_inputs_from_shared(OleState &state,
 }
 
 static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
+                                                const ModulusConfig<Word> &config,
                                                 uint64_t seed,
                                                 const std::vector<std::vector<Word>> &a,
                                                 const std::vector<SparsePoly> &e0,
@@ -370,9 +382,11 @@ static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
     state->args.skip_validation = true;
     state->log_degree = log2i(args.n);
     state->log_domain = log2i(spfss_domain_size(state->args));
-    compute_cheddar_tables(state->host_tables, args.n, kConfig62);
+    state->config = config;
+    state->modulus = config.modulus;
+    compute_cheddar_tables(state->host_tables, args.n, config);
     alloc_and_copy(state->tables, state->host_tables);
-    compute_reference_vectors(state->phi_norm, state->post_norm, args.n, kConfig62);
+    compute_reference_vectors(state->phi_norm, state->post_norm, args.n, config);
     build_inputs_from_shared(*state, a, e0, e1);
     double us = build_spfss_keys(*state, gaes);
     keygen_us += us;
@@ -481,7 +495,7 @@ static void run_one_linear_product(LinearRunState &linear,
     OleState &a0_b1 = *product.a0_b1;
     OleState &a1_b0 = *product.a1_b0;
     const int n = linear.args.n;
-    const Word modulus = kConfig62.modulus;
+    const Word modulus = linear.config.modulus;
     Word *c0_slot = linear.d_c0 + static_cast<size_t>(product.out_slot) * n;
     Word *c1_slot = linear.d_c1 + static_cast<size_t>(product.out_slot) * n;
     Word *expected_slot = linear.d_expected + static_cast<size_t>(product.out_slot) * n;
@@ -554,7 +568,7 @@ static bool validate_linear_outputs(LinearRunState &linear) {
     dim3 block(256);
     dim3 grid(grid_size(out_coeffs, block.x));
     linear_add_matrix_kernel<<<grid, block>>>(
-        linear.d_c0, linear.d_c1, linear.d_csum, out_coeffs, kConfig62.modulus);
+        linear.d_c0, linear.d_c1, linear.d_csum, out_coeffs, linear.config.modulus);
     check(cudaGetLastError(), "launch linear_add_matrix_kernel");
     check(cudaDeviceSynchronize(), "sync linear validation");
 
@@ -570,7 +584,7 @@ static bool validate_linear_outputs(LinearRunState &linear) {
 static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes) {
     const LinearArgs &args = linear.args;
     linear.products.reserve(static_cast<size_t>(args.rows) * args.inner * args.cols);
-    LinearSharedInputs shared = build_shared_inputs(args);
+    LinearSharedInputs shared = build_shared_inputs(args, linear.config);
     uint64_t tag = 0;
     for (int r = 0; r < args.rows; ++r) {
         for (int k = 0; k < args.inner; ++k) {
@@ -583,10 +597,12 @@ static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes
                 product.col = col;
                 product.out_slot = r * args.cols + col;
                 product.a0_b1 = make_ole_state(
-                    args, linear_mix_seed(args.seed, tag++), shared.a, a_entry.p0, b_entry.p1, gaes,
+                    args, linear.config, linear_mix_seed(args.seed, tag++),
+                    shared.a, a_entry.p0, b_entry.p1, gaes,
                     linear.keygen_us, linear.spfss_pair_key_bytes);
                 product.a1_b0 = make_ole_state(
-                    args, linear_mix_seed(args.seed, tag++), shared.a, a_entry.p1, b_entry.p0, gaes,
+                    args, linear.config, linear_mix_seed(args.seed, tag++),
+                    shared.a, a_entry.p1, b_entry.p0, gaes,
                     linear.keygen_us, linear.spfss_pair_key_bytes);
                 linear.products.push_back(std::move(product));
             }
@@ -595,33 +611,64 @@ static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes
     linear.shared_operand_check = check_shared_operand_reuse(linear);
 }
 
-static int run_linear_benchmark(const LinearArgs &args) {
-    initGPUMemPool();
-    AESGlobalContext gaes;
-    initAESContext(&gaes);
-
+static LinearLimbResult run_linear_limb(const LinearArgs &args,
+                                        const ModulusConfig<Word> &config,
+                                        AESGlobalContext *gaes,
+                                        int limb_index) {
+    LinearLimbResult result;
     LinearRunState linear;
     linear.args = args;
+    linear.args.seed = mix_seed(args.seed, static_cast<uint64_t>(limb_index));
+    linear.config = config;
     alloc_linear_buffers(linear);
-    build_linear_products(linear, &gaes);
+    build_linear_products(linear, gaes);
 
-    run_linear_expand(linear, &gaes, !args.skip_validation);
-    bool correct = linear.shared_operand_check && validate_linear_outputs(linear);
+    run_linear_expand(linear, gaes, !args.skip_validation);
+    result.correct = linear.shared_operand_check && validate_linear_outputs(linear);
 
     for (int iter = 0; iter < args.warmup; ++iter) {
-        run_linear_expand(linear, &gaes, false);
+        run_linear_expand(linear, gaes, false);
     }
 
     std::vector<double> samples;
     samples.reserve(args.iters);
     for (int iter = 0; iter < args.iters; ++iter) {
         auto start = Clock::now();
-        run_linear_expand(linear, &gaes, false);
+        run_linear_expand(linear, gaes, false);
         auto end = Clock::now();
         samples.push_back(static_cast<double>(
             std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
     }
-    SummaryStats stats = summarize(samples);
+    result.expand = summarize(samples);
+    result.shared_operand_check = linear.shared_operand_check;
+    result.key_bytes = linear.spfss_pair_key_bytes;
+    result.keygen_us = linear.keygen_us;
+
+    linear.cleanup();
+    return result;
+}
+
+static int run_linear_benchmark(const LinearArgs &args) {
+    initGPUMemPool();
+    AESGlobalContext gaes;
+    initAESContext(&gaes);
+
+    std::vector<ModulusConfig<Word>> configs = ole_modulus_configs(args.qbits);
+    bool correct = true;
+    bool shared_operand_check = true;
+    size_t key_bytes = 0;
+    double keygen_us = 0.0;
+    SummaryStats stats;
+    for (size_t limb = 0; limb < configs.size(); ++limb) {
+        LinearLimbResult limb_result =
+            run_linear_limb(args, configs[limb], &gaes, static_cast<int>(limb));
+        correct = limb_result.correct && correct;
+        shared_operand_check = limb_result.shared_operand_check && shared_operand_check;
+        key_bytes += limb_result.key_bytes;
+        keygen_us += limb_result.keygen_us;
+        stats.mean_us += limb_result.expand.mean_us;
+        stats.stddev_us += limb_result.expand.stddev_us;
+    }
 
     const int ring_products = args.rows * args.inner * args.cols;
     const int ole_instances = 2 * ring_products;
@@ -629,17 +676,16 @@ static int run_linear_benchmark(const LinearArgs &args) {
         args.skip_validation ? "skipped" : (correct ? "pass" : "fail");
     std::cout << RINGLPN_DEVICE_LABEL << ",ring_beaver_two_ole_" << args.noise << ","
               << args.n << "," << log2i(args.n) << "," << log2i(linear_spfss_domain_size(args)) << ","
-              << args.qbits << "," << kConfig62.actual_qbits << ","
+              << args.qbits << "," << ole_actual_qbits(configs) << ","
               << args.noise << "," << linear_spfss_domain_size(args) << ","
               << args.rows << "," << args.inner << "," << args.cols << ","
               << args.c << "," << args.t << "," << args.chunk_size << ","
               << ring_products << "," << ole_instances << "," << args.iters << ","
-              << validation << "," << linear.spfss_pair_key_bytes << ","
-              << linear.keygen_us << "," << stats.mean_us << "," << stats.stddev_us << ","
-              << (linear.shared_operand_check ? 1 : 0) << ","
+              << validation << "," << key_bytes << ","
+              << keygen_us << "," << stats.mean_us << "," << stats.stddev_us << ","
+              << (shared_operand_check ? 1 : 0) << ","
               << (args.skip_validation ? -1 : (correct ? 1 : 0)) << "\n";
 
-    linear.cleanup();
     freeAESGlobalContext(&gaes);
     check(cudaDeviceSynchronize(), "sync linear cleanup");
     return (args.skip_validation || correct) ? 0 : 2;
