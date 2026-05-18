@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <numeric>
 #include <random>
 #include <string>
@@ -111,7 +112,7 @@ __global__ void scatter_regular_group_kernel(const Word *group,
 
 static void ole_usage(const char *prog) {
     std::cerr << "Usage: " << prog
-              << " --n <deg> [--qbits 64] [--c N] [--t N] [--seed N]"
+              << " --n <deg> [--qbits 64|128] [--c N] [--t N] [--seed N]"
               << " [--iters N] [--warmup N] [--chunk-size N]"
               << " [--noise uniform|regular] [--csv-header] [--skip-validation]\n";
 }
@@ -151,7 +152,8 @@ static OleArgs parse_ole_args(int argc, char **argv) {
         ole_usage(argv[0]);
         std::exit(1);
     }
-    if (args.qbits != 64 || args.c <= 0 || args.t <= 0 || args.t > args.n ||
+    if ((args.qbits != 64 && args.qbits != 128) ||
+        args.c <= 0 || args.t <= 0 || args.t > args.n ||
         args.iters <= 0 || args.warmup < 0 || args.chunk_size <= 0) {
         ole_usage(argv[0]);
         std::exit(1);
@@ -170,6 +172,28 @@ static OleArgs parse_ole_args(int argc, char **argv) {
         std::exit(1);
     }
     return args;
+}
+
+static std::vector<ModulusConfig<Word>> ole_modulus_configs(int qbits) {
+    if (qbits == 128) {
+        return {kConfig62, kConfig62Crt2};
+    }
+    return {kConfig62};
+}
+
+static int ole_actual_qbits(const std::vector<ModulusConfig<Word>> &configs) {
+    int total = 0;
+    for (const auto &config : configs) {
+        total += config.actual_qbits;
+    }
+    return total;
+}
+
+static uint64_t mix_seed(uint64_t seed, uint64_t tag) {
+    uint64_t z = seed + 0x9E3779B97F4A7C15ULL + (tag << 6) + (tag >> 2);
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+    return z ^ (z >> 31);
 }
 
 static bool use_regular_noise(const OleArgs &args) {
@@ -313,6 +337,8 @@ struct OleState {
     OleArgs args;
     int log_degree = 0;
     int log_domain = 0;
+    int limb_index = 0;
+    ModulusConfig<Word> config = kConfig62;
     Word modulus = kConfig62.modulus;
     HostTables<Word> host_tables;
     DeviceTables<Word> tables;
@@ -372,6 +398,13 @@ struct OleState {
         cudaFree(d_zsum);
         cudaFree(d_expected);
     }
+};
+
+struct OleLimbResult {
+    bool correct = false;
+    bool host_validation_ran = false;
+    size_t key_bytes = 0;
+    double keygen_us = 0.0;
 };
 
 static void build_inputs(OleState &state) {
@@ -668,7 +701,7 @@ static bool validate_outputs(OleState &state, bool &host_validation_ran) {
                                    x1,
                                    state.phi_norm,
                                    state.post_norm,
-                                   kConfig62,
+                                   state.config,
                                    n,
                                    state.log_degree);
         host_validation_ran = true;
@@ -677,33 +710,66 @@ static bool validate_outputs(OleState &state, bool &host_validation_ran) {
     return gpu_ok;
 }
 
+static void init_ole_state(OleState &state,
+                           const OleArgs &args,
+                           const ModulusConfig<Word> &config,
+                           int limb_index) {
+    state.args = args;
+    state.args.seed = mix_seed(args.seed, static_cast<uint64_t>(limb_index));
+    state.log_degree = log2i(args.n);
+    state.log_domain = log2i(spfss_domain_size(args));
+    state.limb_index = limb_index;
+    state.config = config;
+    state.modulus = config.modulus;
+    compute_cheddar_tables(state.host_tables, args.n, config);
+    alloc_and_copy(state.tables, state.host_tables);
+    compute_reference_vectors(state.phi_norm, state.post_norm, args.n, config);
+    build_inputs(state);
+}
+
+static OleLimbResult run_initial_ole_limb(OleState &state, AESGlobalContext *gaes) {
+    OleLimbResult result;
+    result.keygen_us = build_spfss_keys(state, gaes);
+    result.key_bytes = state.spfss_pair_key_bytes;
+
+    run_x_phase(state);
+    run_spfss_eval_phase(state, gaes);
+    run_z_phase(state);
+    check(cudaDeviceSynchronize(), "sync initial OLE run");
+    result.correct = validate_outputs(state, result.host_validation_ran);
+    return result;
+}
+
 static int run_benchmark(const OleArgs &args) {
     initGPUMemPool();
     AESGlobalContext gaes;
     initAESContext(&gaes);
 
-    OleState state;
-    state.args = args;
-    state.log_degree = log2i(args.n);
-    state.log_domain = log2i(spfss_domain_size(args));
-    compute_cheddar_tables(state.host_tables, args.n, kConfig62);
-    alloc_and_copy(state.tables, state.host_tables);
-    compute_reference_vectors(state.phi_norm, state.post_norm, args.n, kConfig62);
-    build_inputs(state);
+    std::vector<ModulusConfig<Word>> configs = ole_modulus_configs(args.qbits);
+    std::vector<std::unique_ptr<OleState>> states;
+    states.reserve(configs.size());
+    bool correct = true;
+    bool host_validation_ran = true;
+    size_t key_bytes = 0;
+    double keygen_us = 0.0;
 
-    double keygen_us = build_spfss_keys(state, &gaes);
-
-    run_x_phase(state);
-    run_spfss_eval_phase(state, &gaes);
-    run_z_phase(state);
-    check(cudaDeviceSynchronize(), "sync initial OLE run");
-    bool host_validation_ran = false;
-    bool correct = validate_outputs(state, host_validation_ran);
+    for (size_t limb = 0; limb < configs.size(); ++limb) {
+        auto state = std::make_unique<OleState>();
+        init_ole_state(*state, args, configs[limb], static_cast<int>(limb));
+        OleLimbResult limb_result = run_initial_ole_limb(*state, &gaes);
+        correct = limb_result.correct && correct;
+        host_validation_ran = limb_result.host_validation_ran && host_validation_ran;
+        key_bytes += limb_result.key_bytes;
+        keygen_us += limb_result.keygen_us;
+        states.push_back(std::move(state));
+    }
 
     for (int iter = 0; iter < args.warmup; ++iter) {
-        run_x_phase(state);
-        run_spfss_eval_phase(state, &gaes);
-        run_z_phase(state);
+        for (auto &state : states) {
+            run_x_phase(*state);
+            run_spfss_eval_phase(*state, &gaes);
+            run_z_phase(*state);
+        }
         check(cudaDeviceSynchronize(), "sync OLE warmup");
     }
 
@@ -711,9 +777,11 @@ static int run_benchmark(const OleArgs &args) {
     samples.reserve(args.iters);
     for (int iter = 0; iter < args.iters; ++iter) {
         auto start = Clock::now();
-        run_x_phase(state);
-        run_spfss_eval_phase(state, &gaes);
-        run_z_phase(state);
+        for (auto &state : states) {
+            run_x_phase(*state);
+            run_spfss_eval_phase(*state, &gaes);
+            run_z_phase(*state);
+        }
         check(cudaDeviceSynchronize(), "sync OLE iter");
         auto end = Clock::now();
         samples.push_back(static_cast<double>(
@@ -727,16 +795,18 @@ static int run_benchmark(const OleArgs &args) {
         args.skip_validation ? "skipped" : (host_validation_ran ? "pass" : "skipped");
 
     std::cout << RINGLPN_DEVICE_LABEL << ",figure2_spfss_" << args.noise << ","
-              << args.n << "," << state.log_degree << "," << state.log_domain << ","
-              << args.qbits << "," << kConfig62.actual_qbits << ","
+              << args.n << "," << log2i(args.n) << "," << log2i(spfss_domain_size(args)) << ","
+              << args.qbits << "," << ole_actual_qbits(configs) << ","
               << args.noise << "," << spfss_domain_size(args) << ","
               << args.c << "," << args.t << "," << args.chunk_size << ","
               << args.iters << "," << validation << "," << host_validation << ","
-              << state.spfss_pair_key_bytes << "," << keygen_us << ","
+              << key_bytes << "," << keygen_us << ","
               << ole.mean_us << "," << ole.stddev_us << ","
               << (args.skip_validation ? -1 : (correct ? 1 : 0)) << "\n";
 
-    state.cleanup();
+    for (auto &state : states) {
+        state->cleanup();
+    }
     freeAESGlobalContext(&gaes);
     check(cudaDeviceSynchronize(), "sync cleanup");
     return (args.skip_validation || correct) ? 0 : 2;
