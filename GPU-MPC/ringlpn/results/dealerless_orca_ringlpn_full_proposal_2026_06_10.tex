@@ -1,0 +1,376 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\Party}{\mathsf{P}}
+\newcommand{\ServerZero}{\mathsf{P}_0}
+\newcommand{\ServerOne}{\mathsf{P}_1}
+\newcommand{\Share}[1]{\langle #1 \rangle}
+\newcommand{\modtwo}{\Z_{2^{\mathsf{bw}}}}
+\newcommand{\PrimeRing}{\Z_p[X]/(X^N+1)}
+\newcommand{\bw}{\mathsf{bw}}
+
+\title{Proposal: A Fully Dealerless Ring-LPN Preprocessing Pipeline\\
+for Orca Linear Layers}
+\author{Ring-LPN / GPU-MPC project}
+\date{2026-06-10}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+As of this date the project has a working end-to-end artifact in which Orca's
+FC (linear-layer) Beaver keys are produced from \emph{real} Figure~2 Ring-LPN
+OLEs --- SPFSS-expanded on the GPU, slot-packed through the fully-split ring's
+NTT isomorphism, derandomized per cross term, CRT-lifted, exported to
+$\modtwo$, and validated through the \emph{unchanged} \texttt{gpuMatmulBeaver}
+online path at both q64 and q128. Two oracle boundaries remain between this
+artifact and a protocol one may honestly call \emph{dealerless}: centralized
+SPFSS key generation, and dealer-supplied correlations inside the
+$\Z_M \to \modtwo$ share conversion. This proposal specifies the protocol
+components that remove both boundaries, gives concrete cost models anchored in
+measured numbers, and lays out six milestones, each with a mechanical
+validation gate in the style of the project's existing artifacts.
+\end{abstract}
+
+\section{Current verified state (2026-06-10)}
+\label{sec:state}
+
+All claims in this section are backed by CSV artifacts regenerated on
+2026-06-10 on $4\times$ RTX 5000 Ada (CUDA 12.6), all validation columns
+\texttt{pass}.
+
+\paragraph{Real-OLE slot-packed FC transcript (new).}
+\texttt{bench\_orca\_fc\_real\_ole\_transcript} replaces the Step-1 ideal-OLE
+oracle with the real Figure~2 engine and packs cross terms into NTT slots:
+because $p_0 = 2^{62}-6\cdot2^{24}+1$ and $p_1 = 2^{62}-7\cdot2^{24}+1$
+(with $v_2(p_0-1)=25$, $v_2(p_1-1)=24$) both split $X^N+1$
+completely, the forward negacyclic NTT is a ring isomorphism
+$\R_p \to \Z_p^N$, so \emph{one} ring OLE yields up to $N$ independent scalar
+OLEs. Each cross term $a\cdot b$ (with $\ServerZero$ holding $a$, $\ServerOne$
+holding $b$) is derandomized against slot $s$ of a random ring OLE
+$(X_0, Z_0; X_1, Z_1)$, $Z_0[s]+Z_1[s]=X_0[s]\cdot X_1[s]$:
+$\ServerZero$ opens $d = a - X_0[s]$, $\ServerOne$ opens $e = b - X_1[s]$, and
+the shares $u_0 = de + eX_0[s] + Z_0[s]$, $u_1 = dX_1[s] + Z_1[s]$ satisfy
+$u_0+u_1 = ab \pmod p$. The 9-case suite
+(\texttt{orca\_fc\_real\_ole\_transcript\_transcript\_suite.csv}) passes at
+q64 ($\bw \le 16$) and q128 ($\bw = 32$, two CRT limbs, per-party Garner
+lift), under uniform and regular noise, including:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+case & ring OLEs & ideal-OLE equiv. & slots used & opened $\Z_p$ words & contract \\
+\midrule
+q64, $16{\times}32{\times}16$, $\bw{=}16$ & 2 & 16{,}384 & 8{,}192 & 32{,}768 & pass \\
+q128, $16{\times}16{\times}16$, $\bw{=}32$ & 4 & 8{,}192 & 4{,}096 & 32{,}768 & pass \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The constant-polynomial packing objection to the earlier artifacts is hereby
+resolved: ring-OLE count is $2\cdot\mathrm{limbs}\cdot\lceil MKN/N \rceil$,
+independent of layer size up to the slot capacity. Engine-internal validation
+($z_0{+}z_1 = x_0 x_1$ on GPU and against the host oracle), the slot identity,
+the per-cross-term identity, and the full Orca online contract all hold.
+
+\paragraph{NTT backend improvement (new).}
+The cheddar-derived backend now (i) fuses the Hadamard product into the
+inverse-NTT phase-1 load, adaptively for small batches
+(\texttt{RINGLPN\_NTT\_NO\_FUSE} / \texttt{FORCE\_FUSE} override), measured
+$\sim$2--8\% faster at the batch sizes the OLE expand actually uses while
+leaving the large-batch sweep path untouched; and (ii) caches the forward NTTs
+of the fixed public vectors $a$ and $a_i a_j$ across expand iterations,
+halving forward-NTT work per expansion. Polymul validation passes in both
+modes at all swept sizes ($2^{13}$--$2^{20}$, q32/q64/q128). The measured OLE
+expansion time is unchanged ($13.3$\,ms q64, $26.8$\,ms q128 at the $t{=}8$
+smoke point; $881$\,ms at $t{=}64$ uniform), confirming quantitatively that
+\textbf{SPFSS full-domain evaluation, not the NTT, is the cost centre}; this
+is why the proposal below spends its engineering budget on the SPFSS/OT side.
+
+\paragraph{Carried over from the 2026-06-05 checkpoint.}
+Byte-compatible FC keywriter behind \texttt{ORCA\_RINGLPN\_FC\_KEYS} (baseline
+Orca byte-identical with the flag off, verified through the real
+\texttt{tests/nn/orca/fc}); secure $\Z_M \to \modtwo$ conversion prototype,
+bit-exact on 8{,}512 conversions per case with measured cost
+(Table~\ref{tab:convert}); parameter audit identifying the deployment as the
+\emph{splittable} Ring-LPN regime.
+
+\section{What still separates us from ``dealerless''}
+\label{sec:gaps}
+
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{Centralized SPFSS key generation.} In the Figure~2 engine the
+  function \texttt{build\_spfss\_keys()} sees \emph{both} parties' sparse
+  noise vectors $e^0, e^1$ and writes both DPF key halves. In a dealerless
+  protocol each party samples its own noise locally, and the DPF keys for each
+  product point (position $\alpha = \mathrm{pos}^0_k + \mathrm{pos}^1_l$,
+  payload $\beta = \mathrm{val}^0_k \cdot \mathrm{val}^1_l$) must be generated
+  by a two-party protocol in which the position is \emph{additively} shared
+  and the payload \emph{multiplicatively} shared across the parties.
+\item \textbf{Conversion correlations.} The secure conversion prototype
+  consumes edaBits, daBits and AND triples labelled as dealer-supplied; the
+  transcript artifact still calls the exact carry-correction oracle.
+\item \textbf{Common-seed randomness.} Benchmarks derive both parties'
+  randomness from \texttt{mt19937\_64} seeds; a protocol needs per-party
+  AES-CTR PRGs with seeds fixed by coin tossing.
+\item \textbf{Security parameters.} $c{=}2$, $t{=}8$ are correctness
+  parameters. No concrete bit-security has been pinned for the fully-split
+  (splittable Ring-LPN / quasi-abelian decoding) regime.
+\item \textbf{Scope.} Orca's nonlinear layers (truncation, ReLU) consume
+  DCF/DPF keys from the same trusted dealer. They are out of scope for the
+  linear-layer pipeline but are addressed by the \emph{same} distributed DPF
+  machinery as item~1; see \S\ref{sec:scope}.
+\end{enumerate}
+
+\section{Proposed protocol components}
+\label{sec:proposal}
+
+\subsection{Distributed SPFSS key generation via OT (removes gap 1)}
+\label{sec:dpf}
+
+Adopt the Doerner--shelat style two-party DPF key-generation protocol
+\cite{doerner2017floram}, in the variant used by the PCG literature for
+exactly our setting \cite{boyle2019efficient,boyle2020ringlpn}: the parties
+hold an additively shared point $\alpha = \alpha_0 + \alpha_1 \bmod 2n$ and
+walk the GGM tree level by level; at each of the $\log(2n)$ levels a 1-of-2
+correction word is transferred via OT so that neither party learns $\alpha$.
+The $\Z_p$ payload $\beta = \beta_0 \cdot \beta_1$ (a product of one value
+known to each party) is placed by a final correction word computed from one
+scalar OLE --- which we already produce; bootstrapping order is resolved as in
+\cite{boyle2020ringlpn} by generating the (small, fixed) number of seed OLEs
+for the next epoch out of the previous epoch's expansion.
+
+\paragraph{Cost model.} Per DPF of domain $2n$: $\lambda \log (2n)$ bits of
+OT-correction material, i.e.\ $128 \cdot 14 = 1{,}792$ OT bits at
+$n = 8192$. Per ring OLE limb with uniform noise, $c^2 t^2$ DPFs:
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+noise, $t$ & DPFs per limb & OT instances ($\lambda\log 2n$ each) & est.\ comm.\ (Ferret-style sOT) \\
+\midrule
+uniform, $t{=}8$  & $4 \cdot 64 = 256$    & 458{,}752  & $\sim$0.06--0.5\,MB \\
+regular, $t{=}8$  & $4 \cdot 15 = 60$     & 107{,}520  & $\sim$0.015--0.12\,MB \\
+uniform, $t{=}64$ & $4 \cdot 4096 = 16{,}384$ & 29.4M  & $\sim$3.7--29\,MB \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Silent OT extension \cite{yang2020ferret} amortizes each OT to
+$\sim$1--8 bits of communication; the wide range reflects implementation
+maturity, to be replaced by measurements at milestone M1. Regular noise is
+the clear default: it cuts the DPF count $4\times$ at $t{=}8$ (and its
+measured pair-key bytes and expand time are already smaller:
+233\,kB vs.\ 283\,kB, $61$\,ms vs.\ $881$\,ms at $t{=}64$).
+
+\paragraph{GPU batching.} All DPF trees for a generation batch advance
+level-synchronously: one kernel per level for AES-CTR expansion (the
+\texttt{gpu\_spfss\_zp} PRG path already exists), one batched OT round per
+level. $\log(2n) = 14$ communication rounds total, independent of the number
+of trees --- the same trick that makes Floram practical, now amortized over
+hundreds to thousands of trees.
+
+\subsection{PCG-sourced conversion correlations (removes gap 2)}
+\label{sec:convert}
+
+The measured conversion cost per $\modtwo$ output is small and fixed
+(Table~\ref{tab:convert}). All three correlation types are silently
+generatable with machinery this project already has or that is standard:
+
+\begin{itemize}[leftmargin=2em]
+\item \textbf{AND triples}: binary Beaver triples from a binary PCG
+  (expand-accumulate / silver-style \cite{couteau2021silver}, or simply the
+  $\Z_2$ instantiation of our Figure~2 pipeline); Ferret \cite{yang2020ferret}
+  yields them at $\sim$1 bit amortized communication.
+\item \textbf{edaBits}: generated from random bit-shares via the
+  Escudero et al.\ construction \cite{escudero2020edabits}; each edaBit costs
+  $O(\ell)$ AND triples in a one-time batch.
+\item \textbf{daBits}: one per conversion, from the same batch.
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+per $\modtwo$ output & q64 ($\ell{=}63$) & q128 ($\ell{=}125$) \\
+\midrule
+AND triples   & 124 & 248 \\
+edaBit bits   & 63  & 125 \\
+daBits        & 1   & 1   \\
+opened bits   & 375 & 747 \\
+AND rounds (current ripple) & 125 & 249 \\
+AND rounds (proposed prefix comparator) & $\sim$7 & $\sim$8 \\
+\bottomrule
+\end{tabular}
+\caption{Measured conversion cost (\texttt{secure\_convert\_prototype.csv})
+and the round-count target after replacing the ripple comparator with a
+parallel-prefix / Rabbit-style comparison \cite{makri2021rabbit}. Triple and
+bit counts grow by a small constant factor; rounds drop from $O(\ell)$ to
+$O(\log \ell)$.}
+\label{tab:convert}
+\end{table}
+
+\subsection{Coin-tossed PRG seeds and transcript hygiene (removes gap 3)}
+
+Replace every \texttt{mt19937\_64} stream with AES-CTR keyed by
+coin-tossed seeds (commit-then-open over the existing \texttt{SigmaPeer}
+channel); tag every derived stream with the (layer, epoch, direction, limb)
+tuple already used by \texttt{mixSeed}. This is bookkeeping, not research,
+but it is a precondition for any security claim.
+
+\subsection{Parameter and security audit (removes gap 4)}
+\label{sec:params}
+
+Fix $(n, c, t)$ by running standard syndrome-decoding estimators
+(ISD/statistical decoding) against the \emph{splittable} Ring-LPN assumption,
+i.e.\ the quasi-abelian decoding regime of Bombar et al.
+\cite{bombar2023quasiabelian}, which is the assumption our fully-split primes
+actually invoke --- representative parameter points in the literature (e.g.\
+$c{=}4$ with $t$ in the dozens at $n \ge 2^{16}$ for 128-bit security in
+BCG+20-style analyses \cite{boyle2020ringlpn}) must be re-derived, not
+copied, because full splitting admits stronger attacks than the irreducible
+case. Deliverable: a parameter memo pinning $(n, c, t, p_0, p_1)$ with
+estimator outputs, and regenerated headline tables at those parameters.
+The engine already accepts arbitrary $(c, t)$ and regular noise, so this is
+measurement, not new code.
+
+\subsection{Two-process deployment (turns the transcript into a protocol)}
+\label{sec:deploy}
+
+The transcript artifacts are party-separated within one process. Promote them
+to two processes over TCP using the existing \texttt{SigmaPeer} comms layer
+(the same one \texttt{tests/nn/orca/fc} uses): the openings $(d, e)$, the OT
+messages of \S\ref{sec:dpf}, and the conversion openings are the only
+traffic. Measured opened-word counts from the suite
+(e.g.\ $32{,}768$ $\Z_p$ words $\approx$ 256\,kB for a full-capacity
+$16{\times}32{\times}16$ layer at q64) bound the derandomization bandwidth.
+
+\section{Milestones and validation gates}
+\label{sec:milestones}
+
+\begin{enumerate}[leftmargin=2.4em,label=\textbf{M\arabic*.}]
+\item \textbf{Distributed DPF keygen prototype (GPU-batched).}
+  Gate: for random additively-shared $\alpha$ and multiplicatively-shared
+  $\beta$, the two generated key halves full-domain-evaluate to shares whose
+  sum equals the point function, for every tree in a batch of $\ge 256$;
+  byte-level key format unchanged so \texttt{gpuDpfZpFullEvalSum} runs as is.
+\item \textbf{Real-OLE transcript driven end-to-end by M1 keys.}
+  Gate: \texttt{orca\_fc\_real\_ole\_transcript} suite passes with
+  \texttt{build\_spfss\_keys()} replaced by the two-party keygen; the
+  \emph{only} remaining oracle is the conversion.
+\item \textbf{PCG-sourced conversion + prefix comparator.}
+  Gate: \texttt{test\_secure\_convert} passes bit-exact with correlations
+  consumed from the binary PCG instead of the dealer block, and measured
+  round count drops to $O(\log \ell)$ (Table~\ref{tab:convert}).
+\item \textbf{Two-process deployment over TCP.}
+  Gate: the full pipeline (M1 keygen $\to$ expand $\to$ derandomize $\to$
+  convert $\to$ key write) runs as two OS processes on two GPUs;
+  \texttt{gpuMatmulBeaver} contract passes; communication measured and
+  reported per layer.
+\item \textbf{Security parameter memo.}
+  Gate: pinned $(n, c, t)$ with estimator evidence for $\ge 128$-bit
+  splittable Ring-LPN security; headline tables regenerated at those
+  parameters (expect $t$ well above the smoke value --- the $t{=}64$ uniform
+  row, $881$\,ms expand, is the realistic anchor today, and regular noise its
+  mitigation at $61$\,ms).
+\item \textbf{Scale and report.}
+  Gate: dealerless preprocessing for the FC layers of one Orca model
+  (e.g.\ the CNN FC dimensions), with a table comparing trusted-dealer
+  key generation versus the dealerless pipeline on time, communication, and
+  key bytes --- with no mixing of oracle-backed and protocol-backed numbers
+  in a single column.
+\end{enumerate}
+
+M1 and M3 are independent and can proceed in parallel; M2 depends on M1;
+M4 on M2+M3; M5 is independent measurement; M6 closes.
+
+\section{Cost model summary}
+\label{sec:cost}
+
+For one FC layer $(M, K, N)$ at modulus with $L$ limbs (1 for q64, 2 for
+q128), ring dimension $n$:
+
+\begin{itemize}[leftmargin=2em]
+\item \textbf{Ring OLEs}: $2 L \lceil MKN/n \rceil$ (measured: 2 at q64,
+  4 at q128 for all suite shapes).
+\item \textbf{Offline keygen}: per ring OLE limb, $c^2 t^2$ (uniform) or
+  $c^2(2t-1)$ (regular) distributed DPFs, each $\lambda \log(2n)$ OT bits
+  (\S\ref{sec:dpf}); GPU expand measured $13.3$\,ms (q64) / $26.8$\,ms (q128)
+  at the smoke point, $881$\,ms / $61$\,ms (uniform/regular) at $t{=}64$.
+\item \textbf{Derandomization traffic}: $2 \cdot 2 \cdot MKN \cdot L$ field
+  words per layer (both directions, both openings), measured as
+  \texttt{opened\_words}.
+\item \textbf{Conversion}: $MN$ conversions $\times$ Table~\ref{tab:convert};
+  amortized over the layer this is $1/K$ of the cross-term work.
+\item \textbf{Online}: unchanged Orca (\texttt{gpuMatmulBeaver}); key bytes
+  unchanged (byte-compatible writer).
+\end{itemize}
+
+\section{Claims discipline}
+\label{sec:scope}
+
+\textbf{After M2} it is honest to say: ``linear-layer Beaver keys are
+generated by a two-party protocol whose only idealized component is the share
+conversion''; \textbf{after M4}: ``Orca FC preprocessing is dealerless
+(semi-honest, splittable Ring-LPN)''. \textbf{Not claimable at any milestone
+here}: malicious security (consistency checks are future work);
+``dealerless Orca'' without the linear-layer qualifier --- truncation and
+ReLU keys remain dealer-generated until the M1 machinery is extended to
+Orca's DCF keys, which is the natural follow-on project (the trees are
+larger and the payload groups differ, but the level-synchronous OT pattern
+is identical); and any security level until M5 lands.
+
+\begin{thebibliography}{9}
+\bibitem{boyle2019efficient}
+E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, P.~Scholl.
+\emph{Efficient Pseudorandom Correlation Generators: Silent OT Extension and
+More}. CRYPTO 2019.
+\bibitem{boyle2020ringlpn}
+E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, P.~Scholl.
+\emph{Efficient Pseudorandom Correlation Generators from Ring-LPN}.
+CRYPTO 2020.
+\bibitem{doerner2017floram}
+J.~Doerner, a.~shelat. \emph{Scaling ORAM for Secure Computation}.
+CCS 2017.
+\bibitem{yang2020ferret}
+K.~Yang, C.~Weng, X.~Lan, J.~Zhang, X.~Wang.
+\emph{Ferret: Fast Extension for Correlated OT with Small Communication}.
+CCS 2020.
+\bibitem{couteau2021silver}
+G.~Couteau, P.~Rindal, S.~Raghuraman.
+\emph{Silver: Silent VOLE and Oblivious Transfer from Hardness of Decoding
+Structured LDPC Codes}. CRYPTO 2021.
+\bibitem{escudero2020edabits}
+D.~Escudero, S.~Ghosh, M.~Keller, R.~Rachuri, P.~Scholl.
+\emph{Improved Primitives for MPC over Mixed Arithmetic-Binary Circuits}.
+CRYPTO 2020.
+\bibitem{makri2021rabbit}
+E.~Makri, D.~Rotaru, F.~Vercauteren, S.~Wagh.
+\emph{Rabbit: Efficient Comparison for Secure Multi-Party Computation}.
+FC 2021.
+\bibitem{bombar2023quasiabelian}
+M.~Bombar, G.~Couteau, A.~Couvreur, C.~Ducros.
+\emph{Correlated Pseudorandomness from the Hardness of Quasi-Abelian
+Decoding}. CRYPTO 2023.
+\bibitem{jawalkar2024orca}
+N.~Jawalkar, K.~Gupta, A.~Basu, N.~Chandran, D.~Gupta, R.~Sharma.
+\emph{Orca: FSS-based Secure Training and Inference with GPUs}.
+IEEE S\&P 2024.
+\end{thebibliography}
+
+\end{document}
