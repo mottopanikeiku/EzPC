@@ -68,5 +68,9 @@ echo "[paper-smoke] building and running ideal-OLE dealerless FC transcript"
 "$ROOT/scripts/build_orca_fc_ideal_ole_transcript.sh"
 "$ROOT/scripts/run_orca_fc_ideal_ole_transcript.sh"
 
+echo "[paper-smoke] building and running real-OLE slot-packed FC transcript"
+"$ROOT/scripts/build_orca_fc_real_ole_transcript.sh"
+"$ROOT/scripts/run_orca_fc_real_ole_transcript.sh"
+
 echo "[paper-smoke] complete"
 echo "[paper-smoke] ALL GATES PASS"

@@ -301,3 +301,43 @@ constant-polynomial packing it is comparable to the per-output OLE work. This is
 concrete measurement needed before committing to prime-field+convert (Route A) vs the
 Z_2^k-native triple route (Route B). Next: Step 3 (regenerate q128 OLE/linear summaries)
 and Step 5 (replace the ideal OLE oracle with the Figure 2 engine).
+
+## Update (2026-06-10): Step 5 landed — real-OLE slot-packed transcript; NTT backend improved
+
+### Step 5: Real Figure 2 OLE replaces the ideal oracle (with dense slot packing)
+
+- `src/bench_orca_fc_real_ole_transcript.cu`,
+  `scripts/build_orca_fc_real_ole_transcript.sh`,
+  `scripts/run_orca_fc_real_ole_transcript.sh`; memo in
+  `results/orca_fc_real_ole_transcript_memo.md`.
+- The Figure 2 engine (`bench_ole_ringlpn_cuda.cu`, included via its
+  `RINGLPN_OLE_DISABLE_MAIN` guard) produces random ring OLEs; the fully-split
+  primes make the forward negacyclic NTT a slot isomorphism, so one ring OLE
+  backs up to n scalar OLEs. Cross terms are derandomized per slot (open
+  `d = a - X0[s]`, `e = b - X1[s]`), accumulated per limb, Garner-lifted to
+  Z_M per party (q128), converted, and written in Orca key order.
+- Suite: 9/9 pass through unchanged `gpuMatmulBeaver` (q64 bw<=16, q128 bw=32,
+  uniform+regular). Ring-OLE count is `2*limbs*ceil(MKN/n)`: the
+  q64 16x32x16 case backs 16,384 ideal-OLE-equivalents with 2 ring OLEs.
+  **This resolves the dense-packing gap** (evaluation-domain packing; no
+  negacyclic sign handling needed in slots).
+- Remaining oracle boundaries: centralized SPFSS keygen; conversion oracle in
+  the transcript (the secure prototype from Step 2 is not yet wired in);
+  c=2/t=8 correctness parameters. Removal plan:
+  `results/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` (six
+  milestones M1-M6 with gates; M1 = OT-based distributed DPF keygen).
+
+### NTT backend (cheddar) improvements
+
+- Adaptive fused-INTT polymul: Hadamard product folded into the INTT phase-1
+  load when `batch*primes <= 16` (saves a launch + a full coefficient-vector
+  round trip; ~2-8% at OLE batch sizes, large-batch path unchanged where the
+  separate kernel was faster). Env: `RINGLPN_NTT_NO_FUSE`,
+  `RINGLPN_NTT_FORCE_FUSE`.
+- OLE engine caches `NTT(a)` and `NTT(a_i*a_j)` and uses
+  `run_polymul_prepared_lhs` in the x/z phases: half the forward NTTs per
+  expand iteration.
+- All polymul/NTT validation passes (2^13-2^20, q32/64/128, both modes); OLE
+  expand unchanged (SPFSS dominates) — re-confirming the keep-Cheddar /
+  defer-four-step decision and pointing the optimization budget at the
+  SPFSS/OT side (see proposal M1).
