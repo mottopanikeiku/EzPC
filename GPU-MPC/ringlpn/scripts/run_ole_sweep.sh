@@ -16,8 +16,8 @@ SMOKE="${SMOKE:-0}"
 
 mkdir -p "$OUT_DIR"
 
-if [[ "$QBITS" != "64" ]]; then
-  echo "Unsupported QBITS=$QBITS. This first-pass OLE artifact supports only QBITS=64."
+if [[ "$QBITS" != "64" && "$QBITS" != "128" ]]; then
+  echo "Unsupported QBITS=$QBITS. Supported: 64 (single q62 limb) or 128 (two q62 CRT limbs)."
   exit 1
 fi
 
@@ -84,6 +84,8 @@ for n in "${N_LIST[@]}"; do
     --iters "$iters" \
     --warmup "$warmup" \
     "${extra_args[@]}" 2>>"$LOG")
+
+  printf '%s\n' "$output" >> "$LOG"
 
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue

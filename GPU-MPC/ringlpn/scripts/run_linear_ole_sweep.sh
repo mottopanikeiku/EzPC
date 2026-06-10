@@ -22,8 +22,8 @@ OUT_TAG="${OUT_TAG:-q${QBITS}_${NOISE}_r${ROWS}_k${INNER}_c${COLS}_n${N}_t${T}}"
 
 mkdir -p "$OUT_DIR"
 
-if [[ "$QBITS" != "64" ]]; then
-  echo "Unsupported QBITS=$QBITS. This first-pass linear OLE artifact supports only QBITS=64."
+if [[ "$QBITS" != "64" && "$QBITS" != "128" ]]; then
+  echo "Unsupported QBITS=$QBITS. Supported: 64 (single q62 limb) or 128 (two q62 CRT limbs)."
   exit 1
 fi
 
@@ -57,6 +57,8 @@ output=$("$BIN" \
   --warmup "$WARMUP" \
   --seed "$SEED" \
   --csv-header 2>>"$LOG")
+
+printf '%s\n' "$output" >> "$LOG"
 
 header_cols=0
 header_written=0

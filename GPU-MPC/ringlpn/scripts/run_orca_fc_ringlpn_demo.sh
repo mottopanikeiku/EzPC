@@ -9,10 +9,11 @@ OUT_DIR="$BASE_DIR/results"
 OUT_TAG="${OUT_TAG:-bounded_suite}"
 
 CASES=(
-  "2 2 2 16 255 1 2"
-  "2 3 2 16 255 3 4"
-  "3 2 2 16 255 5 6"
-  "2 2 3 32 255 7 8"
+  "64 2 2 2 16 255 1 2"
+  "64 2 3 2 16 255 3 4"
+  "64 3 2 2 16 255 5 6"
+  "64 2 2 3 32 255 7 8"
+  "128 2 2 2 32 4294967295 9 10"
 )
 
 mkdir -p "$OUT_DIR"
@@ -32,8 +33,9 @@ header_cols=0
 header_written=0
 
 for case in "${CASES[@]}"; do
-  read -r rows inner cols bw value_bound seed second_seed <<<"$case"
+  read -r qbits rows inner cols bw value_bound seed second_seed <<<"$case"
   output=$("$BIN" \
+    --qbits "$qbits" \
     --rows "$rows" \
     --inner "$inner" \
     --cols "$cols" \
@@ -42,6 +44,8 @@ for case in "${CASES[@]}"; do
     --seed "$seed" \
     --second-seed "$second_seed" \
     --csv-header 2>>"$LOG")
+
+  printf '%s\n' "$output" >> "$LOG"
 
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue

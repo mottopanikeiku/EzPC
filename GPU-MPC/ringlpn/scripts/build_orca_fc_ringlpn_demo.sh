@@ -32,6 +32,7 @@ COMMON_FLAGS=(
 "$NVCC" "${COMMON_FLAGS[@]}" \
   "$BASE_DIR/src/bench_orca_fc_ringlpn_demo.cu" \
   "$PROJECT_ROOT/utils/gpu_mem.cu" \
+  "$BASE_DIR/src/orca_globals_stub.cpp" \
   -lcurand \
   -o "$OUT_DIR/bench_orca_fc_ringlpn_demo"
 

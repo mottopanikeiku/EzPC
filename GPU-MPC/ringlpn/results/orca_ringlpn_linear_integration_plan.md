@@ -1,6 +1,6 @@
 # Ring-LPN Linear Layer Integration Plan for Orca
 
-Updated: 2026-05-18
+Updated: 2026-05-21
 
 ## Goal
 
@@ -21,16 +21,16 @@ Already implemented:
 - q32/q64/q128 promoted Cheddar NTT/PolyMul benchmark.
 - q128 is represented as two q62 CRT residue limbs and reports actual qbits 124.
 - q128 is wired into the standalone Ring-LPN VOLE prototype.
-- Figure 2 SPFSS/OLE artifact is validated for single-prime q62 only.
-- Ring-polynomial linear OLE-to-Beaver artifact is validated for single-prime q62 only.
-- Host scalar bridge validates dealer/oracle `Z_p -> Z_{2^bw}` carry correction.
-- Tiny forward-only Orca FC demo writes byte-compatible `A`, `B`, `C_masked` buffers and validates unchanged `gpuMatmulBeaver` for bounded q62 cases.
+- Figure 2 SPFSS/OLE source now accepts q64/q128 and iterates over one or two q62 limbs, but saved validation summaries are still primarily q62/q64; q128 OLE summaries remain to be regenerated before a paper-parameter OLE claim.
+- Ring-polynomial linear OLE-to-Beaver source now accepts q64/q128 and accumulates per CRT limb, but q128 saved summaries remain to be regenerated before a q128 linear-layer claim.
+- Host scalar bridge validates dealer/oracle `Z_p -> Z_{2^bw}` and q128 CRT-to-`Z_{2^bw}` carry correction under explicit no-wrap bounds.
+- Tiny Orca FC demo writes byte-compatible `A`, `B`, `C_masked` buffers and validates unchanged `gpuMatmulBeaver` for bounded q62 cases plus a bounded q128/full-32-bit `2x2x2` case; it also checks synthetic forward, `dW`, and `dX` contracts.
 
 Main missing pieces:
 
-- q128/CRT support in Figure 2 OLE.
-- q128/CRT support in the linear OLE-to-Beaver artifact.
-- q128/CRT export from residue-limb shares to Orca `Z_{2^bw}` shares.
+- q128/CRT saved validation summaries for Figure 2 OLE.
+- q128/CRT saved validation summaries for the linear OLE-to-Beaver artifact.
+- secure q128/CRT export from residue-limb shares to Orca `Z_{2^bw}` shares.
 - Dense scalar packing, or a documented reason to keep constant-polynomial packing for v1 correctness.
 - Secure distributed conversion if claiming trusted-dealer removal.
 - Real Orca FC keygen integration, then backward/training integration.
@@ -235,13 +235,69 @@ The first milestone can use dealer/oracle q128 CRT export. The second requires a
 
 Do not claim trusted-dealer removal until that second milestone is complete.
 
+Professor-facing protocol memo:
+
+- `results/dealerless_orca_ringlpn_protocol_plan.tex` is the current research-checked academic-style writeup for the dealerless direction. It separates the existing Orca-compatible dealer/oracle demo from the intended two-party protocol, states the OLE cross-term algebra, identifies secure `Z_M -> Z_{2^bw}` conversion and Ring-LPN parameter auditing as the main theory gaps, and lists the next deliverables.
+
 ## Immediate Next Task
 
-Start with Phase 2:
+Start with a validation-and-protocol checkpoint rather than a broader Orca rewrite:
 
-1. generalize `OleState` from one modulus to a vector of CRT limb contexts,
-2. make q128 run OLE independently over both q62 limbs,
-3. validate per-limb OLE correctness,
-4. then port the linear artifact in Phase 3.
+1. regenerate saved q128 OLE summaries for uniform and regular noise using the existing q128 limb plumbing,
+2. regenerate saved q128 linear OLE-to-Beaver summaries for uniform and regular noise,
+3. add an ideal dealerless FC transcript test that computes cross terms through an ideal OLE oracle and writes party-local Orca key buffers,
+4. write the parameter/factorization audit for the selected primes and `X^N+1`,
+5. design the secure `Z_M -> Z_{2^bw}` share-conversion protocol before claiming trusted-dealer removal.
 
-This is the shortest route from the current codebase to an honest q128 Ring-LPN linear-layer bridge for Orca.
+This is the shortest route from the current codebase to an honest q128 Ring-LPN linear-layer bridge for Orca without overstating the dealerless security claim.
+
+## Update (2026-06-05): Dealerless roadmap Steps 1-2 landed
+
+Two new standalone artifacts move the work from "byte-compatible oracle keywriter"
+toward the dealerless protocol. Both are additive (no change to baseline Orca or to
+the feature-flagged keywriter), and both keep the existing oracle as the reference.
+
+### Step 1: Ideal-OLE dealerless FC transcript (proves the reduction, not just the format)
+
+- `src/orca_fc_ideal_ole_transcript.cuh`, `src/bench_orca_fc_ideal_ole_transcript.cu`,
+  `scripts/build_orca_fc_ideal_ole_transcript.sh`, `scripts/run_orca_fc_ideal_ole_transcript.sh`.
+- Unlike `buildCShare` (which multiplies the *clear* masks and shares the product), the
+  transcript samples `A_i, B_i, Y_i` per party and forms the Beaver cross terms
+  `A0*B1`, `A1*B0` through an **ideal OLE oracle**, accumulating each party's Beaver
+  share over `Z_M` and converting once per output entry. It writes party-local
+  `A_i || B_i || C_i` buffers that pass the **unchanged** `gpuMatmulBeaver`.
+- Scope: single q62 limb (qbits=64). Because the OLE multiplies *full-width* shares
+  (not bounded masks), the conservative no-wrap bound is `K * 2^(2*bw+2) < p62`, so the
+  demo default `bw=16` works; `bw=32` needs the q128/CRT per-limb extension (folds into
+  Step 3 below). Validated 2x2x2, 2x3x2, 3x2x2, 4x4x4 (bw16) and 2x2x2 (bw20): all pass,
+  with `#OLE = 2*M*K*N` and `#conversions = M*N` reported per case.
+- Still ideal-oracle: the OLE is a trusted functionality (Step 5 replaces it with the
+  Figure 2 engine) and the conversion is still the carry-correction oracle (Step 2 below).
+
+### Step 2: Secure Z_M -> Z_{2^bw} conversion prototype (the central protocol gap)
+
+- `src/test_secure_convert.cpp`, `scripts/build_secure_convert_test.sh`,
+  `scripts/run_secure_convert_test.sh` (host-only g++).
+- Party-separated semi-honest protocol: edaBit-masked open of `S = z0+z1`, a boolean
+  ripple comparator (public `A` + boolean-shared `R`) to extract the wrap bit
+  `w = [S >= M]` via boolean Beaver triples, a daBit B2A of `w`, and the local
+  correction `r_i = (z_i - M*w_i) mod 2^bw`. Matches the oracle `exactZmToRingShares`
+  **bit-for-bit** on randomized, forced-wrap, and layer-shaped (bounded-dot) vectors;
+  q64 and q128 moduli both pass with zero mismatches.
+- Measured cost per converted scalar (the Route-A vs Route-B input):
+  - q64 (ell=63): ~124 AND triples, 63 edaBit bits, 1 daBit, 375 opened bits, 125 seq. rounds.
+  - q128 (ell=125): ~248 AND triples, 125 edaBit bits, 1 daBit, 747 opened bits, 249 seq. rounds.
+- Honest scope: the edaBits/daBits/boolean-triples are produced by a labeled prototype
+  offline dealer; in the full dealerless system these come from PCG/OT (silent OT ->
+  edaBits). The high sequential-round count is the ripple's; the standard edaBits
+  constant-round comparison removes it at the cost of more correlated randomness.
+
+### Implication for Route A vs Route B (kept open per user decision)
+
+Conversion cost is ~2*ell boolean AND triples + ell edaBit bits + an ell-bit opening
+per *output element* (one conversion per output, independent of K). For FC layers with
+large inner dim K, this amortizes against the 2K OLE cross-term calls; for small K or
+constant-polynomial packing it is comparable to the per-output OLE work. This is the
+concrete measurement needed before committing to prime-field+convert (Route A) vs the
+Z_2^k-native triple route (Route B). Next: Step 3 (regenerate q128 OLE/linear summaries)
+and Step 5 (replace the ideal OLE oracle with the Figure 2 engine).

@@ -24,7 +24,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
+#include <cstdlib>
 #include <cmath>
+#include <iostream>
 
 #include "utils/gpu_mem.h"
 #include "utils/gpu_file_utils.h"
@@ -34,11 +36,35 @@
 #include "fss/gpu_matmul.h"
 #include "fss/dcf/gpu_truncate.h"
 #include "fss/dcf/gpu_sgd.h"
+#include "ringlpn/src/orca_fc_ringlpn_keywriter.cuh"
 
 namespace dcf
 {
     namespace orca
     {
+        inline int ringlpnFcQbitsOrDie()
+        {
+            int qbits = ringlpn_orca::requestedQbitsFromEnv();
+            if (qbits != 64 && qbits != 128)
+            {
+                std::cerr << "ORCA_RINGLPN_FC_QBITS must be 64 or 128, got "
+                          << qbits << "\n";
+                std::exit(1);
+            }
+            return qbits;
+        }
+
+        inline void requireRinglpnFcKey(bool ok, const char *label, int bw)
+        {
+            if (!ok)
+            {
+                std::cerr << "Ring-LPN FC key generation failed for " << label
+                          << " at bw=" << bw
+                          << ". v1 supports bounded bw<=32 constant-polynomial cases; "
+                          << "baseline Orca remains unchanged with ORCA_RINGLPN_FC_KEYS unset.\n";
+                std::exit(1);
+            }
+        }
 
         template <typename T>
         FCLayer<T>::FCLayer(int bin, int bout, int M, int N, int K, dcf::TruncateType tf, dcf::TruncateType tb, bool useBias, bool computedX, bool inputIsShares)
@@ -123,13 +149,24 @@ namespace dcf
                 moveIntoCPUMem((u8 *)this->mask_X, (u8 *)d_mask_X, mmKey.mem_size_A, NULL);
             auto d_mask_Z = randomGEOnGpu<T>(p.size_C, p.bw);
             auto d_mask_W = (T *)moveToGPU((u8 *)mask_W, mmKey.mem_size_B, NULL);
-            auto d_masked_Z = gpuMatmulPlaintext(p, d_mask_X, d_mask_W, d_mask_Z, false); //, true, true, true);
-            writeShares<T, T>(key_as_bytes, party, p.size_A, d_mask_X, p.bw);
-            writeShares<T, T>(key_as_bytes, party, p.size_B, d_mask_W, p.bw);
-            writeShares<T, T>(key_as_bytes, party, p.size_C, d_masked_Z, p.bw);
-            // gpuFree(d_mask_X);
+            if (ringlpn_orca::fcKeysEnabled())
+            {
+                int qbits = ringlpnFcQbitsOrDie();
+                requireRinglpnFcKey(
+                    ringlpn_orca::writeMatmulKey<T>(
+                        key_as_bytes, party, p, d_mask_X, d_mask_W, d_mask_Z,
+                        qbits, 0xF0FC00ULL),
+                    "forward", p.bw);
+            }
+            else
+            {
+                auto d_masked_Z = gpuMatmulPlaintext(p, d_mask_X, d_mask_W, d_mask_Z, false); //, true, true, true);
+                writeShares<T, T>(key_as_bytes, party, p.size_A, d_mask_X, p.bw);
+                writeShares<T, T>(key_as_bytes, party, p.size_B, d_mask_W, p.bw);
+                writeShares<T, T>(key_as_bytes, party, p.size_C, d_masked_Z, p.bw);
+                gpuFree(d_masked_Z);
+            }
             gpuFree(d_mask_W);
-            gpuFree(d_masked_Z);
             if (useBias)
                 gpuAddBias(1, p.M, p.N, p.bw, d_mask_Z, mask_Y, NULL);
             auto d_mask_truncated_Z = genGPUTruncateKey(key_as_bytes, party, tf, p.bw, p.bw, global::scale, p.size_C, d_mask_Z, gaes); /*, mask_truncated_C);*/
@@ -145,11 +182,30 @@ namespace dcf
 
             auto d_mask_dW = randomGEOnGpu<T>(p.size_B, p.bw);
             auto d_mask_X = (T *)moveToGPU((u8 *)mask_X, mmKey.mem_size_A, NULL);
-            auto d_masked_dW = gpuMatmulPlaintext(pdW, d_mask_X, d_mask_grad, d_mask_dW, false);
+            const bool useRinglpnFc = ringlpn_orca::fcKeysEnabled();
+            const int ringlpnQbits = useRinglpnFc ? ringlpnFcQbitsOrDie() : 0;
+            const uint64_t epochTag = static_cast<uint64_t>(epoch) << 16;
 
-            writeShares<T, T>(key_as_bytes, party, p.size_C, d_mask_grad, p.bw);
-            writeShares<T, T>(key_as_bytes, party, p.size_B, d_masked_dW, p.bw);
-            gpuFree(d_masked_dW);
+            if (useRinglpnFc)
+            {
+                requireRinglpnFcKey(
+                    ringlpn_orca::writeValueShares<T>(
+                        key_as_bytes, party, p.size_C, d_mask_grad, p.bw,
+                        ringlpnQbits, 0xB0FC00ULL ^ epochTag),
+                    "backward grad", p.bw);
+                requireRinglpnFcKey(
+                    ringlpn_orca::writeMatmulCShare<T>(
+                        key_as_bytes, party, pdW, d_mask_X, d_mask_grad, d_mask_dW,
+                        ringlpnQbits, 0xB0FC10ULL ^ epochTag),
+                    "backward dW", p.bw);
+            }
+            else
+            {
+                auto d_masked_dW = gpuMatmulPlaintext(pdW, d_mask_X, d_mask_grad, d_mask_dW, false);
+                writeShares<T, T>(key_as_bytes, party, p.size_C, d_mask_grad, p.bw);
+                writeShares<T, T>(key_as_bytes, party, p.size_B, d_masked_dW, p.bw);
+                gpuFree(d_masked_dW);
+            }
             gpuFree(d_mask_X);
 
             auto d_mask_W = (T *)moveToGPU((u8 *)mask_W, mmKey.mem_size_B, NULL);
@@ -159,9 +215,20 @@ namespace dcf
             if (computedX)
             {
                 auto d_mask_dX = randomGEOnGpu<T>(p.size_A, p.bw);
-                auto d_masked_dX = gpuMatmulPlaintext(pdX, d_mask_grad, d_mask_W, d_mask_dX, false);
-                writeShares<T, T>(key_as_bytes, party, p.size_A, d_masked_dX, p.bw);
-                gpuFree(d_masked_dX);
+                if (useRinglpnFc)
+                {
+                    requireRinglpnFcKey(
+                        ringlpn_orca::writeMatmulCShare<T>(
+                            key_as_bytes, party, pdX, d_mask_grad, d_mask_W, d_mask_dX,
+                            ringlpnQbits, 0xB0FC20ULL ^ epochTag),
+                        "backward dX", p.bw);
+                }
+                else
+                {
+                    auto d_masked_dX = gpuMatmulPlaintext(pdX, d_mask_grad, d_mask_W, d_mask_dX, false);
+                    writeShares<T, T>(key_as_bytes, party, p.size_A, d_masked_dX, p.bw);
+                    gpuFree(d_masked_dX);
+                }
                 // d_mask_dX gets freed inside keygen for truncate
                 d_mask_truncated_dX = genGPUTruncateKey(key_as_bytes, party, tb, p.bw, p.bw, global::scale, p.size_A, d_mask_dX, gaes);
             }
