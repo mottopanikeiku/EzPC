@@ -1,0 +1,15 @@
+reserved memory: 26843545600 18446744073709551615
+device,mode,requested_qbits,actual_qbits,seed,rows,inner,cols,bw,no_prime_wrap_bound,ole_calls,expected_ole,conversions,expected_conversions,transcript_built,masks_consistent,key_order,online_contract,validation
+cuda_orca_fc_ideal_ole_transcript,ideal_ole_q64_constant_polynomial,64,62,1,2,2,2,16,1,16,16,4,4,1,1,1,pass,pass
+reserved memory: 26843545600 18446744073709551615
+device,mode,requested_qbits,actual_qbits,seed,rows,inner,cols,bw,no_prime_wrap_bound,ole_calls,expected_ole,conversions,expected_conversions,transcript_built,masks_consistent,key_order,online_contract,validation
+cuda_orca_fc_ideal_ole_transcript,ideal_ole_q64_constant_polynomial,64,62,3,2,3,2,16,1,24,24,4,4,1,1,1,pass,pass
+reserved memory: 26843545600 18446744073709551615
+device,mode,requested_qbits,actual_qbits,seed,rows,inner,cols,bw,no_prime_wrap_bound,ole_calls,expected_ole,conversions,expected_conversions,transcript_built,masks_consistent,key_order,online_contract,validation
+cuda_orca_fc_ideal_ole_transcript,ideal_ole_q64_constant_polynomial,64,62,5,3,2,2,16,1,24,24,6,6,1,1,1,pass,pass
+reserved memory: 26843545600 18446744073709551615
+device,mode,requested_qbits,actual_qbits,seed,rows,inner,cols,bw,no_prime_wrap_bound,ole_calls,expected_ole,conversions,expected_conversions,transcript_built,masks_consistent,key_order,online_contract,validation
+cuda_orca_fc_ideal_ole_transcript,ideal_ole_q64_constant_polynomial,64,62,7,4,4,4,16,1,128,128,16,16,1,1,1,pass,pass
+reserved memory: 26843545600 18446744073709551615
+device,mode,requested_qbits,actual_qbits,seed,rows,inner,cols,bw,no_prime_wrap_bound,ole_calls,expected_ole,conversions,expected_conversions,transcript_built,masks_consistent,key_order,online_contract,validation
+cuda_orca_fc_ideal_ole_transcript,ideal_ole_q64_constant_polynomial,64,62,9,2,2,2,20,1,16,16,4,4,1,1,1,pass,pass
