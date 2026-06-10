@@ -24,6 +24,7 @@ below; nothing writes to this top level anymore.
 | File | What it is |
 |---|---|
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | **Proposal to make the linear-layer pipeline fully dealerless** (M1-M6 milestones) |
+| `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |
 | `reports/orca_fc_real_ole_transcript_memo.md` | Real-OLE slot-packed FC transcript (Step 5) + NTT backend changes, 2026-06-10 |
 | `reports/baseline_2026_06_10.md` | Verified baseline: environment, all PASS counts, headline perf |
 | `reports/orca_ringlpn_dealerless_results_2026_06_05.tex` | June 5 checkpoint report (4 validated checkpoints, NTT decision) |

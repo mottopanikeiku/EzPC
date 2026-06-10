@@ -1,0 +1,8 @@
+device,n,logn,prime_label,modulus,batch,iters,gpuntt_validation,cheddar_validation,gpuntt_ntt_mean_us,gpuntt_ntt_std_us,cheddar_ntt_mean_us,cheddar_ntt_std_us,gpuntt_poly_mul_mean_us,gpuntt_poly_mul_std_us,cheddar_poly_mul_mean_us,cheddar_poly_mul_std_us
+ntt_baseline_compare,8192,13,pool60,576460756061519873,4,400,pass,pass,10.615,0.575999,15.005,0.0998749,24.82,1.24403,42.88,2.57111
+ntt_baseline_compare,8192,13,pool60,576460756061519873,64,400,pass,pass,23.5625,0.579736,90.615,1.15403,66.485,0.748181,258.92,6.19101
+ntt_baseline_compare,65536,16,pool60,576460756061519873,4,200,pass,pass,19.04,0.422374,24.055,0.449416,49.07,0.274044,63.44,0.51614
+ntt_baseline_compare,65536,16,pool60,576460756061519873,64,100,pass,pass,158.29,0.475289,156.85,9.11633,560.44,23.981,693.8,9.15205
+ntt_baseline_compare,1048576,20,pool60,576460756061519873,2,50,pass,pass,98.92,0.56,150.32,0.810925,312.84,0.417612,477.02,3.98241
+ntt_baseline_compare,8192,13,p62,4611686018326724609,4,400,unsupported,pass,0,0,14.23,0.549636,0,0,40.05,0.415331
+ntt_baseline_compare,8192,13,p62,4611686018326724609,64,400,unsupported,pass,0,0,86.0875,0.57432,0,0,253.688,0.748227
