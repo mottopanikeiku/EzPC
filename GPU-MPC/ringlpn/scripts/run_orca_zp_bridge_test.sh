@@ -3,14 +3,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/host_bin/test_orca_zp_bridge"
-CSV="$ROOT/results/orca_zp_bridge_constant_scalar.csv"
-MD="$ROOT/results/orca_zp_bridge_constant_scalar.md"
+CSV="$ROOT/results/orca_fc/orca_zp_bridge_constant_scalar.csv"
+MD="$ROOT/results/orca_fc/orca_zp_bridge_constant_scalar.md"
 
 if [[ ! -x "$BIN" ]]; then
   "$ROOT/scripts/build_orca_zp_bridge_test.sh"
 fi
 
-mkdir -p "$ROOT/results"
+mkdir -p "$ROOT/results/orca_fc"
 
 "$BIN" --csv-header --bw 16 --rows 2 --inner 2 --cols 2 \
   --value-bound 255 --trials 1000 --forced-wraps 128 --seed 1 > "$CSV"

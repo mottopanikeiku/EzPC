@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_vole_ringlpn"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/vole"
 QBITS="${QBITS:-32}"
 M="${M:-32}"
 C="${C:-2}"

@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/host_bin/test_secure_convert"
-OUT_DIR="$ROOT/results"
+OUT_DIR="$ROOT/results/secure_convert"
 CSV="$OUT_DIR/secure_convert_prototype.csv"
 
 mkdir -p "$OUT_DIR"

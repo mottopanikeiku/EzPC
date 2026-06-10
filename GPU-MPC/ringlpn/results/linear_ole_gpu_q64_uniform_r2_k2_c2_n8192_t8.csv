@@ -1,2 +1,0 @@
-device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,shared_operands,correct
-cuda_ringlpn_linear_ole,ring_beaver_two_ole_uniform,8192,13,14,64,62,uniform,16384,2,2,2,2,8,8192,8,16,1,pass,2264064,6763,222918,0,1,1

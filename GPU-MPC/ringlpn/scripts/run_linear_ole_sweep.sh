@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_linear_ole_ringlpn_cuda"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/linear_ole"
 
 QBITS="${QBITS:-64}"
 N="${N:-8192}"

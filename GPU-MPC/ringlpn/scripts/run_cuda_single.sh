@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN_CPU="$BASE_DIR/bin/bench_ntt"
 BIN_GPU="$BASE_DIR/bin/bench_ntt_cuda"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/ntt"
 N="${1:-8192}"
 BATCH="${2:-1}"
 

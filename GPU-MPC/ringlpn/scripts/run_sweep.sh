@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_ntt"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/ntt"
 CSV="$OUT_DIR/ntt_cpu.csv"
 UNSUPPORTED_CSV="$OUT_DIR/ntt_cpu_unsupported.csv"
 MD="$OUT_DIR/ntt_cpu.md"

@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_orca_fc_ideal_ole_transcript"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/orca_fc"
 
 OUT_TAG="${OUT_TAG:-transcript_suite}"
 

@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$RESULT_DIR" ]]; then
-  RESULT_DIR="$BASE_DIR/results/vtune_hotspots_${N}_${QBITS}"
+  RESULT_DIR="$BASE_DIR/results/profiling/vtune_hotspots_${N}_${QBITS}"
 fi
 
 if [[ ! -x "$BIN" ]]; then

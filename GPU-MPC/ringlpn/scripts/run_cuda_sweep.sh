@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_ntt_cuda"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/ntt"
 QBITS="${QBITS:-32}"
 OUT_TAG="${OUT_TAG:-q${QBITS}}"
 CSV="$OUT_DIR/ntt_gpu_${OUT_TAG}.csv"

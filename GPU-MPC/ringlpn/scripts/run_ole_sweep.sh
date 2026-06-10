@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BIN="$BASE_DIR/bin/bench_ole_ringlpn_cuda"
 TEST_BIN="$BASE_DIR/bin/test_spfss_zp_cuda"
-OUT_DIR="$BASE_DIR/results"
+OUT_DIR="$BASE_DIR/results/ole"
 
 QBITS="${QBITS:-64}"
 C="${C:-2}"

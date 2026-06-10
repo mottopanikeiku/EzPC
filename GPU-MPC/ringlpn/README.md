@@ -41,19 +41,19 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - ../scripts/run_dpf_online_keygen_sweep.py: run the standalone DPF online key generation sweep and generate CSV + Markdown
 - scripts/run_vtune_hotspots.sh: VTune hotspots wrapper for CPU benchmark
 - scripts/run_vtune_memory.sh: VTune memory-access wrapper for CPU benchmark
-- results/: output files
+- results/: output files, organized per artifact (see results/README.md for the index)
 
-For the current Figure 2 OLE work, read `results/ole_gpu_handoff.md` first. It records the exact validated claim, caveats, reproduction commands, and follow-up path.
+For the current Figure 2 OLE work, read `results/reports/ole_gpu_handoff.md` first. It records the exact validated claim, caveats, reproduction commands, and follow-up path.
 
-For the current linear-layer work, read `results/linear_ole_handoff.md` first. It records the exact two-OLE-to-Beaver ring-polynomial artifact and why Orca scalar integration remains a separate step.
+For the current linear-layer work, read `results/reports/linear_ole_handoff.md` first. It records the exact two-OLE-to-Beaver ring-polynomial artifact and why Orca scalar integration remains a separate step.
 
-For the current Orca scalar bridge boundary, read `results/orca_zp_bridge_handoff.md`. It records the carry correction needed for `Z_p` shares, the conservative constant-polynomial scalar packing smoke, and the q62/full-32-bit counterexample.
+For the current Orca scalar bridge boundary, read `results/reports/orca_zp_bridge_handoff.md`. It records the carry correction needed for `Z_p` shares, the conservative constant-polynomial scalar packing smoke, and the q62/full-32-bit counterexample.
 
-For the current v1 Orca FC demo, read `results/orca_fc_ringlpn_demo_memo.md`. It records the bounded q62 FC claim, proof sketch, exact command log, result table, and remaining paper gaps.
+For the current v1 Orca FC demo, read `results/reports/orca_fc_ringlpn_demo_memo.md`. It records the bounded q62 FC claim, proof sketch, exact command log, result table, and remaining paper gaps.
 
-For the current q128 Orca FC integration plan, read `results/orca_ringlpn_linear_integration_plan.md`. It is the canonical transition document for q128/CRT OLE, linear OLE-to-Beaver, dealer/oracle CRT export, and feature-flagged FC train/infer integration. Older poster/professor-facing files in `results/` are historical snapshots and can contain stale q128 wording.
+For the current q128 Orca FC integration plan, read `results/reports/orca_ringlpn_linear_integration_plan.md`. It is the canonical transition document for q128/CRT OLE, linear OLE-to-Beaver, dealer/oracle CRT export, and feature-flagged FC train/infer integration. Older poster/professor-facing files in `results/` are historical snapshots and can contain stale q128 wording.
 
-For execution order and paper-oriented next steps, read `results/paper_execution_next_steps.md`.
+For execution order and paper-oriented next steps, read `results/reports/paper_execution_next_steps.md`.
 
 ## Quick start (inside container)
 ```bash
@@ -70,8 +70,8 @@ cd /home/ringlpn
 ```
 
 ## Outputs
-- results/ntt_cpu.csv
-- results/ntt_cpu.md
+- results/ntt/ntt_cpu.csv
+- results/ntt/ntt_cpu.md
 
 ## CUDA q=32 / q=64 / q=128 sweeps
 The current primary GPU deliverable is a batched CUDA NTT path for requested `q=32`, `q=64`, and `q=128`. The q=32 and q=64 modes use one 30-bit or 62-bit prime, while q=128 uses two 62-bit CRT prime limbs, all supporting `n` through `2^20`.
@@ -93,15 +93,15 @@ QBITS=128 ./scripts/run_cuda_sweep.sh
 ```
 
 Outputs:
-- results/ntt_gpu_q32.csv
-- results/ntt_gpu_q32_unsupported.csv
-- results/ntt_gpu_q32.md
-- results/ntt_gpu_q64.csv
-- results/ntt_gpu_q64_unsupported.csv
-- results/ntt_gpu_q64.md
-- results/ntt_gpu_q128.csv
-- results/ntt_gpu_q128_unsupported.csv
-- results/ntt_gpu_q128.md
+- results/ntt/ntt_gpu_q32.csv
+- results/ntt/ntt_gpu_q32_unsupported.csv
+- results/ntt/ntt_gpu_q32.md
+- results/ntt/ntt_gpu_q64.csv
+- results/ntt/ntt_gpu_q64_unsupported.csv
+- results/ntt/ntt_gpu_q64.md
+- results/ntt/ntt_gpu_q128.csv
+- results/ntt/ntt_gpu_q128_unsupported.csv
+- results/ntt/ntt_gpu_q128.md
 
 Notes:
 - The primary CUDA path is now the cheddar-derived implementation in `src/bench_ntt_cuda_cheddar.cu`, built into `bin/bench_ntt_cuda` by `scripts/build_cuda_bench.sh`.
@@ -124,9 +124,9 @@ ALLOW_LEGACY_CUDA_NTT=1 ./scripts/run_cuda_sweep_legacy.sh
 ```
 
 Legacy outputs:
-- results/ntt_gpu_q32_legacy.csv
-- results/ntt_gpu_q32_legacy_unsupported.csv
-- results/ntt_gpu_q32_legacy.md
+- results/ntt/ntt_gpu_q32_legacy.csv
+- results/ntt/ntt_gpu_q32_legacy_unsupported.csv
+- results/ntt/ntt_gpu_q32_legacy.md
 
 ## Cheddar Backend Alias
 The canonical GPU NTT binary is `bench_ntt_cuda`, built from `src/bench_ntt_cuda_cheddar.cu`. The repository also includes an explicit standalone alias, `bench_ntt_cuda_cheddar`, which builds the same source under a separate name for manual checks.
@@ -185,7 +185,7 @@ Notes:
 - The prototype reuses the promoted GPU polynomial multiplication path from `src/bench_ntt_cuda_cheddar.cu` instead of introducing a separate CUDA implementation.
 - Requested `qbits=32` maps to actual `qbits=30`, requested `qbits=64` maps to actual `qbits=62`, and requested `qbits=128` maps to actual `qbits=124` with two q62 CRT limbs in the same flattened Cheddar launch schedule.
 - The prototype is intentionally scoped for bring-up and benchmarking of the algebraic expansion step; SPFSS key generation and evaluation are still external to this harness.
-- The default sweep emits `results/vole_gpu_q32_m32_c2_w64.csv`, `results/vole_gpu_q32_m32_c2_w64.md`, and the q64/q128 counterparts when run with `QBITS=64` or `QBITS=128`. A smaller q128 CRT smoke sweep is saved as `results/vole_gpu_q128_smoke.md`.
+- The default sweep emits `results/vole/vole_gpu_q32_m32_c2_w64.csv`, `results/vole/vole_gpu_q32_m32_c2_w64.md`, and the q64/q128 counterparts when run with `QBITS=64` or `QBITS=128`. A smaller q128 CRT smoke sweep is saved as `results/vole/vole_gpu_q128_smoke.md`.
 
 ## Figure 2 GPU OLE artifact
 The repository also includes a standalone GPU artifact for the Figure 2 SPFSS-based Ring-LPN OLE path.
@@ -211,10 +211,10 @@ NOISE=regular ./scripts/run_ole_sweep.sh
 ```
 
 Outputs:
-- `results/ole_gpu_q64_uniform_c2_t8_smoke.csv` and `.md` for the smoke run
-- `results/ole_gpu_q64_regular_c2_t8_smoke.csv` and `.md` for the regular-noise smoke run
-- `results/ole_gpu_q64_regular_c2_t64.csv` and `.md` for the bounded regular-noise run
-- `results/ole_gpu_q64_uniform_c2_t64.csv` and `.md` for the bounded sweep
+- `results/ole/ole_gpu_q64_uniform_c2_t8_smoke.csv` and `.md` for the smoke run
+- `results/ole/ole_gpu_q64_regular_c2_t8_smoke.csv` and `.md` for the regular-noise smoke run
+- `results/ole/ole_gpu_q64_regular_c2_t64.csv` and `.md` for the bounded regular-noise run
+- `results/ole/ole_gpu_q64_uniform_c2_t64.csv` and `.md` for the bounded sweep
 
 Notes:
 - This artifact uses the promoted single 62-bit prime and reports requested `qbits=64`, actual `qbits=62`.
@@ -236,10 +236,10 @@ NOISE=regular ./scripts/run_linear_ole_sweep.sh
 ```
 
 Default smoke output:
-- `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.csv`
-- `results/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md`
-- `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.csv`
-- `results/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md`
+- `results/linear_ole/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.csv`
+- `results/linear_ole/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md`
+- `results/linear_ole/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.csv`
+- `results/linear_ole/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md`
 
 Notes:
 - The default smoke validates a `2 x 2` by `2 x 2` ring-polynomial matrix product using 8 ring products and 16 OLE instances.
@@ -257,9 +257,9 @@ GPU-MPC/ringlpn/scripts/run_orca_zp_bridge_test.sh
 ```
 
 Outputs:
-- `results/orca_zp_bridge_constant_scalar.csv`
-- `results/orca_zp_bridge_constant_scalar.md`
-- `results/orca_zp_bridge_handoff.md`
+- `results/orca_fc/orca_zp_bridge_constant_scalar.csv`
+- `results/orca_fc/orca_zp_bridge_constant_scalar.md`
+- `results/reports/orca_zp_bridge_handoff.md`
 
 Notes:
 - Reducing each `Z_p` share independently modulo `2^bw` is wrong when the hidden prime carry is one.
@@ -280,10 +280,10 @@ chmod +x scripts/*.sh
 ```
 
 Outputs:
-- `results/orca_fc_ringlpn_demo_bounded_suite.csv`
-- `results/orca_fc_ringlpn_demo_bounded_suite.md`
-- `results/orca_fc_ringlpn_demo_memo.md`
-- `results/professor_ringlpn_orca_fc_deliverable_2026_05_15.md`
+- `results/orca_fc/orca_fc_ringlpn_demo_bounded_suite.csv`
+- `results/orca_fc/orca_fc_ringlpn_demo_bounded_suite.md`
+- `results/reports/orca_fc_ringlpn_demo_memo.md`
+- `results/outreach/professor_ringlpn_orca_fc_deliverable_2026_05_15.md`
 
 Notes:
 - The default suite covers `2x2x2`, `2x3x2`, and `3x2x2` at `bw=16`, plus a bounded `2x2x3` case at `bw=32`; all use `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, `tf=None`, and zero bias.
@@ -324,8 +324,8 @@ python3 scripts/run_dpf_online_keygen_sweep.py
 ```
 
 Outputs:
-- ringlpn/results/dpf_online_keygen_bin16_chunk8192.csv
-- ringlpn/results/dpf_online_keygen_bin16_chunk8192.md
+- ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.csv
+- ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.md
 
 Notes:
 - This is a standalone systems benchmark, not yet an end-to-end Orca or SPFSS-backed integration.
