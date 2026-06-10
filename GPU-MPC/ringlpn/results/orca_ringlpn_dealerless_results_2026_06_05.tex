@@ -1,0 +1,440 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\ServerZero}{\mathsf{P}_0}
+\newcommand{\ServerOne}{\mathsf{P}_1}
+\newcommand{\modtwo}{\Z_{2^{\mathsf{bw}}}}
+\newcommand{\Orca}{\textsc{Orca}}
+\newcommand{\RingLPN}{\textsc{Ring-LPN}}
+\newcommand{\OLE}{\mathsf{OLE}}
+\newcommand{\SPFSS}{\mathsf{SPFSS}}
+\newcommand{\CRT}{\mathsf{CRT}}
+
+\title{Dealerless \Orca{} Linear Layers from \RingLPN{} OLE:\\
+Assessment, NTT Decision, and Validated Checkpoints}
+\author{GPU-MPC Ring-LPN Integration --- Technical Status Report}
+\date{5 June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report evaluates the GPU-MPC effort to replace \Orca{}'s trusted-dealer
+fully-connected (FC) linear-layer preprocessing with a two-party protocol built
+on \RingLPN{} pseudorandom correlation generators (PCGs) for oblivious linear
+evaluation (OLE)~\cite{boyle2022ringlpn}. It answers three questions: (i)~is the
+direction scientifically sound; (ii)~is the Cheddar-derived GPU NTT the right
+backend or should it be replaced by a four-step NTT; and (iii)~how feasible is a
+genuinely dealerless protocol, and what is required. It then documents four
+validated checkpoints produced in this cycle: an ideal-OLE dealerless
+\emph{transcript} that proves the OLE-to-Beaver reduction (not merely the
+\Orca{} key byte format); a secure $\Z_M\!\to\!\modtwo$ share-conversion
+prototype that matches the carry-correction oracle bit-for-bit and whose cost is
+measured; regenerated $q128$ OLE and linear OLE-to-Beaver summaries at the
+paper modulus; and a parameter/assumption audit establishing that the deployed
+NTT-friendly primes place the construction in the \emph{fully-split (splittable)}
+\RingLPN{} regime. The honest scope of the current result is
+\emph{dealerless FC matmul preprocessing under ideal correlation oracles}, with
+the two remaining oracle boundaries (real OLE wiring and distributed SPFSS
+key generation) clearly identified.
+\end{abstract}
+
+\tableofcontents
+
+\section{Assessment: Is the Direction Sound?}
+
+\paragraph{Verdict.} Yes. \Orca{}~\cite{jawalkar2024orca} is an FSS-based GPU
+two-party framework whose dominant practical weakness is its reliance on a
+trusted dealer for correlated randomness. Replacing that dealer with a PCG
+(silent OT/VOLE/OLE expansion in the Boyle--Couteau--Gilboa--Ishai--Kohl--Scholl
+line~\cite{boyle2019pcg,boyle2022ringlpn}) is the correct research frontier, and
+\RingLPN{} OLE is the appropriate primitive for the \emph{arithmetic/linear}
+correlations a matmul consumes. The thesis is publishable provided the protocol
+gaps below close.
+
+\paragraph{Strengths.} The repository has a validated GPU NTT/PolyMul backend
+($q32/q64/q128$ CRT, $n$ up to $2^{20}$); a $\Z_p$-payload \SPFSS{} path that
+resolves the boolean-only ($\text{payload}=1$) GPU-DPF limitation; a validated
+Figure~2 \SPFSS{}$\to$OLE artifact ($z_0+z_1=x_0x_1$ over
+$\Z_p[X]/(X^N+1)$); a validated OLE-to-Beaver ring matrix product; and a clean,
+feature-flagged \Orca{} integration that preserves baseline behaviour when the
+flag is unset. Crucially, the existing documentation is scientifically honest:
+it never claims ``dealer removed'' and separates byte compatibility from the
+protocol.
+
+\paragraph{Gaps (most acknowledged in-repo).}
+\begin{enumerate}[leftmargin=*]
+  \item The shipped keywriter is a centralized oracle: it forms the clear product
+  $A\cdot B$ from both operands and then shares it. As cryptography it equals the
+  trusted dealer; the novelty was, until this cycle, entirely prospective.
+  \item The OLE engine and the keywriter were two disconnected tracks (now
+  joined under an ideal oracle; \S\ref{sec:transcript}).
+  \item Share conversion $\Z_M\!\to\!\modtwo$ was an oracle reading both shares
+  (now prototyped securely; \S\ref{sec:convert}).
+  \item Constant-polynomial packing (one scalar per degree-$N$ polynomial)
+  defeats the PCG amortization; dense packing is load-bearing for any efficiency
+  claim and remains future work.
+  \item No pinned security level; the NTT-friendly primes invoke a stronger
+  assumption variant than plain \RingLPN{} (\S\ref{sec:audit}).
+  \item Scope honesty: even perfect dealerless FC preprocessing leaves the dealer
+  generating ReLU/DCF/truncation/optimizer FSS keys. The honest claim is
+  \emph{dealerless FC matmul preprocessing}, not \emph{dealerless \Orca{}}.
+\end{enumerate}
+
+\paragraph{Grade.} As an engineering scaffold with honest scoping: strong. As a
+\emph{completed} dealerless cryptographic result: not yet---the two hardest
+pieces (real OLE wired in, distributed setup) remain, and efficiency hinges on
+unbuilt packing. This cycle closes two of the gaps to the ideal-oracle level and
+removes the $q128$ ``paper-parameter pending'' caveat.
+
+\section{NTT Decision: Keep Cheddar, Defer Four-Step}
+\label{sec:ntt}
+
+\paragraph{What the Cheddar NTT is.} Not a naive baseline. It is a two-phase,
+high-radix, \emph{merged-stage} negacyclic NTT: Phase~1 fuses the least-significant
+stages in shared memory, Phase~2 handles the most-significant stages, with
+recursive high-radix butterflies (\texttt{MultiRadixNTT}), Montgomery arithmetic,
+bit-reversed $\psi$ tables, and RNS/CRT. The LSB/MSB split is itself a
+hierarchical decomposition---the same family as the four-step, minus the explicit
+transpose.
+
+\paragraph{What the four-step (GPU-NTT) is.} Factor $N=N_1N_2$: batched
+$N_2$-point NTTs, twiddle multiply, transpose, batched $N_1$-point NTTs. Its
+advantage is for very large $N$ that does not fit shared memory, where the
+explicit transpose plus small cache-friendly sub-NTTs improve coalescing and
+occupancy.
+
+\paragraph{Decision and rationale.} Keep Cheddar; defer any four-step swap.
+\begin{enumerate}[leftmargin=*]
+  \item It is validated and \emph{faster} than the prior hand-written path
+  ($2.1$--$3.7\times$ for $n\le 262144$; $\sim 9$--$38\times$ over the NFLLib CPU
+  baseline) and already extended to $n=2^{20}$ with $q128$ CRT.
+  \item It fits the cryptographic need natively: negacyclic $\Z_p[X]/(X^N+1)$,
+  Montgomery, RNS.
+  \item \textbf{The NTT is not the bottleneck.} In the linear OLE-to-Beaver
+  artifact the expansion takes hundreds of milliseconds
+  (Table~\ref{tab:q128}) while NTT/PolyMul is in microseconds; the cost centre is
+  \SPFSS{} full-domain evaluation and the OLE \emph{count}. Replacing the NTT now
+  optimizes a non-bottleneck.
+\end{enumerate}
+The stable seam is the prepared-LHS PolyMul interface
+(\texttt{run\_full\_polymul} / \texttt{run\_polymul\_prepared\_lhs}). If/when NTT
+becomes a measured bottleneck at large \RingLPN{} $N$ ($2^{18}$--$2^{22}$), add
+GPU-NTT's four-step as an optional second backend behind that interface and
+decide by measurement. One item is non-deferrable regardless of backend: resolve
+the cheddar-fhe license/provenance for any released artifact (a permissively
+licensed four-step library is the clean fallback).
+
+\section{Dealerless Feasibility}
+\label{sec:feasibility}
+
+``Dealerless'' is meant in the PCG sense: a distributed seed/setup (using base OT
+and a little MPC) followed by silent local expansion, such that no process sees
+both parties' shares of the long correlations. It does \emph{not} mean zero setup.
+The Beaver algebra is settled and validated: with additive mask shares
+$A=A_0+A_1$, $B=B_0+B_1$,
+\[
+  AB = A_0B_0 + A_1B_1 + \underbrace{A_0B_1}_{\OLE} + \underbrace{A_1B_0}_{\OLE},
+  \qquad
+  Z_i = A_iB_i + U_i + V_i, \quad C_i = Z_i + Y_i,
+\]
+where $(U_0,U_1)\leftarrow\OLE(A_0,B_1)$ and $(V_0,V_1)\leftarrow\OLE(A_1,B_0)$.
+The remaining work is not algebraic; it is two oracle boundaries plus packing and
+parameters. In priority order: (1) join keywriter and OLE under an ideal oracle
+[done, \S\ref{sec:transcript}]; (2) secure $\Z_M\!\to\!\modtwo$ conversion
+[prototyped, \S\ref{sec:convert}]; (3) distributed \SPFSS{} key generation via OT
+[future]; (4) parameter/assumption audit [done, \S\ref{sec:audit}]; (5)~dense
+packing for amortization [future].
+
+\section{Checkpoint 1: Ideal-OLE Dealerless Transcript}
+\label{sec:transcript}
+
+\paragraph{What it proves.} The shipped keywriter forms $A\cdot B$ in the clear.
+The transcript instead has each party sample its own additive shares
+$A_i,B_i,Y_i\in\modtwo$ \emph{locally}; the two Beaver cross terms come from an
+\emph{ideal OLE oracle} (the exact functionality the real Figure~2 OLE will
+realize); each party accumulates its Beaver share $Z_i$ over $\Z_M$ and converts
+once per output entry. No process forms $A\cdot B$ from both operands. This proves
+the OLE-to-Beaver \emph{reduction}, and is a drop-in target for replacing the
+oracle with the real OLE engine.
+
+\paragraph{Correctness boundary.} Because the multiplied quantities are now
+\emph{full-width additive shares} ($A_i,B_i<2^{\mathsf{bw}}$), not the clear
+bounded masks, the conservative no-wrap bound is
+\[
+  K\cdot 2^{\,2\mathsf{bw}+2} < M ,
+\]
+which the single-limb $q64$ path ($M=p_{62}\approx 2^{62}$) satisfies for the
+$\mathsf{bw}=16$/$20$ shapes below; $\mathsf{bw}=32$ requires the $q128$ per-limb
+extension and is deferred. The conversion in this checkpoint is still the
+carry-correction oracle (replaced in \S\ref{sec:convert}); the OLE is ideal.
+
+\paragraph{Result.} Party-local key buffers $A_i\,\|\,B_i\,\|\,C_i$ are written
+in \Orca{} byte order, read back with the unchanged \texttt{readGPUMatmulKey},
+and run through the unchanged \texttt{gpuMatmulBeaver}; the reconstruction equals
+the clear FC output plus the output mask. The reported counts match
+$\#\OLE = 2\,M\,K\,N$ and $\#\text{conv}=M\,N$ exactly.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lcccccc}
+\toprule
+Shape ($M{\times}K{\times}N$) & bw & \#OLE & \#conv & masks ok & $\texttt{gpuMatmulBeaver}$ & status \\
+\midrule
+$2{\times}2{\times}2$ & 16 & 16  & 4  & yes & reconstructs & pass \\
+$2{\times}3{\times}2$ & 16 & 24  & 4  & yes & reconstructs & pass \\
+$3{\times}2{\times}2$ & 16 & 24  & 6  & yes & reconstructs & pass \\
+$4{\times}4{\times}4$ & 16 & 128 & 16 & yes & reconstructs & pass \\
+$2{\times}2{\times}2$ & 20 & 16  & 4  & yes & reconstructs & pass \\
+\bottomrule
+\end{tabular}
+\caption{Ideal-OLE dealerless transcript ($q64$, single $q62$ limb). Source:
+\texttt{src/bench\_orca\_fc\_ideal\_ole\_transcript.cu},
+\texttt{src/orca\_fc\_ideal\_ole\_transcript.cuh}.}
+\label{tab:transcript}
+\end{table}
+
+\section{Checkpoint 2: Secure $\Z_M\!\to\!\modtwo$ Conversion}
+\label{sec:convert}
+
+\paragraph{The barrier.} The oracle conversion computes the wrap bit
+$m=[z_0+z_1\ge M]$ from \emph{both} shares and sets $r_0=z_0\bmod 2^{\mathsf{bw}}$,
+$r_1=(z_1-mM)\bmod 2^{\mathsf{bw}}$. Dealerlessly, neither party may learn the
+other's share, so the wrap bit must come from a secure sub-protocol.
+
+\paragraph{Protocol (semi-honest, two parties).} $\ServerZero$ holds $z_0$,
+$\ServerOne$ holds $z_1$, both in $[0,M)$. Let $\ell=\lceil\log_2 2M\rceil$ and
+$L=2^\ell$.
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{edaBit-mask open.} With a shared random $R\in[0,L)$ held both as
+  arithmetic shares over $\Z_L$ and as boolean shares of its bits, open
+  $A=(z_0+z_1+R)\bmod L$. Since $S=z_0+z_1<2M\le L$, $R$ perfectly hides $S$.
+  \item \textbf{Boolean wrap circuit.} Recover $S=(A-R)\bmod L$ as boolean shares
+  via a ripple adder (public $A$ plus boolean-shared two's complement of $R$); a
+  second ripple adder takes the carry-out of $S+(L-M)$, which equals
+  $w=[S\ge M]$. AND gates use boolean Beaver triples (party-separated).
+  \item \textbf{B2A.} A daBit converts the boolean-shared $w$ to arithmetic shares
+  $w_i$ over $\modtwo$.
+  \item \textbf{Local correction.} $r_i=(z_i-M\,w_i)\bmod 2^{\mathsf{bw}}$, so
+  $r_0+r_1\equiv z_0+z_1-wM\equiv v\pmod{2^{\mathsf{bw}}}$, matching the oracle.
+\end{enumerate}
+
+\paragraph{Honest scope.} The edaBits, daBits and boolean triples are generated
+here by a labelled offline phase. In the full system these correlations come
+silently from PCG/OT (silent OT $\to$ edaBits is a standard
+pipeline~\cite{escudero2020edabits,boyle2019pcg}); the cost counters report
+exactly how much each conversion consumes, so the only idealized piece is the
+\emph{source} of cheap boolean correlated randomness, not the wrap computation.
+
+\paragraph{Validation.} The protocol output reconstructs bit-for-bit to the same
+value as the oracle on randomized, \emph{forced-wrap}, and layer-shaped
+(matmul-output) inputs; all wrap/convert/oracle mismatch counters are zero.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lcccccccc}
+\toprule
+modulus & $\ell$ & bw & AND triples & edaBit bits & daBits & opened bits & rounds & bit-exact \\
+\midrule
+$q64$  & 63  & 16 & 124 & 63  & 1 & 375 & 125 & pass \\
+$q64$  & 63  & 24 & 124 & 63  & 1 & 375 & 125 & pass \\
+$q128$ & 125 & 16 & 248 & 125 & 1 & 747 & 249 & pass \\
+$q128$ & 125 & 32 & 248 & 125 & 1 & 747 & 249 & pass \\
+\bottomrule
+\end{tabular}
+\caption{Secure conversion cost \emph{per output element} (8512 conversions per
+row: 4000 random $+$ 512 forced-wrap $+$ 4000 layer-shaped). Source:
+\texttt{src/test\_secure\_convert.cpp}.}
+\label{tab:convert}
+\end{table}
+
+\paragraph{Implication for the Route A vs.\ Route B fork.} Conversions scale with
+$M\,N$ (one per output element), whereas OLE/triple generation scales with
+$M\,K\,N$. The conversion is therefore a factor $\sim\!1/K$ rarer than the OLE,
+and each conversion is only $\sim\!124$ cheap \emph{boolean} triples versus a full
+\RingLPN{} OLE expansion. For FC layers with large inner dimension $K$, the
+$\Z_M\!\to\!\modtwo$ conversion is a small fraction of preprocessing. This is
+concrete evidence that \emph{Route~A} (keep the prime-field OLE and the Cheddar
+NTT, pay the conversion) is viable and that the conversion is not a showstopper,
+which is the data the ``evaluate both, then commit'' decision required. A
+$\Z_{2^k}$-native triple route (Route~B) remains the cleaner long-term redesign
+only if dense packing later shifts the balance.
+
+\section{Checkpoint 3: $q128$ OLE and Linear Summaries}
+\label{sec:q128}
+
+The Figure~2 OLE and ring-polynomial linear OLE-to-Beaver artifacts were rerun at
+the paper modulus (requested $q128$, actual $q124$ via two $q62$ CRT limbs),
+under both uniform and regular noise, removing the prior ``paper-parameter
+pending'' caveat. All runs validate per CRT limb and reconstruct correctly.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{llcccccc}
+\toprule
+Artifact & noise & \SPFSS{} domain & pair-key (B) & keygen ($\mu$s) & expand ($\mu$s) & validation \\
+\midrule
+OLE ($n{=}8192$, $c{=}2$, $t{=}8$)        & uniform & 16384 & 283{,}008   & 880    & 26{,}831  & pass \\
+OLE ($n{=}8192$, $c{=}2$, $t{=}8$)        & regular & 2048  & 233{,}088   & 10{,}187 & 13{,}706 & pass \\
+linear $2{\times}2{\times}2$ (16 OLE)     & uniform & 16384 & 4{,}528{,}128 & 12{,}954 & 447{,}883 & pass \\
+linear $2{\times}2{\times}2$ (16 OLE)     & regular & 2048  & 3{,}729{,}408 & 162{,}312 & 231{,}203 & pass \\
+\bottomrule
+\end{tabular}
+\caption{$q128$ (actual $q124$) saved summaries. The linear expand dominating the
+NTT cost confirms the NTT is not the bottleneck (\S\ref{sec:ntt}). Sources:
+\texttt{results/ole\_gpu\_q128\_*\_smoke.\{csv,md\}},
+\texttt{results/linear\_ole\_gpu\_q128\_*\_n8192\_t8.\{csv,md\}}.}
+\label{tab:q128}
+\end{table}
+
+\section{Checkpoint 4: Parameter and Assumption Audit}
+\label{sec:audit}
+
+\paragraph{Primes and modulus.} The CRT modulus is $M=p_0p_1$ with
+\[
+  p_0 = 4611686018326724609,\qquad p_1 = 4611686018309947393,
+\]
+both $62$-bit primes, so $\lceil\log_2 M\rceil = 124$ (``actual qbits $124$'').
+Their two-adic valuations are $v_2(p_0-1)=25$ and $v_2(p_1-1)=24$; in particular
+$p_i\equiv 1\pmod{2^{21}}$, so each $\F_{p_i}$ contains a primitive $2N$-th root
+of unity for every $N$ up to $2^{24}$ (resp.\ $2^{23}$).
+
+\paragraph{Factorization regime.} For every sweep dimension
+$N\in\{2^{13},\dots,2^{20}\}$ we have $2N\mid p_i-1$, hence
+\[
+  X^N+1 = \prod_{j=0}^{N-1}\bigl(X-\omega^{2j+1}\bigr)\quad\text{over }\F_{p_i},
+  \qquad \R_{p_i}=\F_{p_i}[X]/(X^N+1)\;\cong\;\F_{p_i}^{\,N},
+\]
+where $\omega$ is a primitive $2N$-th root of unity. This is the
+\emph{fully-split} (maximally reducible) case: the ring is a product of $N$
+copies of the field, which is exactly why the NTT is fast.
+
+\paragraph{Assumption consequence.} Fully-split rings invoke the
+\emph{splittable} \RingLPN{} assumption (equivalently the quasi-abelian/decoding
+variant), which is newer and stronger than the irreducible \RingLPN{} used for
+the most conservative hardness claims~\cite{boyle2022ringlpn,bombar2023qa}. A
+paper must therefore state ``security under splittable \RingLPN{}'' with the
+explicit splitting degree, not ``security under \RingLPN{}''.
+
+\paragraph{Security level is not yet pinned.} The smoke noise weight $t=8$ and
+compression $c=2$ are \emph{correctness} parameters, not a security level. A
+concrete bit-security claim requires choosing $(n,c,t)$ via a syndrome-decoding /
+LPN cost estimator for the splittable instance and reporting the estimate. This
+is a writing/analysis deliverable, not a code change, and is the last item before
+any security claim.
+
+\section{Honest Claims}
+
+\paragraph{Safe to state now.}
+\begin{enumerate}[leftmargin=*]
+  \item A byte-compatible \Orca{} FC keywriter and an ideal-OLE dealerless
+  \emph{transcript} both validate through the unchanged
+  \texttt{gpuMatmulBeaver}; the transcript proves the OLE-to-Beaver reduction.
+  \item A secure $\Z_M\!\to\!\modtwo$ conversion prototype matches the oracle
+  bit-for-bit on random, forced-wrap, and layer-shaped inputs, with measured
+  per-element cost (Table~\ref{tab:convert}).
+  \item $q128$ (actual $q124$) OLE and linear OLE-to-Beaver summaries validate
+  under uniform and regular noise (Table~\ref{tab:q128}).
+  \item The deployed primes put the construction in the fully-split (splittable)
+  \RingLPN{} regime (Table-free fact, \S\ref{sec:audit}).
+\end{enumerate}
+
+\paragraph{Not yet claimable.}
+\begin{enumerate}[leftmargin=*]
+  \item ``The trusted dealer is removed'' --- cross terms still use an
+  \emph{ideal} OLE oracle and the correlated randomness still has an idealized
+  source; distributed \SPFSS{} key generation is future work.
+  \item ``Dense packing is implemented'' --- packing is constant-polynomial.
+  \item ``Secure under \RingLPN{}'' without the splittable qualifier and a
+  concrete bit-security estimate.
+  \item ``Full \Orca{} training is dealerless'' --- nonlinear/FSS/optimizer keys
+  remain dealer-generated.
+\end{enumerate}
+
+\section{Remaining Roadmap}
+
+\begin{enumerate}[leftmargin=*]
+  \item[\textbf{5.}] Replace the ideal OLE oracle in the transcript with the real
+  Figure~2 OLE engine ($q128$), keeping centralized \SPFSS{} keygen for one
+  step.
+  \item[\textbf{6.}] Distributed \SPFSS{}/DPF key generation via OT (reuse
+  cryptoTools/libOTe), with secret-shared noise positions---the step that earns
+  ``dealerless'' for the cross terms.
+  \item[\textbf{7.}] Dense packing with negacyclic sign handling; validate packed
+  vs.\ constant-polynomial agreement; then commit Route~A vs.\ Route~B using the
+  conversion-cost data of Table~\ref{tab:convert}.
+  \item[\textbf{Later}] Malicious-security consistency checks; backward/training
+  keys (the $dW,dX$ paths are already scaffolded behind the feature flag);
+  model-level benchmarks that never mix trusted-dealer, oracle-export, and
+  secure-conversion claims in one table.
+\end{enumerate}
+
+\section*{Reproduction}
+
+\begin{lstlisting}
+# Step 1 (CUDA, container):
+bash scripts/build_orca_fc_ideal_ole_transcript.sh
+bash scripts/run_orca_fc_ideal_ole_transcript.sh
+# Step 2 (host g++):
+bash scripts/build_secure_convert_test.sh
+bash scripts/run_secure_convert_test.sh
+# Step 3 (CUDA, container):
+SMOKE=1 QBITS=128 NOISE=uniform bash scripts/run_ole_sweep.sh
+SMOKE=1 QBITS=128 NOISE=regular bash scripts/run_ole_sweep.sh
+QBITS=128 NOISE=uniform bash scripts/run_linear_ole_sweep.sh
+QBITS=128 NOISE=regular bash scripts/run_linear_ole_sweep.sh
+\end{lstlisting}
+
+\begin{thebibliography}{9}
+
+\bibitem{boyle2022ringlpn}
+E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, and P.~Scholl.
+\newblock Efficient Pseudorandom Correlation Generators from Ring-LPN.
+\newblock IACR ePrint 2022/1035 (full version of CRYPTO 2020).
+\newblock \url{https://eprint.iacr.org/2022/1035}.
+
+\bibitem{boyle2019pcg}
+E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, and P.~Scholl.
+\newblock Efficient Pseudorandom Correlation Generators: Silent OT Extension and
+More.
+\newblock CRYPTO 2019. \url{https://eprint.iacr.org/2019/448}.
+
+\bibitem{escudero2020edabits}
+D.~Escudero, S.~Ghosh, M.~Keller, R.~Rachuri, and P.~Scholl.
+\newblock Improved Primitives for MPC over Mixed Arithmetic-Binary Circuits
+(daBits/edaBits).
+\newblock CRYPTO 2020. \url{https://eprint.iacr.org/2020/338}.
+
+\bibitem{bombar2023qa}
+M.~Bombar, G.~Couteau, A.~Couvreur, and C.~Ducros.
+\newblock Correlated Pseudorandomness from the Hardness of Quasi-Abelian
+Decoding.
+\newblock CRYPTO 2023. \url{https://arxiv.org/abs/2306.03488}.
+
+\bibitem{jawalkar2024orca}
+N.~Jawalkar, K.~Gupta, A.~Basu, N.~Chandran, D.~Gupta, and R.~Sharma.
+\newblock Orca: FSS-based Secure Training and Inference with GPUs.
+\newblock IEEE S\&P 2024. \url{https://eprint.iacr.org/2023/206}.
+
+\end{thebibliography}
+
+\end{document}

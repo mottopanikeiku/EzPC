@@ -1,0 +1,653 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\Party}{\mathsf{P}}
+\newcommand{\ServerZero}{\mathsf{P}_0}
+\newcommand{\ServerOne}{\mathsf{P}_1}
+\newcommand{\Share}[1]{\langle #1 \rangle}
+\newcommand{\modtwo}{\Z_{2^{\mathsf{bw}}}}
+\newcommand{\PrimeRing}{\Z_p[X]/(X^N+1)}
+\newcommand{\LimbRing}[1]{\Z_{p_{#1}}[X]/(X^N+1)}
+\newcommand{\CRTRing}{\LimbRing{0} \times \LimbRing{1}}
+\newcommand{\Orca}{\textsc{Orca}}
+\newcommand{\RingLPN}{\textsc{Ring-LPN}}
+\newcommand{\OLE}{\mathsf{OLE}}
+\newcommand{\SPFSS}{\mathsf{SPFSS}}
+\newcommand{\CRT}{\mathsf{CRT}}
+
+\title{Toward a Dealerless \Orca{} Linear-Layer Protocol from \RingLPN{} OLE}
+\author{GPU-MPC Ring-LPN Integration Notes}
+\date{May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note lays out a theory and engineering plan for replacing the trusted
+\Orca{} fully-connected linear-layer dealer with a two-party preprocessing
+protocol based on \RingLPN{}-style pseudorandom correlation generators
+(PCGs) for oblivious linear evaluation (OLE)~\cite{boyle2022ringlpn}. The
+current implementation already demonstrates an \Orca{}-compatible key format:
+party key buffers are written in the existing \texttt{A}, \texttt{B},
+\texttt{C\_masked} order and the online phase calls the unchanged
+\texttt{gpuMatmulBeaver} routine. However, that checkpoint is still a
+dealer/oracle correctness artifact. A scientifically sound dealerless result
+should mean distributed seed/setup plus party-local expansion, not a hidden
+central keywriter. It requires two additional protocol boundaries: (i) the
+parties must obtain shares of the cross terms in a Beaver product without any
+process seeing both parties' masks, and (ii) shares produced over a prime or
+CRT modulus must be converted securely into \(\modtwo\), the arithmetic ring
+consumed by \Orca{}. This document identifies the exact algebra, the current
+validated evidence, the missing secure components, and a staged
+implementation plan suitable for discussion before committing to the next
+coding phase.
+\end{abstract}
+
+\section{Goal and Scope}
+
+The near-term goal is not to rewrite \Orca{}'s online execution. The goal is
+to replace the offline dealer work for linear layers while preserving the
+online contract:
+\[
+  \texttt{gpuMatmulBeaver}
+  \quad \text{consumes shares of} \quad
+  (A, B, C_{\mathrm{masked}})
+\]
+where
+\[
+  C_{\mathrm{masked}} = A B + Y
+  \quad \text{in} \quad \modtwo .
+\]
+Here \(A\) masks the input activation, \(B\) masks the weight matrix, and
+\(Y\) is the output mask. The key files must remain byte-compatible with the
+existing \Orca{} reader before we attempt model-level benchmarks.
+
+The intended dealerless milestone is:
+\[
+  \ServerZero \text{ outputs } (A_0,B_0,C_0), \qquad
+  \ServerOne \text{ outputs } (A_1,B_1,C_1),
+\]
+such that
+\[
+  A = A_0 + A_1,\qquad
+  B = B_0 + B_1,\qquad
+  C_0 + C_1 = AB + Y
+  \pmod {2^{\mathsf{bw}}},
+\]
+and no trusted process learns both \(A_0,A_1\) or both \(B_0,B_1\).
+
+\paragraph{Meaning of ``dealerless.''}
+In the PCG literature, the trusted correlated-randomness source is replaced by
+a setup protocol that distributes short correlated seeds, followed by local
+``silent'' expansion of those seeds into long correlations
+\cite{boyle2022ringlpn,boyle2019pcg}. Thus, ``dealerless'' should not be read
+as zero setup or zero interaction. The intended claim is: after a secure
+distributed setup, each party can locally expand its own seed/share and write
+its \Orca{} key material, without any central process learning both parties'
+linear masks or Beaver-product shares.
+
+\paragraph{Out of scope for the first dealerless checkpoint.}
+Convolution, ReLU/FSS, truncation, optimizer keys, and malicious-security
+checks should remain separate unless the claim explicitly expands beyond
+fully-connected linear layers. The first credible claim should be
+\emph{dealerless FC matmul preprocessing}, not \emph{dealerless \Orca{} end to
+end}.
+
+\section{Current State in the Repository}
+
+The current GPU-MPC workspace contains the following relevant artifacts.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.29\linewidth}p{0.62\linewidth}}
+\toprule
+Artifact & Present status \\
+\midrule
+\texttt{bench\_ntt\_cuda} &
+Promoted Cheddar-derived NTT/PolyMul backend supports requested
+\(q=32,64,128\). Requested \(q=128\) is represented as two q62 CRT limbs and
+reported as actual qbits \(124\). \\
+\texttt{bench\_vole\_ringlpn} &
+Standalone VOLE-style algebraic expansion prototype is validated, including
+the q128 CRT path. This is an expansion benchmark, not full SPFSS-backed
+dealerless key generation. \\
+\texttt{bench\_ole\_ringlpn\_cuda} &
+Standalone Figure 2 OLE artifact validates
+\(z_0+z_1=x_0x_1\) over \(\Z_p[X]/(X^N+1)\). The source now has q128
+argument plumbing via two q62 limbs, but saved summaries are primarily
+q62/q64; q128 OLE summaries should be regenerated before making a
+paper-parameter OLE claim. \\
+\texttt{bench\_linear\_ole\_ringlpn\_cuda} &
+Converts two OLEs into one ring-polynomial Beaver product and validates small
+matrix semantics with shared operands. As with OLE, q128 should be rerun and
+saved explicitly before claiming paper-parameter linear-layer evidence. \\
+\texttt{test\_orca\_zp\_bridge} &
+Host bridge validates carry-corrected export from \(\Z_p\), and from q128
+CRT scalar modulus \(M=p_0p_1\), into \(\modtwo\) under explicit no-wrap
+bounds. The conversion is dealer/oracle, not secure distributed conversion. \\
+\texttt{bench\_orca\_fc\_ringlpn\_demo} &
+Small \Orca{} FC demo writes byte-compatible \texttt{A}, \texttt{B},
+\texttt{C\_masked} buffers. The current saved result includes q62 and q128
+bounded cases and checks forward, \(dW\), and \(dX\) contracts. \\
+\bottomrule
+\end{tabular}
+\caption{Relevant current implementation layers.}
+\end{table}
+
+The key scientific boundary is that the current \Orca{}-compatible demo is
+still an oracle-style keywriter. It proves the \emph{format} and online
+compatibility, but not yet the dealerless protocol.
+
+\section{Scientific Soundness Audit}
+
+The research-backed interpretation is summarized in Table~\ref{tab:audit}.
+This table is meant to keep the presentation honest: the current codebase has
+several strong correctness checkpoints, but the dealerless protocol claim
+requires additional cryptographic functionality.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.30\linewidth}p{0.30\linewidth}p{0.30\linewidth}}
+\toprule
+Question & Sound answer & Missing before a dealerless claim \\
+\midrule
+Can PCGs replace a trusted correlation dealer? &
+Yes, in the PCG model: a distributed setup gives parties short correlated
+seeds, then local expansion generates long OLE/triple correlations
+\cite{boyle2022ringlpn,boyle2019pcg}. &
+An actual setup/seed-generation boundary in the implementation, rather than a
+central oracle that writes both parties' shares. \\
+Does OLE fit Beaver triples? &
+Yes. Two OLE-style product-share calls produce the cross terms
+\(A_0B_1\) and \(A_1B_0\), completing the Beaver product algebra. &
+A real OLE-backed transcript test that writes byte-compatible \Orca{} keys
+from party-local state. \\
+Is q128 a native Ring-LPN modulus here? &
+No. In this codebase q128 means two q62 prime-limb computations with CRT
+interpretation, not one monolithic prime-field Ring-LPN instance. &
+Saved q128 OLE/linear summaries and a parameter note that states the exact
+prime limbs and assumption variant. \\
+Is the \(\Z_M \rightarrow \modtwo\) export local? &
+No. The wrap/carry term depends on both additive shares. Modular conversion is
+a separate MPC functionality~\cite{yu2011modcnv,escudero2020edabits}. &
+A secure conversion protocol, or a redesign that avoids conversion before
+\Orca{} consumes the key. \\
+Can we cite generic Ring-LPN security? &
+Not without parameters. NTT-friendly choices can make \(X^N+1\) reducible or
+split, changing the assumption being invoked. &
+A factorization/security audit for each \(p_i,N\), including whether the claim
+uses irreducible, reducible, or splittable Ring-LPN. \\
+\bottomrule
+\end{tabular}
+\caption{Scientific fit of the current plan against the relevant protocol
+literature.}
+\label{tab:audit}
+\end{table}
+
+\section{Algebraic Target}
+
+Let \(A=A_0+A_1\) and \(B=B_0+B_1\) be additive shares of the input and weight
+masks. A Beaver product expands as
+\[
+  AB =
+  A_0B_0 + A_0B_1 + A_1B_0 + A_1B_1 .
+\]
+The local terms are easy:
+\[
+  \ServerZero \text{ can compute } A_0B_0,\qquad
+  \ServerOne \text{ can compute } A_1B_1.
+\]
+The dealerless problem is exactly the cross terms:
+\[
+  A_0B_1 \quad \text{and} \quad A_1B_0.
+\]
+An OLE instance can be used to obtain additive shares of a product without
+revealing the underlying operands; equivalently, symmetric OLE is commonly
+viewed as secret-shared multiplication~\cite{baum2020ole}. We use the additive
+convention \(U_0+U_1=A_0B_1\), noting that some papers use a sign convention
+such as \(c-d=ab\). For each ring product, the protocol needs two OLE calls:
+\[
+\begin{aligned}
+  (U_0,U_1) &\leftarrow \OLE(A_0,B_1), &
+  U_0+U_1 &= A_0B_1,\\
+  (V_0,V_1) &\leftarrow \OLE(A_1,B_0), &
+  V_0+V_1 &= A_1B_0.
+\end{aligned}
+\]
+Then the parties form
+\[
+\begin{aligned}
+  Z_0 &= A_0B_0 + U_0 + V_0,\\
+  Z_1 &= A_1B_1 + U_1 + V_1,
+\end{aligned}
+\]
+which satisfies
+\[
+  Z_0+Z_1 = (A_0+A_1)(B_0+B_1).
+\]
+Finally, output-mask shares \(Y_0,Y_1\) are added:
+\[
+  C_0 = Z_0 + Y_0,\qquad C_1 = Z_1 + Y_1.
+\]
+These \(C_i\) are the \texttt{C\_masked} key entries consumed by
+\texttt{gpuMatmulBeaver}.
+
+\section{Where \RingLPN{} Enters}
+
+The \RingLPN{} artifacts work over prime-limb negacyclic polynomial rings
+\[
+  \PrimeRing .
+\]
+For requested q128 in this codebase, the implementation should be interpreted
+as two independent q62 prime limbs,
+\[
+  \CRTRing,
+\]
+with scalar CRT recomposition used only at the export boundary. This is more
+precise than saying that the Ring-LPN assumption is directly over the
+composite ring \(\Z_M[X]/(X^N+1)\), where \(M=p_0p_1\). The PCG literature
+usually states assumptions and OLE constructions over prime fields/rings and
+then uses splitting/CRT structure to obtain many scalar correlations
+\cite{boyle2022ringlpn}.
+This is structurally consistent with the concrete Ring-LPN PCG cost estimates
+that use a modulus represented as a product of two 62-bit primes, but the
+implementation still needs to state the exact prime-limb assumption and
+security estimate rather than relying on that resemblance alone.
+
+For the current correctness-first bridge, scalar values are embedded as
+constant polynomials:
+\[
+  s \mapsto s + 0X + \cdots + 0X^{N-1}.
+\]
+This makes the first coefficient of the ring product equal to the scalar
+product as long as the integer dot product does not wrap the modulus. For an
+inner dimension \(K\) and bounded operands \(|x|,|w|\leq B\), the conservative
+condition is
+\[
+  K B^2 < M .
+\]
+For q62, this is enough for small bounded demos but not for unrestricted
+32-bit products. For q128/actual q124, the current host bridge validates the
+bounded full-32-bit \(2\times2\times2\) case, but larger layers still need
+layer-specific bounds.
+
+\paragraph{Parameter assumption caveat.}
+The current CUDA path uses NTT-friendly primes for which \(2N\)-th roots of
+unity exist, so \(X^N+1\) may be reducible or fully split over the selected
+prime field. This is operationally useful for fast NTTs, but it is also a
+security-assumption choice. The Ring-LPN PCG paper explicitly distinguishes
+irreducible and reducible/splittable instantiations, and later work points
+out that programmable PCGs based on splittable Ring-LPN rely on newer
+assumptions~\cite{boyle2022ringlpn,bombar2023qa}. Therefore a paper claim
+must state which assumption is being used, the factorization degree of
+\(X^N+1\) modulo each \(p_i\), and the concrete security estimate. It is not
+scientifically sound to write simply ``secure under Ring-LPN'' without this
+parameter mapping.
+
+\section{The Share-Conversion Obstacle}
+
+\RingLPN{} OLE naturally gives additive shares modulo an odd prime \(p\), or
+per-limb shares that can be CRT-recomposed to a scalar modulo
+\(M=p_0p_1\). \Orca{} FC layers consume additive shares in \(\modtwo\).
+Naively reducing each share is incorrect.
+
+Suppose \(z_0,z_1\in [0,M)\) and
+\[
+  v = z_0 + z_1 \pmod M.
+\]
+Let
+\[
+  m = \left\lfloor \frac{z_0+z_1}{M} \right\rfloor .
+\]
+The dealer/oracle conversion is
+\[
+\begin{aligned}
+  r_0 &= z_0 \bmod 2^{\mathsf{bw}},\\
+  r_1 &= z_1 - mM \bmod 2^{\mathsf{bw}}.
+\end{aligned}
+\]
+Then
+\[
+  r_0+r_1 = v \pmod {2^{\mathsf{bw}}}.
+\]
+The hidden bit \(m\) is the barrier to dealerless conversion. A centralized
+oracle can compute it because it sees both \(z_0\) and \(z_1\). In a true
+dealerless protocol, neither party knows enough to compute \(m\) alone.
+
+\paragraph{Required theory result.}
+The project needs either:
+\begin{enumerate}[leftmargin=*]
+  \item a secure distributed wrap-bit/comparison protocol that outputs
+  additive shares of \(mM \bmod 2^{\mathsf{bw}}\), or
+  \item a different arithmetic design that keeps the online protocol in the
+  prime/CRT ring until after reconstruction, or
+  \item a cited PCG/OLE construction that directly emits correlations in
+  \(\modtwo\).
+\end{enumerate}
+Until this boundary is solved, the phrase ``trusted dealer removed'' should
+not be used.
+
+This is a standard mixed-domain MPC issue rather than a coding detail:
+modular conversion between additive shares over different moduli has dedicated
+protocols~\cite{yu2011modcnv}, and modern mixed arithmetic/binary systems use
+special preprocessing such as daBits/edaBits for bit-decomposition,
+comparison, and conversion~\cite{escudero2020edabits}. Those works are not
+drop-in implementations for this codebase, but they are the right literature
+class for replacing the current oracle carry correction.
+
+\section{Candidate Dealerless Protocol}
+
+The following is the clean semi-honest protocol skeleton for one FC matmul.
+
+\paragraph{Distributed setup.}
+Both parties agree on \((N,\{p_i\},M,\mathsf{bw})\), a packing layout, and
+layer dimensions \((M_{\mathrm{rows}},K,N_{\mathrm{cols}})\). They run a
+distributed PCG/OLE setup protocol to obtain correlated seeds for the required
+OLE instances. Each party also locally samples its mask shares:
+\[
+  \ServerZero: A_0,B_0,Y_0,\qquad
+  \ServerOne: A_1,B_1,Y_1.
+\]
+If the setup is replaced by a local test oracle, the result is only a
+simulation of the intended dealerless transcript.
+
+\paragraph{Cross-term generation.}
+For each ring product or packed product slot:
+\[
+\begin{aligned}
+  (U_0,U_1) &\leftarrow \OLE(A_0,B_1),\\
+  (V_0,V_1) &\leftarrow \OLE(A_1,B_0).
+\end{aligned}
+\]
+The implementation should first use the existing Figure 2 SPFSS/OLE artifact
+as the OLE engine, then replace any test oracle with the actual two-party
+message boundary.
+
+\paragraph{Local accumulation.}
+Each party computes, per prime limb,
+\[
+\begin{aligned}
+  Z_{0,i} &= A_{0,i}B_{0,i} + U_{0,i} + V_{0,i} \pmod {p_i},\\
+  Z_{1,i} &= A_{1,i}B_{1,i} + U_{1,i} + V_{1,i} \pmod {p_i}.
+\end{aligned}
+\]
+For q62 there is one limb. For q128, the limbs are later recomposed only for
+the scalar export/carry reference.
+Matrix products sum across the inner dimension. If constant-polynomial
+packing is used, each scalar entry uses one polynomial product. If dense
+packing is used, a separate extraction proof must identify the valid
+coefficients and account for negacyclic sign flips.
+
+\paragraph{Export to \Orca{}.}
+Convert the per-limb \(Z_{0,i},Z_{1,i}\) shares into scalar shares modulo
+\(M\), then into \(\modtwo\). In the current reference this is the
+carry-corrected oracle conversion above. In the dealerless protocol this must
+become a secure conversion. The parties then add their \(\modtwo\)
+output-mask shares:
+\[
+  C_i = \mathsf{Convert}(Z_i) + Y_i \pmod {2^{\mathsf{bw}}}.
+\]
+
+\paragraph{Key writing.}
+Each party writes its local key buffer:
+\[
+  \Party_i: \quad A_i \,\|\, B_i \,\|\, C_i.
+\]
+This must remain compatible with \texttt{FCLayer::readForwardKey} and
+\texttt{readGPUMatmulKey}. The online path remains unchanged.
+
+\section{Security Model}
+
+The first written protocol should target semi-honest security. The proof
+obligations are:
+\begin{enumerate}[leftmargin=*]
+  \item Local mask shares are sampled independently and reveal no information
+  about the clear activation or weight values.
+  \item The distributed PCG setup produces OLE seeds indistinguishable from
+  ideal OLE correlations under the stated Ring-LPN or splittable Ring-LPN
+  assumption.
+  \item The OLE expansions reveal only additive shares of cross products.
+  \item The conversion protocol from CRT/prime-limb shares to \(\modtwo\)
+  shares leaks no information beyond the output shares.
+  \item The final key buffers are distributed exactly as Beaver triples in
+  \Orca{}'s existing offline dealer model.
+\end{enumerate}
+
+Malicious security would require additional consistency checks, especially
+around OLE inputs and conversion. That should be treated as a later protocol
+variant unless the professor asks for it explicitly.
+
+\section{Implementation Roadmap}
+
+\subsection*{Checkpoint 1: Freeze the Current Oracle Reference}
+
+Preserve the current reference as an oracle specification:
+\begin{itemize}[leftmargin=*]
+  \item q62 and q128 host bridge tests must keep zero corrected failures;
+  \item q62/full-32-bit negative control must remain present;
+  \item the \Orca{} FC demo must keep passing q62 bounded and q128 bounded
+  cases;
+  \item feature flag off must preserve baseline \Orca{} behavior.
+\end{itemize}
+
+\subsection*{Checkpoint 2: Add an Ideal Dealerless Transcript Test}
+
+Implement a host or CUDA-light test that samples \(A_0,A_1,B_0,B_1,Y_0,Y_1\)
+separately, computes the two cross terms through an \emph{ideal OLE oracle},
+and writes party-local key buffers. This is not the final protocol, but it is
+the right executable specification:
+\[
+  \text{ideal OLE transcript} \Rightarrow
+  \text{byte-compatible \Orca{} keys} \Rightarrow
+  \texttt{gpuMatmulBeaver pass}.
+\]
+This test should report:
+\[
+  \#\OLE = 2\cdot \text{rows}\cdot K\cdot \text{cols}
+\]
+for constant-polynomial packing, and the number of conversion calls.
+
+\subsection*{Checkpoint 3: Parameter and Assumption Audit}
+
+Before replacing the oracle with the real Ring-LPN machinery, record the
+cryptographic parameter interpretation:
+\begin{itemize}[leftmargin=*]
+  \item the exact primes \(p_i\), polynomial \(X^N+1\), and factorization
+  behavior modulo each \(p_i\);
+  \item whether the intended assumption is irreducible Ring-LPN, reducible
+  Ring-LPN, or a splittable/divisible variant;
+  \item the target security level and whether q128/actual q124 is sufficient
+  for the target \Orca{} layer bounds;
+  \item whether the protocol claim is semi-honest only or includes active
+  consistency checks.
+\end{itemize}
+
+\subsection*{Checkpoint 4: Replace the Ideal OLE with Figure 2 OLE}
+
+The next protocol-real step is to replace the ideal cross-term oracle with the
+existing \RingLPN{} OLE engine:
+\[
+  \OLE(A_0,B_1),\qquad \OLE(A_1,B_0).
+\]
+Before claiming q128, regenerate saved q128 summaries for:
+\begin{itemize}[leftmargin=*]
+  \item Figure 2 OLE,
+  \item ring-polynomial linear OLE-to-Beaver,
+  \item \Orca{} FC keywriter with q128 bounds.
+\end{itemize}
+
+\subsection*{Checkpoint 5: Secure Share Conversion}
+
+This is the central protocol gap. The deliverable should be a small standalone
+document and a test implementation for secure conversion:
+\[
+  \Share{z}_{M} \longrightarrow \Share{z}_{2^{\mathsf{bw}}}.
+\]
+The oracle conversion remains the reference. A secure candidate must match it
+bit-for-bit on randomized tests, forced-wrap tests, and layer-shaped matmul
+outputs. Candidate approaches include secure wrap-bit computation, modular
+conversion protocols, or mixed arithmetic/binary preprocessing such as
+edaBits; the memo should explain why the chosen approach matches the two-party
+\Orca{} threat model.
+
+\subsection*{Checkpoint 6: Dense Packing}
+
+Once correctness is stable, replace constant-polynomial packing. The packing
+work needs its own proof:
+\begin{enumerate}[leftmargin=*]
+  \item define the coefficient layout for activation and weight tensors;
+  \item prove which coefficients contain the desired dot products;
+  \item handle negacyclic wraparound under \(X^N=-1\);
+  \item validate packed and constant-polynomial outputs agree on small FC
+  layers;
+  \item report utilization as scalar products per \RingLPN{} OLE expansion.
+\end{enumerate}
+
+\subsection*{Checkpoint 7: Expand Beyond Forward FC}
+
+After forward FC passes with the real protocol, extend to:
+\[
+  dW = X^\top dZ,\qquad dX = dZ W^\top.
+\]
+The current demo already has synthetic \(dW\) and \(dX\) contract checks, but
+the full training path also needs truncation, optimizer, and bias-gradient
+boundaries kept honest.
+
+\section{Suggested Professor-Facing Claims}
+
+Safe claims today:
+\begin{enumerate}[leftmargin=*]
+  \item The project has a byte-compatible \Orca{} FC keywriter demo.
+  \item The unchanged \texttt{gpuMatmulBeaver} online path validates the
+  generated key buffers.
+  \item q128 CRT export is validated in the host/oracle bridge for bounded
+  32-bit cases.
+  \item The OLE-to-Beaver algebra is validated in standalone
+  ring-polynomial matrix artifacts.
+  \item The intended dealerless algebra is consistent with standard OLE-to-
+  multiplication-triple reductions, provided the OLE and conversion
+  functionalities are realized securely.
+\end{enumerate}
+
+Claims to avoid until additional work lands:
+\begin{enumerate}[leftmargin=*]
+  \item ``The trusted dealer is removed.''
+  \item ``The conversion from \(\Z_M\) to \(\modtwo\) is secure.''
+  \item ``Dense packing is implemented.''
+  \item ``Full \Orca{} training uses Ring-LPN dealerless preprocessing.''
+  \item ``Paper-parameter OLE/linear numbers are complete,'' unless the q128
+  OLE and q128 linear summaries are regenerated and validated.
+  \item ``Security follows from standard Ring-LPN'' without specifying
+  whether the deployed NTT polynomial is irreducible, reducible, or fully
+  split under the selected primes.
+\end{enumerate}
+
+\section{Concrete Next Deliverables}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.08\linewidth}p{0.42\linewidth}p{0.40\linewidth}}
+\toprule
+Order & Deliverable & Evidence required \\
+\midrule
+1 & Ideal dealerless FC transcript & Key buffers pass unchanged
+\texttt{gpuMatmulBeaver}; report OLE and conversion counts. \\
+2 & Parameter/assumption audit & Prime limbs, factorization, assumption
+variant, and layer bounds are written down. \\
+3 & q128 OLE and q128 linear saved summaries & Uniform and regular smokes pass
+with requested qbits 128, actual qbits 124. \\
+4 & Secure conversion note and prototype & Matches oracle conversion on forced
+wraps and layer-shaped randomized tests. \\
+5 & Real OLE-backed FC transcript & Replaces ideal cross-term oracle with
+Figure 2 OLE shares. \\
+6 & Dense packing oracle & Packed and constant-polynomial paths agree on
+small FC layers. \\
+7 & Model-level FC benchmark & Feature flag on/off comparison for selected
+\Orca{} FC-heavy workloads. \\
+\bottomrule
+\end{tabular}
+\caption{Recommended order for the next dealerless work.}
+\end{table}
+
+\section{Summary}
+
+The clean path is to keep \Orca{}'s online protocol fixed and make the offline
+correlations progressively less oracle-like. The algebraic bridge is already
+clear: two OLEs supply the cross terms that a dealer would otherwise compute.
+The current codebase has enough machinery to validate byte compatibility and
+bounded q128 export, but a true dealerless claim depends on replacing two
+oracle boundaries: ideal cross-term generation and carry-corrected
+\(\Z_M \rightarrow \modtwo\) conversion. It also depends on matching the
+chosen NTT-friendly parameters to a clearly stated Ring-LPN assumption. The
+next best checkpoint is therefore an ideal dealerless transcript test,
+followed by a parameter audit, a secure-conversion design, and a real
+\RingLPN{} OLE-backed transcript.
+
+\begin{thebibliography}{9}
+
+\bibitem{boyle2022ringlpn}
+Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and
+Peter Scholl.
+\newblock Efficient Pseudorandom Correlation Generators from Ring-LPN.
+\newblock IACR Cryptology ePrint Archive, Paper 2022/1035. Full version of
+CRYPTO 2020 paper.
+\newblock \url{https://eprint.iacr.org/2022/1035}.
+
+\bibitem{boyle2019pcg}
+Elette Boyle, Geoffroy Couteau, Niv Gilboa, Yuval Ishai, Lisa Kohl, and
+Peter Scholl.
+\newblock Efficient Pseudorandom Correlation Generators: Silent OT Extension
+and More.
+\newblock CRYPTO 2019.
+\newblock \url{https://eprint.iacr.org/2019/448}.
+
+\bibitem{baum2020ole}
+Carsten Baum, Daniel Escudero, Alberto Pedrouzo-Ulloa, Peter Scholl, and
+Juan Ramon Troncoso-Pastoriza.
+\newblock Efficient Protocols for Oblivious Linear Function Evaluation from
+Ring-LWE.
+\newblock IACR Cryptology ePrint Archive, Paper 2020/970.
+\newblock \url{https://eprint.iacr.org/2020/970}.
+
+\bibitem{yu2011modcnv}
+Ching-Hua Yu and Bo-Yin Yang.
+\newblock Randomized Secure Two-Party Computation for Modular Conversion, Zero
+Test, Comparison, MOD and Exponentiation.
+\newblock IACR Cryptology ePrint Archive, Paper 2011/560.
+\newblock \url{https://eprint.iacr.org/2011/560}.
+
+\bibitem{escudero2020edabits}
+Daniel Escudero, Satrajit Ghosh, Marcel Keller, Rahul Rachuri, and Peter
+Scholl.
+\newblock Improved Primitives for MPC over Mixed Arithmetic-Binary Circuits.
+\newblock IACR Cryptology ePrint Archive, Paper 2020/338; CRYPTO 2020.
+\newblock \url{https://eprint.iacr.org/2020/338}.
+
+\bibitem{bombar2023qa}
+Maxime Bombar, Geoffroy Couteau, Alain Couvreur, and Clement Ducros.
+\newblock Correlated Pseudorandomness from the Hardness of Quasi-Abelian
+Decoding.
+\newblock arXiv:2306.03488, CRYPTO 2023 long version.
+\newblock \url{https://arxiv.org/abs/2306.03488}.
+
+\end{thebibliography}
+
+\end{document}
