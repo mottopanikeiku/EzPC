@@ -4,8 +4,8 @@ Configuration: single 62-bit prime, noise mode(s): uniform, folded into `Z_p[X]/
 
 | n | c | t | noise | SPFSS domain | validation | host validation | key bytes MiB | keygen us | OLE expand mean us | OLE expand std us |
 | --- | --- | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: |
-| 8192 | 2 | 64 | uniform | 16384 | pass | pass | 8.63 | 5,034.000 | 867,374.000 | 74.500 |
-| 16384 | 2 | 64 | uniform | 32768 | pass | skipped | 9.19 | 5,212.000 | 1,840,560.000 | 0.000 |
+| 8192 | 2 | 64 | uniform | 16384 | pass | pass | 8.63 | 4,866.000 | 881,062.000 | 790.500 |
+| 16384 | 2 | 64 | uniform | 32768 | pass | skipped | 9.19 | 4,915.000 | 1,863,930.000 | 0.000 |
 
 Notes:
 - `requested_qbits=64` maps to the promoted single 62-bit prime.

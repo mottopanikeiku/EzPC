@@ -1341,7 +1341,8 @@ __global__ void INTTPhase1SinglePrime(SignedWord<Word> *dst,
                                       const Word *twiddle_factors_msb,
                                       int prime_count,
                                       int batch_count,
-                                      const SignedWord<Word> *src) {
+                                      const SignedWord<Word> *src,
+                                      const SignedWord<Word> *src_b) {
     extern __shared__ char shared_mem[];
     using signed_word = SignedWord<Word>;
     signed_word *temp = reinterpret_cast<signed_word *>(shared_mem);
@@ -1380,7 +1381,28 @@ __global__ void INTTPhase1SinglePrime(SignedWord<Word> *dst,
     signed_word local[kPerThreadElems];
     int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
     const signed_word *load_ptr = src_limb + (x_idx << kStageMerging);
-    cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(local, load_ptr);
+    if (src_b != nullptr) {
+        // Fused pointwise multiply: consume NTT(a) and NTT(b) directly instead
+        // of a separately materialized product buffer (one fewer kernel launch
+        // and one fewer full read+write of the coefficient vector per polymul).
+        // Operands use the same Word bit-pattern convention as
+        // pointwise_mul_kernel.
+        const signed_word *load_ptr_b =
+            src_b + (static_cast<size_t>(limb_idx) << log_degree) +
+            (x_idx << kStageMerging);
+        signed_word local_b[kPerThreadElems];
+        cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(local, load_ptr);
+        cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(local_b, load_ptr_b);
+        for (int j = 0; j < kPerThreadElems; j++) {
+            local[j] = static_cast<signed_word>(
+                cheddar_extract::MultMontgomery<Word>(static_cast<Word>(local[j]),
+                                                      static_cast<Word>(local_b[j]),
+                                                      prime,
+                                                      inv_prime));
+        }
+    } else {
+        cheddar_extract::VectorizedMove<signed_word, kPerThreadElems>(local, load_ptr);
+    }
 
     int tw_idx = (1 << (log_degree - kStageMerging)) + x_idx;
     int sm_log_stride = 0;
@@ -1658,7 +1680,8 @@ static void run_inverse_only_impl(Word *d_ntt_input,
                                   const DeviceTables<Word> &tables,
                                   int batch_count,
                                   int prime_count,
-                                  bool convert_from_montgomery) {
+                                  bool convert_from_montgomery,
+                                  const Word *d_ntt_input_b = nullptr) {
     using signed_word = SignedWord<Word>;
     using Config1 = cheddar_extract::NTTLaunchConfig<log_degree,
                                                      cheddar_extract::NTTType::INTT,
@@ -1689,7 +1712,8 @@ static void run_inverse_only_impl(Word *d_ntt_input,
         tables.d_inv_twiddles_msb,
         prime_count,
         batch_count,
-        reinterpret_cast<const signed_word *>(d_ntt_input));
+        reinterpret_cast<const signed_word *>(d_ntt_input),
+        reinterpret_cast<const signed_word *>(d_ntt_input_b));
     check_launch("launch cheddar INTTPhase1SinglePrime");
 
     INTTPhase2SinglePrime<Word, log_degree><<<grid_phase2, block_dim_2, shared_mem_2>>>(
@@ -1712,7 +1736,8 @@ static void run_inverse_only(Word *d_ntt_input,
                              int batch_count,
                              int log_degree,
                              bool convert_from_montgomery = true,
-                             int prime_count = 1) {
+                             int prime_count = 1,
+                             const Word *d_ntt_input_b = nullptr) {
     bool launched = false;
     constexpr_for<kMinLogDegree, kMaxLogDegree + 1>([&](auto degree_c) {
         if (log_degree != degree_c) {
@@ -1723,13 +1748,45 @@ static void run_inverse_only(Word *d_ntt_input,
                                               tables,
                                               batch_count,
                                               prime_count,
-                                              convert_from_montgomery);
+                                              convert_from_montgomery,
+                                              d_ntt_input_b);
         launched = true;
     });
     if (!launched) {
         std::cerr << "Unsupported log_degree in run_inverse_only: " << log_degree << "\n";
         std::exit(1);
     }
+}
+
+// Fused-INTT polymul folds the Hadamard product into the INTT phase-1 load,
+// saving one kernel launch and one full read+write of the coefficient vector
+// per polymul. Measured on RTX 5000 Ada (n=8192): ~2% faster at the small
+// batches the OLE expand uses (launch overhead dominates there), ~3% slower at
+// q64 batch=64 (the pointwise round trip stays resident in L2, and the dual
+// source streams slightly hurt the phase-1 load). Default is therefore
+// adaptive: fuse when batch*primes <= kFuseBatchThreshold. Override with
+// RINGLPN_NTT_NO_FUSE=1 (never fuse) or RINGLPN_NTT_FORCE_FUSE=1 (always).
+constexpr int kFuseBatchThreshold = 16;
+
+static bool ntt_fusion_enabled(int batch_count, int prime_count) {
+    static const int mode = [] {
+        const char *no_fuse = std::getenv("RINGLPN_NTT_NO_FUSE");
+        if (no_fuse && std::strcmp(no_fuse, "0") != 0) {
+            return 0;  // never
+        }
+        const char *force = std::getenv("RINGLPN_NTT_FORCE_FUSE");
+        if (force && std::strcmp(force, "0") != 0) {
+            return 2;  // always
+        }
+        return 1;  // adaptive
+    }();
+    if (mode == 0) {
+        return false;
+    }
+    if (mode == 2) {
+        return true;
+    }
+    return batch_count * prime_count <= kFuseBatchThreshold;
 }
 
 template <typename Word>
@@ -1746,6 +1803,12 @@ static void run_full_polymul(Word *d_a,
                              int prime_count = 1) {
     run_forward_only(d_a, d_a_work, tables, n, batch_count, log_degree, true, prime_count);
     run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true, prime_count);
+
+    if (ntt_fusion_enabled(batch_count, prime_count)) {
+        run_inverse_only(d_a_work, d_out, tables, n, batch_count, log_degree, true,
+                         prime_count, d_b_work);
+        return;
+    }
 
     dim3 block(256);
     size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(prime_count) *
@@ -1771,6 +1834,12 @@ static void run_polymul_prepared_lhs(const Word *d_a_ntt,
                                      int log_degree,
                                      int prime_count = 1) {
     run_forward_only(d_b, d_b_work, tables, n, batch_count, log_degree, true, prime_count);
+
+    if (ntt_fusion_enabled(batch_count, prime_count)) {
+        run_inverse_only(d_b_work, d_out, tables, n, batch_count, log_degree, true,
+                         prime_count, d_a_ntt);
+        return;
+    }
 
     dim3 block(256);
     size_t total_coeffs = static_cast<size_t>(batch_count) * static_cast<size_t>(prime_count) *

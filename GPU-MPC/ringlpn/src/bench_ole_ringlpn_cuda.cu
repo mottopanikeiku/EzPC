@@ -351,11 +351,13 @@ struct OleState {
     size_t spfss_pair_key_bytes = 0;
 
     Word *d_a = nullptr;
+    Word *d_a_ntt = nullptr;   // cached forward NTT of the public a vector
     Word *d_e0 = nullptr;
     Word *d_e1 = nullptr;
     Word *d_aa_lhs = nullptr;
     Word *d_aa_rhs = nullptr;
     Word *d_aa = nullptr;
+    Word *d_aa_ntt = nullptr;  // cached forward NTT of the a_i*a_j products
     Word *d_aw = nullptr;
     Word *d_bw = nullptr;
     Word *d_cw = nullptr;
@@ -376,6 +378,8 @@ struct OleState {
     void cleanup() {
         free_tables(tables);
         cudaFree(d_a);
+        cudaFree(d_a_ntt);
+        cudaFree(d_aa_ntt);
         cudaFree(d_e0);
         cudaFree(d_e1);
         cudaFree(d_aa_lhs);
@@ -486,6 +490,14 @@ static void build_inputs(OleState &state) {
                      cc,
                      state.log_degree);
     check(cudaDeviceSynchronize(), "sync aa precompute");
+
+    // a and a_i*a_j are fixed for the lifetime of the instance: cache their
+    // forward NTTs once so every expand iteration skips half its forward NTTs.
+    alloc_device(&state.d_a_ntt, c_coeffs, "alloc a ntt cache");
+    alloc_device(&state.d_aa_ntt, cc_coeffs, "alloc aa ntt cache");
+    run_forward_only(state.d_a, state.d_a_ntt, state.tables, n, c, state.log_degree);
+    run_forward_only(state.d_aa, state.d_aa_ntt, state.tables, n, cc, state.log_degree);
+    check(cudaDeviceSynchronize(), "sync ntt caches");
 }
 
 static double build_spfss_keys(OleState &state, AESGlobalContext *gaes) {
@@ -574,28 +586,26 @@ static double build_spfss_keys(OleState &state, AESGlobalContext *gaes) {
 static void run_x_phase(OleState &state) {
     int n = state.args.n;
     int c = state.args.c;
-    run_full_polymul(state.d_a,
-                     state.d_e0,
-                     state.d_aw,
-                     state.d_bw,
-                     state.d_cw,
-                     state.d_terms,
-                     state.tables,
-                     n,
-                     c,
-                     state.log_degree);
+    run_polymul_prepared_lhs(state.d_a_ntt,
+                             state.d_e0,
+                             state.d_bw,
+                             state.d_cw,
+                             state.d_terms,
+                             state.tables,
+                             n,
+                             c,
+                             state.log_degree);
     reduce_batches(state.d_terms, state.d_x0, c, n, state.modulus);
 
-    run_full_polymul(state.d_a,
-                     state.d_e1,
-                     state.d_aw,
-                     state.d_bw,
-                     state.d_cw,
-                     state.d_terms,
-                     state.tables,
-                     n,
-                     c,
-                     state.log_degree);
+    run_polymul_prepared_lhs(state.d_a_ntt,
+                             state.d_e1,
+                             state.d_bw,
+                             state.d_cw,
+                             state.d_terms,
+                             state.tables,
+                             n,
+                             c,
+                             state.log_degree);
     reduce_batches(state.d_terms, state.d_x1, c, n, state.modulus);
 }
 
@@ -637,28 +647,26 @@ static void run_spfss_eval_phase(OleState &state, AESGlobalContext *gaes) {
 static void run_z_phase(OleState &state) {
     int n = state.args.n;
     int cc = state.args.c * state.args.c;
-    run_full_polymul(state.d_aa,
-                     state.d_u0,
-                     state.d_aw,
-                     state.d_bw,
-                     state.d_cw,
-                     state.d_terms,
-                     state.tables,
-                     n,
-                     cc,
-                     state.log_degree);
+    run_polymul_prepared_lhs(state.d_aa_ntt,
+                             state.d_u0,
+                             state.d_bw,
+                             state.d_cw,
+                             state.d_terms,
+                             state.tables,
+                             n,
+                             cc,
+                             state.log_degree);
     reduce_batches(state.d_terms, state.d_z0, cc, n, state.modulus);
 
-    run_full_polymul(state.d_aa,
-                     state.d_u1,
-                     state.d_aw,
-                     state.d_bw,
-                     state.d_cw,
-                     state.d_terms,
-                     state.tables,
-                     n,
-                     cc,
-                     state.log_degree);
+    run_polymul_prepared_lhs(state.d_aa_ntt,
+                             state.d_u1,
+                             state.d_bw,
+                             state.d_cw,
+                             state.d_terms,
+                             state.tables,
+                             n,
+                             cc,
+                             state.log_degree);
     reduce_batches(state.d_terms, state.d_z1, cc, n, state.modulus);
 }
 
