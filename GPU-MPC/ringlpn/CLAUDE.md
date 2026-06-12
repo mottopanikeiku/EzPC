@@ -140,3 +140,28 @@ the ≤60-bit class.
    "safe to claim / not yet claimable" split current.
 4. Don't claim perf wins without an A/B at the consumer's actual shape
    (cf. the fused-INTT adaptive threshold story).
+
+## Documentation contract — BINDING for every agent working here
+
+This file is the single source of truth for project state. Stale documentation
+is worse than no documentation: it corrupts the context of whoever reads it
+next. Therefore, **before ending any session that changed code, results, or
+plans, you must**:
+
+1. **Update this file** — the Status line, the source map (if files were
+   added/moved), the claims split (if a boundary moved), the perf anchors
+   (if regenerated), and the gotchas (if you hit a new one).
+2. **Update `results/README.md`** with a row for any new artifact or report.
+3. **Write or refresh the memo** in `results/reports/` for the artifact you
+   touched, dated, with reproduction commands.
+4. **Mark superseded documents**, never delete-without-trace and never leave
+   them unmarked: prepend the standard banner
+   (`> **HISTORICAL ...** superseded by CLAUDE.md; statements below may
+   describe an older state`) the moment a document's claims stop being
+   current. All pre-2026-06-10 reports already carry it; keep the convention.
+5. **Never let two live documents disagree.** If you find a contradiction,
+   the newer gate-verified statement wins; banner or fix the other on the
+   spot, in the same commit.
+6. Historical/outreach/archive documents are read-only context: quote them,
+   don't trust them. Anything without a banner and dated 2026-06-10 or later,
+   plus the gate output, is current; everything else is history.

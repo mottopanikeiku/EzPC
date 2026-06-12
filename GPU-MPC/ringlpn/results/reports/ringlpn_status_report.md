@@ -1,3 +1,5 @@
+> **HISTORICAL DOCUMENT (pre-2026-06-10).** Superseded by `GPU-MPC/ringlpn/CLAUDE.md` and the newer reports indexed in `results/README.md`. Statements below describe an **older state of the code** (e.g., "real OLE pending", "q128 summaries missing", "dense packing not implemented" are all RESOLVED since). Quote for history; do not treat as current.
+
 # Ring-LPN Status Report
 
 Generated: 2026-04-09

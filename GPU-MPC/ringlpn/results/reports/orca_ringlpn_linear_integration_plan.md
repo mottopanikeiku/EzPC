@@ -1,3 +1,5 @@
+> **Living document with dated update sections** (read bottom-up for newest). For current status always start at `GPU-MPC/ringlpn/CLAUDE.md`; sections above the latest update describe earlier states by design.
+
 # Ring-LPN Linear Layer Integration Plan for Orca
 
 Updated: 2026-05-21

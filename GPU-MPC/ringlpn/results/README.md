@@ -45,3 +45,10 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 Conventions: every run produces a `.csv` (data), usually a `.md` (summary), and
 a `.log` (raw stdout + stderr). `validation`/`*_contract` columns must read
 `pass`; suites exit non-zero on any failure.
+
+**Staleness convention (binding, see `../CLAUDE.md` documentation contract):**
+documents whose claims are no longer current carry a `> **HISTORICAL …**`
+banner at the top; `outreach/` and `archive/` are wholly historical (see their
+READMEs). A document is current only if it is unbannered and dated
+2026-06-10 or later. When your work supersedes a document, banner it in the
+same commit.

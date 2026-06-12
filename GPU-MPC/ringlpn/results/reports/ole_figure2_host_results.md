@@ -1,3 +1,5 @@
+> **Historical record (2026-04-21).** The 135/57/36 host validation counts below were re-verified unchanged on 2026-06-10 (`reports/baseline_2026_06_10.md`); surrounding prose may reference an older roadmap.
+
 # Figure 2 (Ring-LPN OLE from SPFSS) — Host Correctness Artifact
 
 Date: 2026-04-21
