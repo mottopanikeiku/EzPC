@@ -113,6 +113,12 @@ the ≤60-bit class.
 
 ## Environment & gotchas (will bite you)
 
+- **This is a shared school server; the user is NOT a sudoer.** Never attempt
+  privileged operations. The user is in the docker group (root-equivalent in
+  principle) — use it only for ephemeral containers and for chown-ing the
+  user's OWN files under `/home/fatih`; never touch system paths or other
+  users' files. Check `nvidia-smi` before heavy GPU runs and prefer pinning
+  with `CUDA_VISIBLE_DEVICES` — others may be working.
 - `nvcc` is at `/usr/local/cuda/bin` — NOT in default PATH. `GPU_ARCH=89`
   (4× RTX 5000 Ada). Two-party tests: run party 0 and 1 with
   `CUDA_VISIBLE_DEVICES=0/1`, args `<party> 127.0.0.1`.
