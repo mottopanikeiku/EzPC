@@ -1,5 +1,11 @@
 # Ring-LPN Benchmarks (CPU + GPU)
 
+> **Start at [`CLAUDE.md`](CLAUDE.md)** — the canonical catch-up document
+> (current status, source map, validated claims vs. open boundaries, roadmap,
+> environment gotchas). Results and reports are indexed in
+> [`results/README.md`](results/README.md). The per-artifact handoff pointers
+> further down this file are historical and may lag.
+
 This folder is a standalone Ring-LPN benchmarking harness. It is separate from ORCA.
 
 ## Layout
