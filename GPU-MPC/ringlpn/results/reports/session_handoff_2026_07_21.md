@@ -197,10 +197,14 @@ research-progress artifact and proposal. It is not publication-ready:
 - `spfss_host.cpp` is intentionally untouched.
 - `scripts/run_paper_checkpoint_smoke.sh` contains exactly one DPF artifact
   build/run pair.
-- Root `.gitignore` ignores CSV/PDF. A later requested commit must force-add
-  `distributed_dpf_keygen_prototype.csv` and the proposal PDF.
-- No commit, staging, professor delivery, author change, venue-template
-  conversion, or upstream Orca modification is part of this change.
+- The corrected artifact, canonical evidence, proposal source/PDF, and current
+  documentation are committed at `28f8451`; the ignored DPF CSV and proposal
+  PDF were force-added deliberately.
+- `publication_readiness_plan_2026_07_21.md` is the binding S1--S10 roadmap.
+  Every completed stage must pass its gate and end in an atomic checkpoint
+  commit.
+- Nothing was sent to the professor; authors, venue template, and upstream
+  Orca remain unchanged.
 - `/bin/sh` in the TeX containers is dash; do not use brace expansion.
 - The current memo is
   `results/reports/distributed_dpf_keygen_memo_2026_07_21.md`.

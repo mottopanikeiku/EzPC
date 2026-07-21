@@ -33,20 +33,27 @@ with corrected Table 1/Table 5 costs and bootstrap condition
 `3*c^2*t^2 < n`. See
 `results/reports/session_handoff_2026_07_21.md` and
 `results/reports/distributed_dpf_keygen_memo_2026_07_21.md`.
+The corrected host checkpoint and v2.2 evidence are committed at `28f8451`.
+The binding staged route to publication readiness is
+`results/reports/publication_readiness_plan_2026_07_21.md`; every completed
+stage must end in a gate-verified checkpoint commit.
 
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
 2. `results/reports/session_handoff_2026_07_21.md` — current verification,
    boundaries, paper state, and next actions.
-3. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
+3. `results/reports/publication_readiness_plan_2026_07_21.md` — binding
+   S1--S10 execution order, gates, proof/evaluation requirements, and
+   per-stage commit discipline.
+4. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
    Phase C protocol, executable controls, and regenerated D1 counts.
-4. `results/README.md` — where every result/report lives and what produces it.
-5. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
+5. `results/README.md` — where every result/report lives and what produces it.
+6. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
    slot-packed transcript and NTT backend changes.
-6. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
+7. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
    v2.2 forward plan, cost models, and claims discipline.
-7. `results/reports/baseline_2026_06_10.md` — older full-GPU environment,
+8. `results/reports/baseline_2026_06_10.md` — older full-GPU environment,
    PASS counts, and performance anchors.
 
 Then re-validate everything with one command (~15 min, needs GPU):
@@ -196,6 +203,10 @@ the ≤60-bit class.
    "safe to claim / not yet claimable" split current.
 4. Don't claim perf wins without an A/B at the consumer's actual shape
    (cf. the fused-INTT adaptive threshold story).
+5. **Commit every stage:** a stage is complete only after its mechanical gate
+   passes, evidence and current docs are synchronized, and an atomic checkpoint
+   commit is created. Preserve completed gate commits; corrections get new
+   commits and rerun affected gates. See the publication-readiness plan.
 
 ## Documentation contract — BINDING for every agent working here
 
