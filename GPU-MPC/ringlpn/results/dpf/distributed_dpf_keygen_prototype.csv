@@ -1,0 +1,7 @@
+modulus,log_domain,trees,pass,fail,centralized_ref_pass,negctrl_expected_fail,old_sign_opening_leak_control,string_ots_per_tree,bit_triples_per_tree,scalar_oles_per_tree,opened_bits_per_tree,keygen_plus_eval_us_per_tree,validation
+q62,4,512,512,0,8,yes,yes,8.0,3.0,3.0,1170.0,2.4,pass
+q62,8,512,512,0,8,yes,yes,16.0,7.0,3.0,2218.0,37.2,pass
+q62,11,384,384,0,8,yes,yes,22.0,10.0,3.0,3004.0,223.7,pass
+q62,14,256,256,0,8,yes,yes,28.0,13.0,3.0,3790.0,1764.7,pass
+q62b,14,256,256,0,8,yes,yes,28.0,13.0,3.0,3790.0,1763.9,pass
+q62b,8,512,512,0,8,yes,yes,16.0,7.0,3.0,2218.0,27.8,pass

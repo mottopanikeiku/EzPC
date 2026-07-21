@@ -27,6 +27,10 @@ echo "[paper-smoke] running host secure Zm-to-Z2k conversion prototype"
 "$ROOT/scripts/build_secure_convert_test.sh"
 "$ROOT/scripts/run_secure_convert_test.sh"
 
+echo "[paper-smoke] running host distributed DPF keygen prototype (M1 host slice)"
+"$ROOT/scripts/build_distributed_dpf_keygen.sh"
+"$ROOT/scripts/run_distributed_dpf_keygen.sh"
+
 if [[ "$RUN_GPU_SMOKE" != "1" ]]; then
   echo "[paper-smoke] GPU smoke skipped; set RUN_GPU_SMOKE=1 inside /home/ringlpn in the orca-dev container to run it"
   echo "[paper-smoke] HOST GATES PASS (GPU smoke skipped)"

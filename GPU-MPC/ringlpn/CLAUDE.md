@@ -9,22 +9,45 @@ Z_p SPFSS (sum of DPFs) → Figure 2 Ring-LPN OLE → slot-packed Beaver cross
 terms → Z_M→Z_2^bw conversion → byte-compatible Orca keys, validated through
 Orca's **unchanged** online path (`gpuMatmulBeaver`).
 
-**Status (2026-06-10):** the full chain works end-to-end with *real* Figure 2
-OLEs (not oracles) at q64 and q128, densely slot-packed, all gates passing.
-Two oracle boundaries remain before "dealerless" is honest: centralized SPFSS
-key generation, and dealer-style correlations inside the share conversion.
-The removal plan is the M1–M6 proposal (below).
+**Status (2026-07-21):** the GPU chain works end-to-end with real Figure 2
+OLEs at q64/q128 and dense slot packing. The complete required-GPU checkpoint
+gate was freshly revalidated on idle GPU 3 and ended `ALL GATES PASS`.
+**The corrected M1 distributed-keygen protocol logic is implemented as a host
+prototype** (`src/test_distributed_dpf_keygen.cpp`): two-party DPF keygen from
+additively shared α and multiplicatively shared β, party-separated and
+functionally validated by the unchanged `spfss_host::dpfEvalAll` on 2,432
+trees (both primes, depths 4–14, deterministic edges, centralized reference,
+corrupted-key control). Phase C now uses three scalar OLEs and opens only the
+standard `finalCW`; an executable old-sign regression demonstrates why the
+removed sign opening leaked one point bit when conditioned on a party's key.
+The fresh host and required-GPU gates pass. This is a protocol-logic and compatibility
+prototype using ideal OT/triple/OLE functionalities and the evaluator's
+non-cryptographic correctness PRG — not evidence of computational privacy,
+128-bit security, or M1 completion. M1 still needs AES/CSPRNG evaluation, real
+silent OT/OLE, GPU batching and bytes, and round/traffic measurements. Two
+pipeline oracle boundaries remain: centralized SPFSS key generation in the
+GPU pipeline and dealer-style share-conversion correlations. The M1–M6
+proposal is **v2.2** (stable filename:
+`results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` + PDF),
+with corrected Table 1/Table 5 costs and bootstrap condition
+`3*c^2*t^2 < n`. See
+`results/reports/session_handoff_2026_07_21.md` and
+`results/reports/distributed_dpf_keygen_memo_2026_07_21.md`.
 
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
-2. `results/README.md` — where every result/report lives and what produces it.
-3. `results/reports/orca_fc_real_ole_transcript_memo.md` — the newest artifact
-   (real-OLE slot-packed transcript) and the NTT backend changes.
-4. `results/reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` —
-   the forward plan (M1–M6 milestones, cost models, claims discipline).
-5. `results/reports/baseline_2026_06_10.md` — environment, all PASS counts,
-   perf anchors.
+2. `results/reports/session_handoff_2026_07_21.md` — current verification,
+   boundaries, paper state, and next actions.
+3. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
+   Phase C protocol, executable controls, and regenerated D1 counts.
+4. `results/README.md` — where every result/report lives and what produces it.
+5. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
+   slot-packed transcript and NTT backend changes.
+6. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
+   v2.2 forward plan, cost models, and claims discipline.
+7. `results/reports/baseline_2026_06_10.md` — older full-GPU environment,
+   PASS counts, and performance anchors.
 
 Then re-validate everything with one command (~15 min, needs GPU):
 
@@ -48,6 +71,7 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 | `bench_orca_fc_real_ole_transcript.cu` | **The flagship artifact.** Real Figure 2 OLE + slot packing (forward negacyclic NTT is a ring isomorphism on the fully-split ring → one ring OLE = up to n scalar OLEs) + per-slot derandomization + per-party Garner CRT lift (q128) + conversion + Orca key write, validated via unchanged `gpuMatmulBeaver`. Ring-OLE count: `2·limbs·ceil(MKN/n)`. |
 | `bench_orca_fc_ringlpn_demo.cu` | Byte-compatibility demo: forward + dW + dX key contracts at q64/q128. |
 | `test_secure_convert.cpp` | Step-2 artifact (host): secure party-separated Z_M→Z_2^bw conversion (edaBit-masked open, ripple comparator, daBit B2A). Bit-exact vs oracle; costs measured. Not yet wired into the transcript (proposal M3). |
+| `test_distributed_dpf_keygen.cpp` | **Corrected M1 host protocol-logic prototype (2026-07-21).** Two-party DPF keygen: secure adder for α's bits (L−1 bit triples), cancellation-lemma level walk (2 string OTs/level), and Phase C arithmetic-share multiplication (3 scalar OLEs) that opens only standard `finalCW`. Omniscient old-sign leakage regression, deterministic edge trees, centralized reference, and corrupted-key control. Emits standard `spfss_host::DPFKey`s validated by unchanged `dpfEvalAll`; ideal OT/triple/OLE interfaces and non-cryptographic splitmix64 correctness PRG mean functional compatibility, not computational privacy. `spfss_host.cpp` remains untouched. |
 | `test_orca_zp_bridge.cpp` | Carry-corrected Z_p→Z_2^bw share export + the bw=32/q62 counterexample (negative control). |
 | `bench_ntt_gpu_ntt_baseline.cu` | External baseline: GPU-NTT (Ozcan–Savas) vs cheddar, same prime/psi/operation. Needs external checkout (`GPU_NTT_HOME`, default `/home/fatih/GPU-NTT`); benchmark-only, not in the gate. |
 | `spfss_host.{h,cpp}`, `test_spfss.cpp`, `bench_ole_ringlpn_host.cpp`, `verify_figure2_expand.cpp` | Host reference implementations + the 135/57/36 host validation suites. |
@@ -77,6 +101,13 @@ Safe to state (every item gate-verified):
   `e=b−X1` derandomization messages.
 - Secure conversion prototype is bit-exact with measured cost
   (124/248 AND triples, 125/249 ripple rounds per output at q64/q128).
+- The distributed key-generation protocol logic is implemented
+  party-separated and functionally validated by the unchanged evaluator,
+  using ideal OT/triple/OLE functionalities and a non-cryptographic
+  correctness PRG (2,432 trees; both primes; depth ≤14; deterministic edges;
+  centralized and corruption controls; old-sign leak regression). Measured
+  per tree: `2*depth` string OTs, `depth-1` bit triples, 3 scalar OLEs, and
+  `2*(depth-1) + 260*depth + 124` opened bits. This is not "M1 done".
 - Baseline Orca is untouched with the flag off.
 
 NOT claimable yet (the honest boundaries — never blur these):
@@ -87,14 +118,25 @@ NOT claimable yet (the honest boundaries — never blur these):
   irreducible), unaudited.
 - Anything about nonlinear layers (ReLU/truncation FSS keys are a separate
   dealer axis).
+- The host D1 artifact does not establish computational privacy, 128-bit
+  security, GPU byte compatibility, real transports, or two-process
+  isolation.
 
-## Roadmap (proposal M1–M6, in `reports/dealerless_*_full_proposal_*.tex`)
+## Roadmap (proposal M1–M6, in `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex`)
 
-M1 distributed DPF keygen via OT (GPU level-synchronous batching) →
+M1 distributed DPF keygen via OT (GPU level-synchronous batching) —
+**host protocol-logic slice functionally validated 2026-07-21**
+(`test_distributed_dpf_keygen`; remaining: AES/CSPRNG evaluator, real silent
+OT/OLE transport, GPU batching, GPU byte format, and measured network bytes
+and rounds) →
 M2 wire M1 into the real-OLE transcript → M3 PCG-sourced conversion
 correlations + log-round comparator → M4 two-process TCP deployment →
 M5 splittable-Ring-LPN parameter audit (pins n, c, t; may re-pin primes —
-see NTT note below) → M6 model-scale report. M1 ∥ M3 can run in parallel.
+see NTT note below; must re-check `3*c^2*t^2 < n`, coupling M5 to M1) →
+M6 model-scale report. M1 ∥ M3 can run in parallel. Design components are
+D1–D5 in the v2.2 proposal (D1=keygen, D2=conversion,
+D3=coin-tossed seeds, D4=two-process, D5=parameter audit); Table 3 maps
+G1–G5 → D1–D5 → milestone gates → claims.
 
 ## Perf anchors (RTX 5000 Ada, this repo's gate configs)
 
@@ -127,6 +169,14 @@ the ≤60-bit class.
   fix: `docker run --rm -v <dir>:/x ubuntu:22.04 chown -R 1013:1014 /x/...`.
 - `bench_ntt` (CPU NFLlib) needs libmpfr-dev — absent on host and in the
   images; build in a container with an ephemeral `apt-get install libmpfr-dev`.
+- **No LaTeX anywhere** (host, orca-dev, all local images). Compile reports
+  with an ephemeral container: `docker run -d --name texbuild -v <reports
+  dir>:/work debian:bookworm sleep infinity`, then `apt-get install -y
+  --no-install-recommends texlive-latex-base texlive-latex-recommended
+  texlive-pictures` (~300 MB; covers tikz/booktabs/hyperref; avoid enumitem —
+  it needs texlive-latex-extra), `pdflatex` twice in `/work`, then delete the
+  root-owned .aux/.log/.out via a root container and chown the PDF to
+  1013:1014. `/bin/sh` in these containers is dash: no `{a,b}` brace expansion.
 - Root `.gitignore` ignores `*.csv` globally — committing new result CSVs
   requires `git add -f`.
 - `extern/NFLlib` is a registered submodule (quarkslab/NFLlib @ 5cf40ed);
