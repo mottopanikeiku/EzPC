@@ -1,4 +1,4 @@
-# Distributed DPF keygen — corrected M1 host protocol-logic prototype (2026-07-21)
+# Distributed DPF keygen — corrected M1 host protocol-logic prototype (2026-07-21; S1 accounting correction 2026-07-29)
 
 **Claimable sentence:** “the distributed key-generation protocol logic is
 implemented party-separated and functionally validated by the unchanged
@@ -15,23 +15,28 @@ Files:
 - `results/dpf/distributed_dpf_keygen_prototype.{csv,log}`
 
 Two party structs hold disjoint state. Every cross-party value flows through
-a counted ideal functionality or an explicit counted opening. For a tree of
+a counted ideal functionality or an explicit counted opening. Every ideal call
+also carries a tree/phase/ordinal correlation ID recorded in a consume-once
+ledger; reuse is rejected before a functionality returns output. For a tree of
 depth $L$:
 
 1. **Phase A — shared position bits.** A secure ripple adder converts private
    summands `off0`, `off1` into XOR-shared bits of
-   $\alpha=\mathrm{off0}+\mathrm{off1}$. Cost: $L-1$ Beaver bit triples and
-   $2(L-1)$ opened bits. This is the concrete integration choice for
-   arithmetic position shares, not a claim of ripple-adder novelty.
+   $\alpha=\mathrm{off0}+\mathrm{off1}$. The non-wrapping sum is the intended
+   triangular exponent distribution of the unreduced polynomial product:
+   uniform-noise positions lie in $[0,n)$ and regular-noise offsets lie in one
+   public bucket pair. Cost: $L-1$ Beaver bit triples, $2(L-1)$ logical opened
+   bits, and $4(L-1)$ revealed-share bits. This is the concrete integration
+   choice for arithmetic position shares, not a claim of ripple-adder novelty.
 2. **Phase B — level-synchronous tree walk.** Each party expands every current
    node and XORs its left/right seed and control-bit aggregates. Off-path
    nodes cancel across parties. A secret-bit MUX produces the seed correction
    word using two 128-bit string OTs per level; the parties open only the
-   standard seed and control-bit correction words. Cost: $2L$ string OTs and
-   $260L$ opened bits. Control/tag bits remain separate from seed material,
-   following the original BGI-style construction and avoiding the insecure
-   seed-LSB optimization identified in BCG+20's corrected full version,
-   IACR ePrint 2022/1035, §5.2/Remark 5.1.
+   standard seed and control-bit correction words. Cost: $2L$ string OTs,
+   $130L$ logical opened bits, and $260L$ revealed-share bits. Control/tag bits
+   remain separate from seed material,
+   following the formal BGI seed/tag separation. The S1 target does not derive
+   tags from seed LSBs: it carries 128 secret seed bits and separate tags.
 3. **Phase C — payload correction word.** Let the signed leaf aggregates be
    $A_0,A_1,F_0,F_1$. The first of three scalar OLEs produces additive shares
    $\gamma_0+\gamma_1=\beta_0\beta_1=\beta$. Define
@@ -42,6 +47,9 @@ depth $L$:
    $w_0+w_1=(d_0+d_1)(s_0+s_1)$ and open only
    `finalCW = w0 + w1`, which is already present in each standard output key.
    They do not open $d_b$, $s_b$, or the sign.
+   This is one logical opened field element and two revealed field shares:
+   respectively $\lceil\log_2p\rceil$ and
+   $2\lceil\log_2p\rceil$ bits.
 
 The predecessor transcript opened both $F_b$ values. Marginal independence
 of $F_0+F_1$ from $\alpha$ was insufficient: conditioned on party 0's leaf
@@ -60,10 +68,13 @@ Every generated pair is evaluated over the full domain by
 also requires:
 
 - eight centralized `dpfGen` references to pass through the same evaluator;
-- a corrupted correction word to fail;
+- five independent corruptions (root seed, `sCW`, `tLCW`, `tRCW`, and
+  `finalCW`) to fail;
+- six invalid point/payload encodings to abort before consuming correlation;
 - deterministic tree 0 with $\alpha=0$, factors $1,p-1$, payload $p-1$;
 - deterministic tree 1 with $\alpha=2^L-2$, factors $p-1,p-1$, payload $1$;
-- `old_sign_opening_leak_control=yes`.
+- `old_sign_opening_leak_control=yes`;
+- `ideal_mask_draw_accounting=pass` and `correlation_reuse_control=pass`.
 
 The old-sign control runs only in the omniscient test harness. It reconstructs
 the removed sign, expands party 0's leaf control-bit class, verifies that the
@@ -77,29 +88,46 @@ it is a regression model, not a security proof.
 ./scripts/run_distributed_dpf_keygen.sh` completed without prototype compiler
 warnings and produced:
 
-| prime | depth | trees | pass | string OTs | bit triples | scalar OLEs | opened bits | µs/tree |
+| prime | depth | trees | pass | string OTs | bit triples | scalar OLEs | logical open bits | revealed-share bits |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| p0 | 4  | 512 | 512/512 | 8  | 3  | 3 | 1,170 | 2.4 |
-| p0 | 8  | 512 | 512/512 | 16 | 7  | 3 | 2,218 | 37.2 |
-| p0 | 11 | 384 | 384/384 | 22 | 10 | 3 | 3,004 | 223.7 |
-| p0 | 14 | 256 | 256/256 | 28 | 13 | 3 | 3,790 | 1,764.7 |
-| p1 | 14 | 256 | 256/256 | 28 | 13 | 3 | 3,790 | 1,763.9 |
-| p1 | 8  | 512 | 512/512 | 16 | 7  | 3 | 2,218 | 27.8 |
+| p0 | 4  | 512 | 512/512 | 8  | 3  | 3 | 588   | 1,176 |
+| p0 | 8  | 512 | 512/512 | 16 | 7  | 3 | 1,116 | 2,232 |
+| p0 | 11 | 384 | 384/384 | 22 | 10 | 3 | 1,512 | 3,024 |
+| p0 | 14 | 256 | 256/256 | 28 | 13 | 3 | 1,908 | 3,816 |
+| p1 | 14 | 256 | 256/256 | 28 | 13 | 3 | 1,908 | 3,816 |
+| p1 | 8  | 512 | 512/512 | 16 | 7  | 3 | 1,116 | 2,232 |
+
+Per-run timings remain raw observations in the
+`keygen_plus_eval_us_per_tree` column of
+`results/dpf/distributed_dpf_keygen_prototype.csv`, not paper evidence.
+Depth-14 runs take roughly 2 ms/tree single-threaded including full-domain validation;
+small-depth timings varied by more than $2\times$ across repeated gates, so no
+performance claim is made from them.
 
 Totals: 2,432/2,432 functional passes. Every row has
 `centralized_ref_pass=8`, `negctrl_expected_fail=yes`,
-`old_sign_opening_leak_control=yes`, and `validation=pass`.
+`corruption_controls=5/5`, `invalid_inputs_rejected=6/6`,
+`old_sign_opening_leak_control=yes`, `transcript_accounting=pass`,
+`ideal_mask_draw_accounting=pass`, `correlation_reuse_control=pass`, and
+`validation=pass`.
 
 Closed forms per tree:
 
 - string OTs: $2L$;
 - bit triples: $L-1$;
 - scalar OLEs: $3$;
-- opened bits: $2(L-1)+260L+124$.
+- logical opened bits:
+  $2(L-1)+130L+\lceil\log_2 p\rceil$;
+- raw revealed-share bits:
+  $4(L-1)+260L+2\lceil\log_2 p\rceil$.
 
-At depth 14, the opening count is 3,790 bits. The bootstrap condition is
-$3c^2t^2<n$; for $(c,t,n)=(2,8,8192)$, 768 scalar-OLE slots are consumed and
-the output/input surplus is $8192/768=10.67\times$.
+At depth 14 and either 62-bit prime these are 1,908 logical opened bits and
+3,816 revealed-share bits. The earlier 3,790 figure mixed Phase A's logical
+openings with Phases B/C's revealed shares and is superseded. Neither corrected
+counter includes OT/OLE payloads or framing; S4 must measure real transport.
+The bootstrap condition is $3c^2t^2<n$; for $(c,t,n)=(2,8,8192)$, 768
+scalar-OLE slots are consumed and the output/input surplus is
+$8192/768=10.67\times$.
 
 The fresh host-only gate ended
 `[paper-smoke] HOST GATES PASS (GPU smoke skipped)`. After confirming GPU 3
@@ -113,6 +141,10 @@ CUDA_VISIBLE_DEVICES=3 RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
 exited 0 and ended `[paper-smoke] ALL GATES PASS`. The full package is
 therefore freshly revalidated; this GPU result does not change the host D1
 artifact's security boundary.
+
+The S1 functionality, exact transcript, leakage contract, simulators, and open
+proof obligations are in
+`dealerless_orca_fc_security_contract_2026_07_29.md`.
 
 ## Security boundary
 
@@ -145,8 +177,9 @@ From `GPU-MPC/ringlpn`:
 The build/run pair is wired exactly once into the host section of
 `run_paper_checkpoint_smoke.sh`. Proposal
 `dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` keeps its stable filename
-and is now v2.2 (2026-07-21), with the corrected Phase C equations, costs,
-security boundary, Table 5, M1 status, and claims ladder.
+and is now v2.3 (2026-07-29), with the S1 functionality/transcript/leakage
+contract, corrected split accounting and Table 5, simulator obligations,
+GPU-NTT provenance, M1 status, and claims ladder.
 
 The root `.gitignore` ignores CSV/PDF files. If a later explicit commit is
 requested, force-add the generated CSV and PDF; this session does not stage or

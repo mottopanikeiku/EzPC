@@ -6,15 +6,21 @@
 
 ## Direction decision — 2026-07-29
 
-- **Primary thesis:** an integrated dealerless Orca FC-preprocessing system.
-  The corrected shared-point/multiplicative-payload distributed DPF protocol is
-  this paper's key enabling protocol contribution; the end-to-end two-party GPU
-  integration and evaluation must demonstrate its systems value.
+- **Primary thesis candidate:** an integrated dealerless Orca FC-preprocessing
+  system. The corrected shared-point/multiplicative-payload distributed DPF is
+  the candidate enabling protocol contribution; the end-to-end two-party GPU
+  integration and evaluation must demonstrate its systems value. Novelty is
+  not claimed until S2's pre-implementation provenance/prior-art gate passes.
 - **Contribution boundary:** the GPU PCG system is separate work with its own
-  forthcoming paper and PIM-architecture comparison. This project may consume
-  that baseline, but must not present GPU PCG design/performance as new here.
-  Before a draft is shared externally, its related-work and novelty table must
-  identify all overlapping methods, experiments, text, and artifacts.
+  forthcoming paper and PIM-architecture comparison. Contributor ownership,
+  credit, chronology, and permission to reuse its DPF/GPU code are not yet
+  resolved; ask the professor before consuming that implementation. This
+  paper's sole author is Alp by user direction, but that does not transfer
+  ownership or erase attribution for inherited work. The paper must not
+  present GPU PCG design/performance as new. S2 must record the professor's
+  reuse/credit decisions and a related-work/overlap table before S3 imports or
+  implements overlapping code; external circulation remains blocked until
+  then.
 - **Publication path:** first produce an advisor-ready technical report at the
   full technical bar in this plan. Lock a venue and its formatting only after
   advisor feedback; do not lower the proof, real-transport, or evaluation gates
@@ -37,9 +43,17 @@ The project is publication-ready only when all of the following are true at the 
 2. **Security:** the paper states a precise functionality and two-party semi-honest theorem, gives simulators for corruption of either party, accounts for every opening, and reduces privacy to named assumptions: AES, the chosen OT/OLE implementation, commitments, and the pinned splittable Ring-LPN parameters.
 3. **Parameters:** a reproducible audit supports the claimed security level for the exact noise distribution and fully split ring used by the implementation. Smoke parameters are never presented as secure parameters.
 4. **Implementation:** two OS processes on separate GPUs generate the FC preprocessing, communicate only through the declared transport, serialize byte-compatible keys, and validate through unchanged `gpuMatmulBeaver`.
-5. **Evaluation:** trusted-dealer, oracle-backed, and fully protocol-backed results are separated. Time, communication, rounds, key bytes, and memory are measured at the exact pinned parameters and at model-scale FC shapes.
+5. **Evaluation:** trusted-dealer, oracle-backed, fully protocol-backed, and a
+   closest dealerless baseline are separated. Time, communication, rounds, key
+   bytes, and memory are measured at the exact pinned parameters and at
+   model-scale FC shapes.
 6. **Artifact:** a clean checkout can regenerate every claim, table, and figure with pinned dependencies and nonzero-on-failure gates.
-7. **Paper:** the final venue-formatted paper, appendix, and artifact documentation survive cryptographic, systems, and reproducibility review without an unresolved claim/evidence mismatch.
+7. **Paper/provenance:** the formal protocol delta, closest prior art, source
+   ownership/license, overlap disclosures, contributor credit/reuse decisions,
+   and sole-author boundary are recorded before implementation; the final
+   venue-formatted paper, appendix, and artifact documentation survive
+   cryptographic, systems, novelty, and reproducibility review without an
+   unresolved claim/evidence mismatch.
 
 Passing a component unit test, producing a GPU kernel, or preserving the current 2,432 host passes does not alone satisfy this definition.
 
@@ -60,14 +74,19 @@ The user requires a commit at every stage. This is a binding execution rule for 
 ## 3. Dependency order
 
 ```text
-S1 protocol/proof contract ─┬─> S3 M1 cryptographic GPU core ─> S4 M1 real transports ─> S5 M2 integration ─┐
-S2 M5 parameter audit ──────┘                                                                                ├─> S7 M4 composition
-S6 M3 protocol-backed conversion (independent after S1/S2) ────────────────────────────────────────────────┘
-                                                                                                              ↓
-                                    S8 proof + implementation audit ─> S9 M6 evaluation ─> S10 release
+S1 protocol/proof contract ─> S2 M5 parameters + provenance/novelty pre-gate ─┬─> S3 M1 GPU core ─> S4 M1 real transports ─> S5 M2 integration ─┐
+                                                                            └─> S6 M3 protocol-backed conversion ────────────────────────┤
+                                                                                                                                          └─> S7 M4 stateful two-process composition
+                                                                                                                                                       ↓
+                                                                                                  S8 proof + implementation audit ─> S9 M6 evaluation ─> S10 release
 ```
 
-S2 is scheduled before performance freeze even though M5 is logically parallel to M1/M3: it may change `n`, `c`, `t`, the primes, the bootstrap budget, GPU memory, and the NTT backend. S3–S5 and S6 may proceed on separate branches after S1/S2; each branch must preserve its own stage commits and gates. S7 is the first point at which their protocol-backed paths compose.
+S2 runs its parameter and provenance workstreams in parallel, but both are
+preconditions for S3/S6: parameter choices affect `n`, `c`, `t`, primes,
+bootstrap capacity, GPU memory, and NTT support, while provenance can force a
+protocol/backend or thesis change. S3–S5 and S6 may then proceed on separate
+branches; each branch preserves its own stage commits and gates. S7 is the
+first point at which their protocol-backed paths compose.
 
 ## 4. Execution stages
 
@@ -80,19 +99,27 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 
 ---
 
-### S1 — Freeze the protocol, functionality, and proof obligations
+### S1 — Freeze the protocol, functionality, and proof obligations — **complete 2026-07-29**
 
 **Purpose:** prevent implementation choices from outrunning the security argument.
 
 **Work:**
 
-1. Specify the ideal FC-preprocessing functionality: party inputs, public dimensions/parameters, party outputs, allowed aborts, and the exact public transcript.
+1. Specify the ideal FC-preprocessing functionality: party inputs, public
+   dimensions/parameters, party outputs, allowed aborts, exact public
+   transcript, and the source-aligned forward/bias/truncation/`dW`/`dX`/
+   bias-gradient/weight-and-bias optimizer mask topology.
 2. Specify D1 at message level: arithmetic-share adder, level walk, control bits, seed correction words, three-OLE Phase C, and the sole Phase C opening `finalCW`.
 3. Specify D2–D4 composition: conversion correlations, coin-tossed public seeds, private AES streams, derandomization openings, key serialization, and two-process transport.
 4. Enumerate leakage explicitly: dimensions, parameter set, batch sizes, message lengths, round schedule, public correction words, and abort behavior. State that access patterns and sizes are public if that is the intended model.
 5. Draft simulators for corrupted party 0 and party 1. In particular, prove that Phase C can simulate each party's OLE shares and the public `finalCW` without revealing the hidden sign, the other payload factor, or the secret point.
 6. State all composition assumptions and theorem scope. Separate computational privacy from Ring-LPN pseudorandomness and correctness.
-7. Add proof-driven tests for boundary inputs permitted by the functionality: point edges, all legal payload factors, wrap/no-wrap conversion boundaries, invalid/corrupted messages, transcript length invariants, and no correlation reuse.
+7. Add proof-driven tests for boundary inputs permitted by the functionality:
+   point edges; boundary factors `1,p-1`; deterministic product edges;
+   randomized legal nonzero factors; zero/noncanonical rejection; wrap/no-wrap
+   conversion boundaries; invalid inputs and corrupted-key negative controls;
+   transcript length invariants; and no ideal-correlation reuse. The protocol
+   proof, not exhaustive testing over `Z_p^*`, covers all legal factors.
 
 **Gate:**
 
@@ -122,6 +149,17 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 5. Recompute the complete epoch budget, not only `3c^2t^2<n`: reserve scalar OLEs for three OLEs per DPF tree, epoch-zero Gilboa bootstrap, conversion correlations, safety margin, and any rejected/unused slots. Prove no slot is reused.
 6. Recheck NTT feasibility, prime bit width, `v2(p_i-1)`, CRT correctness, GPU memory, and batch size at the pinned `n`. If primes move to at most 60 bits, reopen the documented cheddar-versus-GPU-NTT decision; if `n` grows, rerun every polynomial and slot-packing gate.
 7. Generate machine-readable parameter tables and estimator transcripts from a pinned script/container.
+8. In parallel, compare the exact shared-point/multiplicative-payload,
+   three-OLE DPF construction against the closest distributed-DPF and
+   dealerless-preprocessing literature. Record the formal protocol delta,
+   assumptions, asymptotics, and what is integration rather than protocol
+   novelty.
+9. Audit active and candidate source provenance/licenses: local
+   cheddar-derived NTT, GPU-NTT baseline, and the separate GPU-PCG/PIM work.
+   Obtain the professor's ownership, contributor-credit, chronology,
+   reuse-permission, citation, and overlap/disclosure decisions before
+   importing overlapping code or externally circulating the paper. Retain Alp
+   as the sole paper author as directed by the user.
 
 **Gate:**
 
@@ -129,41 +167,79 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 - The full bootstrap/consumption budget is positive with a documented margin.
 - Both CRT limbs and the required NTT size pass host-reference and GPU tests.
 - An independent reviewer can rerun the estimator command and obtain the reported table.
+- The formal novelty/overlap table and source/license inventory are complete;
+  the professor's required provenance decisions are recorded; no blocked code
+  or measurement is imported.
 
 **Hard stops/reversals:**
 
 - No concrete security claim if the regular-noise estimate is unsupported.
 - Grow `n` or change the distribution if the bootstrap budget fails; do not weaken the inequality.
 - Re-pin primes and reopen the NTT backend if the selected `n` exceeds current roots-of-unity headroom.
+- If provenance or closest prior art invalidates the proposed contribution,
+  revise the thesis/protocol before S3; do not defer the problem to submission.
 
-**Evidence:** estimator code, versioned raw transcripts, parameter CSV/MD/log, security memo, updated paper tables.
+**Evidence:** estimator code, versioned raw transcripts, parameter CSV/MD/log,
+security memo, formal protocol-delta/prior-art table, source/license inventory,
+recorded professor decisions, and updated paper tables.
 
-**Checkpoint commit:** `ringlpn(m5): pin audited splittable Ring-LPN parameters`
+**Checkpoint commit:** `ringlpn(m5): pin parameters and contribution boundary`
 
-**Claim unlocked:** concrete security level for the pinned parameter set only.
+**Claims unlocked:** concrete security level for the pinned parameter set and
+the reviewed contribution/provenance boundary; no end-to-end security claim.
 
 ---
 
 ### S3 — M1a: cryptographic, GPU-consumable distributed DPF core
 
-**Purpose:** replace the splitmix64 host semantics with the AES/GPU key semantics used by the real expansion path while retaining ideal transports temporarily.
+**Purpose:** replace the splitmix64 host semantics with full-128-bit AES/GPU
+key semantics while retaining ideal transports temporarily.
 
-**Primary targets:** `src/test_distributed_dpf_keygen.cpp` as the independent host reference, `src/gpu_spfss_zp.cuh` as the unchanged consumer format/evaluator, and a production distributed-keygen module under `src/` rather than code embedded in a benchmark.
+**Primary targets:** `src/test_distributed_dpf_keygen.cpp` as the independent
+host reference, `src/gpu_spfss_zp.cuh` with a stable API/callsite but corrected
+full-entropy evaluator semantics, and a production distributed-keygen module
+under `src/` rather than code embedded in a benchmark.
 
 **Work:**
 
-1. Use the existing AES-based GPU DPF expansion semantics. Remove splitmix64 from the production path; keep it only in the labelled host correctness reference.
-2. Emit `GPUDPFZpKey`-compatible party keys: seeds, seed correction words, separate control correction bits, and final correction words. Define a versioned byte serialization with explicit endianness and bounds.
-3. GPU-batch every tree level synchronously. Preserve party-owned buffers; no kernel or host helper may read both parties' private state outside a named ideal transport used at this stage.
-4. Implement the known one-string-OT-per-level formulation or retain two only if the proof and measured cost justify it. The paper and counters must match the implementation exactly.
-5. Cross-check the AES implementation against fixed known-answer vectors and a separately written CPU AES evaluator. Keep control bits out of seed LSBs.
-6. Test q64/q128 limbs, pinned depths, batches from 1 through at least 256, edge points, maximum legal point, deterministic replay, malformed serialization, and corrupted correction words.
+1. Implement AES expansion over a full 128-bit secret seed and generate
+   control tags separately, matching the formal BGI seed/tag separation
+   (Boyle--Gilboa--Ishai, CCS 2016, DOI
+   `10.1145/2976749.2978429`). The current evaluator uses a Doerner--shelat-style
+   low-bit control encoding; the GPU code masks each seed LSB and leaves a
+   127-bit seed state. The centralized GPU keygen also derives
+   all roots from one 64-bit `seed_base`. Replace the latter with independent
+   OS-CSPRNG roots and update the internal PRG semantics while preserving the
+   public API/callsite. Validate every affected centralized/distributed
+   generator and evaluator together. Keep splitmix64 only in the labelled host
+   correctness reference.
+2. Emit `GPUDPFZpKey`-compatible party keys: seeds, seed correction words,
+   separate control correction bits, and final correction words. Define a
+   versioned byte serialization with explicit endianness and bounds.
+3. GPU-batch every tree level synchronously. Preserve party-owned buffers; no
+   kernel or host helper may read both parties' private state outside a named
+   ideal transport used at this stage.
+4. Implement the known one-string-OT-per-level formulation or retain two only
+   if the proof and measured cost justify it. The paper and counters must match
+   the implementation exactly.
+5. Cross-check the full-128-bit AES implementation against fixed known-answer
+   vectors, a separately written CPU AES evaluator, and the pre-change
+   functionality on fixtures where the former cleared bit is zero.
+6. Test both values of every root-seed LSB, q64/q128 limbs, pinned depths,
+   batches from 1 through at least 256, edge points, maximum legal point,
+   deterministic replay, malformed serialization, and corrupted correction
+   words.
 
 **Gate:**
 
-- For at least 256 trees per pinned configuration, GPU full-domain evaluation reconstructs `beta [x=alpha]` with the existing `gpuDpfZpFullEvalSum` consumer unchanged.
+- For at least 256 trees per pinned configuration, GPU full-domain evaluation
+  reconstructs `beta [x=alpha]` through the stable
+  `gpuDpfZpFullEvalSum` API with corrected full-128-bit seed semantics.
 - Serialized keys round-trip byte-identically and have the same evaluator result before/after transfer.
-- CPU reference, GPU evaluator, and centralized generator agree on the functionality but are independently implemented.
+- CPU reference, corrected GPU evaluator, and centralized/distributed
+  generators agree on the functionality but are independently implemented;
+  a seed-LSB=1 control fails under the obsolete semantics and passes under the
+  corrected one.
 - Compute Sanitizer or equivalent bounds checking reports no memory error on the focused suite.
 - Production source contains no correctness PRG and no unlabelled cross-party read.
 
@@ -271,13 +347,29 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 
 **Work:**
 
-1. Instantiate D3: commit-then-open public seed contributions; verify commitments before XOR/combine. Derive public and private AES streams with explicit domain separation over protocol version, session, party, layer, epoch, direction, limb, tree/slot, and purpose.
-2. Draw private root seeds from the OS CSPRNG. Never derive both parties' private randomness from a shared benchmark seed.
+1. Instantiate D3: commit-then-open public seed contributions; verify
+   commitments before XOR/combine. Derive only public streams from that public
+   seed. Give each party independent OS-CSPRNG keys for every private AES
+   stream, with explicit domain separation over protocol version, session,
+   party, layer, epoch, direction, limb, tree/slot, and purpose.
+2. Draw private root seeds and masks only from those party-local CSPRNG streams.
+   Never derive either party's private randomness from a shared public or
+   benchmark seed.
 3. Run each party as a separate OS process pinned to a distinct GPU, using the existing `SigmaPeer` transport. Ring-LPN code must not communicate through shared memory, shared writable files, or cross-party pointers.
 4. Send only protocol-declared messages: commitments/reveals, OT/OLE traffic, correction-word openings, derandomization openings, and conversion messages. Version and length-check every frame.
 5. Produce independent per-party logs with matching public transcript hashes but no private seeds, OT choices, or key material.
 6. Test loopback for correctness. Any latency/throughput claim also requires two physical hosts or an explicitly documented network environment; otherwise report bytes/rounds and label loopback wall time as such.
 7. Exercise disconnect, replayed session ID, mismatched parameters, wrong party role, malformed frame, and peer abort. All must fail without hanging or silently falling back.
+8. Implement one complete training-layer state transition before S8:
+   forward reuses incoming truncated `mask_X` and persistent `mask_W`, creates
+   fresh `mask_Z`, adds broadcast persistent bias `mask_Y`, and truncates the
+   combined output; `dW` reuses `mask_X` and introduces `mask_grad`; `dX`
+   reuses `mask_grad` plus `mask_W` and is truncated. Row-sum `mask_grad` into
+   `mask_dY`, then execute both optimizer transitions
+   `(mask_W,mask_Vw,mask_dW)` and `(mask_Y,mask_Vy,mask_dY)`, including the
+   no-momentum case. Serialize exactly `A||B||C`, then `B||C`, then `C`.
+   Verify every handle identity and adjacent truncation/optimizer handoff. S9
+   may scale this state machine but may not be its first implementation.
 
 **Gate:**
 
@@ -286,6 +378,11 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 - An audit confirms no undeclared cross-party data path and no common private seed.
 - Per-party byte counts reconcile with transport totals and transcript hashes.
 - Ten consecutive sessions use unique IDs/correlation ranges and pass without resource leaks.
+- One full training-layer forward/bias/truncation/`dW`/`dX`/bias-gradient/
+  dual-optimizer sequence demonstrates the specified persistent
+  `mask_X`/`mask_W`/`mask_Y`/`mask_Vw`/`mask_Vy` identities, reduced matmul
+  key-field serialization, and next-state handles; deliberate state-mask reuse
+  does not reuse primitive correlation.
 
 **Evidence:** two-party runner, independent P0/P1 CSV/MD/log, transcript-hash report, fault-control results, network manifest, updated canonical gate.
 
@@ -334,6 +431,10 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 - `c=2,t=8,n=8192` remains a clearly labelled correctness/smoke row only.
 - q64 and q128; supported FC shapes from CNN2 and CNN3; both training and inference FC directions where Orca uses them.
 - Trusted-dealer baseline, centralized/oracle diagnostic, and fully protocol-backed system in separate columns.
+- At least one closest dealerless preprocessing baseline selected by S2's
+  novelty audit, matched to the same security level and FC shapes. If
+  compatible code is unavailable, use a reproducible normalized
+  communication/round/compute comparison and explain incompatibilities.
 
 **Measurement protocol:**
 
@@ -354,6 +455,9 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 - Every row records parameter security status and oracle/protocol source fields.
 - Confidence intervals and raw repetitions are available; no best-of-run timing is reported.
 - Consumer output matches trusted-dealer output and the unchanged online path on every case.
+- The closest-baseline comparison uses matched assumptions/shapes and
+  reproducible source data; trusted-dealer overhead alone is not the systems
+  value claim.
 
 **Evidence:** raw per-trial CSV/logs, aggregated tables, plotting scripts, model/layer manifest, baseline comparison, profiling traces for bottlenecks.
 
@@ -374,11 +478,19 @@ S2 is scheduled before performance freeze even though M5 is logically parallel t
 3. Regenerate every paper table/figure from committed raw data. Store commands and checksums; keep raw and summarized artifacts distinct.
 4. Have a second person reproduce the artifact from the instructions on a clean environment. Treat undocumented setup intervention as a failed artifact review.
 5. Archive the exact source commit, container digest, parameter-estimator version, and paper PDF. Tag the accepted candidate only after all gates pass.
+6. Reconcile the final dependency/source/license/citation inventory against
+   S2's approved provenance record and every dependency actually shipped.
+   Cite Özcan--Savaş GPU-NTT (ePrint 2023/1410 and the applicable published
+   version) whenever its merge/four-step algorithms or code are discussed or
+   used. Any post-S2 code source or overlap requires the same professor
+   ownership/reuse/disclosure review before inclusion.
 
 **Paper work:**
 
-1. With the advisor, lock the target venue, title, author list/order, disclosure requirements, and page/supplement limits. Technical work before this decision remains venue-neutral.
-2. Convert the v2.2 proposal into a results paper: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+1. With the advisor, lock the target venue, title, disclosure requirements, and
+   page/supplement limits. Alp remains the sole author; do not add commit
+   co-author trailers or paper co-authors.
+2. Convert the v2.3 proposal into a results paper: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.
@@ -405,6 +517,7 @@ Both commands must exit 0. The paper's generated tables must match the committed
 | Distributed payload keygen is correct | Independent host and GPU evaluators, deterministic edges, corruption controls | S3 |
 | Distributed keygen is private | Real OT/OLE, simulator for each corruption, transcript audit | S4 + S8 |
 | Parameters provide at least 128-bit security | Reproducible estimator transcripts for exact splittable distribution | S2 |
+| Contribution is novel and reusable code is permitted | Formal protocol delta, closest-prior-art table, source/license inventory, professor decisions | S2 |
 | Keygen removes centralized O1 | Flag/assertion that `build_spfss_keys()` is unreachable; 9/9 transcript | S5 |
 | Conversion removes O2 | PCG correlation accounting, no `exactZmToRingShares`, bit-exact suite | S6 |
 | Preprocessing is actually two-party | Separate processes/GPUs, independent state/logs, declared network messages only | S7 |
@@ -431,15 +544,24 @@ Both commands must exit 0. The paper's generated tables must match the committed
 
 Publication readiness is reached only when every box is supported by a committed artifact:
 
-- [ ] S1 protocol and proof contract reviewed.
+- [x] S1 protocol and proof contract frozen for advisor review after the
+  requested model-assisted audit; independent human cryptographic review
+  remains an S8 gate.
 - [ ] S2 exact splittable parameters independently reproducible and at least 128-bit secure.
-- [ ] S3 AES/GPU distributed key format passes unchanged GPU evaluator.
+- [ ] S2 formal novelty/overlap, source/license inventory, and professor
+  provenance decisions are recorded before overlapping implementation.
+- [ ] S3 full-128-bit AES/GPU distributed key semantics pass through the stable
+  GPU evaluator API, including seed-LSB=1 controls.
 - [ ] S4 real OT/OLE/triple path passes, bootstraps, and reports measured bytes/rounds.
 - [ ] S5 centralized keygen removed from the publication transcript.
 - [ ] S6 dealer-labelled conversion correlations and exact-carry oracle removed.
-- [ ] S7 two-process/two-GPU pipeline passes with coin-tossed public seeds and private CSPRNG streams.
+- [ ] S7 complete forward/bias/truncation/`dW`/`dX`/bias-gradient/
+  dual-optimizer two-process/two-GPU pipeline passes with exact serialization,
+  persistent mask/velocity handoff, coin-tossed public seeds, and private
+  CSPRNG streams.
 - [ ] S8 both-party simulation proof and implementation audit have no blocking finding.
-- [ ] S9 model-scale FC evaluation is statistically reported with evidence levels separated.
+- [ ] S9 model-scale FC evaluation and the closest-baseline comparison are
+  statistically reported with evidence levels separated.
 - [ ] S10 clean-clone artifact reproduction, venue paper build, rendered review, and final full gate pass.
 - [ ] Every completed stage has its own immutable checkpoint commit and current documentation.
 - [ ] Final wording never exceeds: dealerless **linear/FC-layer preprocessing**, two party, semi-honest, pinned splittable Ring-LPN parameters, evaluated environments only.

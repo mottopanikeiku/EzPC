@@ -1,4 +1,4 @@
-% Dealerless Orca Ring-LPN proposal, v2.2 (2026-07-21).
+% Dealerless Orca Ring-LPN proposal, v2.3 (2026-07-29).
 % Restructured per advisor feedback on the 2026-06-10 draft:
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
@@ -34,12 +34,13 @@
 \newcommand{\bw}{\mathsf{bw}}
 \newcommand{\modtwo}{\Z_{2^{\bw}}}
 \newcommand{\Q}{Q}   % composite CRT modulus Q = p_0 p_1 (renamed from M to avoid clashing with the layer dimension M)
+\newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
 \title{Removing the Trusted Dealer from Orca's Linear Layers:\\
-GPU-Accelerated Ring-LPN Preprocessing --- Status and Proposal (v2.2)}
-\author{Ring-LPN / GPU-MPC project}
-\date{2026-07-21 \quad (v2.2; corrects the D1 payload transcript and reports\\
-the distributed key-generation protocol-logic host artifact of \S\ref{sec:m1proto})}
+GPU-Accelerated Ring-LPN Preprocessing --- Status and Proposal (v2.3)}
+\author{Alp}
+\date{2026-07-29 \quad (v2.3; adds the S1 functionality, transcript, leakage,\\
+simulator, and proof-obligation contract of \S\ref{sec:s1contract})}
 
 \begin{document}
 \maketitle
@@ -65,10 +66,15 @@ party-separated host \emph{protocol-logic and compatibility prototype} using
 ideal OT/triple/OLE functionalities and the unchanged evaluator's explicitly
 non-cryptographic correctness PRG. It functionally validates 2{,}432
 two-party-generated DPF key pairs across six configurations up to the
-production tree depth, includes edge cases and a corrupted-key control, and
-models the distinguishing power of a sign opening removed in v2.2
+production tree depth, covers two deterministic point/payload edges, rejects
+six invalid encodings, and independently corrupts each of the five serialized
+key-field classes (all controls fail evaluation as required). It also models
+the distinguishing power of a sign opening removed in v2.2
 (\S\ref{sec:m1proto}). This is evidence of executable correctness and
-primitive accounting, not computational privacy or 128-bit security. All
+primitive accounting, not computational privacy or 128-bit security. The S1
+contract now fixes the target ideal functionality, exact message transcript,
+allowed leakage, simulator obligations for either corrupted party, and
+unresolved proof lemmas; it does not upgrade that security claim. All
 performance claims are anchored in regenerated CSV artifacts; measured
 numbers, derived numbers, and estimates are labelled as such throughout.
 \end{abstract}
@@ -305,6 +311,7 @@ $\bw$ & Orca's ring width; shares live in $\modtwo$ (bw $\le 32$ here)\\
 $n$ & ring dimension; $\Ring_p = \Z_p[X]/(X^n+1)$, $n = 8192$\\
 $p_0, p_1$ & NTT-friendly 62-bit primes $2^{62}-6\cdot2^{24}+1$,\ $2^{62}-7\cdot2^{24}+1$\\
 $L$, $\Q$ & CRT limb count; composite modulus $\Q = p_0p_1$ ($L{=}1$: ``q64'', $\Q{=}p_0$; $L{=}2$: ``q128'')\\
+$\dpfd$ & DPF tree depth ($\dpfd=\log_2(2n)$ for the production uniform-noise tree)\\
 $c, t$ & Ring-LPN noise parameters: $c$ sparse polynomials, $t$ nonzeros each\\
 $\lambda$ & symmetric security parameter (AES/OT), $\lambda = 128$\\
 \bottomrule
@@ -427,10 +434,10 @@ GGM tree level by level. Off the secret path the two parties' nodes are
 identical, so XORing each party's aggregate PRG expansions leaves the on-path
 contribution needed for that level's correction word. Selection by the
 current secret-shared bit of $\alpha$ uses a 1-of-2 OT on
-$\lambda$-bit strings. We keep control/tag bits separate from seed material,
-following the original BGI-style construction and avoiding the insecure
-seed-LSB optimization identified in the corrected full version of
-BCG+20~\cite{boyle2020ringlpn}, \S5.2 and Remark~5.1.
+$\lambda$-bit strings. We keep control/tag bits separate from the full
+$\lambda$-bit seed state, following the formal BGI
+construction~\cite{boyle2016fss}. We do not derive tags from seed LSBs: the
+S1 target carries 128 secret seed bits and separate tags.
 
 For the arithmetic payload, let $A_b$ be party $b$'s signed leaf-seed
 aggregate and $F_b$ its signed control-bit aggregate. A first scalar OLE
@@ -462,11 +469,240 @@ shared $(\alpha,\beta)$ and passes full-domain validation by the
 both CRT primes, depths through $\log(2n)=14$. It uses ideal-functionality
 OT, bit triples, and three scalar OLEs, plus the evaluator's non-cryptographic
 correctness PRG; these are exactly why the executable is not evidence of
-computational privacy. At depth 14 it measures 28 string OTs, 13 bit triples,
-3 scalar OLEs, and 3{,}790 opened bits per tree. The old-sign regression
-reconstructs the removed sign only in the omniscient harness and confirms
-that it selects a proper leaf-control-bit class containing the true point;
-this is a regression model of the old leak, not a privacy proof.
+computational privacy. At depth 14 it records 28 string OTs, 13 bit triples,
+3 scalar OLEs, 1{,}908 logical opened bits, and 3{,}816 raw revealed-share
+bits per tree. Neither bit count is measured real-transport traffic. The
+old-sign regression reconstructs the removed sign only in the omniscient
+harness and confirms that it selects a proper leaf-control-bit class
+containing the true point; this is a regression model of the old leak, not a
+privacy proof.
+
+\subsection{S1 security contract for D1 and FC composition}
+\label{sec:s1contract}
+
+\paragraph{Two-level ideal functionality and state topology.}
+For a public $(\mathit{sid},\mathit{tree},\dpfd,p)$,
+$\mathcal F_{\mathrm{DDPF}}$ receives
+$(\mathit{off}_b,\beta_b,\mathit{root}_b)$ from $P_b$, where
+$0\leq\mathit{off}_b<2^{\dpfd-1}$, $\beta_b\in\Z_p^*$ is canonically
+encoded, and $\mathit{root}_b$ is that party's uniform 128-bit random-tape
+draw. It rejects a malformed or duplicate identifier with the same public
+abort at both parties before consuming correlation. Otherwise it sets
+$\alpha=\mathit{off}_0+\mathit{off}_1$ without modular wrap and
+$\beta=\beta_0\beta_1\bmod p$, runs standard DPF generation conditioned on
+the supplied roots, and returns only $K_b$ to $P_b$. A batch may contain
+arbitrarily correlated or repeated private inputs, but every tree uses a
+distinct identifier, independent roots, and fresh primitive correlation.
+
+The stateful $\mathcal F_{\mathrm{FC}}$ takes a public ordered topology table
+whose entries reference public mask-wire handles. A handle names one
+$\Z_{2^\bw}$ mask and its additive shares; repeated handles intentionally
+reuse those shares. A training-layer row names
+$(X,W,Y_{\rm bias},V_W,V_Y,G)$, its public truncation/optimizer parameters,
+and whether momentum is enabled; current \texttt{FCLayer} requires bias.
+Each matrix product creates a fresh product-output handle $R_C$ (source-level
+\texttt{mask\_Z}) and splits
+\[
+ C_0+C_1=AB+R_C \pmod {2^\bw}.
+\]
+Forward reads $(X,W)$ and emits
+$X_b\Vert W_b\Vert C_{\mathrm f,b}$; weight gradient reads the same $X$ plus
+the incoming gradient handle $G$ and emits
+$G_b\Vert C_{\mathrm{dW},b}$; input gradient, when enabled, reads that same
+$G$ and the same $W$ and emits only $C_{\mathrm{dX},b}$.
+
+The source-level forward transition broadcasts and adds persistent
+$Y_{\rm bias}$ to $R_{C,\mathrm f}$ before truncation; the truncated result is
+the next activation-mask handle. Backward row-sums $G$ to obtain the bias
+gradient $dY$, truncates the $dX$ output, and applies both optimizer
+transitions
+$(W,V_W,dW)\mapsto(W',V_W')$ and
+$(Y_{\rm bias},V_Y,dY)\mapsto(Y_{\rm bias}',V_Y')$.
+Current Orca initializes $W,Y_{\rm bias},V_W,V_Y$ to zero; $X$ comes from the
+preceding truncated output. These persistent operand/state masks are neither
+resampled nor assumed independent per invocation. Freshness applies instead
+to every OT/DPF/OLE/conversion correlation. S7 implements this complete
+forward/bias/truncation/$dW$/$dX$/bias-gradient/dual-optimizer handle and
+serialization transition before S8 composes its proof; S9 scales and measures
+that state machine. The present artifact exercises only a forward-shaped
+matmul.
+
+All ideal calls carry
+$(\mathit{sid},\mathit{invocation},\mathit{tree/slot},\mathit{phase},
+\mathit{ordinal})$ and abort before output on identifier reuse.
+$\mathcal F_{\mathrm{BT}}$ returns private XOR shares of fresh uniform
+$(a,b,c=a\wedge b)$; the Beaver openings remain real protocol messages.
+$\mathcal F_{\mathrm{OT}}^{128}$ reveals only the selected sender string, and
+$\mathcal F_{\mathrm{OLE}}^p$ samples $g_0$ uniformly and sets
+$g_1=x_0x_1-g_0$. The composition additionally uses
+$\mathcal F_{\mathrm{COIN}}$ for one uniform public seed,
+$\mathcal F_{\mathrm{RINGOLE}}$ for private shares
+$(X_b,Z_b)$ with $Z_0+Z_1=X_0X_1$ in the public ring, and
+$\mathcal F_{\mathrm{CONV}}$. For canonical $z_b\in[0,Q)$, the last
+functionality computes
+\[
+ S=z_0+z_1,\quad \mathit{wrap}=[S\ge Q],\quad
+ v=S-\mathit{wrap}\,Q,
+\]
+then returns uniform additive shares of $v\bmod 2^\bw$ and never opens
+$\mathit{wrap}$. Real transports and realizations of these ideal interfaces
+are later milestones, not current evidence.
+
+For canonical additive shares,
+$a_0+a_1<2^{\bw+1}$ and $b_0+b_1<2^{\bw+1}$, so a length-$K$
+integer dot product is strictly below $K\,2^{2\bw+2}$. The FC functionality
+accepts only public triples satisfying $K\,2^{2\bw+2}<Q$: reduction modulo
+$2^\bw$ then gives the intended mask product before any reduction modulo $Q$.
+This rules out q62/bw32 entirely, caps q62/bw24 at
+$K\leq2^{12}-1$, and is checked before masks are read; q62/bw32
+inadmissibility is independently exercised by the executable negative
+control in \texttt{test\_orca\_zp\_bridge}. The current
+\texttt{buildCShare} instead tests the clear, secret-mask-dependent
+\texttt{dot >= Q}; that is a centralized oracle and a forbidden
+value-dependent abort, not target behavior. Two further security blockers are
+in the current GPU SPFSS keygen: it uses a Doerner--shelat-style
+low-bit control encoding~\cite{doerner2017floram}; the GPU code masks each seed LSB, leaving 127 secret seed bits,
+while
+the centralized kernel derives every root deterministically from one 64-bit
+\texttt{seed\_base}. The S1 target uses independent OS-CSPRNG roots and 128
+secret seed bits with separately generated tags. S3 must change the PRG/root
+semantics or lower the security target; this draft makes no 128-bit
+DPF-security claim.
+
+\paragraph{Leakage and abort contract.}
+Common leakage consists of protocol/session and party-role identifiers; the
+parameter set, $L,\dpfd,p,n,c,t$, CRT limbs, noise mode, epoch and batch/tree
+counts; public layer shapes, layouts, invocation kind, wire-handle topology,
+slot/access order, serialized field lengths, fixed message lengths and
+dependency schedule; common DPF correction words and
+$\mathit{finalCW}$; masked openings
+$\epsilon,\delta,d,e$ and the specified conversion openings; public
+coin-toss commitments/reveals and seed; and common accept/abort stage.
+$P_b$ additionally sees only its own DPF inputs/root draw, retained mask
+shares, local frontier/noise/output-mask state, sender/receiver
+OT view, triple/OLE shares, authenticated messages, output DPF keys, and
+emitted Orca fields. The other inputs, roots, keys, mask shares, hidden
+leaf-control sign, conversion wrap, unused OT messages, OLE masks, and PCG
+state remain hidden. Public mask-handle reuse is required topology; reuse of
+primitive correlation or private random-tape draws is prohibited. External
+packet observers, timing/microarchitectural side channels, active security,
+fairness, and availability remain out of scope.
+
+\paragraph{Exact D1 hybrid transcript.}
+The proof target is the
+$(\mathcal F_{\mathrm{BT}},\mathcal F_{\mathrm{OT}}^{128},
+\mathcal F_{\mathrm{OLE}}^p)$-hybrid protocol instantiated by the current
+source. \emph{Phase A}: for each of the $\dpfd-1$ carry positions, obtain one
+fresh bit triple, reveal both parties' shares of the two masked one-bit
+values $(\epsilon_j,\delta_j)$, apply the Beaver equation, and update
+XOR-shared carry and point bits. This exposes $2(\dpfd-1)$ logical bits as
+$4(\dpfd-1)$ transmitted shares. The private position summands are the
+Ring-LPN noise positions, so uniform-mode sums are triangular; regular-mode
+offsets give the corresponding public-bucket shift, not a uniform modular
+point.
+
+\emph{Phase B}: at level $i$, each party locally expands its live seeds,
+XOR-aggregates left/right seed and flag children, and defines
+$Z_b=S_b^{\mathrm L}\oplus S_b^{\mathrm R}$. Two directional 128-bit OTs
+share $a_i(Z_0\oplus Z_1)$. Parties reveal their shares of the standard
+seed correction word and two flag correction words, then advance locally.
+These are exactly $130\dpfd$ logical opened bits and $260\dpfd$ raw
+revealed-share bits.
+
+\emph{Phase C}: one OLE shares
+$\gamma_0+\gamma_1=\beta_0\beta_1$. With
+$d_b=\gamma_b-A_b$ and $s_b=F_b$, two directional OLEs share
+$d_0s_1$ and $s_0d_1$. Each party sets
+$w_b=d_bs_b+x_b+y_b$ and reveals only $w_b$, giving the standard
+$\mathit{finalCW}=w_0+w_1$. Neither $d_b$, $s_b$, nor
+$s_0+s_1$ is opened. Thus
+\[
+\begin{aligned}
+\text{logical opened bits}&=2(\dpfd-1)+130\dpfd+\lceil\log_2 p\rceil,\\
+\text{raw revealed-share bits}&=4(\dpfd-1)+260\dpfd+
+ 2\lceil\log_2 p\rceil .
+\end{aligned}
+\]
+
+\paragraph{D1 batch-simulation lemma at the ideal boundary.}
+Fix either corrupt party, its complete arbitrarily correlated input/root
+vector, public order and identifiers, and its full ideal output-key vector.
+Condition each key on the same root supplied by that party. The following
+algorithms generate the complete hybrid view with the real conditional
+distribution. This lemma does not yet prove that the emitted pair has the
+standard DPF distribution or instantiate concrete PRG/transport security.
+
+\emph{Corrupt $P_0$.}
+For each tree, take the root seed and common correction words from $K_0$ and
+expand the local frontier. At every carry, sample $P_0$'s three bit-triple
+shares, compute its actual sent shares of $(\delta_j,\epsilon_j)$, sample the
+two reconstructed openings uniformly, and set the honest sent shares to the
+XOR complements. Apply $P_0$'s real Beaver equation, including the public
+$\delta_j\epsilon_j$ term, and the carry recurrence. Hidden honest triple
+shares one-time-pad both openings, so induction from carry zero gives the
+exact joint carry/point-share view.
+
+At every level, derive $P_0$'s aggregates. In the first OT it is receiver:
+sample the selected output, uniform under the honest sender's fresh mask. In
+the second it is sender: sample $r_0$ and record
+$(r_0,r_0\oplus Z_0)$. Compute its seed/flag opening shares with the real
+equations and set the honest shares to complements of the words fixed by
+$K_0$. Finally sample its three OLE outputs
+$(\gamma_0,x_0,y_0)$ independently, compute $d_0,s_0,w_0$, and emit only
+$w_1=\mathit{finalCW}-w_0$. This ordering also covers zero intermediate
+values; it does not infer the hidden sign.
+
+\emph{Corrupt $P_1$.}
+Take the root and common words from $K_1$. Sample its triple shares and
+masked openings as above, but apply $P_1$'s Beaver equation without the
+public $\delta_j\epsilon_j$ term. At each level record its first-OT sender
+pair $(r_1,r_1\oplus Z_1)$ and sample its selected second-OT receiver output;
+derive its own seed/flag shares and complement to the fixed common words.
+Sample $(\gamma_1,x_1,y_1)$ from the three uniform $P_1$ OLE marginals,
+compute $d_1,s_1,w_1$, and emit only
+$w_0=\mathit{finalCW}-w_1$.
+
+Both simulators enforce a consumed-correlation-ID ledger before every ideal
+call and proceed tree by tree conditioned on the complete prior state.
+Therefore repeated/correlated private summands do not invalidate the
+one-time-pad hybrids. S1 treats local coins as independent consumed
+random-tape draws and makes the root explicit; S3 must prove a concrete,
+state-consistent CSPRNG interface. In the end-to-end hybrid, only the honest
+party's hidden PRG stream may be replaced by ideal random strings; the corrupt
+party's stream and retained state remain consistent.
+
+\begin{table}[ht]
+\centering
+\scriptsize
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.12\linewidth}>{\raggedright\arraybackslash}p{0.58\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}}
+\toprule
+ID & Proof obligation & Current status\\
+\midrule
+P-CORR & Keys reconstruct $\beta[x=\alpha]$. & 2{,}432/2{,}432 executable passes\\
+P-DIST/P-KEY & Couple correction words to standard DPF generation conditioned
+on both roots; instantiate single-key privacy. & open for S3/S8\\
+P-POS & Prove the exact uniform/regular Ring-LPN exponent distribution. &
+contract fixed; S2 audit open\\
+P-ADD & Simulate either ripple-adder view with explicit triple/opening
+equations. & closed in bit-triple hybrid\\
+P-LEVEL & Simulate both OT roles and CW shares conditioned on each full key. &
+closed in OT hybrid\\
+P-PAYLOAD & Simulate the three-OLE view without the removed sign, including
+zero intermediates. & closed in OLE hybrid\\
+P-BATCH/P-FRESH & Preserve correlated tree inputs and reject correlation-ID
+reuse before output. & D1 lemma + executable control\\
+P-RNG/P-PCG & Realize the random-tape interface and prove Ring-LPN OLE at the
+pinned parameters. & open for S2/S3/S8\\
+P-CONV & Realize exact modulo-$Q$ conversion without revealing wrap. &
+correctness/count gate; S6 proof open\\
+P-TOPO/P-PROC & Match stateful mask reuse, serialized fields, and a two-process
+implementation. & contract fixed; S7/S9 open\\
+\bottomrule
+\end{tabular}
+\caption{S1 proof contract. Closed rows are hybrid-transcript lemmas only,
+not a computational-security claim; open rows are binding later-stage gates.}
+\label{tab:s1proof}
+\end{table}
 
 \paragraph{Bootstrapping (and why it is not circular).} Key generation
 consumes three scalar OLEs per DPF tree; expansion produces $n$ slot OLEs per
@@ -542,19 +778,28 @@ whenever the integer share-sum wrapped past $\Q$ --- and that \emph{wrap bit}
 depends on both shares jointly, so computing it requires an actual secure
 protocol.
 
-\paragraph{The protocol (validated prototype).} With $S = z_0 + z_1 < 2\Q$
-and $\ell = \lceil\log_2 2\Q\rceil$ ($\ell{=}63$ at q64, $125$ at q128):
-(1)~mask-and-open $A = (z_0 + z_1 + R) \bmod 2^\ell$ using an
-edaBit~\cite{escudero2020edabits} $R$ shared in both worlds ($A$ is uniform,
-leaks nothing); (2)~a ripple adder over boolean shares recovers the bits of
-$S = A - R$; (3)~a second adder computes the carry-out of $S + (2^\ell - \Q)$,
-which \emph{is} the wrap bit $w = [S \ge \Q]$; (4)~a daBit converts $w$ to
-arithmetic shares over $\modtwo$; (5)~each party locally corrects
-$r_i = (z_i - \Q\, w_i) \bmod 2^{\bw}$. The prototype is bit-exact against
-the all-seeing oracle on 8{,}512 conversions per configuration, and every
-count in Table~\ref{tab:convert} is derivable: $2(\ell{-}1)$ AND triples (two
-adders), $2\ell{-}1$ ripple rounds, $2\ell + 2\cdot\#\mathrm{AND} + 1$ opened
-bits.
+\paragraph{The protocol (validated prototype).} For canonical
+$z_b\in[0,\Q)$, let $S=z_0+z_1<2\Q$ and
+$\ell=\lceil\log_2 2\Q\rceil$ ($\ell{=}63$ at q64, $125$ at q128).
+An ideal edaBit samples uniform $R\in\Z_{2^\ell}$, an independent uniform
+arithmetic first share, and independent uniform XOR masks for its bits, then
+gives each party its consistent shares. An ideal daBit samples a random bit,
+an independent uniform Boolean first share, and an independent uniform
+$\Z_{2^\bw}$ first share, then complements each sharing. Under fresh
+identifiers: (1)~mask and open
+$A=(z_0+z_1+R)\bmod 2^\ell$; (2)~a ripple adder recovers Boolean shares of
+$S=A-R$; (3)~a second adder obtains
+$w=[S\ge\Q]$ from the carry of $S+(2^\ell-\Q)$; (4)~the daBit converts $w$
+to arithmetic shares; and (5)~each party computes
+$r_i=(z_i-\Q w_i)\bmod 2^\bw$. Thus
+$r_0+r_1=((z_0+z_1)\bmod\Q)\bmod 2^\bw$ and $w$ is never opened.
+The prototype is bit-exact against the all-seeing oracle on 8{,}516
+conversions per configuration, including deterministic integer sums
+$0,\Q-1,\Q,2\Q-2$ on both sides of the wrap boundary. Its ripple circuit
+consumes $2(\ell-1)$ AND triples, $2\ell-1$ post-mask dependency rounds,
+$5\ell-3$ logical opened bits, and $10\ell-6$ raw revealed-share bits.
+The post-mask count begins after the masked-$A$ opening, includes the final
+daBit opening, and is not an end-to-end transport-round measurement.
 
 \paragraph{What D2 changes.} Two things. \emph{Sourcing:} AND triples come
 from a binary PCG (the $\Z_2$ instantiation of our own pipeline, or
@@ -578,16 +823,19 @@ per $\modtwo$ output & q64 ($\ell{=}63$) & q128 ($\ell{=}125$)\\
 AND triples $=2(\ell{-}1)$ & 124 & 248\\
 edaBit bits $=\ell$        & 63  & 125\\
 daBits                     & 1   & 1\\
-opened bits $=2\ell + 2\cdot\#\mathrm{AND} + 1$ & 375 & 747\\
-AND rounds, ripple $=2\ell{-}1$ (measured today) & 125 & 249\\
-AND rounds, prefix comparator (D2 target) & $\sim$7 & $\sim$8\\
+logical opened bits $=5\ell-3$ & 312 & 622\\
+raw revealed-share bits $=10\ell-6$ & 624 & 1{,}244\\
+post-mask dependency rounds, ripple $=2\ell{-}1$ & 125 & 249\\
+post-mask dependency rounds, prefix target & $\sim$7 & $\sim$8\\
 \bottomrule
 \end{tabular}
 \caption{Measured conversion cost per output
-(\texttt{secure\_convert\_prototype.csv}) with its closed-form derivations,
-and the round-count target after the prefix-comparator swap. Triple and bit
-counts grow by a small constant factor under the prefix comparator; rounds
-drop from $O(\ell)$ to $O(\log\ell)$.}
+(\texttt{secure\_convert\_prototype.csv}) with executable transcript
+accounting, plus the prefix-comparator round target. The earlier 375/747
+column mixed the two transmitted shares of the masked-$A$ opening with
+logical AND/B2A openings; it was not a coherent opening or wire-payload
+metric. Prefix comparison changes correlation counts and must report its own
+measured logical/raw split.}
 \label{tab:convert}
 \end{table}
 
@@ -639,14 +887,20 @@ is the default regime, and why condition~\eqref{eq:bootstrap} must be
 re-checked at the audited parameters. Three engineering notes recorded with
 reversal conditions: $v_2(p_0{-}1) = 25$ and $v_2(p_1{-}1) = 24$ leave
 headroom to grow $n$ to $\sim 2^{23}$ without re-pinning primes; the 62-bit
-prime class is what our Montgomery-based NTT supports (a faster external
-library was rejected \emph{because} its Barrett reduction cannot run 62-bit
-primes --- measured, documented); if D5 re-pins primes at $\le 60$ bits, that
-NTT-backend decision re-opens.
+prime class is what our current cheddar-derived Montgomery NTT supports.
+We separately evaluated the GPU-NTT Merge and four-step implementations of
+\"Ozcan--Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt}; that code is an external
+measured dependency, not this paper's contribution, and its Barrett path did
+not support our 62-bit primes in the audited revision. If D5 re-pins primes
+at $\leq60$ bits, the backend decision and source/license audit re-open.
+
+This audit is the first implementation gate, not a final-paper-only check:
+changing the pinned parameters changes GPU memory, NTT support, DPF tree
+counts, communication, and whether the bootstrap inequality holds. M1 and M3
+performance work starts only after M5 pins those values.
 
 \subsection{How the components compose to ``dealerless''}
 \label{sec:design-composition}
-
 \begin{table}[ht]
 \centering
 \small
@@ -656,9 +910,9 @@ gap & removed by & verified at (gate) & claim unlocked\\
 \midrule
 G1 centralized keygen & D1 & M1, M2 & \emph{after M2:} keys from a two-party protocol whose only idealized part is the conversion\\
 G2 conversion correlations & D2 & M3 & conversion protocol-backed end-to-end\\
-G3 common-seed RNG & D3 & M4 (audited in review) & transcript hygiene preconditions met\\
-(process separation) & D4 & M4 & \emph{after M4:} ``Orca FC preprocessing is dealerless (semi-honest, splittable Ring-LPN)''\\
-G4 unaudited parameters & D5 & M5 & concrete $\ge$128-bit parameter claim\\
+G3 common-seed RNG & D3 & M4 (audited in review) & transcript-hygiene preconditions met\\
+(process/state separation) & D4 & M4 & two-process stateful implementation transcript complete; scoped security claim waits for S8 review\\
+G4 unaudited parameters & D5 & M5/S2 & pinned concrete-security claim; required before M1/M3 performance work\\
 G5 nonlinear layers & out of scope & --- & never claimed here; D1 machinery extends (future work)\\
 \bottomrule
 \end{tabular}
@@ -751,7 +1005,7 @@ per-scalar OLE calls the same layer consumed before slot packing.}
 \end{table}
 
 \paragraph{Distributed key-generation protocol-logic prototype
-(corrected 2026-07-21).}
+(corrected 2026-07-29).}
 \label{sec:m1proto}
 The artifact\footnote{\texttt{test\_distributed\_dpf\_keygen}; per-case
 results in \texttt{distributed\_dpf\_keygen\_prototype.csv}.} implements the
@@ -769,44 +1023,54 @@ The suite (Table~\ref{tab:m1proto}) generates 2{,}432 key pairs across six
 configurations, tree depths 4--14, and both CRT primes. Every pair
 full-domain-evaluates to $\beta\cdot[x{=}\alpha]$. In every configuration,
 the first two trees deterministically cover $\alpha=0$ and
-$\alpha=2^L-2$, factors $1$ and $p-1$, and resulting payloads $p-1$ and
-$1$; the remaining trees use random nonzero payload factors. A centralized
-reference passes through the same evaluator, while a corrupted correction
-word fails. The field
+$\alpha=2^{\dpfd}-2$, factors $1$ and $p-1$, and resulting payloads $p-1$ and
+$1$; the remaining trees use random nonzero payload factors. Eight centralized
+references pass through the same evaluator; five independent root-seed,
+seed-CW, left-flag-CW, right-flag-CW, and final-CW corruptions fail; and six invalid point/payload encodings abort
+before correlation is consumed. The field
 \texttt{old\_sign\_opening\_leak\_control=yes} records that the omniscient
 regression model reconstructed the removed sign and observed a proper
 party-0 leaf-control-bit class containing the true point. This demonstrates
-the old transcript's distinguishing power; it is not a privacy proof. The
-gate is wired into the repository's one-command re-validation
-(\S\ref{sec:methodology}).
+the old transcript's distinguishing power; it is not a privacy proof.
+Every row also requires ideal-mask-draw accounting and a duplicate-correlation-ID
+negative control to pass. The gate is wired into the repository's one-command
+re-validation (\S\ref{sec:methodology}).
 
 \begin{table}[ht]
 \centering
 \small
-\begin{tabular}{lrrrrrrr}
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrrrr}
 \toprule
-prime & depth & trees & pass & string OTs & bit triples & OLEs & opened bits\\
+prime & depth & trees & pass & string OTs & triples & OLEs & logical open & revealed shares\\
 \midrule
-$p_0$ & 4  & 512 & 512/512 & 8  & 3  & 3 & 1{,}170\\
-$p_0$ & 8  & 512 & 512/512 & 16 & 7  & 3 & 2{,}218\\
-$p_0$ & 11 & 384 & 384/384 & 22 & 10 & 3 & 3{,}004\\
-$p_0$ & 14 & 256 & 256/256 & 28 & 13 & 3 & 3{,}790\\
-$p_1$ & 14 & 256 & 256/256 & 28 & 13 & 3 & 3{,}790\\
-$p_1$ & 8  & 512 & 512/512 & 16 & 7  & 3 & 2{,}218\\
+$p_0$ & 4  & 512 & 512/512 & 8  & 3  & 3 & 588   & 1{,}176\\
+$p_0$ & 8  & 512 & 512/512 & 16 & 7  & 3 & 1{,}116 & 2{,}232\\
+$p_0$ & 11 & 384 & 384/384 & 22 & 10 & 3 & 1{,}512 & 3{,}024\\
+$p_0$ & 14 & 256 & 256/256 & 28 & 13 & 3 & 1{,}908 & 3{,}816\\
+$p_1$ & 14 & 256 & 256/256 & 28 & 13 & 3 & 1{,}908 & 3{,}816\\
+$p_1$ & 8  & 512 & 512/512 & 16 & 7  & 3 & 1{,}116 & 2{,}232\\
 \bottomrule
 \end{tabular}
-\caption{Distributed key-generation protocol-logic prototype: regenerated
-results (\texttt{distributed\_\allowbreak dpf\_\allowbreak keygen\_\allowbreak
-prototype.csv}). Per-tree counts
-match $2\cdot$depth string OTs, depth$-1$ bit triples, three scalar OLEs, and
-$2(\mathrm{depth}-1)+260\cdot\mathrm{depth}+124$ opened bits. The depth-14
-host timing is approximately 1.8\,ms per tree, single-threaded and including
-validation; timings are approximate run observations, not transport
-measurements. Table~\ref{tab:m1proto} proves functional compatibility, edge
-correctness, and primitive accounting, not computational privacy or
-128-bit security.}
+}
+\caption{Distributed DPF key-generation host results.}
 \label{tab:m1proto}
 \end{table}
+
+Source: \texttt{distributed\_\allowbreak dpf\_\allowbreak
+keygen\_\allowbreak prototype.csv}. For tree depth $\dpfd$, per-tree counts
+match $2\dpfd$ string OTs,
+$\dpfd-1$ bit triples, three scalar OLEs,
+$2(\dpfd-1)+130\dpfd+\lceil\log_2 p\rceil$ logical opened bits, and
+$4(\dpfd-1)+260\dpfd+2\lceil\log_2 p\rceil$ raw revealed-share bits. Every row
+reports \texttt{transcript\_accounting=pass},
+\texttt{ideal\_mask\_draw\_\allowbreak accounting=pass}, and
+\texttt{correlation\_reuse\_\allowbreak control=pass}. Timings are approximately
+2.0\,ms per depth-14 tree, single-threaded and including validation; they are
+run observations, not transport measurements. Table~\ref{tab:m1proto} proves
+functional compatibility, edge correctness, and ideal-primitive accounting,
+not computational privacy or 128-bit security.
 
 \paragraph{Performance anchors.}
 Ring-OLE expansion ($n{=}8192$, $c{=}2$): 13.3\,ms (q64) and 26.8\,ms (q128)
@@ -815,7 +1079,7 @@ regular} ($14\times$), with pair-key bytes 283\,kB vs.\ 233\,kB. SPFSS
 full-domain evaluation dominates ($\sim$99\%); the NTT is under 1\% ---
 measured directly, and confirmed by the fact that a 2--8\% NTT-side
 improvement left expansion time unchanged. Conversion prototype: bit-exact on
-8{,}512 conversions per configuration at the costs of
+8{,}516 conversions per configuration at the costs of
 Table~\ref{tab:convert}. Byte-compatibility: with the integration flag off,
 baseline Orca output is byte-identical (verified through the real two-party
 FC test).
@@ -829,37 +1093,46 @@ FC test).
   m/.style={draw, rounded corners=2pt, font=\small, inner sep=4pt, minimum width=17mm, align=center},
   arr/.style={-{Stealth[length=2mm]}, thick, black!70}
 ]
-\node[m] (m1) {M1\\ \scriptsize dist.\ keygen};
-\node[m, below=7mm of m1] (m3) {M3\\ \scriptsize conversion};
-\node[m, below=7mm of m3] (m5) {M5\\ \scriptsize parameters};
-\node[m, right=13mm of m1] (m2) {M2\\ \scriptsize keys $\to$ pipeline};
-\node[m, right=13mm of $(m2.east)!0.5!(m3.east)$, yshift=-3.5mm] (m4) {M4\\ \scriptsize two processes};
-\node[m, right=13mm of m4] (m6) {M6\\ \scriptsize scale + report};
+\node[m] (m5) {M5\\ \scriptsize parameters};
+\node[m, right=12mm of m5, yshift=8mm] (m1) {M1\\ \scriptsize dist.\ keygen};
+\node[m, right=12mm of m5, yshift=-8mm] (m3) {M3\\ \scriptsize conversion};
+\node[m, right=12mm of m1] (m2) {M2\\ \scriptsize keys $\to$ pipeline};
+\node[m, right=12mm of $(m2.east)!0.5!(m3.east)$] (m4) {M4\\ \scriptsize two processes};
+\node[m, right=12mm of m4] (m6) {M6\\ \scriptsize scale + report};
+\draw[arr] (m5) -- (m1);
+\draw[arr] (m5) -- (m3);
 \draw[arr] (m1) -- (m2);
 \draw[arr] (m2) -- (m4);
 \draw[arr] (m3) -- (m4);
 \draw[arr] (m4) -- (m6);
-\draw[arr, dashed] (m5) -- (m6);
 \end{tikzpicture}
-\caption{Milestone dependencies. M1, M3, M5 are mutually independent and can
-proceed in parallel; M5 (dashed) gates only the security column of M6's
-report.}
+\caption{Binding milestone dependencies. M5 pins the exact parameter regime
+before M1/M3 performance implementation. M1 and M3 may then proceed in
+parallel; M2 and M3 both gate M4, which gates M6.}
 \label{fig:milestones}
 \end{figure}
 
 \begin{description}
+\item[M5 --- Security parameter memo (first gate).] Implements D5.
+  \emph{Gate:} pinned $(n,c,t,p_0,p_1)$ with estimator evidence for
+  $\ge128$-bit splittable Ring-LPN security; headline tables regenerated at
+  the pinned parameters; condition~\eqref{eq:bootstrap}, NTT support, and GPU
+  memory re-checked.
 \item[M1 --- Distributed DPF keygen prototype (GPU-batched).]
   Implements D1. \emph{Gate:} for random additively shared $\alpha$ and
   multiplicatively shared $\beta$, the generated key halves full-domain
-  evaluate to the point function for every tree in a batch of $\ge256$; the
-  GPU key format is byte-identical so \texttt{gpuDpfZpFullEvalSum} runs
-  unmodified. \emph{Metrics:} real OT/OLE bytes, wall-clock per batch, and
-  end-to-end network rounds. \emph{Status:} the host artifact of
+  evaluate to the point function for every tree in a batch of $\ge256$.
+  Preserve the \texttt{gpuDpfZpFullEvalSum} API and key byte layout while
+  correcting its internal seed semantics to 128 secret bits with separate
+  tags; independently validate the centralized and distributed generators
+  against CPU/GPU evaluators, including seed-LSB-one controls.
+  \emph{Metrics:} real OT/OLE bytes, wall-clock per batch, and end-to-end
+  network rounds. \emph{Status:} the host artifact of
   \S\ref{sec:m1proto} discharges only the protocol-logic and host-format
   functional slice (batches $\ge256$, depth 14, unchanged host evaluator).
-  M1 still requires AES/CSPRNG evaluation, real silent-OT/OLE transport, GPU
-  level-synchronous batching, byte-identical GPU keys, and measured bytes and
-  rounds.
+  M1 still requires corrected full-128-bit AES/CSPRNG GPU semantics, real
+  silent-OT/OLE transport, GPU level-synchronous batching, compatible GPU
+  keys, and measured bytes and rounds.
 \item[M2 --- Real-generator transcript driven end-to-end by M1 keys.]
   \emph{Gate:} the existing 9/9 suite passes with
   \texttt{build\_spfss\_keys()} replaced by the two-party protocol; the only
@@ -868,21 +1141,21 @@ report.}
 \item[M3 --- PCG-sourced conversion + prefix comparator.] Implements D2.
   \emph{Gate:} the conversion suite (\texttt{test\_secure\_convert}) passes
   bit-exact with correlations consumed from the binary PCG instead of the
-  dealer block;
-  measured round count drops to $O(\log\ell)$ (Table~\ref{tab:convert}).
+  dealer block; measured round count drops to $O(\log\ell)$
+  (Table~\ref{tab:convert}).
 \item[M4 --- Two-process deployment over TCP.] Implements D4 (with D3's
   coin-tossed seeds). \emph{Gate:} the full pipeline (M1 keygen $\to$ expand
   $\to$ derandomize $\to$ convert $\to$ key write) runs as two OS processes on
-  two GPUs; the \texttt{gpuMatmulBeaver} contract passes; communication
-  measured and reported per layer.
-\item[M5 --- Security parameter memo.] Implements D5. \emph{Gate:} pinned
-  $(n, c, t)$ with estimator evidence for $\ge 128$-bit splittable Ring-LPN
-  security; headline tables regenerated at the pinned parameters; bootstrap
-  condition~\eqref{eq:bootstrap} re-checked.
+  two GPUs; the \texttt{gpuMatmulBeaver} contract passes; one complete
+  forward/bias/truncation/$dW$/$dX$/bias-gradient/dual-optimizer sequence
+  matches Orca's persistent mask/velocity handles, reduced matmul fields, and
+  next-state transitions; communication is measured and reported per layer.
 \item[M6 --- Scale and report.] \emph{Gate:} dealerless preprocessing for the
-  FC layers of one Orca model, with a table comparing trusted-dealer versus
-  dealerless preprocessing on time, communication, and key bytes --- with no
-  mixing of oracle-backed and protocol-backed numbers in a single column.
+  FC layers of one Orca model, with separate trusted-dealer, oracle-backed, and
+  protocol-backed columns plus one closest dealerless-preprocessing baseline
+  selected by S2's novelty audit. Compare time, communication, rounds, and key
+  bytes at matched assumptions/shapes; if compatible baseline code is
+  unavailable, give a reproducible normalized comparison and explain why.
 \end{description}
 
 \subsection{Reporting and claims discipline}
@@ -896,11 +1169,14 @@ correctness PRG.'' This is deliberately not a claim of computational
 privacy, 128-bit security, M1 completion, GPU byte compatibility, real
 transports, or two-process isolation. \emph{After M2}: ``linear-layer Beaver
 keys are generated by a two-party protocol whose only idealized component is
-the share conversion.'' \emph{After M4}: ``Orca FC preprocessing is
-dealerless (semi-honest, splittable Ring-LPN).'' \emph{Never claimable within
+the share conversion.'' \emph{After M4}: only ``the full protocol-backed
+preprocessing transcript runs as two processes''; the security claim remains
+blocked. \emph{Only after M5/S2 parameters and the S8 proof/implementation
+review}: ``Orca FC preprocessing is dealerless (two-party, semi-honest,
+splittable Ring-LPN, at the pinned parameters).'' \emph{Never claimable within
 this proposal's scope}: malicious security; any concrete security level
-before M5; ``dealerless Orca'' without the linear-layer qualifier. Every
-measured table in the final report carries the regenerating command;
+before M5; ``dealerless Orca'' without the linear-layer qualifier.
+Every measured table in the final report carries the regenerating command;
 oracle-backed and protocol-backed numbers never share a column; decisions
 carry written reversal conditions (e.g., the NTT-backend choice re-opens if
 M5 re-pins primes below 61 bits).
@@ -922,6 +1198,11 @@ edaBits/daBits~\cite{escudero2020edabits} and Rabbit-style
 comparison~\cite{makri2021rabbit}. The concrete hardness of our fully-split
 (splittable / quasi-abelian) Ring-LPN regime is analyzed by Bombar et
 al.~\cite{bombar2023quasiabelian}.
+The active GPU polynomial backend is cheddar-derived; GPU-NTT's Merge and
+four-step algorithms are separate upstream work by \"Ozcan, Javeed, and
+Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt}. We use that work only as an
+external measured comparison/dependency. Its algorithms, implementation, and
+performance are not contributions of this paper.
 
 \section{Summary}
 \label{sec:summary}
@@ -935,12 +1216,15 @@ parameters). D1 now has a host protocol-logic and compatibility prototype:
 corruption, and old-leak regression controls, using ideal transport
 functionalities and a non-cryptographic correctness PRG. This is research
 progress suitable for evaluating the M1 design, not evidence that M1 or
-computational privacy is complete. D1--D5 remove the remaining boundaries
-along M1--M6. Only after that ladder completes is ``dealerless Orca
-linear-layer preprocessing (semi-honest, splittable Ring-LPN)'' an honest,
-reproducible claim.
+computational privacy is complete. The S1 contract fixes the ideal
+functionality, exact transcript, leakage, simulators, and open proof
+obligations; it deliberately does not claim those obligations are discharged.
+D1--D5 remove the implementation boundaries along M1--M6. Only after the
+parameter gate and S8 proof/implementation review also close is ``dealerless
+Orca linear-layer preprocessing (two-party, semi-honest, splittable Ring-LPN,
+at the pinned parameters)'' an honest, reproducible claim.
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 \bibitem{jawalkar2024orca}
 N.~Jawalkar, K.~Gupta, A.~Basu, N.~Chandran, D.~Gupta, R.~Sharma.
 \emph{Orca: FSS-based Secure Training and Inference with GPUs}.
@@ -951,6 +1235,10 @@ CRYPTO 1991.
 \bibitem{boyle2015fss}
 E.~Boyle, N.~Gilboa, Y.~Ishai. \emph{Function Secret Sharing}.
 EUROCRYPT 2015.
+\bibitem{boyle2016fss}
+E.~Boyle, N.~Gilboa, Y.~Ishai.
+\emph{Function Secret Sharing: Improvements and Extensions}.
+CCS 2016, pp.~1292--1303. doi:10.1145/2976749.2978429.
 \bibitem{boyle2019efficient}
 E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, P.~Scholl.
 \emph{Efficient Pseudorandom Correlation Generators: Silent OT Extension and
@@ -983,6 +1271,17 @@ FC 2021.
 M.~Bombar, G.~Couteau, A.~Couvreur, C.~Ducros.
 \emph{Correlated Pseudorandomness from the Hardness of Quasi-Abelian
 Decoding}. CRYPTO 2023.
+\bibitem{ozcan2023gpuntt}
+A.~\c{S}.~\"Ozcan, E.~Sava\c{s}.
+\emph{Two Algorithms for Fast GPU Implementation of NTT}.
+Cryptology ePrint Archive, Paper 2023/1410, 2023.
+\bibitem{ozcan2025gpuntt}
+{\raggedright
+A.~\"Ozcan, A.~Javeed, E.~Sava\c{s}.
+\emph{High-Performance Number Theoretic Transform on GPU Through radix2-CT
+and 4-Step Algorithms}.
+IEEE Access 13 (2025), 87862--87883.
+doi:10.1109/ACCESS.2025.3570024.\par}
 \end{thebibliography}
 
 \end{document}

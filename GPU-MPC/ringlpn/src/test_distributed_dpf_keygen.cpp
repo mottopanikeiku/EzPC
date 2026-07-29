@@ -2,8 +2,8 @@
 //
 // WHAT THIS PROVES. The proposal's component D1 (milestone M1) claims that two
 // parties holding an *additively shared* point position (alpha = off0 + off1,
-// each summand private) and a *multiplicatively shared* payload
-// (beta = beta0 * beta1, each factor private) can generate the two halves of a
+// each summand private) and a *multiplicatively shared nonzero payload*
+// (beta = beta0 * beta1, each factor in Z_p^* and private) can generate the two halves of a
 // standard BGI-style DPF key without either party learning alpha, beta, or the
 // other party's key half. This file implements that protocol, party-separated,
 // on the host — and validates its output keys with the UNCHANGED existing
@@ -16,6 +16,10 @@
 //     but alpha is shared arithmetically. A secure ripple adder over the
 //     parties' XOR-shared summand bits produces XOR-shared bits of alpha:
 //     L-1 AND gates (Beaver bit triples), carries c' = c ^ (u^c)(v^c).
+//     The summands are the two parties' actual positions/regular-bucket
+//     offsets in [0,2^(L-1)); their non-wrapping sum is the intended triangular
+//     exponent distribution of the unreduced polynomial product, not a
+//     uniform point sampler.
 //   Phase B (level walk), for each level i:
 //     - Each party locally expands ALL its current-level nodes with the PRG
 //       and XORs the expansions into per-side aggregates S^L, S^R, T^L, T^R.
@@ -65,20 +69,31 @@
 //   generated key halves via unchanged spfss_host::dpfEvalAll sums to
 //   beta * [x == alpha] at every point of the domain. A centralized-keygen
 //   reference (spfss_host::dpfGen) is validated by the same evaluator in the
-//   same run (same-consumer control), and a corrupted-key negative control
-//   must FAIL evaluation. An omniscient regression model also reconstructs
-//   the removed sign opening and confirms that, conditioned on party 0's
-//   expanded leaf control bits, it selects a proper class containing alpha.
-//   This catches reintroduction of the old leak; it is not a privacy proof.
+//   same run (same-consumer control); independent corruptions of the root seed,
+//   sCW, tLCW, tRCW, and finalCW must all FAIL evaluation; invalid point/payload
+//   encodings must abort before consuming a correlation. An omniscient
+//   regression model also reconstructs the removed sign opening and confirms
+//   that, conditioned on party 0's expanded leaf control bits, it selects a
+//   proper class containing alpha. This catches reintroduction of the old
+//   leak; it is not a privacy proof. The gate separately verifies logical
+//   openings and the raw payload of both parties' revealed shares. At 62-bit p
+//   these are
+//     2*(L-1) + 130*L + 62      logical opened bits, and
+//     4*(L-1) + 260*L + 124     revealed-share bits.
+//   It also verifies one fresh functionality-randomness draw per bit triple
+//   and two per scalar OLE, plus consume-once correlation IDs with a duplicate
+//   reuse negative control. None of these counters is measured network traffic.
 
 #include "spfss_host.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 namespace {
 
@@ -138,59 +153,129 @@ inline Word convert_zp(U128 s, Word m) {
 
 // ----- transcript / cost accounting -----
 
+struct OpeningCosts {
+    uint64_t logical_bits = 0;       // common values reconstructed
+    uint64_t revealed_share_bits = 0; // sum of both parties' revealed shares
+};
+
 struct Costs {
     uint64_t string_ots = 0;      // 1-of-2 OTs on 128-bit strings
     uint64_t bit_triples = 0;     // Beaver bit triples (alpha-bit adder)
     uint64_t scalar_oles = 0;     // ideal Z_p OLE calls (payload)
-    uint64_t opened_bits = 0;     // every bit either party reveals outside OT
+    uint64_t functionality_random_words = 0;  // fresh triple/OLE mask draws
+    OpeningCosts phase_a;
+    OpeningCosts phase_b;
+    OpeningCosts phase_c;
+
+    uint64_t logical_opened_bits() const {
+        return phase_a.logical_bits + phase_b.logical_bits + phase_c.logical_bits;
+    }
+    uint64_t revealed_share_bits() const {
+        return phase_a.revealed_share_bits +
+               phase_b.revealed_share_bits +
+               phase_c.revealed_share_bits;
+    }
     void reset() { *this = Costs{}; }
 };
+
+inline uint64_t field_encoding_bits(Word p) {
+    uint64_t bits = 0;
+    for (Word x = p - 1; x != 0; x >>= 1) ++bits;
+    return bits;
+}
+
+inline uint64_t correlation_id(uint64_t tree_id, uint64_t phase,
+                               uint64_t ordinal) {
+    return (tree_id << 16) | (phase << 12) | ordinal;
+}
 
 // ----- ideal functionalities (party-separated interfaces, counted) -----
 
 struct Functionalities {
     uint64_t rng;  // functionality-internal randomness (triples, OLE masks)
     Costs *costs;
+    std::unordered_set<uint64_t> consumed_correlation_ids;
+
+    bool consume_once(uint64_t id) {
+        return consumed_correlation_ids.insert(id).second;
+    }
 
     // 1-of-2 string OT: sender supplies (m0, m1), receiver supplies choice.
     // Neither party sees the other's inputs; receiver gets m_choice.
-    U128 ot(U128 m0, U128 m1, uint8_t choice) {
+    bool ot(uint64_t id, U128 m0, U128 m1, uint8_t choice, U128 &out) {
+        if (!consume_once(id)) return false;
         costs->string_ots++;
-        return choice ? m1 : m0;
+        out = choice ? m1 : m0;
+        return true;
     }
 
     // XOR-shared random bit triple a & b = c.
     struct BitTripleShare { uint8_t a, b, c; };
-    void bit_triple(BitTripleShare &sh0, BitTripleShare &sh1) {
+    bool bit_triple(uint64_t id, BitTripleShare &sh0, BitTripleShare &sh1) {
+        if (!consume_once(id)) return false;
         costs->bit_triples++;
+        costs->functionality_random_words++;
         uint64_t r = splitmix64(rng);
         uint8_t a = r & 1, b = (r >> 1) & 1;
         uint8_t c = (uint8_t)(a & b);
         sh0.a = (r >> 2) & 1; sh1.a = a ^ sh0.a;
         sh0.b = (r >> 3) & 1; sh1.b = b ^ sh0.b;
         sh0.c = (r >> 4) & 1; sh1.c = c ^ sh0.c;
+        return true;
     }
 
     // Ideal scalar OLE: gamma0 + gamma1 = x0 * x1 (mod p), gamma0 uniform.
-    void ole(Word x0, Word x1, Word p, Word &gamma0, Word &gamma1) {
+    bool ole(uint64_t id, Word x0, Word x1, Word p,
+             Word &gamma0, Word &gamma1) {
+        if (!consume_once(id)) return false;
         costs->scalar_oles++;
+        costs->functionality_random_words += 2;
         uint64_t lo = splitmix64(rng), hi = splitmix64(rng);
         gamma0 = (Word)((((__uint128_t)hi << 64) | lo) % p);
         gamma1 = mod_sub(mod_mul(x0, x1, p), gamma0, p);
+        return true;
+    }
+
+    uint8_t open_phase_a_bit(uint8_t sh0, uint8_t sh1) {
+        costs->phase_a.logical_bits++;
+        costs->phase_a.revealed_share_bits += 2;
+        return (uint8_t)((sh0 ^ sh1) & 1);
+    }
+
+    U128 open_phase_b_seed_cw(U128 sh0, U128 sh1) {
+        costs->phase_b.logical_bits += 128;
+        costs->phase_b.revealed_share_bits += 2 * 128;
+        return sh0 ^ sh1;
+    }
+
+    uint8_t open_phase_b_flag_cw(uint8_t sh0, uint8_t sh1) {
+        costs->phase_b.logical_bits++;
+        costs->phase_b.revealed_share_bits += 2;
+        return (uint8_t)((sh0 ^ sh1) & 1);
+    }
+
+    Word open_phase_c_final_cw(Word sh0, Word sh1, Word p) {
+        const uint64_t bits = field_encoding_bits(p);
+        costs->phase_c.logical_bits += bits;
+        costs->phase_c.revealed_share_bits += 2 * bits;
+        return mod_add(sh0, sh1, p);
     }
 };
 
 // Shared-bit AND via a Beaver bit triple. x, y are XOR-shared; returns
 // XOR-shares of x & y. Opens d = x^a and e = y^b (2 bits, counted).
-inline void shared_and(uint8_t x0, uint8_t x1, uint8_t y0, uint8_t y1,
+inline bool shared_and(uint64_t correlation_id,
+                       uint8_t x0, uint8_t x1, uint8_t y0, uint8_t y1,
                        Functionalities &F, uint8_t &z0, uint8_t &z1) {
     Functionalities::BitTripleShare t0, t1;
-    F.bit_triple(t0, t1);
-    uint8_t d = (uint8_t)((x0 ^ t0.a) ^ (x1 ^ t1.a));  // opened
-    uint8_t e = (uint8_t)((y0 ^ t0.b) ^ (y1 ^ t1.b));  // opened
-    F.costs->opened_bits += 2;
+    if (!F.bit_triple(correlation_id, t0, t1)) return false;
+    uint8_t d = F.open_phase_a_bit((uint8_t)(x0 ^ t0.a),
+                                   (uint8_t)(x1 ^ t1.a));
+    uint8_t e = F.open_phase_a_bit((uint8_t)(y0 ^ t0.b),
+                                   (uint8_t)(y1 ^ t1.b));
     z0 = (uint8_t)(((d & e) ^ (d & t0.b) ^ (e & t0.a) ^ t0.c) & 1);
     z1 = (uint8_t)(((d & t1.b) ^ (e & t1.a) ^ t1.c) & 1);
+    return true;
 }
 
 // ----- per-party state -----
@@ -214,11 +299,17 @@ struct PartyState {
 
 // Generates one DPF key pair in spfss_host::DPFKey format. Every value that
 // crosses between P0 and P1 goes through F (OT/triples/OLE) or is an explicit
-// "open" (both shares revealed; counted in costs.opened_bits).
-bool distributed_dpf_gen(int log_domain, Word p,
+// opening whose logical value and two revealed shares are counted separately.
+bool distributed_dpf_gen(int log_domain, Word p, uint64_t tree_id,
                          PartyState &P0, PartyState &P1, Functionalities &F,
                          spfss_host::DPFKey &K0, spfss_host::DPFKey &K1) {
     const int L = log_domain;
+    const uint64_t half_domain = 1ULL << (L - 1);
+    if (P0.off >= half_domain || P1.off >= half_domain ||
+        P0.beta_factor == 0 || P0.beta_factor >= p ||
+        P1.beta_factor == 0 || P1.beta_factor >= p) {
+        return false;
+    }
 
     // --- Phase A: XOR-shared bits of alpha = off0 + off1 via secure adder ---
     P0.abit.assign(L, 0);
@@ -232,7 +323,9 @@ bool distributed_dpf_gen(int log_domain, Word p,
         if (j + 1 < L) {
             // carry' = c ^ (u^c)(v^c); shares of x=u^c: (u^c0, c1); y=v^c: (c0, v^c1)
             uint8_t z0, z1;
-            shared_and((uint8_t)(u ^ c0), c1, c0, (uint8_t)(v ^ c1), F, z0, z1);
+            if (!shared_and(correlation_id(tree_id, 1, j),
+                            (uint8_t)(u ^ c0), c1, c0,
+                            (uint8_t)(v ^ c1), F, z0, z1)) return false;
             c0 = (uint8_t)(z0 ^ c0);
             c1 = (uint8_t)(z1 ^ c1);
         }
@@ -281,20 +374,26 @@ bool distributed_dpf_gen(int log_domain, Word p,
         uint8_t a0 = P0.abit[bi], a1 = P1.abit[bi];
         // OT#1: P1 sender masks Z1 with fresh r1; P0 receiver with choice a0.
         U128 r1 = make_u128(splitmix64(P1.rng), splitmix64(P1.rng));
-        U128 w0 = F.ot(r1, r1 ^ Z1, a0);       // = r1 ^ a0*Z1
+        U128 w0;
+        if (!F.ot(correlation_id(tree_id, 2, 2 * i),
+                  r1, r1 ^ Z1, a0, w0)) return false;
         // OT#2: P0 sender masks Z0 with fresh r0; P1 receiver with choice a1.
         U128 r0 = make_u128(splitmix64(P0.rng), splitmix64(P0.rng));
-        U128 w1 = F.ot(r0, r0 ^ Z0, a1);       // = r0 ^ a1*Z0
+        U128 w1;
+        if (!F.ot(correlation_id(tree_id, 2, 2 * i + 1),
+                  r0, r0 ^ Z0, a1, w1)) return false;
         // Shares of a_i*Z, then of sCW; both parties open their sCW share.
         U128 sCW_sh0 = Sside[0][1] ^ (a0 ? Z0 : (U128)0) ^ w0 ^ r0;
         U128 sCW_sh1 = Sside[1][1] ^ (a1 ? Z1 : (U128)0) ^ w1 ^ r1;
-        U128 sCW = sCW_sh0 ^ sCW_sh1;          // opened (public key material)
-        F.costs->opened_bits += 2 * 128;
+        U128 sCW = F.open_phase_b_seed_cw(sCW_sh0, sCW_sh1);
 
-        // Flag CWs: linear — open shares directly.
-        uint8_t tLCW = (uint8_t)(((Tside[0][0] ^ a0 ^ 1) ^ (Tside[1][0] ^ a1)) & 1);
-        uint8_t tRCW = (uint8_t)(((Tside[0][1] ^ a0) ^ (Tside[1][1] ^ a1)) & 1);
-        F.costs->opened_bits += 2 * 2;
+        // Flag CWs: linear shares, opened as common key material.
+        uint8_t tLCW_sh0 = (uint8_t)((Tside[0][0] ^ a0 ^ 1) & 1);
+        uint8_t tLCW_sh1 = (uint8_t)((Tside[1][0] ^ a1) & 1);
+        uint8_t tRCW_sh0 = (uint8_t)((Tside[0][1] ^ a0) & 1);
+        uint8_t tRCW_sh1 = (uint8_t)((Tside[1][1] ^ a1) & 1);
+        uint8_t tLCW = F.open_phase_b_flag_cw(tLCW_sh0, tLCW_sh1);
+        uint8_t tRCW = F.open_phase_b_flag_cw(tRCW_sh0, tRCW_sh1);
 
         K0.sCW[i] = sCW; K1.sCW[i] = sCW;
         K0.tLCW[i] = tLCW; K1.tLCW[i] = tLCW;
@@ -331,7 +430,8 @@ bool distributed_dpf_gen(int log_domain, Word p,
     }
 
     Word gamma0, gamma1;
-    F.ole(P0.beta_factor, P1.beta_factor, p, gamma0, gamma1);
+    if (!F.ole(correlation_id(tree_id, 3, 0),
+               P0.beta_factor, P1.beta_factor, p, gamma0, gamma1)) return false;
     const Word d0 = mod_sub(gamma0, A0, p);
     const Word d1 = mod_sub(gamma1, A1, p);
     const Word s0 = F0;
@@ -339,8 +439,10 @@ bool distributed_dpf_gen(int log_domain, Word p,
 
     Word cross01_0, cross01_1;
     Word cross10_0, cross10_1;
-    F.ole(d0, s1, p, cross01_0, cross01_1);
-    F.ole(s0, d1, p, cross10_0, cross10_1);
+    if (!F.ole(correlation_id(tree_id, 3, 1),
+               d0, s1, p, cross01_0, cross01_1)) return false;
+    if (!F.ole(correlation_id(tree_id, 3, 2),
+               s0, d1, p, cross10_0, cross10_1)) return false;
     const Word w0 = mod_add(
         mod_add(mod_mul(d0, s0, p), cross01_0, p), cross10_0, p);
     const Word w1 = mod_add(
@@ -351,8 +453,7 @@ bool distributed_dpf_gen(int log_domain, Word p,
     // on a party's leaf control-bit vector: the sign selects that party's
     // alpha-containing control-bit class. Open only the standard public key
     // material finalCW, never d0, d1, s0, s1, or their sign.
-    const Word finalCW = mod_add(w0, w1, p);
-    F.costs->opened_bits += 2 * 62;
+    const Word finalCW = F.open_phase_c_final_cw(w0, w1, p);
     K0.finalCW = finalCW;
     K1.finalCW = finalCW;
     return true;
@@ -442,9 +543,9 @@ int main(int argc, char **argv) {
         else if (a == "--csv-header") args.csv_header = true;
         else { usage(argv[0]); return 2; }
     }
-    if (args.log_domain < 2 || args.log_domain > 20 || args.trees < 1 ||
+    if (args.log_domain < 2 || args.log_domain > 20 || args.trees < 6 ||
         (args.modulus_idx != 0 && args.modulus_idx != 1)) {
-        std::fprintf(stderr, "unsupported parameters (log-domain 2..20, trees >= 1, modulus-idx 0|1)\n");
+        std::fprintf(stderr, "unsupported parameters (log-domain 2..20, trees >= 6, modulus-idx 0|1)\n");
         return 2;
     }
     const Word p = args.modulus_idx == 0 ? kPrime62 : kPrime62Crt2;
@@ -452,7 +553,8 @@ int main(int argc, char **argv) {
     const uint64_t half = 1ULL << (L - 1);
 
     Costs costs;
-    Functionalities F{args.seed * 0x5851F42D4C957F2DULL + 0x1405ULL, &costs};
+    Functionalities F{
+        args.seed * 0x5851F42D4C957F2DULL + 0x1405ULL, &costs, {}};
     PartyState P0, P1;
     P0.rng = args.seed * 0x9E3779B97F4A7C15ULL + 1;
     P1.rng = args.seed * 0xC2B2AE3D27D4EB4FULL + 2;
@@ -471,7 +573,8 @@ int main(int argc, char **argv) {
     for (int tr = 0; tr < args.trees; ++tr) {
         // Private inputs. The harness knows both sides (it must, to check the
         // point function); the protocol code above never mixes them. The first
-        // two trees deterministically cover both position and payload edges.
+        // six trees deterministically cover point endpoints, asymmetric
+        // decompositions, carry propagation, and nonzero payload-factor edges.
         if (tr == 0) {
             P0.off = 0;
             P1.off = 0;
@@ -482,6 +585,26 @@ int main(int argc, char **argv) {
             P1.off = half - 1;
             P0.beta_factor = p - 1;
             P1.beta_factor = p - 1;
+        } else if (tr == 2) {
+            P0.off = half - 1;
+            P1.off = 0;
+            P0.beta_factor = p - 1;
+            P1.beta_factor = 1;
+        } else if (tr == 3) {
+            P0.off = 0;
+            P1.off = half - 1;
+            P0.beta_factor = 1;
+            P1.beta_factor = 1;
+        } else if (tr == 4) {
+            P0.off = half - 1;
+            P1.off = 1;
+            P0.beta_factor = (p - 1) / 2;
+            P1.beta_factor = 2;
+        } else if (tr == 5) {
+            P0.off = 1;
+            P1.off = half - 1;
+            P0.beta_factor = 2;
+            P1.beta_factor = (p + 1) / 2;
         } else {
             P0.off = splitmix64(harness_rng) % half;
             P1.off = splitmix64(harness_rng) % half;
@@ -491,7 +614,7 @@ int main(int argc, char **argv) {
         uint64_t alpha = P0.off + P1.off;
         Word beta = mod_mul(P0.beta_factor, P1.beta_factor, p);
 
-        bool ok = distributed_dpf_gen(L, p, P0, P1, F, K0, K1);
+        bool ok = distributed_dpf_gen(L, p, (uint64_t)tr, P0, P1, F, K0, K1);
         if (ok) {
             const OldSignLeakObservation old_sign =
                 observe_old_sign_opening_leak(P0, P1, alpha, p);
@@ -516,8 +639,11 @@ int main(int argc, char **argv) {
     double total_us = std::chrono::duration<double, std::micro>(
                           std::chrono::steady_clock::now() - t_start).count();
 
-    // Negative control: a corrupted correction word must fail validation.
-    bool negctrl_ok = false;
+    // Negative controls: corrupt the root seed and every public
+    // correction-word class independently; each mutation must fail
+    // full-domain validation.
+    int corruption_controls_passed = 0;
+    constexpr int kCorruptionControls = 5;
     {
         P0.off = splitmix64(harness_rng) % half;
         P1.off = splitmix64(harness_rng) % half;
@@ -525,45 +651,150 @@ int main(int argc, char **argv) {
         P1.beta_factor = 1 + splitmix64(harness_rng) % (p - 1);
         uint64_t alpha = P0.off + P1.off;
         Word beta = mod_mul(P0.beta_factor, P1.beta_factor, p);
-        if (distributed_dpf_gen(L, p, P0, P1, F, K0, K1)) {
-            K1.sCW[L / 2] ^= ((U128)1 << 33);
-            negctrl_ok = !validate_pair(K0, K1, alpha, beta, p, e0, e1);
+        if (distributed_dpf_gen(L, p, (uint64_t)args.trees,
+                                P0, P1, F, K0, K1)) {
+            auto corruption_fails = [&](spfss_host::DPFKey corrupted) {
+                return !validate_pair(K0, corrupted, alpha, beta, p, e0, e1);
+            };
+            auto corrupted = K1;
+            corrupted.seed ^= ((U128)1 << 127);
+            corruption_controls_passed += corruption_fails(corrupted);
+            corrupted = K1;
+            corrupted.sCW[L / 2] ^= ((U128)1 << 33);
+            corruption_controls_passed += corruption_fails(corrupted);
+            corrupted = K1;
+            corrupted.tLCW[L / 2] ^= 1;
+            corruption_controls_passed += corruption_fails(corrupted);
+            corrupted = K1;
+            corrupted.tRCW[L / 2] ^= 1;
+            corruption_controls_passed += corruption_fails(corrupted);
+            corrupted = K1;
+            corrupted.finalCW = mod_add(corrupted.finalCW, 1, p);
+            corruption_controls_passed += corruption_fails(corrupted);
         }
     }
 
+    // Invalid private encodings must abort before consuming any ideal
+    // correlation or emitting a partial key.
+    int invalid_inputs_rejected = 0;
+    constexpr int kInvalidInputControls = 6;
+    auto rejects_invalid = [&](uint64_t control_id,
+                               uint64_t off0, uint64_t off1,
+                               Word beta0, Word beta1) {
+        const uint64_t random_words_before = costs.functionality_random_words;
+        const size_t ids_before = F.consumed_correlation_ids.size();
+        PartyState I0, I1;
+        I0.off = off0; I0.beta_factor = beta0; I0.rng = 1;
+        I1.off = off1; I1.beta_factor = beta1; I1.rng = 2;
+        spfss_host::DPFKey IKey0, IKey1;
+        const bool rejected = !distributed_dpf_gen(
+            L, p, control_id, I0, I1, F, IKey0, IKey1);
+        return rejected &&
+               costs.functionality_random_words == random_words_before &&
+               F.consumed_correlation_ids.size() == ids_before;
+    };
+    const uint64_t invalid_id_base = (uint64_t)args.trees + 1;
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base, half, 0, 1, 1);
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base + 1, 0, half, 1, 1);
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base + 2, 0, 0, 0, 1);
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base + 3, 0, 0, 1, 0);
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base + 4, 0, 0, p, 1);
+    invalid_inputs_rejected += rejects_invalid(invalid_id_base + 5, 0, 0, 1, p);
+
+    Functionalities::BitTripleShare duplicate0, duplicate1;
+    const uint64_t random_words_before_reuse =
+        costs.functionality_random_words;
+    const bool correlation_reuse_control_ok =
+        !F.bit_triple(correlation_id(0, 1, 0), duplicate0, duplicate1) &&
+        costs.functionality_random_words == random_words_before_reuse;
+
     const uint64_t trees = (uint64_t)args.trees;
+    const uint64_t invocations = (uint64_t)args.trees + 1;  // trees + one control-key generation
+    const uint64_t field_bits = field_encoding_bits(p);
+    const int centralized_expected = std::min(args.trees, 8);
     const bool old_sign_control_ok =
         old_sign_invariant_ok && old_sign_proper_subset_observed;
+    const bool transcript_accounting_ok =
+        costs.string_ots == invocations * 2 * (uint64_t)L &&
+        costs.bit_triples == invocations * (uint64_t)(L - 1) &&
+        costs.scalar_oles == invocations * 3 &&
+        costs.phase_a.logical_bits == invocations * 2 * (uint64_t)(L - 1) &&
+        costs.phase_a.revealed_share_bits == invocations * 4 * (uint64_t)(L - 1) &&
+        costs.phase_b.logical_bits == invocations * 130 * (uint64_t)L &&
+        costs.phase_b.revealed_share_bits == invocations * 260 * (uint64_t)L &&
+        costs.phase_c.logical_bits == invocations * field_bits &&
+        costs.phase_c.revealed_share_bits == invocations * 2 * field_bits;
+    const bool ideal_mask_draw_accounting_ok =
+        costs.functionality_random_words ==
+        costs.bit_triples + 2 * costs.scalar_oles;
+    auto per_tree = [invocations](uint64_t value) {
+        return (double)value / (double)invocations;
+    };
     if (args.csv_header) {
         std::printf("modulus,log_domain,trees,pass,fail,centralized_ref_pass,negctrl_expected_fail,"
+                    "corruption_controls,invalid_inputs_rejected,"
                     "old_sign_opening_leak_control,string_ots_per_tree,bit_triples_per_tree,"
-                    "scalar_oles_per_tree,opened_bits_per_tree,keygen_plus_eval_us_per_tree,"
-                    "validation\n");
+                    "scalar_oles_per_tree,phase_a_logical_opened_bits_per_tree,"
+                    "phase_a_revealed_share_bits_per_tree,phase_b_logical_opened_bits_per_tree,"
+                    "phase_b_revealed_share_bits_per_tree,phase_c_logical_opened_bits_per_tree,"
+                    "phase_c_revealed_share_bits_per_tree,logical_opened_bits_per_tree,"
+                    "revealed_share_bits_per_tree,transcript_accounting,"
+                    "ideal_mask_draw_accounting,correlation_reuse_control,"
+                    "keygen_plus_eval_us_per_tree,validation\n");
     }
-    bool all_ok = fail == 0 && pass == args.trees && centralized_pass == 8 &&
-                  negctrl_ok && old_sign_control_ok;
-    std::printf("q62%s,%d,%d,%d,%d,%d,%s,%s,%.1f,%.1f,%.1f,%.1f,%.1f,%s\n",
+    const bool negctrl_ok =
+        corruption_controls_passed == kCorruptionControls;
+    const bool invalidctrl_ok =
+        invalid_inputs_rejected == kInvalidInputControls;
+    bool all_ok = fail == 0 && pass == args.trees &&
+                  centralized_pass == centralized_expected &&
+                  negctrl_ok && invalidctrl_ok && old_sign_control_ok &&
+                  transcript_accounting_ok && ideal_mask_draw_accounting_ok &&
+                  correlation_reuse_control_ok;
+    std::printf("q62%s,%d,%d,%d,%d,%d,%s,%d/%d,%d/%d,%s,"
+                "%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s,%s,%s,%.1f,%s\n",
                 args.modulus_idx == 0 ? "" : "b", L, args.trees, pass, fail,
                 centralized_pass, negctrl_ok ? "yes" : "NO",
+                corruption_controls_passed, kCorruptionControls,
+                invalid_inputs_rejected, kInvalidInputControls,
                 old_sign_control_ok ? "yes" : "NO",
-                (double)costs.string_ots / (trees + 1),
-                (double)costs.bit_triples / (trees + 1),
-                (double)costs.scalar_oles / (trees + 1),
-                (double)costs.opened_bits / (trees + 1),
+                per_tree(costs.string_ots),
+                per_tree(costs.bit_triples),
+                per_tree(costs.scalar_oles),
+                per_tree(costs.phase_a.logical_bits),
+                per_tree(costs.phase_a.revealed_share_bits),
+                per_tree(costs.phase_b.logical_bits),
+                per_tree(costs.phase_b.revealed_share_bits),
+                per_tree(costs.phase_c.logical_bits),
+                per_tree(costs.phase_c.revealed_share_bits),
+                per_tree(costs.logical_opened_bits()),
+                per_tree(costs.revealed_share_bits()),
+                transcript_accounting_ok ? "pass" : "FAIL",
+                ideal_mask_draw_accounting_ok ? "pass" : "FAIL",
+                correlation_reuse_control_ok ? "pass" : "FAIL",
                 total_us / trees,
                 all_ok ? "pass" : "FAIL");
     std::fprintf(stderr,
-                 "[distributed-dpf] L=%d trees=%d: %d/%d pass, centralized ref %d/8, "
-                 "negative control %s, old-sign leak regression %s; per tree: "
-                 "%.0f string-OTs, %.0f bit-triples, %.0f OLE, %.0f opened bits; "
+                 "[distributed-dpf] L=%d trees=%d: %d/%d pass, centralized ref %d/%d, "
+                 "corruption controls %d/%d, invalid-input controls %d/%d, "
+                 "old-sign leak regression %s, transcript accounting %s, "
+                 "ideal-mask-draw accounting %s, correlation-reuse control %s; per tree: "
+                 "%.0f string-OTs, %.0f bit-triples, %.0f OLE, "
+                 "%.0f logical-open bits, %.0f revealed-share bits; "
                  "%.0f us/tree (incl. validation eval %.0f us)\n",
-                 L, args.trees, pass, args.trees, centralized_pass,
-                 negctrl_ok ? "failed as expected" : "DID NOT FAIL",
+                 L, args.trees, pass, args.trees,
+                 centralized_pass, centralized_expected,
+                 corruption_controls_passed, kCorruptionControls,
+                 invalid_inputs_rejected, kInvalidInputControls,
                  old_sign_control_ok ? "observed" : "NOT OBSERVED",
-                 (double)costs.string_ots / (trees + 1),
-                 (double)costs.bit_triples / (trees + 1),
-                 (double)costs.scalar_oles / (trees + 1),
-                 (double)costs.opened_bits / (trees + 1),
+                 transcript_accounting_ok ? "pass" : "FAIL",
+                 ideal_mask_draw_accounting_ok ? "pass" : "FAIL",
+                 correlation_reuse_control_ok ? "pass" : "FAIL",
+                 per_tree(costs.string_ots),
+                 per_tree(costs.bit_triples),
+                 per_tree(costs.scalar_oles),
+                 per_tree(costs.logical_opened_bits()),
+                 per_tree(costs.revealed_share_bits()),
                  total_us / trees, eval_us / trees);
     return all_ok ? 0 : 1;
 }

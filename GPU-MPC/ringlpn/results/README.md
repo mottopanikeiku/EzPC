@@ -14,7 +14,7 @@ below; nothing writes to this top level anymore.
 | `vole/` | Standalone VOLE expansion prototype | `run_vole_sweep.sh` |
 | `orca_fc/` | Orca FC artifacts: keywriter demo, ideal-OLE transcript, **real-OLE slot-packed transcript**, Zp bridge | `run_orca_fc_ringlpn_demo.sh`, `run_orca_fc_ideal_ole_transcript.sh`, `run_orca_fc_real_ole_transcript.sh`, `run_orca_zp_bridge_test.sh` |
 | `secure_convert/` | Secure Z_M -> Z_2^bw conversion prototype | `run_secure_convert_test.sh` |
-| `dpf/` | Distributed DPF keygen protocol-logic CSV/log plus older online-keygen memory-efficiency track | `run_distributed_dpf_keygen.sh`; tests/fss bench (older track, manual) |
+| `dpf/` | Distributed DPF keygen protocol-logic CSV/log: split transcript counters, ideal-functionality mask-draw accounting, consume-once correlation-ID control, invalid-input and independent corruption controls; plus older online-keygen memory-efficiency track | `run_distributed_dpf_keygen.sh`; tests/fss bench (older track, manual) |
 | `profiling/` | VTune hotspot/memory captures | `run_vtune_*.sh` |
 | `outreach/` | Abstracts, posters, professor memos/status emails | hand-written |
 | `archive/` | Superseded one-offs: early spot checks, `*_regular_patch`, `*_after_linear`, old plan drafts | frozen |
@@ -24,9 +24,10 @@ below; nothing writes to this top level anymore.
 | File | What it is |
 |---|---|
 | `reports/publication_readiness_plan_2026_07_21.md` | **BINDING PUBLICATION ROADMAP**: integrated dealerless Orca FC thesis; advisor-first report; S1--S10 dependency order, security proof and parameter gates, M1--M6 implementation/evaluation criteria, risks, evidence matrix, per-stage user consultation, and required checkpoint commit |
-| `reports/session_handoff_2026_07_21.md` | **START HERE for catch-up**: corrected M1 protocol-logic artifact, fresh verification, v2.2 paper state, security boundaries, open milestones |
-| `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **Corrected M1 host protocol-logic prototype**: party-separated and functionally validated by unchanged evaluator using ideal OT/triple/OLE and non-cryptographic correctness PRG; 2,432 trees, three OLEs/tree, old-sign regression; `dpf/distributed_dpf_keygen_prototype.{csv,log}` |
-| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **CURRENT proposal (v2.2, 2026-07-21)**: corrected Phase C, security boundary, tree-accurate keygen/OLE/bootstrap costs, regenerated Table 5, M1 status and claims ladder; stable filename; supersedes the 2026-06-10 draft |
+| `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **S1 CONTRACT FROZEN FOR ADVISOR REVIEW** after the requested Opus 5 model-assisted audit: two-level `F_FC`/`F_DDPF` functionality, exact three-phase DPF and integrated FC transcripts, complete bias/velocity topology, permitted/prohibited leakage, simulators for either corrupted party, position-distribution and proof obligations; not a security proof or independent human cryptographic review |
+| `reports/session_handoff_2026_07_21.md` | **START HERE for catch-up**: corrected M1 protocol-logic artifact, fresh verification, v2.3 S1 paper state, security boundaries, open milestones |
+| `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **Corrected M1 host protocol-logic prototype**: party-separated and functionally validated by unchanged evaluator using ideal OT/triple/OLE and non-cryptographic correctness PRG; 2,432 trees, three OLEs/tree, old-sign regression, 5/5 corruptions, 6/6 invalid inputs, ideal-mask-draw and correlation-reuse controls, executable split accounting (1,908 logical / 3,816 revealed-share bits at depth 14); `dpf/distributed_dpf_keygen_prototype.{csv,log}` |
+| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **CURRENT proposal (v2.3, 2026-07-29)**: S1 ideal functionality/transcript/leakage/simulators/proof obligations; corrected split transcript accounting and Table 5; GPU-NTT provenance; M1 status and claims ladder; stable filename; supersedes the 2026-06-10 draft |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |
 | `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |

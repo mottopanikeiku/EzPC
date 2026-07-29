@@ -284,15 +284,18 @@ the feature-flagged keywriter), and both keep the existing oracle as the referen
   ripple comparator (public `A` + boolean-shared `R`) to extract the wrap bit
   `w = [S >= M]` via boolean Beaver triples, a daBit B2A of `w`, and the local
   correction `r_i = (z_i - M*w_i) mod 2^bw`. Matches the oracle `exactZmToRingShares`
-  **bit-for-bit** on randomized, forced-wrap, and layer-shaped (bounded-dot) vectors;
-  q64 and q128 moduli both pass with zero mismatches.
-- Measured cost per converted scalar (the Route-A vs Route-B input):
-  - q64 (ell=63): ~124 AND triples, 63 edaBit bits, 1 daBit, 375 opened bits, 125 seq. rounds.
-  - q128 (ell=125): ~248 AND triples, 125 edaBit bits, 1 daBit, 747 opened bits, 249 seq. rounds.
+  **bit-for-bit** on deterministic sums `0,M-1,M,2M-2`, randomized/forced-wrap,
+  and layer-shaped (bounded-dot) vectors; q64 and q128 pass with zero mismatches.
+- Measured cost per converted scalar (the Route-A vs Route-B input; opening
+  units corrected 2026-07-29):
+  - q64 (ell=63): 124 AND triples, 63 edaBit bits, 1 daBit, 312 logical opened
+    bits, 624 raw revealed-share bits, 125 post-mask dependency rounds.
+  - q128 (ell=125): 248 AND triples, 125 edaBit bits, 1 daBit, 622 logical
+    opened bits, 1,244 raw revealed-share bits, 249 post-mask dependency rounds.
 - Honest scope: the edaBits/daBits/boolean-triples are produced by a labeled prototype
   offline dealer; in the full dealerless system these come from PCG/OT (silent OT ->
-  edaBits). The high sequential-round count is the ripple's; the standard edaBits
-  constant-round comparison removes it at the cost of more correlated randomness.
+  edaBits). The high post-mask dependency-round count is the ripple's; the
+  standard edaBits constant-round comparison removes it at the cost of more correlated randomness.
 
 ### Implication for Route A vs Route B (kept open per user decision)
 

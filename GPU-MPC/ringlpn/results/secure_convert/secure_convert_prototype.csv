@@ -1,5 +1,5 @@
-mode,requested_qbits,actual_qbits,bw,ell,trials,forced_wraps,inner,rand_wrap_mismatch,rand_convert_mismatch,rand_oracle_mismatch,layer_wrap_mismatch,layer_convert_mismatch,layer_oracle_mismatch,conversions,and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,opened_bits_per_conv,and_rounds_per_conv,bit_exact_match
-secure_convert_edabit_ripple,64,62,16,63,4000,512,8,0,0,0,0,0,0,8512,124,63,1,375,125,pass
-secure_convert_edabit_ripple,64,62,24,63,4000,512,8,0,0,0,0,0,0,8512,124,63,1,375,125,pass
-secure_convert_edabit_ripple,128,124,16,125,4000,512,8,0,0,0,0,0,0,8512,248,125,1,747,249,pass
-secure_convert_edabit_ripple,128,124,32,125,4000,512,16,0,0,0,0,0,0,8512,248,125,1,747,249,pass
+mode,requested_qbits,actual_qbits,bw,ell,trials,forced_wraps,inner,boundary_trials,boundary_wrap_mismatch,boundary_convert_mismatch,boundary_oracle_mismatch,rand_wrap_mismatch,rand_convert_mismatch,rand_oracle_mismatch,layer_wrap_mismatch,layer_convert_mismatch,layer_oracle_mismatch,conversions,and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,logical_opened_bits_per_conv,revealed_share_bits_per_conv,post_mask_dependency_rounds_per_conv,transcript_accounting,bit_exact_match
+secure_convert_edabit_ripple,64,62,16,63,4000,512,8,4,0,0,0,0,0,0,0,0,0,8516,124,63,1,312,624,125,pass,pass
+secure_convert_edabit_ripple,64,62,24,63,4000,512,8,4,0,0,0,0,0,0,0,0,0,8516,124,63,1,312,624,125,pass,pass
+secure_convert_edabit_ripple,128,124,16,125,4000,512,8,4,0,0,0,0,0,0,0,0,0,8516,248,125,1,622,1244,249,pass,pass
+secure_convert_edabit_ripple,128,124,32,125,4000,512,16,4,0,0,0,0,0,0,0,0,0,8516,248,125,1,622,1244,249,pass,pass

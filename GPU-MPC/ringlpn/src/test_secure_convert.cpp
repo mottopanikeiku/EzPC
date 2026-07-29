@@ -93,11 +93,12 @@ struct BitShare {
 
 struct CostCounters {
     uint64_t conversions = 0;
-    uint64_t edabit_bits = 0;     // boolean-shared random bits consumed
-    uint64_t and_triples = 0;     // boolean Beaver triples consumed
-    uint64_t dabits = 0;          // daBits consumed for B2A
-    uint64_t opened_bits = 0;     // total bits revealed online
-    uint64_t and_rounds = 0;      // sequential AND rounds (constant-round achievable)
+    uint64_t edabit_bits = 0;       // boolean-shared random bits consumed
+    uint64_t and_triples = 0;       // boolean Beaver triples consumed
+    uint64_t dabits = 0;            // daBits consumed for B2A
+    uint64_t logical_opened_bits = 0;
+    uint64_t revealed_share_bits = 0;
+    uint64_t post_mask_dependency_rounds = 0;  // excludes the initial masked-value opening
 };
 
 // One boolean AND triple, party-separated.
@@ -123,8 +124,9 @@ static BitShare secure_and(const BitShare &x, const BitShare &y,
     const uint8_t d = (x.s0 ^ t.a.s0) ^ (x.s1 ^ t.a.s1);  // open x ^ a
     const uint8_t e = (y.s0 ^ t.b.s0) ^ (y.s1 ^ t.b.s1);  // open y ^ b
     cost.and_triples += 1;
-    cost.opened_bits += 2;
-    cost.and_rounds += 1;
+    cost.logical_opened_bits += 2;
+    cost.revealed_share_bits += 4;
+    cost.post_mask_dependency_rounds += 1;
     BitShare z;
     // z = c ^ (d & b) ^ (e & a) ^ (d & e), with d&e placed on party 0 only.
     z.s0 = t.c.s0 ^ (d & t.b.s0) ^ (e & t.a.s0) ^ (d & e);
@@ -241,8 +243,9 @@ static ConvOut secure_convert(u128 z0, u128 z1, u128 modulus, int bw, int ell, u
     u128 y0 = (z0 + eda.r0) % L;
     u128 y1 = (z1 + eda.r1) % L;
     u128 A = (y0 + y1) % L;
-    cost.opened_bits += 2ull * ell;  // both parties reveal an ell-bit masked share
-    cost.and_rounds += 0;            // (this opening is its own round; tracked separately if needed)
+    cost.logical_opened_bits += ell;
+    cost.revealed_share_bits += 2ull * ell;
+    // This initial masked-value opening is excluded from the post-mask counter.
 
     // Step 2a: S = (A - R) mod L = A + NOT(R) + 1 (mod L). Boolean-shared sum bits.
     std::vector<BitShare> notR(ell);
@@ -260,8 +263,9 @@ static ConvOut secure_convert(u128 z0, u128 z1, u128 modulus, int bw, int ell, u
     // Step 3: B2A of wrap bit -> arithmetic shares over Z_{2^bw}.
     Dabit da = make_dabit(bw, rng, cost);
     const uint8_t e = wrap.clear() ^ da.b.clear();  // open w ^ d
-    cost.opened_bits += 1;
-    cost.and_rounds += 1;
+    cost.logical_opened_bits += 1;
+    cost.revealed_share_bits += 2;
+    cost.post_mask_dependency_rounds += 1;
     // w_arith = e + d - 2*e*d : party0 carries the public e term.
     uint64_t wa0 = ring_reduce(u128(e) + da.a0 - u128(2) * e * da.a0 + (u128(1) << bw) * 4, bw);
     uint64_t wa1 = ring_reduce(u128(da.a1) - u128(2) * e * da.a1 + (u128(1) << bw) * 4, bw);
@@ -321,6 +325,36 @@ static Stats run_random_trials(const Args &args, int ell, u128 L, std::mt19937_6
         uint64_t o0 = 0, o1 = 0;
         exact_zm_to_ring_shares(z0, z1, args.modulus, args.bw, o0, o1);
         if (ring_add(sc.r0, sc.r1, args.bw) != ring_add(o0, o1, args.bw)) ++st.oracle_mismatch;
+    }
+    return st;
+}
+
+static Stats run_boundary_trials(const Args &args, int ell, u128 L,
+                                 std::mt19937_64 &rng, CostCounters &cost) {
+    Stats st;
+    constexpr int kCases = 4;
+    const u128 z0[kCases] = {0, args.modulus - 1, 1, args.modulus - 1};
+    const u128 z1[kCases] = {0, 0, args.modulus - 1, args.modulus - 1};
+    st.trials = kCases;
+    for (int i = 0; i < kCases; ++i) {
+        const u128 sum = z0[i] + z1[i];
+        const u128 clear = sum % args.modulus;
+        const uint8_t true_wrap = sum >= args.modulus ? 1 : 0;
+        const uint64_t target = ring_reduce(clear, args.bw);
+
+        ConvOut sc = secure_convert(
+            z0[i], z1[i], args.modulus, args.bw, ell, L, rng, cost);
+        if (sc.wrap != true_wrap) ++st.wrap_mismatch;
+        if (ring_add(sc.r0, sc.r1, args.bw) != target) {
+            ++st.convert_mismatch;
+        }
+        uint64_t o0 = 0, o1 = 0;
+        exact_zm_to_ring_shares(
+            z0[i], z1[i], args.modulus, args.bw, o0, o1);
+        if (ring_add(sc.r0, sc.r1, args.bw) !=
+            ring_add(o0, o1, args.bw)) {
+            ++st.oracle_mismatch;
+        }
     }
     return st;
 }
@@ -402,35 +436,65 @@ int main(int argc, char **argv) {
     const u128 L = u128(1) << ell;
 
     CostCounters cost;
+    Stats boundary = run_boundary_trials(args, ell, L, rng, cost);
     Stats rnd = run_random_trials(args, ell, L, rng, cost);
     Stats layer = run_layer_trials(args, ell, L, rng, cost);
 
     const bool exact_match =
-        rnd.wrap_mismatch == 0 && rnd.convert_mismatch == 0 && rnd.oracle_mismatch == 0 &&
-        layer.wrap_mismatch == 0 && layer.convert_mismatch == 0 && layer.oracle_mismatch == 0;
+        boundary.wrap_mismatch == 0 && boundary.convert_mismatch == 0 &&
+        boundary.oracle_mismatch == 0 &&
+        rnd.wrap_mismatch == 0 && rnd.convert_mismatch == 0 &&
+        rnd.oracle_mismatch == 0 && layer.wrap_mismatch == 0 &&
+        layer.convert_mismatch == 0 && layer.oracle_mismatch == 0;
+    const uint64_t expected_triples =
+        cost.conversions * static_cast<uint64_t>(2 * ell - 2);
+    const uint64_t expected_logical_opened =
+        cost.conversions * static_cast<uint64_t>(5 * ell - 3);
+    const uint64_t expected_revealed_shares =
+        cost.conversions * static_cast<uint64_t>(10 * ell - 6);
+    const uint64_t expected_post_mask_rounds =
+        cost.conversions * static_cast<uint64_t>(2 * ell - 1);
+    const bool transcript_accounting =
+        cost.and_triples == expected_triples &&
+        cost.edabit_bits == cost.conversions * static_cast<uint64_t>(ell) &&
+        cost.dabits == cost.conversions &&
+        cost.logical_opened_bits == expected_logical_opened &&
+        cost.revealed_share_bits == expected_revealed_shares &&
+        cost.post_mask_dependency_rounds == expected_post_mask_rounds;
 
     const double conv = static_cast<double>(cost.conversions);
     const double and_per = conv ? cost.and_triples / conv : 0.0;
     const double eda_per = conv ? cost.edabit_bits / conv : 0.0;
-    const double bits_per = conv ? cost.opened_bits / conv : 0.0;
-    const double rounds_per = conv ? cost.and_rounds / conv : 0.0;
+    const double logical_per =
+        conv ? cost.logical_opened_bits / conv : 0.0;
+    const double revealed_per =
+        conv ? cost.revealed_share_bits / conv : 0.0;
+    const double post_mask_rounds_per =
+        conv ? cost.post_mask_dependency_rounds / conv : 0.0;
 
     if (args.csv_header) {
         std::cout << "mode,requested_qbits,actual_qbits,bw,ell,trials,forced_wraps,inner,"
+                  << "boundary_trials,boundary_wrap_mismatch,"
+                  << "boundary_convert_mismatch,boundary_oracle_mismatch,"
                   << "rand_wrap_mismatch,rand_convert_mismatch,rand_oracle_mismatch,"
                   << "layer_wrap_mismatch,layer_convert_mismatch,layer_oracle_mismatch,"
                   << "conversions,and_triples_per_conv,edabit_bits_per_conv,"
-                  << "dabits_per_conv,opened_bits_per_conv,and_rounds_per_conv,"
-                  << "bit_exact_match\n";
+                  << "dabits_per_conv,logical_opened_bits_per_conv,"
+                  << "revealed_share_bits_per_conv,post_mask_dependency_rounds_per_conv,"
+                  << "transcript_accounting,bit_exact_match\n";
     }
     std::cout << "secure_convert_edabit_ripple," << args.qbits << ","
               << (args.qbits == 128 ? 124 : 62) << "," << args.bw << "," << ell << ","
               << args.trials << "," << args.forced_wraps << "," << args.inner << ","
+              << boundary.trials << "," << boundary.wrap_mismatch << ","
+              << boundary.convert_mismatch << "," << boundary.oracle_mismatch << ","
               << rnd.wrap_mismatch << "," << rnd.convert_mismatch << "," << rnd.oracle_mismatch << ","
               << layer.wrap_mismatch << "," << layer.convert_mismatch << "," << layer.oracle_mismatch << ","
               << cost.conversions << "," << and_per << "," << eda_per << ","
-              << (conv ? cost.dabits / conv : 0.0) << "," << bits_per << "," << rounds_per << ","
+              << (conv ? cost.dabits / conv : 0.0) << "," << logical_per << ","
+              << revealed_per << "," << post_mask_rounds_per << ","
+              << (transcript_accounting ? "pass" : "fail") << ","
               << (exact_match ? "pass" : "fail") << "\n";
 
-    return exact_match ? 0 : 2;
+    return exact_match && transcript_accounting ? 0 : 2;
 }
