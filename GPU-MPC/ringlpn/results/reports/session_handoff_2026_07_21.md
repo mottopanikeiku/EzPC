@@ -1,4 +1,4 @@
-# Session handoff — 2026-07-21 (corrected M1 host artifact + proposal v2.3; S1 update 2026-07-29)
+# Session handoff — corrected M1 host artifact + proposal v2.3; S1/S2 update 2026-07-29
 
 **Read after `CLAUDE.md`.** This is the current handoff. The 2026-07-10
 handoff is historical.
@@ -27,6 +27,17 @@ independent human cryptographic review or a security proof.
 The user fixed Alp as the sole paper and commit author. Use the configured Git
 identity only; never add `Co-Authored-By` or generated-by trailers. This does
 not weaken citation, license, provenance, or overlap-disclosure obligations.
+S2 is blocked before S3. The preliminary audit found a contradiction between
+BCG+20's literal projection rule and Table 1, no proved mapping from dependent
+projected noise to the accepted finite-field estimator, and no complete epoch
+budget. The preliminary `n=2^14,c=4,t=16` point leaves only 25% raw capacity
+after keygen reserve and is not pinned. Direct 2026 fully distributed DMPF and
+SLAMP-FSS work plus Stationary-SD, direct-`Z_(2^k)`, and QA-SD/WHT PCGs require
+an architecture decision. Private-project ownership/license/overlap remains
+unresolved; Cheddar attribution, reconstructed source pin, local delta, MIT
+notice, and citation are recorded. No parameter or protocol contribution is
+pinned. See `s2_parameter_novelty_provenance_audit_2026_07_29.md` and
+`s2_professor_decision_request_2026_07_29.md`.
 
 ## 1. Corrected protocol
 
@@ -198,6 +209,9 @@ The paper now:
   source-aligned forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer
   mask and velocity topology, ideal-correlation consume-once identifiers,
   abort-before-output rules, and the GPU 64-bit-root/127-bit-seed blockers.
+- adds the S2 hard stops: exact `w=c*t` parameter mapping, accepted-estimator
+  transcript with its unresolved reduction steps, DMPF/direct-ring prior art,
+  and Cheddar/private-project provenance boundaries.
 
 The full S1 contract and corrected state topology increased the PDF from 15 to
 18 pages. This is accepted rather than compressing text or shrinking figures.
@@ -225,16 +239,17 @@ Do not market the 2,432 functional passes as privacy evidence.
 
 ## 6. Readiness and remaining milestones
 
-After the required full GPU gate, clean paper build, rendered review, and
-claims-drift search all pass, v2.3 is appropriate to show the professor as a
-research-progress artifact and proposal. It is not publication-ready. The
-binding execution order is the frozen S1 contract, then S2/M5 exact parameter
-novelty/provenance audit, then performance implementation:
+S2 now blocks performance implementation. The advisor decision packet is ready
+to show the professor as an internal research-progress artifact; the paper is
+not publication-ready or cleared for external circulation. The binding order
+is the frozen S1 contract, professor resolution of the S2 parameter/
+novelty/provenance hard stops, and only then the reviewed implementation route:
 
-- M5/S2 first pins the exact splittable Ring-LPN parameters, formal protocol
-  delta, closest prior art, source/license inventory, and professor decisions
-  on contributor credit, chronology, reuse, and overlap disclosure; Alp
-  remains the sole author;
+- M5/S2 must pin exact splittable Ring-LPN parameters using a reviewed
+  sparse-projection/noise-reduction argument, select per-point DPF versus the
+  2026 DMPF and prime-plus-conversion versus direct `Z_(2^k)`, complete the
+  source/license inventory, and record professor decisions on contributor
+  credit, chronology, reuse, and overlap; Alp remains the sole author;
 - M1 then needs independent OS-CSPRNG GPU roots, full-128-bit AES seed
   semantics with separate tags, real silent OT/OLE, GPU batching and
   serialization, and measured network bytes/rounds;
@@ -251,14 +266,16 @@ novelty/provenance audit, then performance implementation:
 ### Direction addendum — 2026-07-29
 
 The user selected the integrated dealerless Orca FC-preprocessing system as
-the primary paper thesis. The corrected distributed DPF is its enabling
-protocol contribution. GPU PCG design/performance belongs to separate
-forthcoming work with a PIM-architecture comparison and must not be claimed as
-new here. The immediate publication target is an advisor-ready technical
-report while retaining the full proof, real-transport, parameter, evaluation,
-and artifact gates. Work remains ringlpn-first; proposed external crypto
-dependencies and minimal future upstream Orca integration require review.
-Consult the user before every S1--S10 stage.
+the primary paper thesis. The subsequent S2 audit supersedes the earlier
+assumption that the corrected distributed DPF is its enabling protocol
+contribution: public DPF/DMPF work already covers the protocol class and the
+closest 2026 work directly targets Ring-LPN PCGs. Treat the local DPF as a
+compatibility artifact/baseline unless the professor identifies a concrete
+delta. The private GPU PCG/PIM project's work has multiple contributors, no
+repository license, and unresolved overlap; none of it may be imported or
+claimed here. The immediate target remains an advisor-ready technical report,
+subject to the full proof, real-transport, parameter, evaluation, provenance,
+and artifact gates. Consult the user before every S1--S10 stage.
 
 ## 7. Repository and operational notes
 

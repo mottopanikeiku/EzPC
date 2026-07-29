@@ -7,6 +7,12 @@ measurements instead of opinion. Harness: `src/bench_ntt_gpu_ntt_baseline.cu`
 (2 forward NTT + Hadamard + inverse NTT), both GPU outputs validated
 elementwise against `host_polymul_reference`. RTX 5000 Ada, CUDA 12.6.
 
+Provenance update (2026-07-29): the active backend is substantially derived
+from MIT-licensed Cheddar; its reconstructed source/blob pin, upstream notice,
+and local delta are recorded in `extern/Cheddar_PROVENANCE.txt` and
+`extern/Cheddar_MIT_LICENSE.txt`. GPU-NTT remains an external Apache-2.0
+baseline at local clean checkout `95c739c48d11827277e132f5eec4d4e454d60835`.
+
 ## Result table (`ntt/ntt_gpu_ntt_baseline_compare.csv`)
 
 PolyMul mean µs (validation `pass` unless noted):
@@ -48,8 +54,8 @@ p62 = 4611686018326724609 (the project's deployment prime).
 
 Keep the cheddar backend for now: it runs the deployment primes, the whole
 validation surface is bound to it, and the NTT is not the bottleneck. Two
-revisit triggers, recorded for the M5 parameter audit
-(`reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex`):
+revisit triggers, recorded for the S2/M5 parameter audit in the current v2.3
+proposal and `s2_parameter_novelty_provenance_audit_2026_07_29.md`:
 
 - If M5 re-pins parameters anyway, two ~60-bit CRT primes give M ≈ 2^120,
   which still satisfies the bw=32 no-wrap bound (K·2^66 < M) with enormous

@@ -1,0 +1,43 @@
+Cheddar-derived CUDA NTT provenance
+====================================
+
+Upstream project: https://github.com/scale-snu/cheddar-fhe
+Upstream source used as the reproducible attribution baseline:
+  commit 307b49cbe03e7f8f14bf31485f716c1090c9ec9d
+  commit date 2026-03-31T02:53:46Z
+  file src/core/NTT.cu
+  Git blob b681f4c68f56b6fafd1db13c5dd58822ed6d2d51
+License: MIT; complete notice in Cheddar_MIT_LICENSE.txt
+Citation: W. Choi, J. Kim, J. H. Ahn, "Cheddar: A Swift Fully
+  Homomorphic Encryption Library Designed for GPU Architectures," ASPLOS 2026,
+  DOI 10.1145/3760250.3762223.
+
+Pin reconstruction
+------------------
+
+The local extraction note is dated 2026-03-31 and the first local Git commit
+for src/bench_ntt_cuda_cheddar.cu is 0d11d17 (2026-04-02). Commit 307b49c is
+the public Cheddar commit dated 2026-03-31 and is therefore the reproducible
+repository pin for attribution. The NTT.cu blob is also identical in its
+immediate parent e870137be87225acc8cebeb9026a7de535de7e7f, so the extracted
+NTT.cu text alone cannot distinguish those two repository states. This
+ambiguity does not change the cited source file or license.
+
+Local adaptation history
+------------------------
+
+  0d11d17  2026-04-02  initial standalone Cheddar kernel pipeline
+  1b08973  2026-04-02  62-bit/q64 path
+  ab953b9  2026-04-08  first-week integration changes
+  07fe338  2026-04-21  additional NTT implementations
+  98b434b  2026-05-16  full kernel wiring
+  da18fc3  2026-06-10  adaptive fused-INTT product and cached forward NTTs
+
+The current local file is not an unmodified upstream file. Its principal local
+changes are: standalone table generation and wrappers; 30-bit and 62-bit
+Montgomery arithmetic; independent p0/p1 CRT execution; supported degrees up
+to 2^20; flattened batch/prime scheduling; fused Hadamard/INTT paths; cached
+forward transforms; benchmark/CSV interfaces; and independent host/device
+validation. The dated extraction note at
+results/reports/cheddar_extract_note.md records the original symbol-by-symbol
+source map.

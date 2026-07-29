@@ -138,22 +138,36 @@ first point at which their protocol-backed paths compose.
 
 ### S2 — M5 first: audit and pin splittable Ring-LPN parameters
 
+**Status 2026-07-29:** blocked. The preliminary audit found an unproved
+sparse-projection selection/noise-mapping step, direct 2026 fully distributed
+DMPF prior art, a 2025 direct-`Z_(2^k)` PCG alternative, and unresolved
+private-project ownership/overlap. The Cheddar source pin, local delta, MIT
+notice, and paper citation are now recorded.
+See `s2_parameter_novelty_provenance_audit_2026_07_29.md` and
+`s2_professor_decision_request_2026_07_29.md`. No parameter or contribution is
+pinned; S3 must not start until the professor's eight decisions are recorded.
+
 **Purpose:** establish the parameter set before optimizing or publishing performance.
 
 **Work:**
 
 1. Reproduce the corrected BCG+20 splittable construction and its exact noise distribution. Treat uniform and bucket-regular noise separately; do not transfer an estimate between them.
-2. Model the fully split ring's CRT projections and the relevant quasi-abelian/syndrome-decoding attacks. Include classical and, if claimed, quantum work factors; record estimator versions and assumptions.
+2. Model the fully split ring's sparse-factor projections and every relevant
+   decoding attack. Determine whether quasi-abelian results actually apply
+   before citing them as evidence; do not equate this ring with a group algebra.
 3. Run reproducible ISD/decoding estimates across candidate `(n,c,t,p0,p1)` sets. Include sensitivity around the chosen point rather than one optimistic row.
 4. Audit whether regular noise has a literature-backed reduction/estimator in this setting. If it does not, either use uniform noise for the security claim or name and defend a new structured-noise assumption; performance alone cannot select regular noise.
 5. Recompute the complete epoch budget, not only `3c^2t^2<n`: reserve scalar OLEs for three OLEs per DPF tree, epoch-zero Gilboa bootstrap, conversion correlations, safety margin, and any rejected/unused slots. Prove no slot is reused.
 6. Recheck NTT feasibility, prime bit width, `v2(p_i-1)`, CRT correctness, GPU memory, and batch size at the pinned `n`. If primes move to at most 60 bits, reopen the documented cheddar-versus-GPU-NTT decision; if `n` grows, rerun every polynomial and slot-packing gate.
 7. Generate machine-readable parameter tables and estimator transcripts from a pinned script/container.
 8. In parallel, compare the exact shared-point/multiplicative-payload,
-   three-OLE DPF construction against the closest distributed-DPF and
-   dealerless-preprocessing literature. Record the formal protocol delta,
-   assumptions, asymptotics, and what is integration rather than protocol
-   novelty.
+   three-OLE per-point construction against Doerner--shelat, Programmable DPF,
+   the 2025 improved DMPF, the 2026 fully distributed DMPF for PCGs, and
+   SLAMP-FSS. Compare regular Ring-LPN against Stationary Syndrome Decoding,
+   and Ring-LPN/NTT plus conversion against the 2025 direct-`Z_(2^k)` PCG and
+   2026 QA-SD/WHT prime-field PCG.
+   Record formal deltas, assumptions, asymptotics, implementation availability,
+   and what is systems integration rather than protocol novelty.
 9. Audit active and candidate source provenance/licenses: local
    cheddar-derived NTT, GPU-NTT baseline, and the separate GPU-PCG/PIM work.
    Obtain the professor's ownership, contributor-credit, chronology,
@@ -191,6 +205,10 @@ the reviewed contribution/provenance boundary; no end-to-end security claim.
 ---
 
 ### S3 — M1a: cryptographic, GPU-consumable distributed DPF core
+
+**Route dependency:** this stage describes the pre-audit per-point-DPF route.
+Do not execute it unchanged. Advisor review may replace it with integration of
+the 2026 fully distributed DMPF or another explicitly reviewed design.
 
 **Purpose:** replace the splitmix64 host semantics with full-128-bit AES/GPU
 key semantics while retaining ideal transports temporarily.

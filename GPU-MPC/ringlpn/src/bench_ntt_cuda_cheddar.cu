@@ -1,3 +1,18 @@
+/*
+ * Includes substantial adaptations of Cheddar's CUDA NTT implementation:
+ * https://github.com/scale-snu/cheddar-fhe, src/core/NTT.cu.
+ *
+ * Copyright 2026 Scalable Computer Architecture Laboratory,
+ * Seoul National University, South Korea.
+ * Cheddar is licensed under the MIT License; the complete upstream notice is
+ * retained in ../extern/Cheddar_MIT_LICENSE.txt.
+ * Reconstructed source pin and local delta: ../extern/Cheddar_PROVENANCE.txt.
+ *
+ * Ring-LPN adaptations include standalone table generation, 30/62-bit
+ * Montgomery arithmetic, two-limb CRT execution, larger supported degrees,
+ * fused Hadamard/INTT paths, batching, and independent host validation.
+ */
+
 #include <cuda_runtime.h>
 
 #include <algorithm>

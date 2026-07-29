@@ -1,7 +1,7 @@
 modulus,log_domain,trees,pass,fail,centralized_ref_pass,negctrl_expected_fail,corruption_controls,invalid_inputs_rejected,old_sign_opening_leak_control,string_ots_per_tree,bit_triples_per_tree,scalar_oles_per_tree,phase_a_logical_opened_bits_per_tree,phase_a_revealed_share_bits_per_tree,phase_b_logical_opened_bits_per_tree,phase_b_revealed_share_bits_per_tree,phase_c_logical_opened_bits_per_tree,phase_c_revealed_share_bits_per_tree,logical_opened_bits_per_tree,revealed_share_bits_per_tree,transcript_accounting,ideal_mask_draw_accounting,correlation_reuse_control,keygen_plus_eval_us_per_tree,validation
-q62,4,512,512,0,8,yes,5/5,6/6,yes,8.0,3.0,3.0,6.0,12.0,520.0,1040.0,62.0,124.0,588.0,1176.0,pass,pass,pass,3.5,pass
-q62,8,512,512,0,8,yes,5/5,6/6,yes,16.0,7.0,3.0,14.0,28.0,1040.0,2080.0,62.0,124.0,1116.0,2232.0,pass,pass,pass,37.9,pass
-q62,11,384,384,0,8,yes,5/5,6/6,yes,22.0,10.0,3.0,20.0,40.0,1430.0,2860.0,62.0,124.0,1512.0,3024.0,pass,pass,pass,274.7,pass
-q62,14,256,256,0,8,yes,5/5,6/6,yes,28.0,13.0,3.0,26.0,52.0,1820.0,3640.0,62.0,124.0,1908.0,3816.0,pass,pass,pass,1976.5,pass
-q62b,14,256,256,0,8,yes,5/5,6/6,yes,28.0,13.0,3.0,26.0,52.0,1820.0,3640.0,62.0,124.0,1908.0,3816.0,pass,pass,pass,1993.1,pass
-q62b,8,512,512,0,8,yes,5/5,6/6,yes,16.0,7.0,3.0,14.0,28.0,1040.0,2080.0,62.0,124.0,1116.0,2232.0,pass,pass,pass,34.0,pass
+q62,4,512,512,0,8,yes,5/5,6/6,yes,8.0,3.0,3.0,6.0,12.0,520.0,1040.0,62.0,124.0,588.0,1176.0,pass,pass,pass,3.3,pass
+q62,8,512,512,0,8,yes,5/5,6/6,yes,16.0,7.0,3.0,14.0,28.0,1040.0,2080.0,62.0,124.0,1116.0,2232.0,pass,pass,pass,36.1,pass
+q62,11,384,384,0,8,yes,5/5,6/6,yes,22.0,10.0,3.0,20.0,40.0,1430.0,2860.0,62.0,124.0,1512.0,3024.0,pass,pass,pass,263.0,pass
+q62,14,256,256,0,8,yes,5/5,6/6,yes,28.0,13.0,3.0,26.0,52.0,1820.0,3640.0,62.0,124.0,1908.0,3816.0,pass,pass,pass,1998.9,pass
+q62b,14,256,256,0,8,yes,5/5,6/6,yes,28.0,13.0,3.0,26.0,52.0,1820.0,3640.0,62.0,124.0,1908.0,3816.0,pass,pass,pass,2042.6,pass
+q62b,8,512,512,0,8,yes,5/5,6/6,yes,16.0,7.0,3.0,14.0,28.0,1040.0,2080.0,62.0,124.0,1116.0,2232.0,pass,pass,pass,36.4,pass

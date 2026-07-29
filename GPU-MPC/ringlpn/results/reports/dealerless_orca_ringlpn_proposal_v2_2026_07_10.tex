@@ -74,8 +74,11 @@ the distinguishing power of a sign opening removed in v2.2
 primitive accounting, not computational privacy or 128-bit security. The S1
 contract now fixes the target ideal functionality, exact message transcript,
 allowed leakage, simulator obligations for either corrupted party, and
-unresolved proof lemmas; it does not upgrade that security claim. All
-performance claims are anchored in regenerated CSV artifacts; measured
+unresolved proof lemmas; it does not upgrade that security claim.
+The subsequent S2 audit found unresolved parameter-reduction and
+novelty/provenance hard stops: no parameter set or protocol contribution is
+pinned, and this draft remains internal pending advisor decisions.
+All performance claims are anchored in regenerated CSV artifacts; measured
 numbers, derived numbers, and estimates are labelled as such throughout.
 \end{abstract}
 
@@ -204,6 +207,11 @@ couples the security audit to the key-generation design;
 (5)~an experimental plan of six milestone experiments with mechanical
 pass/fail gates, continuing the artifact discipline under which every number
 in this document was produced.
+These are document, artifact, and systems-design contributions. The S2 audit
+does not identify the per-point DPF protocol as new: BCG+20 already invokes
+distributed DPF setup, and newer DMPF work directly targets the same PCG
+bottleneck (\S\ref{sec:related}). The publication contribution boundary is
+therefore pending advisor review.
 
 \section{Motivation: why dealerless, and why on GPUs}
 \label{sec:motivation}
@@ -271,12 +279,13 @@ then the negacyclic number-theoretic transform (NTT) is a ring
 \emph{isomorphism} $\Ring_p \to \Z_p^n$, and reading one ring OLE per
 coordinate (``slot'') yields up to $n = 8{,}192$ \emph{independent scalar
 OLEs} from a single ring-OLE expansion. Because the NTT is linear, each party
-transforms its own shares locally. Measured consequence
-(\S\ref{sec:baseline}): all linear-layer shapes in our suite consume exactly
-$2L\lceil MKN/n\rceil$ ring OLEs ($L$ = number of CRT limbs, \S\ref{sec:notation})
---- e.g.\ \textbf{two} ring OLEs for an entire $16{\times}32{\times}16$ layer
-at $\Q{=}p_0$, where the same layer would otherwise consume $16{,}384$
-per-scalar OLE calls.
+transforms its own shares locally. In the measured isolated-expansion artifact
+(\S\ref{sec:baseline}), suite shapes consume
+$2L\lceil MKN/n\rceil$ ring OLEs ($L$ is the limb count) --- e.g.\
+\textbf{two} for a $16{\times}32{\times}16$ layer at $\Q=p_0$, instead of
+$16{,}384$ per-scalar OLE calls. A self-sustaining factory must reserve
+next-epoch keygen correlations, reducing usable capacity to at most
+$n-3c^2t^2$ and increasing this count (\S\ref{sec:design-keygen}).
 
 \subsection{Why GPUs}
 \label{sec:motivation-gpu}
@@ -304,16 +313,20 @@ byte-compatibly so Orca's GPU online path runs unmodified.
 \begin{table}[ht]
 \centering
 \small
-\begin{tabular}{ll}
+\begin{tabular}{@{}p{0.13\linewidth}p{0.83\linewidth}@{}}
 \toprule
 $M,K,N$ & linear-layer dimensions ($M{\times}K$ by $K{\times}N$ matmul)\\
 $\bw$ & Orca's ring width; shares live in $\modtwo$ (bw $\le 32$ here)\\
-$n$ & ring dimension; $\Ring_p = \Z_p[X]/(X^n+1)$, $n = 8192$\\
-$p_0, p_1$ & NTT-friendly 62-bit primes $2^{62}-6\cdot2^{24}+1$,\ $2^{62}-7\cdot2^{24}+1$\\
-$L$, $\Q$ & CRT limb count; composite modulus $\Q = p_0p_1$ ($L{=}1$: ``q64'', $\Q{=}p_0$; $L{=}2$: ``q128'')\\
-$\dpfd$ & DPF tree depth ($\dpfd=\log_2(2n)$ for the production uniform-noise tree)\\
-$c, t$ & Ring-LPN noise parameters: $c$ sparse polynomials, $t$ nonzeros each\\
-$\lambda$ & symmetric security parameter (AES/OT), $\lambda = 128$\\
+$n$ & ring dimension in $\Ring_p=\Z_p[X]/(X^n+1)$; smoke artifacts use
+$8192$, preliminary feasibility uses $2^{14}$; not pinned\\
+$p_0,p_1$ & current artifact primes
+$2^{62}-6\cdot2^{24}+1,\ 2^{62}-7\cdot2^{24}+1$; not pinned\\
+$L,\Q$ & CRT limbs; $\Q=p_0p_1$ ($L{=}1$: ``q64'', $\Q=p_0$;
+$L{=}2$: ``q128'')\\
+$\dpfd$ & DPF depth ($\log_2(2n)$ for the uniform-noise artifact)\\
+$c,t$ & Ring-LPN noise parameters: $c$ sparse polynomials, weight $t$ each\\
+$\lambda$ & target symmetric parameter $128$; current GPU seed encoding
+retains only $127$ secret bits\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -721,6 +734,18 @@ Condition~\eqref{eq:bootstrap} \emph{couples the security audit to this
 design}: if M5 (\S\ref{sec:milestones}) raises $t$ to $64$ at $n=8192$, then
 $3c^2t^2=49{,}152>8{,}192$ and the ring dimension must grow with $t$ ---
 consistent with the $n\ge 2^{16}$ parameter points in the literature.
+Equation~\eqref{eq:bootstrap} is necessary, not a complete epoch budget. If
+$C_{\rm key}=3c^2t^2$, steady-state application capacity is at most
+$n-C_{\rm key}$ slots per expanded ring OLE. The current FC artifact counts
+$2L\lceil MKN/n\rceil$ ring OLEs for two cross directions and $L$ limbs; a
+self-sustaining implementation needs at least
+$2L\lceil MKN/(n-C_{\rm key})\rceil$ before conversion correlations, discarded
+tail slots, safety margin, abort/retry handling, and epoch-zero setup. At the
+preliminary $(2^{14},4,16)$ point only $4096$ of $16384$ slots (25\%) remain,
+so the $16{\times}32{\times}16$ q64/q128 cases need at least four/eight ring
+OLEs, twice the present artifact count. D5 must close that full allocation and
+prove consume-once identifiers; this draft does not.
+
 
 \paragraph{GPU batching.} All trees of a generation batch advance
 level-synchronously: the depth-14 tree walk has 14 sequential batched
@@ -870,34 +895,40 @@ $MN$ outputs, so conversion amortizes to $1/K$ of the cross-term work).
 \label{sec:design-params}
 
 The assumption behind step 1 of \S\ref{sec:motivation-pcg} is
-\textbf{Ring-LPN}: $(a, \sum_i a_i e_i + e_0)$ is pseudorandom for sparse
-secret $e_i$. Our primes make $X^n+1$ split \emph{completely} --- that is what
-buys slot packing --- but it also hands the attacker structure: a fully split
-ring has CRT projections onto small quotients, giving decoding attacks
-unavailable in the irreducible-ring variant. The honest hardness regime is
-\emph{quasi-abelian decoding}~\cite{bombar2023quasiabelian}. D5 therefore
-re-derives parameters rather than copying them: run standard
-syndrome-decoding/ISD estimators against the splittable regime and pin
-$(n, c, t, p_0, p_1)$ with estimator transcripts for $\ge 128$-bit security.
-Representative literature points ($c{=}4$, $t$ in the dozens, $n \ge 2^{16}$
-in BCG+20-style analyses) suggest $t$ will land well above the smoke value ---
-which is why \S\ref{sec:baseline}'s $t{=}64$ measurements are quoted as the
-realistic anchors, why regular noise (measured $14\times$ cheaper expansion)
-is the default regime, and why condition~\eqref{eq:bootstrap} must be
-re-checked at the audited parameters. Three engineering notes recorded with
-reversal conditions: $v_2(p_0{-}1) = 25$ and $v_2(p_1{-}1) = 24$ leave
-headroom to grow $n$ to $\sim 2^{23}$ without re-pinning primes; the 62-bit
-prime class is what our current cheddar-derived Montgomery NTT supports.
-We separately evaluated the GPU-NTT Merge and four-step implementations of
-\"Ozcan--Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt}; that code is an external
-measured dependency, not this paper's contribution, and its Barrett path did
-not support our 62-bit primes in the audited revision. If D5 re-pins primes
-at $\leq60$ bits, the backend decision and source/license audit re-open.
+\textbf{reducible Ring-LPN} over each deployed prime-field limb:
+$(a,\sum_i a_i e_i+e_0)$ is pseudorandom for regular sparse secrets $e_i$.
+The q128 path is two independently seeded instances over the 62-bit primes
+$p_0,p_1$, followed by CRT; it is not one instance over a 124-bit field.
+The splitting of $X^n+1$ buys slot packing but exposes reductions modulo
+sparse low-degree factors. This is the BCG+20 reducible-ring setting, not
+directly the quasi-abelian group-algebra setting of
+Bombar et al.~\cite{bombar2023quasiabelian}.
 
-This audit is the first implementation gate, not a final-paper-only check:
-changing the pinned parameters changes GPU memory, NTT support, DPF tree
-counts, communication, and whether the bootstrap inequality holds. M1 and M3
-performance work starts only after M5 pins those values.
+Parameter names matter: BCG+20's total weight is $w=ct$, so its 128-bit
+Table-1 row $(c,w)=(4,64)$ maps to this implementation's per-polynomial
+$t=16$, not $t=64$. We reran every sparse-factor projection over both exact
+deployed primes with the accepted EUROCRYPT 2024 estimator of Liu et
+al.~\cite{liu2024hardness}. For the degree-128 projection reported by BCG+20,
+the mapped instance is $(N,k,t)=(512,384,60)$ and the regular-noise attack
+estimate is 145.85 bits on either limb. This is \emph{not yet} a Ring-LPN
+security claim. The paper's literal usefulness test selects the smallest $i$
+with $w_i\le(c-1)2^i$; here it selects $i=4$ ($47.0967\le48$), while its
+Table~1 reports $i=7$. The separate PCG script replaces that inconsistency
+with a fitted constant that reproduces the table, not a theorem. The dependent
+projected-noise distribution also needs a proved mapping, tail/rounding bound,
+and advantage loss to the estimator's exact/regular input model. Treating every
+raw projection as useful exposes estimates below 128 bits.
+
+Therefore D5 has not pinned $n,c,t,p_0,p_1$. The preliminary engineering
+candidate uses $n=2^{14}$, $c=4$, $t=16$, and the current $p_0,p_1$. It
+satisfies the per-point bootstrap count
+$3c^2t^2=12{,}288<n=16{,}384$ and passed the q64/q128 GPU validator, but it is
+feasibility evidence only. The 2026 fully distributed DMPF prior
+art~\cite{agarwal2026dmpf} changes that setup count, so architecture and
+parameters must be reviewed together. The dated S2 audit in the results index
+records exact transcripts, provenance findings, and the open proof steps.
+M1/M3 performance work remains blocked until advisor and cryptographic review
+select the protocol route and close these reductions.
 
 \subsection{How the components compose to ``dealerless''}
 \label{sec:design-composition}
@@ -925,19 +956,23 @@ mechanical gate verifies its removal.}
 \subsection{Per-layer cost model (worked example)}
 \label{sec:design-cost}
 
-For one FC layer $(M,K,N)$ at $L$ limbs, ring dimension $n$:
-ring OLEs $= 2L\lceil MKN/n\rceil$;
-derandomization traffic $= 2\cdot 2\cdot MKN\cdot L$ field words;
-conversions $= MN$ (each per Table~\ref{tab:convert});
-key-generation OT material per limb per Table~\ref{tab:keygen};
-online phase unchanged (byte-compatible keys).
-Worked example, $16{\times}32{\times}16$ at q64 ($L{=}1$, $\bw{=}16$):
-$MKN = 8192$ cross terms per direction $\Rightarrow$ \textbf{2 ring OLEs};
-$32{,}768$ opened words $\approx 256$\,kB; $MN = 256$ conversions
-$\Rightarrow$ $31{,}744$ AND triples ($\sim$4\,kB of silent-OT traffic) and
-256 daBits; keygen OT material $0.05$--$0.46$\,MB (Table~\ref{tab:keygen},
-$t{=}8$). Every number above is either measured in the suite CSVs or derived
-from a formula stated here.
+For one FC layer $(M,K,N)$ at $L$ limbs, the current isolated-expansion
+artifact (which does not reserve next-epoch correlations) uses
+$2L\lceil MKN/n\rceil$ ring OLEs; derandomization traffic is
+$4MKNL$ field words; and conversions equal $MN$ (each per
+Table~\ref{tab:convert}). Key-generation material per isolated ring OLE is in
+Table~\ref{tab:keygen}; the online phase is unchanged because keys are
+byte-compatible. These are not complete self-sustaining epoch costs.
+
+Worked artifact example, $16{\times}32{\times}16$ at q64 ($L{=}1$,
+$\bw{=}16$, smoke $n{=}8192,c{=}2,t{=}8$): $MKN=8192$ cross terms per
+direction give \textbf{2 isolated ring OLEs}; $32{,}768$ opened words are about
+256\,kB; and $MN=256$ conversions use $31{,}744$ AND triples plus 256 daBits
+in the ideal-correlation prototype. Reserving $C_{\rm key}=768$ leaves only
+7424 application slots per expansion, so even this example needs at least
+\textbf{4 q64 ring OLEs} in steady state, before conversion-PCG and safety
+reserves. Every measured artifact number is regenerated from suite CSVs; the
+production epoch total remains an S2 gate.
 
 \section{Experiment setup}
 \label{sec:experiments}
@@ -971,7 +1006,8 @@ gates}: every artifact ships source + build script + run script + CSV/MD/log;
 suites exit non-zero on any failure; one command re-validates every claim in
 this document ($\sim$15 min on one GPU):
 \begin{center}
-\texttt{RUN\_GPU\_SMOKE=1 REQUIRE\_GPU\_SMOKE=1 scripts/run\_paper\_checkpoint\_smoke.sh}
+{\small\verb+RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \+}\\
+{\small\verb+  scripts/run_paper_checkpoint_smoke.sh+}
 \end{center}
 which must print \texttt{ALL GATES PASS}.
 
@@ -1146,10 +1182,11 @@ parallel; M2 and M3 both gate M4, which gates M6.}
 \item[M4 --- Two-process deployment over TCP.] Implements D4 (with D3's
   coin-tossed seeds). \emph{Gate:} the full pipeline (M1 keygen $\to$ expand
   $\to$ derandomize $\to$ convert $\to$ key write) runs as two OS processes on
-  two GPUs; the \texttt{gpuMatmulBeaver} contract passes; one complete
-  forward/bias/truncation/$dW$/$dX$/bias-gradient/dual-optimizer sequence
-  matches Orca's persistent mask/velocity handles, reduced matmul fields, and
-  next-state transitions; communication is measured and reported per layer.
+  two GPUs; the \texttt{gpuMatmulBeaver} contract passes; one complete FC
+  state sequence covers the forward and bias paths, truncation, $dW$, $dX$,
+  bias gradients, both optimizers, persistent mask/velocity handles, reduced
+  matmul fields, and next-state transitions. Communication is measured per
+  layer.
 \item[M6 --- Scale and report.] \emph{Gate:} dealerless preprocessing for the
   FC layers of one Orca model, with separate trusted-dealer, oracle-backed, and
   protocol-backed columns plus one closest dealerless-preprocessing baseline
@@ -1185,24 +1222,44 @@ M5 re-pins primes below 61 bits).
 \label{sec:related}
 
 Orca~\cite{jawalkar2024orca} defines the host system: FSS-based 2PC ML on
-GPUs with a dealer-based preprocessing model. Beaver's
-technique~\cite{beaver1991} underlies the linear-layer keys. The PCG line ---
-silent OT extension and PCGs from LPN~\cite{boyle2019efficient}, ring-OLE PCGs
-from Ring-LPN~\cite{boyle2020ringlpn} --- provides our correlation generator;
-Ferret~\cite{yang2020ferret} and Silver~\cite{couteau2021silver} provide
-practical silent OT/VOLE for D1's tree-walk material and D2's binary triples.
-DPFs originate in the FSS line~\cite{boyle2015fss}; distributed DPF key
-generation without a dealer is due to Doerner and
-shelat~\cite{doerner2017floram}. Mixed arithmetic--binary conversions use
+GPUs with dealer preprocessing. Beaver's technique~\cite{beaver1991}
+underlies its linear-layer keys. BCG+20~\cite{boyle2020ringlpn} already gives
+the Ring-LPN OLE/triple generator, fully split slot packing, and a semi-honest
+distributed setup blueprint using generic 2PC plus the Doerner--shelat
+distributed DPF~\cite{doerner2017floram}. Those are inherited primitives.
+Programmable DPFs~\cite{boyle2022programmable} reduce distributed generation
+to constant rounds for feasible domains. Improved DMPFs at IEEE S\&P
+2025~\cite{boyle2025dmpf} optimize the multi-point case and its PCG
+applications. Stationary Syndrome Decoding~\cite{kolesnikov2025stationary}
+instead amortizes a shared noise support across correlated instances and
+explicitly targets the high setup cost of Ring-LPN Beaver generation under a
+different assumption. More directly, Agarwal--Raghuraman--Rindal's 2026 fully
+distributed DMPF~\cite{agarwal2026dmpf} targets Ring-LPN/Stationary-LPN PCGs
+with a semi-honest proof and prototype. SLAMP-FSS~\cite{kulaots2026slamp}
+is a second 2026 multi-point design using tree PRGs and linear systems. The
+current per-point host DPF is therefore a compatibility artifact and baseline,
+not a claimed protocol contribution.
+
+Ferret~\cite{yang2020ferret} and Silver~\cite{couteau2021silver} are candidate
+silent OT/VOLE transports. Mixed arithmetic--binary conversion uses
 edaBits/daBits~\cite{escudero2020edabits} and Rabbit-style
-comparison~\cite{makri2021rabbit}. The concrete hardness of our fully-split
-(splittable / quasi-abelian) Ring-LPN regime is analyzed by Bombar et
-al.~\cite{bombar2023quasiabelian}.
-The active GPU polynomial backend is cheddar-derived; GPU-NTT's Merge and
-four-step algorithms are separate upstream work by \"Ozcan, Javeed, and
-Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt}. We use that work only as an
-external measured comparison/dependency. Its algorithms, implementation, and
-performance are not contributions of this paper.
+comparison~\cite{makri2021rabbit}; PCGs directly over
+$\mathbb Z_{2^k}$~\cite{li2025galoisring} may remove that conversion.
+Any-finite-field PCGs~\cite{li2025finitefield} and the fully implemented
+QA-SD/Walsh--Hadamard design~\cite{li2026wht} are current prime-field
+architectural baselines that avoid Ring-LPN's FFT choices. Liu et
+al.~\cite{liu2024hardness} provide the field-size-sensitive and regular-noise
+attack estimators used in the preliminary D5 audit.
+Bombar et al.~\cite{bombar2023quasiabelian} analyze a related
+quasi-abelian-decoding foundation, but their group-algebra theorem is not
+substituted for the reducible $X^n+1$ assumption here.
+
+The active polynomial backend is substantially derived from
+Cheddar~\cite{choi2026cheddar}; this audit retains its MIT notice and records
+the reconstructed source pin and local delta. GPU-NTT's Merge and four-step
+algorithms are separate work by \"Ozcan, Javeed, and
+Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt} and are currently an external
+measured baseline. Neither backend is a contribution of this paper.
 
 \section{Summary}
 \label{sec:summary}
@@ -1248,6 +1305,48 @@ E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, P.~Scholl.
 \emph{Efficient Pseudorandom Correlation Generators from Ring-LPN}.
 CRYPTO 2020; corrected full version, IACR ePrint 2022/1035 (2022),
 \S5.2 and Remark~5.1.
+\bibitem{boyle2022programmable}
+E.~Boyle, N.~Gilboa, Y.~Ishai, V.~I.~Kolobov.
+\emph{Programmable Distributed Point Functions}.
+CRYPTO 2022; IACR ePrint 2022/1060.
+\bibitem{boyle2025dmpf}
+E.~Boyle, N.~Gilboa, M.~Hamilis, Y.~Ishai, Y.~Tu.
+\emph{Improved Constructions for Distributed Multi-Point Functions}.
+IEEE S\&P 2025.
+\bibitem{kolesnikov2025stationary}
+V.~Kolesnikov, S.~Peceny, S.~Raghuraman, P.~Rindal.
+\emph{Stationary Syndrome Decoding for Improved PCGs}.
+CRYPTO 2025; IACR ePrint 2025/295.
+\bibitem{agarwal2026dmpf}
+A.~Agarwal, S.~Raghuraman, P.~Rindal.
+\emph{Fully Distributed Multi-Point Functions for PCGs and Beyond}.
+IACR ePrint 2025/2294, posted January 2026.
+\bibitem{kulaots2026slamp}
+E.~K\"ulaots, T.~Krips, H.~Eerikson, D.~Pisetskaya,
+P.~Pullonen--Raudvere.
+\emph{SLAMP-FSS: Two-Party Multi-Point Function Secret Sharing from Simple
+Linear Algebra}.
+IACR Communications in Cryptology 3(1), 2026.
+doi:10.62056/avommpxqi.
+\bibitem{li2025galoisring}
+Z.~Li, C.~Xing, Y.~Yao, C.~Yuan.
+\emph{Efficient Pseudorandom Correlation Generators over
+$\mathbb Z/p^k\mathbb Z$}.
+CRYPTO 2025; IACR ePrint 2025/1223.
+\bibitem{li2025finitefield}
+Z.~Li, C.~Xing, Y.~Yao, C.~Yuan.
+\emph{Efficient Pseudorandom Correlation Generators for Any Finite Field}.
+EUROCRYPT 2025; IACR ePrint 2025/169.
+\bibitem{li2026wht}
+Z.~Li, H.~Liu, C.~Xing, Y.~Yao, C.~Yuan.
+\emph{Faster Pseudorandom Correlation Generators via Walsh--Hadamard
+Transform}.
+IACR ePrint 2026/196.
+\bibitem{liu2024hardness}
+H.~Liu, X.~Wang, K.~Yang, Y.~Yu.
+\emph{The Hardness of LPN over Any Integer Ring and Field for PCG
+Applications}.
+EUROCRYPT 2024; accepted artifact \texttt{eurocrypt/2024/a1}.
 \bibitem{doerner2017floram}
 J.~Doerner, a.~shelat. \emph{Scaling ORAM for Secure Computation}.
 CCS 2017.
@@ -1271,6 +1370,11 @@ FC 2021.
 M.~Bombar, G.~Couteau, A.~Couvreur, C.~Ducros.
 \emph{Correlated Pseudorandomness from the Hardness of Quasi-Abelian
 Decoding}. CRYPTO 2023.
+\bibitem{choi2026cheddar}
+W.~Choi, J.~Kim, J.~H.~Ahn.
+\emph{Cheddar: A Swift Fully Homomorphic Encryption Library Designed for GPU
+Architectures}.
+ASPLOS 2026. doi:10.1145/3760250.3762223.
 \bibitem{ozcan2023gpuntt}
 A.~\c{S}.~\"Ozcan, E.~Sava\c{s}.
 \emph{Two Algorithms for Fast GPU Implementation of NTT}.

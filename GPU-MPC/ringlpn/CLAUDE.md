@@ -41,21 +41,41 @@ The binding staged route to publication readiness is
 `results/reports/publication_readiness_plan_2026_07_21.md`; every completed
 stage must end in a gate-verified checkpoint commit.
 Direction was locked with the user on 2026-07-29: the paper's thesis is the
-integrated dealerless Orca FC-preprocessing system, with the corrected
-distributed DPF as its candidate enabling protocol contribution. The paper's
-sole author is Alp by user direction; commits use only the configured user
-without co-author/generated-by trailers. The separate GPU PCG/PIM work's
-contributor ownership, credit, chronology, and reuse permission must still be
-resolved with the professor; do not claim it as new here or import it yet. The
-first deliverable is an advisor-ready technical report;
-work remains at publication-grade proof/transport/evaluation standards. Stay
-ringlpn-first, present any minimal upstream integration or external crypto
-dependency before adoption, and consult the user before every S1--S10 stage.
+integrated dealerless Orca FC-preprocessing system. The S2 audit subsequently
+found that the corrected per-point distributed DPF is **not presently a
+defensible protocol contribution**: BCG+20 already uses distributed DPF setup,
+Programmable DPF gives constant-round generation, and 2026 fully distributed
+DMPF/SLAMP-FSS work advances the multi-point PCG/FSS bottleneck. Treat the host
+DPF as a compatibility artifact/baseline unless advisor review identifies a
+concrete delta. The paper's sole author is Alp by user direction; commits use
+only the configured user without co-author/generated-by trailers. The separate
+private GPU PCG/PIM work has multiple contributors, no repository license, and
+unresolved ownership, credit, chronology, reuse, and overlap decisions. In
+particular, Chenkai's private commit `e821141` (leaky output replaced by a
+hash/Beaver-corrected CW) predates this fork's `28f8451` three-OLE correction;
+the implementations differ, but independence/credit cannot be inferred. Do not
+import the private work or claim its design/performance/Phase-C idea.
+The first deliverable is an advisor-ready
+technical report; work remains at publication-grade proof/transport/evaluation
+standards. Stay ringlpn-first, present any minimal upstream integration or
+external crypto dependency before adoption, and consult the user before every
+S1--S10 stage.
 The S1 contract is frozen **for advisor review** at
 `results/reports/dealerless_orca_fc_security_contract_2026_07_29.md` after
 the user-requested Opus 5 model-assisted audit reported no remaining freeze
 blocker. This is not an independent human cryptographic review, security
 proof, computational-security result, or publication-readiness claim.
+S2 is now **blocked pending professor decisions**. The preliminary audit at
+`results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md` records
+the published projection-rule/Table-1 contradiction, unproved projected-noise
+mapping, incomplete epoch budget, 2026 fully distributed DMPF/SLAMP-FSS
+overlap, and Stationary-SD, direct-Z_2^k, and QA-SD/WHT alternatives. The
+preliminary `n=2^14,c=4,t=16` point leaves only 25% raw steady-state capacity
+after per-point keygen reserve; it is not a security or complete-epoch point.
+Cheddar provenance is recorded in
+`extern/Cheddar_{PROVENANCE,MIT_LICENSE}.txt`. No parameter set is pinned and
+S3 must not start. The exact advisor questions are in
+`results/reports/s2_professor_decision_request_2026_07_29.md`.
 
 ## Catch up in 10 minutes (read in this order)
 
@@ -68,15 +88,18 @@ proof, computational-security result, or publication-readiness claim.
 4. `results/reports/dealerless_orca_fc_security_contract_2026_07_29.md` —
    S1 functionality, exact DPF/FC transcript, leakage, simulators, and proof
    obligations.
-5. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
+5. `results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md` and
+   `s2_professor_decision_request_2026_07_29.md` — S2 hard stops, current prior
+   art, attribution, parameter transcript, and eight advisor decisions.
+6. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
    Phase C protocol, executable controls, and regenerated D1 counts.
-6. `results/README.md` — where every result/report lives and what produces it.
-7. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
+7. `results/README.md` — where every result/report lives and what produces it.
+8. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
    slot-packed transcript and NTT backend changes.
-8. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
-   v2.3 S1 contract, forward plan, cost models, and claims discipline.
-9. `results/reports/baseline_2026_06_10.md` — older full-GPU environment,
-   PASS counts, and performance anchors.
+9. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
+   v2.3 S1/S2 state, forward plan, cost models, and claims discipline.
+10. `results/reports/baseline_2026_06_10.md` — historical full-GPU
+    environment, PASS counts, and performance anchors.
 
 Then re-validate everything with one command (~15 min, needs GPU):
 
@@ -90,7 +113,7 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 
 | File | What it is |
 |---|---|
-| `bench_ntt_cuda_cheddar.cu` | The GPU NTT backend (cheddar-derived merged-stage kernels, signed Montgomery, q32/q64/q128-CRT, negacyclic). Included by every GPU bench via `RINGLPN_DISABLE_MAIN`. Contains `run_full_polymul`, `run_polymul_prepared_lhs`, adaptive fused-INTT (`RINGLPN_NTT_NO_FUSE`/`FORCE_FUSE`), `host_polymul_reference` (the host oracle), `kConfig62`/`kConfig62Crt2` (the primes: 2^62−6·2^24+1, 2^62−7·2^24+1). |
+| `bench_ntt_cuda_cheddar.cu` | The GPU NTT backend (substantially Cheddar-derived merged-stage kernels, signed Montgomery, q32/q64/q128-CRT, negacyclic). Upstream MIT notice and reconstructed source/blob pin plus local delta are retained in `extern/Cheddar_MIT_LICENSE.txt` and `extern/Cheddar_PROVENANCE.txt`; cite Cheddar. Included by every GPU bench via `RINGLPN_DISABLE_MAIN`. Contains `run_full_polymul`, `run_polymul_prepared_lhs`, adaptive fused-INTT (`RINGLPN_NTT_NO_FUSE`/`FORCE_FUSE`), `host_polymul_reference` (the host oracle), `kConfig62`/`kConfig62Crt2` (the primes: 2^62−6·2^24+1, 2^62−7·2^24+1). |
 | `gpu_spfss_zp.cuh` | GPU DPF/SPFSS with additive Z_p payloads (`gpuKeyGenDPFZpPair`, `gpuDpfZpFullEvalSum`). The expand-side workhorse. **Security blockers:** unlike the formal BGI16 construction's full-`lambda` seed with separate tag outputs (CCS 2016, DOI 10.1145/2976749.2978429), it uses a Doerner--shelat-style low-bit control encoding; the GPU code masks each seed LSB and leaves 127 secret seed bits. Centralized GPU roots are also expanded from one 64-bit `seed_base`. S3 must use independent OS-CSPRNG roots and widen the PRG/state (or lower the security target) before a 128-bit DPF claim. |
 | `bench_ole_ringlpn_cuda.cu` | The Figure 2 Ring-LPN OLE engine (random ring OLE: z0+z1 = x0·x1 in Z_p[X]/(X^n+1)). Reusable via `#define RINGLPN_OLE_DISABLE_MAIN` + include; caches NTT(a)/NTT(a·a) across expand iterations. **`build_spfss_keys()` is the centralized-keygen oracle boundary.** |
 | `bench_linear_ole_ringlpn_cuda.cu` | Ring-polynomial matrix Beaver from two OLEs per ring product. |
@@ -152,7 +175,8 @@ NOT claimable yet (the honest boundaries — never blur these):
   conversion reads both shares (oracle); benchmark RNG is common-seed.
 - Any concrete security level: c=2/t=8 are correctness parameters; the primes
   fully split the ring → **splittable** Ring-LPN assumption (stronger than
-  irreducible), unaudited.
+  irreducible). S2's preliminary audit is blocked on the sparse-projection
+  selection and projected-noise reduction, so no parameter set is secure-pinned.
 - Anything about nonlinear layers (ReLU/truncation FSS keys are a separate
   dealer axis).
 - The host D1 artifact does not establish computational privacy, 128-bit

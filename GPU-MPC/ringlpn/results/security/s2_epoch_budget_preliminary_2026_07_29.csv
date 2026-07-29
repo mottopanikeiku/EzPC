@@ -1,0 +1,5 @@
+point,n,c,per_poly_t,keygen_ole_per_ring_ole,raw_surplus,raw_application_fraction,bootstrap_feasible,complete_epoch_budget
+smoke_c2_t8,8192,2,8,768,7424,0.906250,yes,no
+preliminary_c4_t16,16384,4,16,12288,4096,0.250000,yes,no
+bcg_scale_c4_t16,1048576,4,16,12288,1036288,0.98828125,yes,no
+rejected_c2_t64,8192,2,64,49152,-40960,-5.000000,no,no

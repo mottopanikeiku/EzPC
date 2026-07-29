@@ -18,15 +18,21 @@ only; it uses ideal OT/triple/OLE calls, splitmix64, and one process.
 
 ## 1. Contribution and provenance boundary
 
-The paper's contribution is the **integrated two-party preprocessing path for
-Orca FC layers**, enabled by the corrected distributed DPF key-generation
-protocol below. The relationship to the separate GPU-PCG/PIM work is not yet
-settled: do not assume common authorship, ownership, chronology, or permission
-to reuse its DPF/GPU code. Until the professor resolves the questions below,
-this draft treats that repository only as an internal comparison point and
-claims none of its GPU-PCG design or performance as new here.
-The paper's author list is fixed to Alp alone. This does not reassign
-ownership or erase attribution for inherited code, protocols, or measurements.
+The candidate paper contribution is the **integrated two-party preprocessing
+path for Orca FC layers**. The corrected per-point distributed DPF below is a
+named subfunction and compatibility artifact, not presently a protocol
+contribution: BCG+20 already invokes Doerner--shelat distributed DPF setup,
+Programmable DPFs give constant-round generation, Agarwal--Raghuraman--
+Rindal's 2026 fully distributed DMPF directly targets Ring-LPN PCGs with a
+proof and prototype, and 2026 SLAMP-FSS is another multi-point construction.
+Advisor review must select a multi-point route, retain this artifact only as a
+baseline, or identify a concrete delta. The relationship to the separate
+private GPU-PCG/PIM work is
+also unsettled; it has multiple contributors and no repository license. Do
+not assume common ownership or permission, and do not import or claim any of
+its GPU-PCG design or performance. The paper's author list is fixed to Alp
+alone. This does not reassign ownership or erase attribution for inherited
+code, protocols, or measurements.
 
 GPU-NTT is separate upstream work by Ali Şah Özcan, Erkay Savaş, and
 collaborators. The local upstream repository identifies ePrint 2023/1410 and the
@@ -36,19 +42,33 @@ or four-step algorithms. The current EzPC deployment backend is documented as
 cheddar-derived; GPU-NTT is presently an external measured baseline. Any claim
 that the active backend incorporates GPU-NTT code or algorithmic ideas requires
 a separate source/license audit before the wording changes.
+The active Cheddar-derived backend is a substantial adaptation of MIT-licensed
+upstream code. This audit added the upstream copyright/license notice and
+paper citation and recorded the reconstructed source pin and local delta in
+`extern/Cheddar_PROVENANCE.txt`.
 
 **Questions to resolve with the professor in S2 before S3 implementation or
 external circulation:**
 
-1. Which contributors own the DPF, GPU expansion, and integration work in the
-   separate GPU-PCG/PIM project, and which components may Alp reuse with
-   citation or disclosure?
-2. What is the chronology and submission status of that work relative to this
-   integrated Orca project?
-3. Should reuse be cited as a paper/preprint, an unpublished technical report,
-   a software artifact, or a shared baseline contribution?
-4. Which algorithms, code, measurements, figures, and prose must appear in an
-   explicit overlap/disclosure table?
+1. Is the contribution the integrated dealerless Orca FC system, or is a new
+   distributed-DPF protocol required?
+2. Should S3 adopt/benchmark the 2026 fully distributed DMPF and SLAMP-FSS,
+   retain this per-point DPF only as a baseline, or pursue a specifically
+   identified delta?
+3. Should the architecture remain regular Ring-LPN/NTT plus conversion, adopt
+   Stationary Syndrome Decoding, or compare/pivot to the 2025 direct-
+   `Z_(2^k)` and 2026 QA-SD/WHT PCGs?
+4. Who will approve the sparse-factor projection criterion, projected-noise
+   mapping, advantage loss, and classical/quantum 128-bit interpretation?
+5. Should the parameter target use `n=2^20,c=4,t=16`, the preliminary
+   `n=2^14,c=4,t=16`, or another reviewed point?
+6. Which contributors own each DPF, CPU/GPU PCG, GPU-NTT, PIM, integration,
+   measurement, figure, and prose component in the private project; what may
+   Alp reuse; and what citation, acknowledgement, or disclosure is required?
+7. What is that work's chronology and submission/public-release status
+   relative to this sole-author project?
+8. May the now-attributed Cheddar-derived backend remain, or should
+   publication use a clean external backend boundary?
 
 ## 2. Notation and fixed conventions
 
