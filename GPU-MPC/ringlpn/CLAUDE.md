@@ -37,6 +37,14 @@ The corrected host checkpoint and v2.2 evidence are committed at `28f8451`.
 The binding staged route to publication readiness is
 `results/reports/publication_readiness_plan_2026_07_21.md`; every completed
 stage must end in a gate-verified checkpoint commit.
+Direction was locked with the user on 2026-07-29: the paper's thesis is the
+integrated dealerless Orca FC-preprocessing system, with the corrected
+distributed DPF as its enabling protocol contribution. The GPU PCG system is
+separate forthcoming work (with a PIM comparison), so do not claim it as new
+here. The first deliverable is an advisor-ready technical report; work remains
+at publication-grade proof/transport/evaluation standards. Stay ringlpn-first,
+present any minimal upstream integration or external crypto dependency before
+adoption, and consult the user before every S1--S10 stage.
 
 ## Catch up in 10 minutes (read in this order)
 

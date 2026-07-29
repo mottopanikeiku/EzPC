@@ -192,6 +192,18 @@ research-progress artifact and proposal. It is not publication-ready:
 - the multiplicative-payload adaptation still lacks a publication-grade
   simulation proof.
 
+### Direction addendum — 2026-07-29
+
+The user selected the integrated dealerless Orca FC-preprocessing system as
+the primary paper thesis. The corrected distributed DPF is its enabling
+protocol contribution. GPU PCG design/performance belongs to separate
+forthcoming work with a PIM-architecture comparison and must not be claimed as
+new here. The immediate publication target is an advisor-ready technical
+report while retaining the full proof, real-transport, parameter, evaluation,
+and artifact gates. Work remains ringlpn-first; proposed external crypto
+dependencies and minimal future upstream Orca integration require review.
+Consult the user before every S1--S10 stage.
+
 ## 7. Repository and operational notes
 
 - `spfss_host.cpp` is intentionally untouched.

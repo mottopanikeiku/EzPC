@@ -4,6 +4,31 @@
 **Scope:** two-party, semi-honest, dealerless preprocessing for Orca's **linear/FC layers** from splittable Ring-LPN. Nonlinear-layer FSS keys and malicious security remain out of scope.  
 **Starting checkpoint:** commit `28f8451` (`ringlpn: add corrected distributed DPF keygen artifact`), with the required GPU gate ending `ALL GATES PASS`.
 
+## Direction decision — 2026-07-29
+
+- **Primary thesis:** an integrated dealerless Orca FC-preprocessing system.
+  The corrected shared-point/multiplicative-payload distributed DPF protocol is
+  this paper's key enabling protocol contribution; the end-to-end two-party GPU
+  integration and evaluation must demonstrate its systems value.
+- **Contribution boundary:** the GPU PCG system is separate work with its own
+  forthcoming paper and PIM-architecture comparison. This project may consume
+  that baseline, but must not present GPU PCG design/performance as new here.
+  Before a draft is shared externally, its related-work and novelty table must
+  identify all overlapping methods, experiments, text, and artifacts.
+- **Publication path:** first produce an advisor-ready technical report at the
+  full technical bar in this plan. Lock a venue and its formatting only after
+  advisor feedback; do not lower the proof, real-transport, or evaluation gates
+  merely because the first deliverable is a report.
+- **Code boundary:** work inside `GPU-MPC/ringlpn/` by default. Plan future Orca
+  integration explicitly. Any new upstream Orca edit must be minimal,
+  feature-flagged where possible, and presented for user review before editing.
+  A vetted external cryptographic dependency also requires a design/license
+  review before adoption.
+- **Consultation:** stop before every S1--S10 stage with current evidence,
+  proposed design, alternatives, risks, gate, and intended checkpoint commit.
+  Also stop immediately if a security assumption fails, the contribution
+  boundary changes, or a stage would require broader upstream modification.
+
 ## 1. Definition of publication-ready
 
 The project is publication-ready only when all of the following are true at the same committed revision:
