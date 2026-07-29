@@ -1,0 +1,12 @@
+source=https://github.com/MatanHamilis/dmpf
+revision=ed044b903fdf6fd213b171eaa125e4eb52363903
+license=CC0-1.0
+rust_image=rust:1.88-bookworm
+toolchain=nightly-2024-09-29
+rustflags=-C target-cpu=native
+cpu_pin=6
+host=Linux 6.8.0-78-generic x86_64 GNU/Linux
+cpu_model=Intel(R) Xeon(R) w5-3435X
+layout=regular noise, (n,c,t)=(2^14,4,16), per-group domain 2^11
+note=one row per distinct per-group point count; per-pair totals are derived
+note=Goldilocks_x2 field, centralized generation, sequential party evaluations

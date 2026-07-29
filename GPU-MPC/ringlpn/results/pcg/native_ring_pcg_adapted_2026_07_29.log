@@ -1,0 +1,156 @@
+source=https://github.com/zhli271828/Trace-F2-OLE-PCG
+revision=43959ef19cee4b25d0580ea0c12499c564e2328d
+license=MIT
+evidence_class=adapted
+params=c=5,t=27,n_log3 in {13 15},trials=3
+cflags=-std=c99 -O3 -I./src -I./include -I./libs/fft/include -I./libs/gf64/include -I./libs/gf128/include -I./libs/base-ary-dpf/include -I/usr/include/openssl/
+ldflags=-march=native -lcrypto -lssl -lm -maes -ffast-math
+cpu_pin=4
+cpu_model=Intel(R) Xeon(R) w5-3435X
+host=Linux 6.8.0-78-generic x86_64 GNU/Linux
+note=single process, both parties' expansion measured together, no network
+note=setup is centralized: the benchmark samples both DPF key halves locally
+note=correctness gate is the artifact's own F4 OLE PCG test, not a Z_2^k triple check
+patch_n13=/tmp/ringlpn-native-ring-pcg/ringlpn_adapted_n13.patch
+patch_n13_sha256=81d26db8bd4e59ca77e5dbc8c41016ec13b3bb38c226664a6eeed138c4eee762
+******************************************
+Testing PCG
+DPF domain bits 8 
+dpf_block_size = 26244
+block_size = 1594323 
+packed_block_size = 24912
+packed_poly_size = 672624
+Done with initializing parameters.
+[       ]Done with Step 0 (sampling the public values)
+[.      ]Done with Step 1 (sampling error vectors)
+[..     ]Done with Step 2 (computing the local vectors)
+[...    ]Done with Step 3 (computing the cross product)
+[....   ]Done with Step 4 (sampling DPF keys)
+[.....  ]Done with Step 5 (evaluating all DPFs)
+[...... ]Done with Step 6 (computing FFTs)
+[.......]Done with Step 7 (recovering shares)
+
+Time elapsed 9405.785000 ms
+******************************************
+PASS
+******************************************
+
+******************************************
+Benchmarking PCG with aggressive parameters (c=5, t=27)
+Run: N=3^13, c=5, t=27
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 5357.537000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 1 of 3
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 5368.942000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 2 of 3
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 5345.662000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 3 of 3
+******************************************
+N=3^13, c=5, t=27: Avg PP time 1529.1270 ms, expand time 5357.3803 ms, total time 7295.2160 ms
+******************************************
+
+******************************************
+******************************************
+Benchmarking PCG with aggressive parameters (c=5, t=27)
+Run: N=3^13, c=5, t=27
+k=64, s=57
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 16792.987000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 1 of 3
+k=64, s=57
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 16633.541000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 2 of 3
+k=64, s=57
+block_size = 59049 
+DPF domain bits 7 
+dpf_block_size = 2187
+block_bits = 10
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 16494.120000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 3 of 3
+******************************************
+N=3^13, c=5, t=27: Avg PP time 2198.0040 ms, expand time 16640.2160 ms, total time 19494.5287 ms
+******************************************
+
+******************************************
+patch_n15=/tmp/ringlpn-native-ring-pcg/ringlpn_adapted_n15.patch
+patch_n15_sha256=aac0c534ca683608c1ac7e45cd5d9fd7ef41d494a8165b53f0352bc8ba8c51af
+******************************************
+Benchmarking PCG with aggressive parameters (c=5, t=27)
+Run: N=3^15, c=5, t=27
+block_size = 531441 
+DPF domain bits 9 
+dpf_block_size = 19683
+block_bits = 12
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 52041.038000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 1 of 3
+block_size = 531441 
+DPF domain bits 9 
+dpf_block_size = 19683
+block_bits = 12
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 52134.178000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 2 of 3
+block_size = 531441 
+DPF domain bits 9 
+dpf_block_size = 19683
+block_bits = 12
+OK
+Benchmarking PCG evaluation 
+Eval time (total) 52125.972000 ms
+DONE Benchmarking PCG evaluation
+
+Done with trial 3 of 3
+******************************************
+N=3^15, c=5, t=27: Avg PP time 11248.1990 ms, expand time 52100.3960 ms, total time 65591.2930 ms
+******************************************
+
+******************************************

@@ -94,6 +94,35 @@ source pin and local delta.
   Use a clean external backend boundary for release if provenance cannot remain
   complete and auditable.
 
+## Project-owner consultation record (2026-07-29)
+
+The project owner selected the following direction:
+
+1. lead with the **integrated dealerless Orca FC system**;
+2. compare the 2026 fully distributed DMPF and SLAMP-FSS against the current
+   point-DPF compatibility baseline before choosing the key-generation route;
+3. compare regular Ring-LPN/NTT, Stationary-SD, direct-`Z_(2^k)`, and
+   QA-SD/WHT before choosing the PCG architecture;
+4. require professor approval for the projection argument and 128-bit
+   interpretation;
+5. use `n=2^14,c=4,t=16` only as a feasibility tier and
+   `n=2^20,c=4,t=16` only as a literature-reference tier until approval;
+6. treat the private PCG/PIM repository as part of the same research stream;
+7. retain the Cheddar-derived backend with its source pin, MIT notice,
+   citation, and local-delta record.
+
+The owner offered unrestricted reuse of the private repository. That offer
+does not establish permission from its other contributors or cure the missing
+repository license. No private code, measurements, figures, or prose are
+needed for the selected public-prior-art comparison, so the safe execution
+boundary is stricter: import none. The only remaining private-project question
+is the professor's written authorship/credit/overlap disposition for the
+same-research-stream relationship and the `e821141`/`28f8451` chronology.
+
+These owner decisions authorize the public-source comparison work below. They
+do not approve a Ring-LPN parameter set, a 128-bit claim, private-project
+reuse, external circulation, or the binding S2 checkpoint.
+
 ## Requested answers
 
 Please answer each item explicitly:

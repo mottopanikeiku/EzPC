@@ -269,7 +269,240 @@ Until these are answered: do not start S3, do not import private-project code,
 do not call any parameter set 128-bit secure, do not present the per-point DPF
 as novel, and do not circulate the paper externally.
 
-## 7. Primary sources
+## 7. Consultation-driven matched architecture comparison
+
+The 2026-07-29 project-owner consultation selected an integrated systems
+contribution and required a comparison before architecture freeze. The
+comparison must use the exact sparse-product functionality consumed by this
+repository, not each paper's preferred demonstration workload.
+
+For one Ring-OLE direction, CRT limb, and polynomial pair `(i,j)`, define
+
+```text
+F_i,j(x) = sum_(r=0)^(t-1) sum_(s=0)^(t-1)
+           u_i,r * v_j,s * [x = a_i,r + b_j,s] mod p.
+```
+
+The parties privately hold the respective positions and nonzero coefficients.
+The domain is `[0,2n)`, duplicate sums must accumulate rather than abort, and
+the two keys must full-evaluate to additive `Z_p` shares accepted by the
+existing polynomial-product path. There are `c^2` such functions per
+direction, two directions per Beaver cross term, and one or two independent
+prime limbs for q64 or q128.
+
+The end-to-end setup boundary begins at those private factor lists, not at a
+DMPF API that already holds shared point/value vectors. It includes secure
+Cartesian point addition, coefficient multiplication, duplicate coalescing,
+zero removal, and conversion into the candidate's input shares. A standalone
+DMPF setup time and this factor-to-DMPF MPC stage must be reported separately
+and summed; omitting the latter is not a Ring-LPN setup comparison.
+
+Two noise layouts are separate workloads:
+
+- **uniform:** one `t^2`-point function over a `2n` domain per polynomial pair;
+- **regular:** for bucket sum `g in [0,2t-2]`, one function over a `2n/t`
+  domain with triangular point count
+  `m_g=g+1` for `g<t` and `m_g=2t-1-g` otherwise. The `2t-1` groups contain
+  exactly `t^2` points in total and are scattered back to the same polynomial.
+
+The three comparison tiers are:
+
+| tier | `n,c,t` | uniform `(log domain, points/function, raw total)` | regular `(log domain, groups/function, raw total)` | claim |
+|---|---|---:|---:|---|
+| current feasibility | `2^13,2,8` | `(14,64,256)` | `(11,15,256)` | smoke configuration; not a security claim |
+| preliminary candidate | `2^14,4,16` | `(15,256,4,096)` | `(11,31,4,096)` | architecture-cost candidate; not a security claim |
+| literature reference | `2^20,4,16` | `(21,256,4,096)` | `(17,31,4,096)` | BCG+20 parameter-scale reference only |
+
+Here `m_raw=c^2*t^2` counts raw Cartesian product terms: 256 or 4,096.
+The current protocol's three OLEs per raw term consume 768 or 12,288
+scalar-OLE slots. The suggested values `m≈98` and `m≈12,288` are therefore
+not matched point counts for these `(c,t)` pairs; the latter is a
+setup-correlation count. Every workload must additionally report
+`m_unique`, the number of distinct positions after accumulation, and
+`m_nonzero`, the support after coefficient cancellation. A distinct-random
+support of size `m_raw` is an expansion-mechanics stress test, not the exact
+private Ring-LPN workload. Combining the `c^2` functions into one DMPF is a
+separate candidate optimization and requires a proof that pair identity is
+irrelevant to the unchanged consumer.
+
+This section is a **DMPF subcomparison** inside the current Ring-LPN route. It
+cannot select the overall PCG architecture; Stationary-SD, native
+`Z_(2^bw)`, and QA-SD/WHT remain a separate required comparison. The DMPF
+candidates also have different functionality and must not be collapsed into
+one runtime bar:
+
+1. the current sum of point DPFs is the compatibility baseline;
+2. Agarwal--Raghuraman--Rindal Reverse Cuckoo is the only named candidate that
+   specifies fully distributed setup from private shared sparse inputs, but
+   the factor-to-product MPC stage and secure deduplication remain part of its
+   Ring-LPN total;
+3. SLAMP-FSS is a functionality-incompatible published reference: its `Gen`
+   is centralized, distributed setup is future work, it requires distinct
+   points, and it outputs XOR shares over characteristic-two fields rather
+   than additive shares over the deployed odd q62 primes;
+4. the CC0 IEEE S&P 2025 `MatanHamilis/dmpf` implementation is an executable
+   centralized expansion baseline. Its fixed Goldilocks-x2 output and
+   distinct-input generator make the new harness an `adapted` scale
+   measurement, not a reproduction over the deployed primes.
+
+Every executable row must report:
+
+- exact source revision, patch/harness digest, license, compiler flags,
+  CPU/GPU, process and thread count, field, PRG, security/statistical
+  parameters, domain, `m_raw`, `m_unique`, `m_nonzero`, and collision policy;
+- factor-to-product MPC, secure deduplication, and DMPF generation separately,
+  then total key-generation wall time, rounds, sent/received bytes, ideal or
+  real OT/OLE/triple counts, abort probability, peak memory, and key bytes per
+  party;
+- single-point and full-domain evaluation time, PRG calls, peak memory, and
+  output bytes;
+- correctness against the same accumulated sparse vector, including duplicate
+  positions and both deployed primes;
+- transport protocol: process placement, link bandwidth/RTT, serialization,
+  host/device-transfer boundaries, warmups, repetitions, and dispersion;
+- per expanded ring OLE, gross setup consumption `C_setup`, net usable slots
+  `n_net=n-C_setup-conversion-reserve-abort-reserve`, epoch-zero cost, and
+  route-specific abort/retry policy;
+- per FC layer, `R=ceil(M*K*N/n_net)` expanded outputs and every cost multiplied
+  by `R`, two cross directions, and the CRT limb count.
+
+Published timings remain `published` rows. An unchanged local rerun is
+`reproduced`; a changed field, parameterization, optimization, or harness is
+`adapted`; formula-only values are `derived`. Hardware, functionality, field,
+output width, or setup-model differences prohibit a speedup ratio.
+
+A route can pass the dealerless architecture gate only if it supports private
+shared positions and payloads from the factor-list boundary, has a semi-honest
+proof for the observed transcript, uses licensed/auditable code, and passes
+the unchanged Ring-OLE consumer. No currently runnable alternative satisfies
+that gate: Reverse Cuckoo lacks an available auditable artifact, while all
+local DMPF rows use centralized generation. The architecture freeze therefore
+remains blocked after the expansion comparison.
+
+### Public artifact and license status (checked 2026-07-29)
+
+| artifact | exact pin | license | executable disposition |
+|---|---|---|---|
+| Reverse Cuckoo / fully distributed DMPF | ePrint revision 2026-01-23 | paper CC BY 4.0; no code license found | The paper reports a prototype, but the ePrint record links no repository; GitHub repository search and Peter Rindal's public repositories exposed no matching source. Request the artifact from the authors; do not reconstruct benchmark claims from an unavailable implementation. |
+| SLAMP-FSS | `jrmngndr/slamp-fss@893650f6a2ce902172ffeb016d82683db295c4df` | paper CC BY 4.0; repository has no `LICENSE` and GitHub reports no license | Use the published formulas and Table 4. Do not vendor, modify, redistribute, or call its timings locally reproduced without written code permission. Its current key generation is centralized in any case. |
+| IEEE S&P 2025 improved DMPF | `MatanHamilis/dmpf@ed044b903fdf6fd213b171eaa125e4eb52363903` | CC0-1.0 | Safe to pin and rerun as an executable expansion/key-size baseline; not fully distributed key generation. |
+| current point-DPF prototype | EzPC checkpoint `28f8451`, corrected security contract `63a0c05` | repository license | Reproducible compatibility and protocol-logic baseline; ideal transports and per-point setup prevent a cryptographic dealerless claim. |
+
+This availability result narrows, but cannot complete, the experiment. A
+truthful local expansion-mechanics comparison can include the current baseline
+and adapted CC0 S&P 2025 implementations. SLAMP contributes only
+functionality-incompatible published/analytic rows. Reverse Cuckoo needs an
+author-provided licensed artifact, resolution of the paper-level ambiguities
+identified below, and a matched private-factor setup before a reproduced
+dealerless row is possible.
+
+### Reverse Cuckoo: published evidence and specification blockers
+
+The revised 49-page ePrint is dated 2026-01-23. Its Figure 6 ideal
+functionality is the closest semantic match found: it accepts secret-shared
+positions and payloads, adds payloads at duplicate positions, and returns a
+dense additive share vector over a group. Section 10.1 nevertheless places a
+generic-MPC Cartesian addition/product stage before the DMPF; Figure 14 does
+not expose whether that stage is included in its claimed end-to-end setup.
+
+The exact printed Figure 7 cannot currently justify implementation. It sets
+`w=2`, `d=2^ceil(log2(t))`, `m=w*d`, pads with `m-t` copies of dummy key `N`,
+requires `H_i(N)=0`, shuffles all rows into `d x q` matrices, and requires each
+matrix to have rank `d` and solve against `(0,1,...,d-1)`. Since `t<=d`, at
+least `d` zero dummy rows exist. Any block containing one has rank below `d`
+and cannot map that row to a nonzero right-hand side. Thus at least one of the
+two required solves is impossible as printed. The characteristic-two
+`bin-solver`, integer bin-label right-hand side, and claimed `q`-bit descriptor
+also lack a printed type conversion. Figure 9 states collision accumulation
+but omits the final payload reduction. These are specification blockers, not
+an experimentally reproduced attack; author source or clarification is
+required.
+
+The paper's rank failure bound `2^-(q-d)` assumes independently uniform rows,
+but Section 7.3 only conjectures that its concrete Goldreich-style hash meets
+that condition. It gives no concrete finite-parameter cuckoo abort bound. The
+printed generic solver costs
+`O(d*log(q))` rounds and `O(d*q^2+d*q*log|G|)` bits per block; printed dedup
+performs `t*(t+1)/2` equality checks. These polynomial terms are material at
+4,096 points and cannot be replaced by the paper's earlier
+`O(t*log(N))` communication goal.
+
+Closest standalone published rows (Table 1, p. 43; u64 field, linear security
+40, cuckoo security 2, three expansions, one set; i7-13700H, single-threaded
+per party, local >10-Gbps socket) are:
+
+| domain | points | setup | average expand | total |
+|---:|---:|---:|---:|---:|
+| `2^16` | 16 | 72.90 ms | 1.37 ms | 77 ms |
+| `2^18` | 16 | 172.90 ms | 6.37 ms | 194 ms |
+| `2^20` | 16 | 516.20 ms | 27.27 ms | 598 ms |
+| `2^16` | 128 | 201.80 ms | 2.40 ms | 209 ms |
+| `2^18` | 128 | 363.80 ms | 7.07 ms | 385 ms |
+| `2^20` | 128 | 988.50 ms | 38.50 ms | 1,104 ms |
+
+No row uses 256 or 4,096 points, domains `2^15` or `2^21`, private-factor
+inputs, or dual q62 outputs. Figure 14's Ring-LPN rows report Goldilocks
+throughput up to 1,811,012 OLE/s at `n=2^20` (12.490-s setup, 170.44-MB setup
+communication, 12.99-MB expansion communication) and Fp31 throughput up to
+2,709,498 OLE/s (11.583 s, 163.95 MB, 6.51 MB), but omit sparsity and DMPF
+point counts. The surrounding prose also contradicts Figure 14 by quoting
+gigabytes instead of megabytes. These remain `published`, incompatible rows;
+no project speedup is inferred.
+
+### Whole-PCG route comparison
+
+The DMPF study chooses only a sparse encoder inside Ring-LPN. The overall
+architecture comparison starts at two private PCG seeds and ends at the exact
+correlation consumed by Orca: plain additive Beaver shares over
+`Z_(2^bw)`, with setup, expansion, conversion, packing, and key serialization
+all charged. Authenticated SPDZ2k triples, scalar OLEs, degree-1 OT/VOLE, and
+prime-field OLEs are separate functionalities, not interchangeable throughput
+units.
+
+| route | output / assumption | distributed setup status | executable evidence | Orca disposition |
+|---|---|---|---|---|
+| current splittable Ring-LPN | one or two q62 prime limbs under reducible Ring-LPN, then conversion | BCG analyses programmable setup; local path has separate ideal-transport keygen and conversion prototypes, not an integrated two-process setup | exact local q64/q128 algebra and unchanged Orca consumer pass | compatibility baseline only; parameter proof, real setup, conversion budget, and epoch budget remain open |
+| Stationary-SD | measured degree-1 OT/VOLE under Stationary-SD; degree-2 Ring-LPN is only sketched | libOTe implements stationary PPRF/OT/VOLE, not the Ring-LPN/Beaver construction | degree-1 primitive can be rerun; Section 7.2 explicitly leaves the needed degree-2 evaluation to future work | no direct `Z_(2^bw)` output and no executable Orca route |
+| native `Z_(2^bw)` / Galois ring | programmable OLE and SPDZ2k correlations under Ring-LPN or QA-SD | paper says malicious setup can be adapted; released benchmark centrally samples both DPF keys | MIT source at `zhli271828/Trace-F2-OLE-PCG@43959ef19cee4b25d0580ea0c12499c564e2328d`; source-native benchmark is not dealerless | strongest algebraic candidate for eliminating conversion, but plain Orca Beaver semantics, real setup, and correctness validation are missing |
+| QA-SD/WHT prime field | prime-field OLE/VOLE under QA-SD; WHT avoids NTT roots | paper gives a semi-honest hybrid setup; benchmark fills base correlations from one PRNG | anonymous artifact has no top-level license, hard-codes `p=2^61-1`, and does not implement either q62 prime | would still require two prime routes plus CRT/conversion for q128; target adaptation and parameter review are new work |
+
+The evidence points are intentionally not ratioed:
+
+- **BCG+20 estimated**, `N=2^20,c=4,w=64`, one i7-7600U core,
+  approximately 124-bit modulus: 1.26-MB seed per party, 2.86-MB passive setup,
+  and 10.0-s expansion (1.4-s ring arithmetic plus 8.6-s DPF);
+- **Stationary-SD published degree 1**, fixed `q*k=2^24` on an i7-12650H:
+  approximately 45 ns/output and 5 bits/output versus 68 ns/output for ordinary
+  SD; this says nothing measured about degree-2 Beaver generation;
+- **native-ring published**, AMD EPYC 9754, secure `c=5,t=27`: SPDZ2k
+  authenticated-triple throughput for batches `2^13..2^16` is
+  115k/113k/109k/102k triples/s at `(k,s)=(32,26)` and
+  65k/64k/62k/52k triples/s at `(64,57)`. The faster `c=3,t=27` rows are
+  explicitly broken after the 2025 QA-SD attack and must not be used;
+- **WHT published**, one EPYC 9754 core: at `N=2^20`, benchmark
+  `(c,t)=(2,64)` takes 37.68 s and 14.86 MB, while `(3,32)` takes 43.37 s and
+  8.93 MB. These do not equal Table 3's conservative 128-bit points
+  `(2,67)` and `(3,42)`.
+
+Source inspection adds a reproducibility blocker for the native-ring artifact.
+Both `init_SPDZ2k_64_bench_params` and its higher-degree variant compute
+`modulus128 = 1 << (k+s)` with a 32-bit integer literal; the published
+64-bit row uses `k+s=121`, so this shift is undefined C rather than
+`2^121`. A separate GCC `-O3` probe on this workstation evaluated the same
+expression to zero. The following `% modulus128` is consequently invalid.
+The shipped main also runs `c=3,t=27`, the paper's explicitly broken row, and
+contains no SPDZ2k correlation validation. Any repaired `c=5` run is therefore
+an `adapted` artifact measurement with a patch digest and new correctness gate,
+not a reproduction of the released benchmark.
+
+This comparison does not select a route. Only the current baseline has been
+exercised against Orca's exact consumer; none has a reproduced, security-pinned
+dealerless setup. The native-ring route deserves the next bounded prototype
+only if the project owner prioritizes removing conversion, but that is an
+architecture decision requiring consultation, not an inference from
+incompatible published throughput.
+
+## 8. Primary sources
 
 - BCG+20 corrected full-version record: <https://eprint.iacr.org/2022/1035>
 - Programmable DPF: <https://eprint.iacr.org/2022/1060>

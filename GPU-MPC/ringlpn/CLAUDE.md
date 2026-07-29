@@ -65,23 +65,58 @@ The S1 contract is frozen **for advisor review** at
 the user-requested Opus 5 model-assisted audit reported no remaining freeze
 blocker. This is not an independent human cryptographic review, security
 proof, computational-security result, or publication-readiness claim.
-S2 is now **blocked pending professor decisions**. The preliminary audit at
-`results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md` records
-the published projection-rule/Table-1 contradiction, unproved projected-noise
-mapping, incomplete epoch budget, 2026 fully distributed DMPF/SLAMP-FSS
-overlap, and Stationary-SD, direct-Z_2^k, and QA-SD/WHT alternatives. The
-preliminary `n=2^14,c=4,t=16` point leaves only 25% raw steady-state capacity
-after per-point keygen reserve; it is not a security or complete-epoch point.
-Cheddar provenance is recorded in
+S2 is **blocked pending professor approval**, but the project-owner
+consultation is recorded. The chosen direction is an integrated dealerless
+Orca FC systems contribution, with matched public-source comparisons of
+fully distributed DMPF versus SLAMP-FSS and of regular Ring-LPN/NTT versus
+Stationary-SD, direct-`Z_(2^k)`, and QA-SD/WHT before architecture freeze.
+Use `n=2^14,c=4,t=16` only as a feasibility tier and `n=2^20,c=4,t=16`
+only as a literature-reference tier. The preliminary audit at
+`results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md`
+records the projection-rule/Table-1 contradiction, unproved projected-noise
+mapping, incomplete epoch budget, and current prior art. The private PCG/PIM
+repository is the same research stream but remains quarantined: its
+multi-contributor/no-license status and output-layer chronology still require
+the professor's written authorship/credit/overlap disposition. Cheddar remains
+an attributed MIT-licensed dependency under
 `extern/Cheddar_{PROVENANCE,MIT_LICENSE}.txt`. No parameter set is pinned and
-S3 must not start. The exact advisor questions are in
-`results/reports/s2_professor_decision_request_2026_07_29.md`.
+S3 must not start. The consultation record and remaining professor questions
+are in `results/reports/s2_professor_decision_request_2026_07_29.md`.
+The comparison the owner asked for is now **measured**, not just specified:
+`results/reports/s2_architecture_comparison_2026_07_29.md`. Its headline result
+is a negative one, and it must not be misquoted. With *uniform* noise an
+OKVS-style DMPF expands the sparse product 275x faster than the current sum of
+point DPFs at `(n,c,t)=(2^14,4,16)`. With the **regular** noise the artifact
+actually deploys (`spfss_domain=2048`, `log_domain=11`, 31 diagonal groups per
+pair) the same encoder is **0.79x - slower** - and the best DMPF (big-state)
+wins only **2.29x** at 37x the key bytes. Regular noise already buys the
+domain/point reduction a DMPF is designed to buy, so the encoder is **not** the
+dominant lever here, and the 275x figure must never be presented as this
+project's result. Every dealerless candidate remains unavailable, unlicensed, or
+unimplemented. Reverse Cuckoo's printed Figure 7 is internally inconsistent
+(dummy padding versus full row rank) and has no public source. Two defects in
+the published native-ring PCG artifact (undefined `1<<(k+s)` for the 121-bit
+modulus; shipped insecure `c=3,t=27` grid) mean any local row from it is
+`adapted`, never `reproduced`.
+
+**2026-07-29 owner decisions (gate lift).** The self-imposed S2->S3 ordering
+gate is lifted **for implementation only**: the GPU distributed-keygen core and
+real OT/OLE transports may proceed in parallel with the unresolved parameter and
+security questions, provided no security claim is attached. Where BCG+20's
+literal projection rule and its Table 1 disagree, adopt the **conservative
+minimum**: `scripts/pin_ringlpn_parameters.py` reports the cheapest attack over
+every projection the accepted EUROCRYPT 2024 estimator admits and over both
+noise models, for both deployed primes. Under that reading `c=4,t=16` is
+**57.29 bits, not 128**; the conservative cost depends on `c*t`, so the pinned
+set must raise the noise weight and the artifact's current parameters must be
+described as feasibility-only.
 
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
-2. `results/reports/session_handoff_2026_07_21.md` — current verification,
-   boundaries, paper state, and next actions.
+2. `results/reports/session_handoff_2026_07_29_dmpf_comparison.md` — current
+   verification, consultation decisions, corrected point-count notation, and
+   next actions.
 3. `results/reports/publication_readiness_plan_2026_07_21.md` — binding
    S1--S10 execution order, gates, proof/evaluation requirements, and
    per-stage commit discipline.
@@ -94,11 +129,14 @@ S3 must not start. The exact advisor questions are in
 6. `results/reports/distributed_dpf_keygen_memo_2026_07_21.md` — corrected
    Phase C protocol, executable controls, and regenerated D1 counts.
 7. `results/README.md` — where every result/report lives and what produces it.
-8. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
+8. `results/reports/s2_architecture_comparison_2026_07_29.md` — measured
+   encoder comparison, dealerless-setup status, artifact defects, decision
+   table, and the open owner questions.
+9. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
    slot-packed transcript and NTT backend changes.
-9. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
+10. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
    v2.3 S1/S2 state, forward plan, cost models, and claims discipline.
-10. `results/reports/baseline_2026_06_10.md` — historical full-GPU
+11. `results/reports/baseline_2026_06_10.md` — historical full-GPU
     environment, PASS counts, and performance anchors.
 
 Then re-validate everything with one command (~15 min, needs GPU):

@@ -1,0 +1,5 @@
+bench,correlation,ring,n_log3,c,t,trials,setup_ms,expand_ms,total_ms,peak_rss_kb,status
+gr128_trace_bench,semi_honest_mult_triple,Z_2^64,13,5,27,3,1529.1270,5357.3803,7295.2160,8216712,ok
+SPDZ2k_64_bench,spdz2k_authenticated_triple,Z_2^64_with_mac,13,5,27,3,2198.0040,16640.2160,19494.5287,14659512,ok
+gr128_trace_bench,semi_honest_mult_triple,Z_2^64,15,5,27,3,11248.1990,52100.3960,65591.2930,73207020,ok
+SPDZ2k_64_bench,spdz2k_authenticated_triple,Z_2^64_with_mac,15,5,27,3,,,,99491328,exit_137
