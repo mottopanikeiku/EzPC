@@ -14,7 +14,7 @@ below; nothing writes to this top level anymore.
 | `vole/` | Standalone VOLE expansion prototype | `run_vole_sweep.sh` |
 | `orca_fc/` | Orca FC artifacts: keywriter demo, ideal-OLE transcript, **real-OLE slot-packed transcript**, Zp bridge | `run_orca_fc_ringlpn_demo.sh`, `run_orca_fc_ideal_ole_transcript.sh`, `run_orca_fc_real_ole_transcript.sh`, `run_orca_zp_bridge_test.sh` |
 | `secure_convert/` | Secure Z_M -> Z_2^bw conversion prototype | `run_secure_convert_test.sh` |
-| `dpf/` | Distributed DPF keygen protocol-logic CSV/log: split transcript counters, ideal-functionality mask-draw accounting, consume-once correlation-ID control, invalid-input and independent corruption controls; plus older online-keygen memory-efficiency track | `run_distributed_dpf_keygen.sh`; tests/fss bench (older track, manual) |
+| `dpf/` | Distributed DPF keygen artifacts: (a) protocol-logic CSV/log with ideal functionalities - split transcript counters, ideal-functionality mask-draw accounting, consume-once correlation-ID control, invalid-input and independent corruption controls; (b) **two-process real-transport CSV/log** (real IKNP OT, Gilboa OLE, measured wire bytes/rounds) plus its offline validation rows; (c) older online-keygen memory-efficiency track | `run_distributed_dpf_keygen.sh`, `run_two_party_dpf_keygen.sh`; tests/fss bench (older track, manual) |
 | `profiling/` | VTune hotspot/memory captures | `run_vtune_*.sh` |
 | `outreach/` | Abstracts, posters, professor memos/status emails | hand-written |
 | `archive/` | Superseded one-offs: early spot checks, `*_regular_patch`, `*_after_linear`, old plan drafts | frozen |
@@ -25,6 +25,7 @@ below; nothing writes to this top level anymore.
 
 | File | What it is |
 |---|---|
+| `reports/two_party_dpf_transport_memo_2026_07_29.md` | **Two-PROCESS keygen on a real transport**: real IKNP OT extension over TCP, Gilboa `Z_p` OLE, OT-based bit triples, OS-CSPRNG roots, versioned key serialization, 32/32 offline-validated pairs with a corrupted-key control, measured setup/protocol bytes and direction switches, and the explicit boundaries (not silent OT, non-cryptographic expansion PRG) |
 | `reports/session_handoff_2026_07_29_dmpf_comparison.md` | **START HERE for catch-up**: consultation decisions, corrected point-count notation, artifact/license findings, new benchmark harnesses, parallel-research status, and remaining work before the next consultation |
 | `reports/s2_architecture_comparison_2026_07_29.md` | **MEASURED ARCHITECTURE COMPARISON**: the DMPF advantage is layout-dependent — 275x (candidate) / 329x (BCG scale) under *uniform* noise, but 0.79x for OKVS and only 2.29x for big-state at the **deployed regular layout**, so the encoder is not the dominant lever; dealerless-setup status per encoder, whole-PCG route status, two defects found in the published native-ring artifact, decision table, and the four open owner questions |
 | `reports/s2_parameter_novelty_provenance_audit_2026_07_29.md` | **S2 PRELIMINARY HARD-STOP REPORT**: accepted-estimator transcript, published projection-rule/Table-1 contradiction, unproved projected-noise mapping, incomplete epoch budget, DMPF/SLAMP-FSS/Stationary-SD/direct-ring/QA-SD-WHT alternatives, private-project chronology/license/Phase-C overlap, recorded Cheddar pin/notice/local delta, and no pinned parameters/contribution |

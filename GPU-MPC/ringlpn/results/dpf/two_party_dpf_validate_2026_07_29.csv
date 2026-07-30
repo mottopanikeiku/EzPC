@@ -1,0 +1,7 @@
+prefix,keys,pass,fail,public_material_mismatch,negative_control,validation
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L4_m0,8,8,0,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L8_m0,8,8,0,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L11_m0,4,4,0,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L14_m0,2,2,0,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L8_m1,8,8,0,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_keys/L14_m1,2,2,0,0,failed_as_expected,pass

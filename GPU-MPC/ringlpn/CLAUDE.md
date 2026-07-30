@@ -111,6 +111,60 @@ noise models, for both deployed primes. Under that reading `c=4,t=16` is
 set must raise the noise weight and the artifact's current parameters must be
 described as feasibility-only.
 
+**2026-07-29 owner route decisions (recorded after the measured comparison).**
+Presented `results/reports/s2_architecture_comparison_2026_07_29.md` §6-§7 to the
+owner; the four answers are binding:
+1. **Encoder:** keep the per-point DPF. Implementation effort goes to *real*
+   silent-OT/OLE transports and a two-process deployment. Rationale is measured,
+   not aesthetic: at the deployed regular layout the best DMPF wins only
+   2.29x expansion at 37x the key bytes, and OKVS is 0.79x (slower), so the
+   encoder is not the pipeline's lever. A dealerless DMPF stays future work.
+2. **Parameters:** pin the conservative minimum *now* - raise the noise weight
+   until the cheapest admissible projection clears 128 bits for both primes -
+   then re-run every feasibility/GPU gate at the pinned set. The current
+   `(n,c,t)` rows are feasibility-only until that lands.
+3. **Claim scope:** the paper's headline claim waits for a real two-process
+   dealerless FC run. Protocol-logic slices are supporting evidence only, never
+   the contribution.
+4. **Prior art:** draft (do not send) an artifact/clarification request to the
+   Reverse Cuckoo authors for owner approval:
+   `results/outreach/reverse_cuckoo_artifact_request_2026_07_29.md`.
+
+**Conservative pin transcript (measured 2026-07-29).**
+`results/security/ringlpn_conservative_pin_2026_07_29.{csv,log}` holds 72 rows
+from the pinned EUROCRYPT 2024 estimator. Two facts drive the pinned set:
+the conservative cost was a function of the total weight `w = c*t` across every
+ring size the coarse sweep completed (`n=2^13..2^16`, 72 rows), and the
+point-DPF bootstrap needs
+`3*c^2*t^2 < n`. Measured: `w=128` gives 108.66-111.24 bits (fails), `w=256`
+gives 190.53 bits at `c=2,t=128` and 218.64 at `c=4,t=64` (passes). The finer
+sweep (`results/security/ringlpn_conservative_pin_refine_2026_07_29.csv`) shows
+the curve is **not monotone in `w`**: the rule admits a projection only while
+the expected reduced weight still fits the reduced dimension
+(`w_i <= (c-1)*2^i`), so raising `t` from 32 to 34 evicts the cheap degree-32
+projection and the conservative minimum jumps from 111.24 to 257.02 bits
+(`c=4,t=34`, degree 64, exact model, at `n=2^18`). Any pin must therefore quote
+the *evicted* projection alongside the surviving minimum; `c=4,t=34` needs
+`3c^2t^2 = 55,488` setup slots, so it bootstraps from `n>=2^16` (15.3% net) and
+has 78.8% net capacity at `n=2^18`. Bits at `n=2^16/2^17` for that candidate are
+being measured into
+`results/security/ringlpn_conservative_pin_n16_n17_2026_07_29.csv`.
+
+**Real two-party transport (2026-07-29, new).** The frozen keygen protocol now
+also runs as **two OS processes over TCP with real OT**:
+`src/test_two_party_dpf_keygen.cpp` + `src/two_party_ot.h`, using this repo's
+unmodified SCI IKNP OT extension (header-only, links only OpenSSL), Gilboa
+`Z_p` OLE, OT-based boolean triples, and OS-CSPRNG party roots. 32/32 key pairs
+across six configurations (depths 4-14, both primes) validate through the
+unchanged `dpfEvalAll` in a separate offline checker with a corrupted-key
+negative control; the measured logical/revealed-bit columns are bit-identical to
+the contract's closed forms, and the run adds what the single-process prototype
+could not: 256 base OTs + 21,829 setup bytes per party, 23.6-74.5 kB protocol
+bytes per tree, and `10L+4` measured direction switches per tree. IKNP is OT
+*extension*, not silent OT, and the expansion PRG is still splitmix64, so this
+is a transport milestone, not a security claim. See
+`results/reports/two_party_dpf_transport_memo_2026_07_29.md`.
+
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
@@ -162,6 +216,10 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 | `bench_orca_fc_ringlpn_demo.cu` | Byte-compatibility demo: forward + dW + dX key contracts at q64/q128. |
 | `test_secure_convert.cpp` | Step-2 artifact (host): party-separated Z_M→Z_2^bw conversion (edaBit-masked open, ripple comparator, daBit B2A). Bit-exact vs oracle, including deterministic sums `0,M-1,M,2M-2`; executable accounting separates `5ell-3` logical opened bits from `10ell-6` raw revealed-share bits and gates `2ell-1` post-mask dependency rounds. Ideal offline correlations; not yet wired into the transcript (proposal M3). |
 | `test_distributed_dpf_keygen.cpp` | **Corrected M1 host protocol-logic prototype (2026-07-29).** Two-party DPF keygen: secure adder for α's bits (L−1 bit triples), cancellation-lemma level walk (2 string OTs/level), and Phase C arithmetic-share multiplication (3 scalar OLEs) that opens only standard `finalCW`. Six invalid-input controls, five independent key corruptions (root seed, `sCW`, `tLCW`, `tRCW`, `finalCW`), omniscient old-sign regression, per-phase transcript accounting, ideal-functionality mask-draw accounting, and consume-once correlation-ID reuse control. Emits standard `spfss_host::DPFKey`s validated by unchanged `dpfEvalAll`; ideal OT/triple/OLE interfaces and non-cryptographic splitmix64 correctness PRG mean functional compatibility, not computational privacy. Party private-random-tape freshness is not executable evidence. `spfss_host.cpp` remains untouched. |
+| `two_party_ot.h` | **Real two-party transport (2026-07-29).** Wraps this repo's unmodified SCI OT stack (`SCI/src/OT/split-iknp.h`, `np.h`, `utils/net_io_channel.h`, header-only, links only OpenSSL) into: 1-of-2 128-bit string OT, boolean AND triples (2 one-bit OTs each), Gilboa `Z_p` scalar OLE (62 field-element OTs each), party-symmetric openings with per-direction bit accounting, OS-CSPRNG party randomness, and NetIO byte/direction-switch counters. IKNP is OT **extension**, not silent OT. |
+| `dpf_key_io.h` | Versioned little-endian `spfss_host::DPFKey` batch serialization (magic `RLPNDPF1`) plus the explicitly TEST-ONLY private-input record the offline checker needs. |
+| `test_two_party_dpf_keygen.cpp` | **The two-PROCESS keygen artifact.** Same frozen protocol, but two OS processes over two TCP sockets with real OT/triples/OLE, each party writing only its own key file; gates the contract's closed forms in-process and reports measured wire bytes, direction switches, and setup cost. Primitive self-tests (`--selftest`) open triple/OLE shares in a labelled test-only mode. |
+| `test_two_party_dpf_validate.cpp` | TEST-ONLY offline checker: runs after both parties exit, reads both key files, validates `beta*[x=alpha]` through unchanged `dpfEvalAll`, requires identical public material and differing seeds, and includes a corrupted-`finalCW` negative control. |
 | `test_orca_zp_bridge.cpp` | Carry-corrected Z_p→Z_2^bw share export + the bw=32/q62 counterexample (negative control). |
 | `bench_ntt_gpu_ntt_baseline.cu` | External baseline: GPU-NTT (Ozcan–Savas) vs cheddar, same prime/psi/operation. Needs external checkout (`GPU_NTT_HOME`, default `/home/fatih/GPU-NTT`); benchmark-only, not in the gate. |
 | `spfss_host.{h,cpp}`, `test_spfss.cpp`, `bench_ole_ringlpn_host.cpp`, `verify_figure2_expand.cpp` | Host reference implementations + the 135/57/36 host validation suites. |

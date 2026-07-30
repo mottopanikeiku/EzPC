@@ -1,0 +1,5 @@
+/tmp/lpn-estimator-eurocrypt-2024-a1.py:333: RuntimeWarning: divide by zero encountered in log2
+  Tgauss = decimal.Decimal((N - k - l) * N) / decimal.Decimal(np.log2(N - k - l))
+/tmp/lpn-estimator-eurocrypt-2024-a1.py:333: RuntimeWarning: invalid value encountered in log2
+  Tgauss = decimal.Decimal((N - k - l) * N) / decimal.Decimal(np.log2(N - k - l))
+# conservative pin: n=2^18, c=4, t=34 -> 257.023 bits, 18496 raw points, point-DPF bootstrap ok
