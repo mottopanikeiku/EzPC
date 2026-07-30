@@ -37,22 +37,21 @@ using U128 = unsigned __int128;
 
 inline U128 clear_tag(U128 seed) { return seed & ~static_cast<U128>(1); }
 
-// One AES-128-ECB block encryption, no padding.
-inline void aes128_block(const uint8_t key[16], const uint8_t in[16],
-                         uint8_t out[16]) {
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    if (ctx == nullptr) throw std::runtime_error("EVP_CIPHER_CTX_new failed");
-    if (EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, key, nullptr) != 1) {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("EVP_EncryptInit_ex failed");
+// One AES-128-ECB context per thread: the key changes on every node but the
+// cipher does not, so re-keying a persistent context avoids an allocation per
+// expansion. Both children are produced in a single ECB update.
+inline EVP_CIPHER_CTX *ecb_ctx() {
+    static thread_local EVP_CIPHER_CTX *ctx = nullptr;
+    if (ctx == nullptr) {
+        ctx = EVP_CIPHER_CTX_new();
+        if (ctx == nullptr) throw std::runtime_error("EVP_CIPHER_CTX_new failed");
+        if (EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), nullptr, nullptr,
+                               nullptr) != 1) {
+            throw std::runtime_error("EVP_EncryptInit_ex(cipher) failed");
+        }
+        EVP_CIPHER_CTX_set_padding(ctx, 0);
     }
-    EVP_CIPHER_CTX_set_padding(ctx, 0);
-    int len = 0;
-    if (EVP_EncryptUpdate(ctx, out, &len, in, 16) != 1 || len != 16) {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("EVP_EncryptUpdate failed");
-    }
-    EVP_CIPHER_CTX_free(ctx);
+    return ctx;
 }
 
 // Bit-identical host twin of the device `aes_prg_expand`.
@@ -62,19 +61,25 @@ inline void gpu_aes_prg_expand(U128 seed, U128 &s_l, uint8_t &t_l, U128 &s_r,
     const U128 masked = clear_tag(seed);
     std::memcpy(key, &masked, 16);
 
-    uint8_t pt_left[16];
-    uint8_t pt_right[16];
-    std::memset(pt_left, 0, sizeof(pt_left));
-    std::memset(pt_right, 0, sizeof(pt_right));
-    pt_right[0] = 0x02;  // device sets plaintext byte 3 of word 0, i.e. AES byte 0
+    // Device plaintexts: byte 3 of word 0 is `pt` and `pt+2`, i.e. AES byte 0 is
+    // 0x00 for the left child and 0x02 for the right child.
+    uint8_t in[32];
+    std::memset(in, 0, sizeof(in));
+    in[16] = 0x02;
 
-    uint8_t left[16], right[16];
-    aes128_block(key, pt_left, left);
-    aes128_block(key, pt_right, right);
+    EVP_CIPHER_CTX *ctx = ecb_ctx();
+    if (EVP_EncryptInit_ex(ctx, nullptr, nullptr, key, nullptr) != 1) {
+        throw std::runtime_error("EVP_EncryptInit_ex(key) failed");
+    }
+    uint8_t out[32];
+    int len = 0;
+    if (EVP_EncryptUpdate(ctx, out, &len, in, 32) != 1 || len != 32) {
+        throw std::runtime_error("EVP_EncryptUpdate failed");
+    }
 
     U128 lv = 0, rv = 0;
-    std::memcpy(&lv, left, 16);
-    std::memcpy(&rv, right, 16);
+    std::memcpy(&lv, out, 16);
+    std::memcpy(&rv, out + 16, 16);
     t_l = static_cast<uint8_t>(lv & 1);
     t_r = static_cast<uint8_t>(rv & 1);
     s_l = clear_tag(lv);

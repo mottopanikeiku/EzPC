@@ -1,0 +1,5 @@
+1,2,8,uniform,14,1,256,28.0,13.0,3.0,1908.0,3816.0,256,21829,1057600,89,901229.0,pass,pass
+party,c,t,noise_mode,log_domain,groups,trees,string_ots_per_tree,bit_triples_per_tree,scalar_oles_per_tree,logical_opened_bits_per_tree,revealed_share_bits_per_tree,base_ots,setup_bytes_sent,protocol_bytes_sent,protocol_direction_switches,keygen_us,transcript_accounting,status
+0,2,8,uniform,14,1,256,28.0,13.0,3.0,1908.0,3816.0,256,21829,1033792,89,903590.6,pass,pass
+1,2,8,uniform,14,1,256,28.0,13.0,3.0,1908.0,3816.0,256,21829,1057600,89,892195.0,pass,pass
+0,2,8,uniform,14,1,256,28.0,13.0,3.0,1908.0,3816.0,256,21829,1033792,89,890150.5,pass,pass

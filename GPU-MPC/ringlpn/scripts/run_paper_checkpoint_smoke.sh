@@ -62,6 +62,12 @@ if [[ "$RUN_REGULAR_SMOKE" == "1" ]]; then
   SMOKE=1 QBITS=128 NOISE=regular "$ROOT/scripts/run_ole_sweep.sh"
 fi
 
+echo "[paper-smoke] running the real OLE engine on two-party dealerless SPFSS keys"
+NOISE=regular BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+  "$ROOT/scripts/run_ole_two_party_keys.sh"
+NOISE=uniform BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+  "$ROOT/scripts/run_ole_two_party_keys.sh"
+
 echo "[paper-smoke] building and running linear OLE-to-Beaver GPU smoke"
 "$ROOT/scripts/build_linear_ole_bench.sh"
 "$ROOT/scripts/run_linear_ole_sweep.sh"

@@ -197,6 +197,25 @@ compatibility and GPU-validated correctness*; the keygen itself is still
 CPU-side, and the GPU PRG's low-bit control encoding still leaves a 127-bit
 secret seed state, so `D-SEED` stays open and no 128-bit claim is attached.
 
+**M2 core gate reached (2026-07-29, new): the real Ring-LPN OLE engine runs on
+two-party dealerless SPFSS keys.** `build_spfss_keys()` - the pipeline's
+centralized-keygen oracle - is now replaceable by two OS processes over real
+IKNP OT: `src/test_two_party_spfss_keygen.cpp` (shared protocol in
+`src/two_party_dpf_protocol.h`, GPU expansion PRG) plus two env-gated hooks in
+`src/bench_ole_ringlpn_cuda.cu` (`RINGLPN_OLE_EXPORT_NOISE`,
+`RINGLPN_OLE_SPFSS_KEYS`; with neither set the bench is byte-for-byte its old
+self). The engine's own `validation`/`host_validation`/`correct` all pass on
+dealerless keys in **all four deployed configurations** (q64/q128 x
+uniform/regular), expansion and validation code unmodified:
+256 trees/limb, one level-synchronous batch, 89 stages at `L=14` (uniform) and 71
+at `L=11` (regular), ~1.0 MB per party per limb, keygen 0.90 s uniform / 0.13 s
+regular after a 6.8x host-PRG speedup. Regular noise is ~7x cheaper to key for
+the same tree count (domain `2^11` vs `2^14`) - the same effect that collapsed the
+DMPF encoder advantage. Wired into the required-GPU gate (`ALL GATES PASS`). Still
+oracles: benchmark-side noise sampling, dealer-labelled conversion correlations,
+single-process expansion measurement, IKNP instead of silent OT. See
+`results/reports/dealerless_ole_two_party_keys_memo_2026_07_29.md`.
+
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
