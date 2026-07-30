@@ -30,6 +30,7 @@
 
 #include "dpf_key_io.h"
 #include "spfss_host.h"
+#include "gpu_aes_prg_host.h"
 #include "two_party_ot.h"
 
 #include <chrono>
@@ -92,13 +93,29 @@ struct Node {
     uint8_t t;
 };
 
+// Expansion PRG selector. `splitmix` matches the unchanged host evaluator
+// `spfss_host::dpfEvalAll`; `gpu_aes` is the bit-identical twin of the deployed
+// GPU device PRG (src/gpu_aes_prg_host.h), so keys generated with it are
+// consumable by the UNMODIFIED GPU evaluator. Neither choice changes the
+// protocol, the transcript, or the accounting.
+enum class PrgMode { kSplitmix, kGpuAes };
+
+inline void expand_node(PrgMode mode, U128 seed, U128 &sL, uint8_t &tL,
+                        U128 &sR, uint8_t &tR) {
+    if (mode == PrgMode::kGpuAes) {
+        ringlpn_gpu_prg::gpu_aes_prg_expand(seed, sL, tL, sR, tR);
+    } else {
+        prg_expand(seed, sL, tL, sR, tR);
+    }
+}
+
 // ----- the batched party-local protocol -------------------------------------
 //
 // Every cross-party value goes through OT or through an explicitly counted
 // opening. Trees are processed level-synchronously: one OT batch and one
 // opening per level for the whole batch.
 
-bool two_party_dpf_gen_batch(int party, int log_domain, Word p,
+bool two_party_dpf_gen_batch(int party, int log_domain, Word p, PrgMode prg,
                              const std::vector<uint64_t> &offs,
                              const std::vector<Word> &beta_factors,
                              PartyChannel &ch, PartyRandom &rng,
@@ -164,7 +181,9 @@ bool two_party_dpf_gen_batch(int party, int log_domain, Word p,
         spfss_host::DPFKey &K = keys[b];
         K.log_domain = L;
         K.modulus = p;
-        K.seed = rng.u128();
+        K.seed = (prg == PrgMode::kGpuAes)
+                     ? ringlpn_gpu_prg::clear_tag(rng.u128())
+                     : rng.u128();
         K.t0 = (uint8_t)party;
         K.sCW.assign((size_t)L, 0);
         K.tLCW.assign((size_t)L, 0);
@@ -192,7 +211,8 @@ bool two_party_dpf_gen_batch(int party, int log_domain, Word p,
             U128 aL = 0, aR = 0;
             uint8_t tL = 0, tR = 0;
             for (size_t k = 0; k < nn; ++k) {
-                prg_expand(nodes[b][k].s, expL[k], expTL[k], expR[k], expTR[k]);
+                expand_node(prg, nodes[b][k].s, expL[k], expTL[k], expR[k],
+                            expTR[k]);
                 aL ^= expL[k];
                 aR ^= expR[k];
                 tL ^= expTL[k];
@@ -251,8 +271,8 @@ bool two_party_dpf_gen_batch(int party, int log_domain, Word p,
             for (size_t k = 0; k < nn; ++k) {
                 U128 sL, sR;
                 uint8_t tl, tr;
-                prg_expand(nodes[b][k].s, sL, tl, sR, tr);
                 const uint8_t t = nodes[b][k].t;
+                expand_node(prg, nodes[b][k].s, sL, tl, sR, tr);
                 if (t) {
                     sL ^= sCW;
                     sR ^= sCW;
@@ -372,6 +392,7 @@ struct Args {
     int selftest = 0;
     uint64_t input_seed = 1;
     std::string out_prefix = "two_party_dpf";
+    std::string prg = "splitmix";
     bool csv_header = false;
 };
 
@@ -395,6 +416,7 @@ Args parse_args(int argc, char **argv) {
         else if (k == "--selftest") a.selftest = std::atoi(next().c_str());
         else if (k == "--input-seed") a.input_seed = std::strtoull(next().c_str(), nullptr, 10);
         else if (k == "--out-prefix") a.out_prefix = next();
+        else if (k == "--prg") a.prg = next();
         else if (k == "--csv-header") a.csv_header = true;
         else {
             std::fprintf(stderr, "unknown flag %s\n", k.c_str());
@@ -411,6 +433,10 @@ Args parse_args(int argc, char **argv) {
     }
     if (a.trees < 1) {
         std::fprintf(stderr, "--trees must be >= 1\n");
+        std::exit(2);
+    }
+    if (a.prg != "splitmix" && a.prg != "gpu-aes") {
+        std::fprintf(stderr, "--prg must be splitmix or gpu-aes\n");
         std::exit(2);
     }
     return a;
@@ -464,8 +490,10 @@ int main(int argc, char **argv) {
 
     const auto t_start = std::chrono::steady_clock::now();
     std::vector<spfss_host::DPFKey> keys;
-    const bool batch_ok = two_party_dpf_gen_batch(args.party, L, p, offs,
-                                                  beta_factors, ch, rng, keys);
+    const PrgMode prg_mode =
+        (args.prg == "gpu-aes") ? PrgMode::kGpuAes : PrgMode::kSplitmix;
+    const bool batch_ok = two_party_dpf_gen_batch(
+        args.party, L, p, prg_mode, offs, beta_factors, ch, rng, keys);
     const double total_us = std::chrono::duration<double, std::micro>(
                                 std::chrono::steady_clock::now() - t_start)
                                 .count();
@@ -512,7 +540,7 @@ int main(int argc, char **argv) {
     auto per_tree = [trees](uint64_t v) { return (double)v / (double)trees; };
     if (args.csv_header) {
         std::printf(
-            "party,modulus,log_domain,batch_trees,generated,selftest_rounds,"
+            "party,modulus,prg,log_domain,batch_trees,generated,selftest_rounds,"
             "selftest_triple_fail,selftest_ole_fail,string_ots_128_per_tree,"
             "triple_ots_per_tree,ole_ots_per_tree,bit_triples_per_tree,"
             "scalar_oles_per_tree,phase_a_logical_bits_per_tree,"
@@ -524,9 +552,10 @@ int main(int argc, char **argv) {
             "transcript_accounting,selftest,status\n");
     }
     std::printf(
-        "%d,q62%s,%d,%d,%d,%d,%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,"
+        "%d,q62%s,%s,%d,%d,%d,%d,%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,"
         "%.1f,%.1f,%llu,%llu,%llu,%llu,%.1f,%llu,%.1f,%.1f,%s,%s,%s\n",
-        args.party, args.modulus_idx == 0 ? "" : "b", L, args.trees, generated,
+        args.party, args.modulus_idx == 0 ? "" : "b", args.prg.c_str(), L,
+        args.trees, generated,
         args.selftest, triple_fail, ole_fail, per_tree(c.string_ots_128),
         per_tree(c.triple_ots), per_tree(c.ole_ots), per_tree(c.bit_triples),
         per_tree(c.scalar_oles), per_tree(c.phase_a.logical_bits),

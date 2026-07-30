@@ -52,6 +52,9 @@ fi
 echo "[paper-smoke] building and running Figure 2 OLE GPU smoke"
 "$ROOT/scripts/build_ole_cuda_bench.sh"
 "$ROOT/bin/test_spfss_zp_cuda"
+
+echo "[paper-smoke] running two-process keygen with the GPU PRG + unmodified GPU evaluator"
+BASE_PORT="${TWO_PARTY_GPU_BASE_PORT:-45200}" "$ROOT/scripts/run_two_party_gpu_dpf.sh"
 SMOKE=1 "$ROOT/scripts/run_ole_sweep.sh"
 SMOKE=1 QBITS=128 "$ROOT/scripts/run_ole_sweep.sh"
 if [[ "$RUN_REGULAR_SMOKE" == "1" ]]; then

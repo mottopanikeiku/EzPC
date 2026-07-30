@@ -115,6 +115,46 @@ through 1,908/3,816 at `L=14`), at every batch size. That agreement is the
 cross-check between the protocol-logic artifact and the real transport, and it
 also shows batching changed the schedule without changing the transcript.
 
+## 3.4 GPU-consumable keys from the two-party protocol
+
+The same two-process protocol can expand with a host PRG that is **bit-identical
+to the deployed GPU device PRG**, so the keys it emits are consumed by the
+**unmodified** GPU evaluator.
+
+- `src/gpu_aes_prg_host.h` reproduces `aes_prg_expand` from
+  `src/gpu_spfss_zp.cuh`: AES-128 key = the seed's 16 little-endian bytes with
+  the low bit cleared, `left = AES_k(0^16)`, `right = AES_k(0x02 || 0^15)`,
+  control bit = LSB of the result, cleared from the child seed.
+- `src/dump_gpu_aes_prg_vectors.cu` dumps device ground truth
+  (`results/dpf/gpu_aes_prg_vectors_2026_07_29.csv`, 16 vectors including
+  all-zero, LSB-only and all-ones seeds).
+- `host_bin/test_gpu_aes_prg_parity` recomputes every vector on the host: 0
+  left/right/tag mismatches, plus a seed-sensitivity control.
+- `test_two_party_dpf_keygen --prg gpu-aes` runs the identical protocol with that
+  PRG; the transcript, correlation counts and accounting are unchanged.
+- `bin/test_two_party_gpu_dpf_eval` (TEST-ONLY, offline) builds
+  `ringlpn_spfss_zp::GPUDPFZpKey` for each party from the two key files and runs
+  `gpuDpfZpFullEvalSum`, the same expand entry point the Ring-LPN OLE engine
+  uses.
+
+Measured on one RTX 5000 Ada (`scripts/run_two_party_gpu_dpf.sh`,
+`results/dpf/two_party_gpu_dpf_2026_07_29.csv`):
+
+| `L` | prime | keys | batched SPFSS mismatch | per-tree pass | seed-tag violations | public-material mismatch | negative control |
+|---:|---|---:|---:|---:|---:|---:|---|
+| 4 | q62 | 8 | 0 | 8/8 | 0 | 0 | failed as expected |
+| 8 | q62 | 16 | 0 | 16/16 | 0 | 0 | failed as expected |
+| 11 | q62 | 32 | 0 | 32/32 | 0 | 0 | failed as expected |
+| 11 | q62b | 32 | 0 | 32/32 | 0 | 0 | failed as expected |
+
+88 key pairs, two checks each: the batch must reconstruct
+`sum_b beta_b [x = alpha_b]` (SPFSS semantics, as the OLE engine consumes it) and
+every single tree must reconstruct `beta_b [x = alpha_b]`. What this does **not**
+claim: the keygen itself is still CPU-side (two processes); this is GPU *key
+compatibility and GPU-validated correctness*, not a GPU implementation of the
+keygen. The GPU PRG's low-bit control encoding still leaves a 127-bit secret
+seed state, so `D-SEED` remains open and no 128-bit claim is attached.
+
 ## 4. Validation and controls
 
 `host_bin/test_two_party_dpf_validate` runs **after both parties exit** and only

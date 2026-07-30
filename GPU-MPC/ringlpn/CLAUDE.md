@@ -168,6 +168,35 @@ OT *extension*, not silent OT, and the expansion PRG is still splitmix64, so
 this is a transport/scheduling milestone, not a security claim. See
 `results/reports/two_party_dpf_transport_memo_2026_07_29.md`.
 
+**2026-07-29 owner pin + slice decision.** Conservative candidate pinned for
+re-measurement: **`n=2^17`, `c=4`, `t=34`** (257.02 conservative bits, 55,488
+point-DPF setup slots, 57.7% net epoch capacity). Every feasibility/GPU gate
+must be re-measured at that set before any table quotes it, and the pin write-up
+MUST state the eviction that produces it: at `c=4,t=32` the cheapest admissible
+projection is degree 32 with **111.24** bits, and raising `t` to 34 evicts that
+projection (expected reduced weight no longer fits `(c-1)*2^i`), leaving degree
+64 at 257.02 bits. Next implementation slice, also owner-selected: GPU-side
+batched keygen with byte-identical GPU keys (M1 remainder), then drive the
+real-OLE GPU transcript from two-party keys (M2).
+
+**GPU key compatibility from the two-party protocol (2026-07-29, new).** The
+same two-process protocol can expand with a host PRG that is bit-identical to
+the deployed device PRG (`src/gpu_aes_prg_host.h` vs `aes_prg_expand` in
+`src/gpu_spfss_zp.cuh`): AES-128 key = the seed's 16 little-endian bytes with the
+low bit cleared, `left = AES_k(0^16)`, `right = AES_k(0x02||0^15)`, control bit =
+LSB, cleared from the child seed. Parity is gated against 16 device-dumped
+vectors (`results/dpf/gpu_aes_prg_vectors_2026_07_29.csv`, 0 mismatches, plus a
+seed-sensitivity control). With `--prg gpu-aes` the two-party keys are then
+accepted by the **unmodified** GPU evaluator: 88 pairs over four configurations
+(L=4/8/11, both primes) pass both batched-SPFSS and per-tree full-domain
+reconstruction with corrupted-CW controls firing
+(`scripts/run_two_party_gpu_dpf.sh`,
+`results/dpf/two_party_gpu_dpf_2026_07_29.csv`), and the check is wired into the
+required-GPU gate (`ALL GATES PASS` re-run on GPU 3). This is GPU *key
+compatibility and GPU-validated correctness*; the keygen itself is still
+CPU-side, and the GPU PRG's low-bit control encoding still leaves a 127-bit
+secret seed state, so `D-SEED` stays open and no 128-bit claim is attached.
+
 ## Catch up in 10 minutes (read in this order)
 
 1. This file.
