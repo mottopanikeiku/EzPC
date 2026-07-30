@@ -1,0 +1,7 @@
+ring_logn,n,c,per_poly_t,total_w,raw_points,conservative_bits,worst_prime,worst_degree,worst_model,meets_target,point_dpf_setup_slots,point_dpf_bootstrap_ok,point_dpf_net_slots,point_dpf_net_fraction,encoder_indep_setup_slots_placeholder,encoder_indep_bootstrap_ok
+16,65536,4,34,136,18496,257.023259,4611686018326724609,64,exact,yes,55488,yes,10048,15.332,48,yes
+16,65536,4,36,144,20736,259.053777,4611686018326724609,64,exact,yes,62208,yes,3328,5.078,48,yes
+16,65536,4,40,160,25600,260.627933,4611686018326724609,64,exact,yes,76800,no,-11264,-17.188,48,yes
+17,131072,4,34,136,18496,257.023259,4611686018326724609,64,exact,yes,55488,yes,75584,57.666,48,yes
+17,131072,4,36,144,20736,259.053777,4611686018326724609,64,exact,yes,62208,yes,68864,52.539,48,yes
+17,131072,4,40,160,25600,260.627933,4611686018326724609,64,exact,yes,76800,yes,54272,41.406,48,yes

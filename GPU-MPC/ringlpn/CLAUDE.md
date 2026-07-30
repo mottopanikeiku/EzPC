@@ -154,15 +154,18 @@ being measured into
 also runs as **two OS processes over TCP with real OT**:
 `src/test_two_party_dpf_keygen.cpp` + `src/two_party_ot.h`, using this repo's
 unmodified SCI IKNP OT extension (header-only, links only OpenSSL), Gilboa
-`Z_p` OLE, OT-based boolean triples, and OS-CSPRNG party roots. 32/32 key pairs
-across six configurations (depths 4-14, both primes) validate through the
-unchanged `dpfEvalAll` in a separate offline checker with a corrupted-key
-negative control; the measured logical/revealed-bit columns are bit-identical to
-the contract's closed forms, and the run adds what the single-process prototype
-could not: 256 base OTs + 21,829 setup bytes per party, 23.6-74.5 kB protocol
-bytes per tree, and `10L+4` measured direction switches per tree. IKNP is OT
-*extension*, not silent OT, and the expansion PRG is still splitmix64, so this
-is a transport milestone, not a security claim. See
+`Z_p` OLE, OT-based boolean triples, and OS-CSPRNG party roots, **batched
+level-synchronously** so the number of communication stages is `6L+6` for depth
+`L` *independent of the batch size*. 369/369 key pairs across ten configurations
+(depths 4-14, both primes, batches 1-256) validate through the unchanged
+`dpfEvalAll` in a separate offline checker with a corrupted-key negative
+control; the measured logical/revealed-bit columns are bit-identical to the
+contract's closed forms at every batch size. The run adds what the
+single-process prototype could not: 256 base OTs + 21,829 setup bytes per party,
+and at `L=11` batch 1 -> 256 the per-tree bytes fall 52,626 -> 3,789 (13.9x) and
+per-tree time 11.3 ms -> 161 us (70x) with the stage count pinned at 72. IKNP is
+OT *extension*, not silent OT, and the expansion PRG is still splitmix64, so
+this is a transport/scheduling milestone, not a security claim. See
 `results/reports/two_party_dpf_transport_memo_2026_07_29.md`.
 
 ## Catch up in 10 minutes (read in this order)

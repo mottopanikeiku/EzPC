@@ -33,7 +33,10 @@ mkdir -p "$OUTDIR" "$WORKDIR"
 : > "$LOG"
 rm -f "$CSV" "$VCSV"
 
-# config: log_domain trees modulus_idx
+# config: log_domain batch_trees modulus_idx
+# The first block sweeps depth and both primes; the second block holds the depth
+# fixed and scales the batch, which is how the "stages depend on depth, not on
+# batch size" claim is measured.
 CONFIGS=(
   "4 8 0"
   "8 8 0"
@@ -41,6 +44,10 @@ CONFIGS=(
   "14 2 0"
   "8 8 1"
   "14 2 1"
+  "11 1 0"
+  "11 16 0"
+  "11 64 0"
+  "11 256 0"
 )
 
 port=$BASE_PORT
@@ -50,7 +57,7 @@ status=0
 
 for cfg in "${CONFIGS[@]}"; do
   read -r L TREES MIDX <<<"$cfg"
-  prefix="$WORKDIR/L${L}_m${MIDX}"
+  prefix="$WORKDIR/L${L}_m${MIDX}_b${TREES}"
   rm -f "${prefix}_p0.key" "${prefix}_p1.key" \
         "${prefix}_p0.testmeta" "${prefix}_p1.testmeta"
 

@@ -1,4 +1,5 @@
-// Two-PROCESS distributed DPF key generation over real sockets and real OT.
+// Two-PROCESS distributed DPF key generation over real sockets and real OT,
+// with LEVEL-SYNCHRONOUS BATCHING across trees.
 //
 // This is the transport realization of the protocol whose logic was frozen in
 // results/reports/dealerless_orca_fc_security_contract_2026_07_29.md and
@@ -12,7 +13,10 @@
 //     ideal correlation oracles;
 //   * party root seeds from the OS CSPRNG instead of a benchmark seed;
 //   * measured wire bytes and direction switches per party, which the
-//     single-process prototype could not report.
+//     single-process prototype could not report;
+//   * all trees in a batch advance together, so the number of communication
+//     stages depends on the tree DEPTH only, not on the batch size. Per-tree
+//     correlation and opening counts are unchanged by batching.
 //
 // UNCHANGED and still NOT claimed: the DPF expansion PRG is spfss_host's
 // non-cryptographic splitmix64 (the independent consumer dpfEvalAll is
@@ -88,178 +92,273 @@ struct Node {
     uint8_t t;
 };
 
-// ----- the party-local protocol ---------------------------------------------
+// ----- the batched party-local protocol -------------------------------------
+//
+// Every cross-party value goes through OT or through an explicitly counted
+// opening. Trees are processed level-synchronously: one OT batch and one
+// opening per level for the whole batch.
 
-bool two_party_dpf_gen(int party, int log_domain, Word p, uint64_t off,
-                       Word beta_factor, PartyChannel &ch, PartyRandom &rng,
-                       spfss_host::DPFKey &K) {
+bool two_party_dpf_gen_batch(int party, int log_domain, Word p,
+                             const std::vector<uint64_t> &offs,
+                             const std::vector<Word> &beta_factors,
+                             PartyChannel &ch, PartyRandom &rng,
+                             std::vector<spfss_host::DPFKey> &keys) {
     const int L = log_domain;
+    const size_t B = offs.size();
+    if (B == 0 || beta_factors.size() != B) return false;
     const uint64_t half_domain = 1ULL << (L - 1);
-    if (off >= half_domain || beta_factor == 0 || beta_factor >= p) {
-        return false;  // local input validation, before any correlation is used
+    for (size_t b = 0; b < B; ++b) {
+        // Local input validation happens before any correlation is consumed.
+        if (offs[b] >= half_domain || beta_factors[b] == 0 ||
+            beta_factors[b] >= p) {
+            return false;
+        }
     }
 
-    // --- Phase A: XOR-shared bits of alpha = off_0 + off_1 -------------------
+    // --- Phase A: XOR-shared bits of alpha = off_0 + off_1, all trees at once -
     std::vector<BitTriple> triples;
-    ringlpn_2pc::generate_bit_triples(ch, L - 1, rng, triples);
+    ringlpn_2pc::generate_bit_triples(ch, (int)(B * (size_t)(L - 1)), rng,
+                                      triples);
 
-    std::vector<uint8_t> abit((size_t)L, 0);
-    uint8_t carry = 0;
+    std::vector<uint8_t> abit(B * (size_t)L, 0);
+    std::vector<uint8_t> carry(B, 0);
+    std::vector<uint8_t> open_mine(2 * B), open_theirs(2 * B);
     for (int j = 0; j < L; ++j) {
-        const uint8_t u = (uint8_t)((off >> j) & 1);
-        abit[(size_t)j] = (uint8_t)(u ^ carry);
+        for (size_t b = 0; b < B; ++b) {
+            const uint8_t u = (uint8_t)((offs[b] >> j) & 1);
+            abit[b * (size_t)L + (size_t)j] = (uint8_t)(u ^ carry[b]);
+        }
         if (j + 1 >= L) break;
-        // x = u_0 ^ carry (P0 holds u_0^c_0, P1 holds c_1)
-        // y = u_1 ^ carry (P0 holds c_0,     P1 holds u_1^c_1)
-        const uint8_t x_mine = (party == 0) ? (uint8_t)(u ^ carry) : carry;
-        const uint8_t y_mine = (party == 0) ? carry : (uint8_t)(u ^ carry);
-        const BitTriple &t = triples[(size_t)j];
-        const uint8_t d =
-            ch.open_bits((uint8_t)((x_mine ^ t.a) & 1), 1, ch.costs.phase_a);
-        const uint8_t e =
-            ch.open_bits((uint8_t)((y_mine ^ t.b) & 1), 1, ch.costs.phase_a);
-        const uint8_t and_share = (uint8_t)(
-            (((party == 0) ? (uint8_t)(d & e) : (uint8_t)0) ^ (uint8_t)(d & t.b) ^
-             (uint8_t)(e & t.a) ^ t.c) & 1);
-        carry = (uint8_t)(and_share ^ carry);
+        // d = x ^ a and e = y ^ b are independent, so one stage opens both for
+        // every tree in the batch.
+        for (size_t b = 0; b < B; ++b) {
+            const uint8_t u = (uint8_t)((offs[b] >> j) & 1);
+            const uint8_t x_mine =
+                (party == 0) ? (uint8_t)(u ^ carry[b]) : carry[b];
+            const uint8_t y_mine =
+                (party == 0) ? carry[b] : (uint8_t)(u ^ carry[b]);
+            const BitTriple &t = triples[b * (size_t)(L - 1) + (size_t)j];
+            open_mine[2 * b] = (uint8_t)((x_mine ^ t.a) & 1);
+            open_mine[2 * b + 1] = (uint8_t)((y_mine ^ t.b) & 1);
+        }
+        ch.exchange_bytes(open_mine.data(), open_theirs.data(), 2 * B);
+        ch.costs.phase_a.logical_bits += 2ULL * (uint64_t)B;
+        ch.costs.phase_a.revealed_bits_sent += 2ULL * (uint64_t)B;
+        ch.costs.phase_a.revealed_bits_recv += 2ULL * (uint64_t)B;
+        for (size_t b = 0; b < B; ++b) {
+            const uint8_t d = (uint8_t)((open_mine[2 * b] ^ open_theirs[2 * b]) & 1);
+            const uint8_t e =
+                (uint8_t)((open_mine[2 * b + 1] ^ open_theirs[2 * b + 1]) & 1);
+            const BitTriple &t = triples[b * (size_t)(L - 1) + (size_t)j];
+            const uint8_t and_share = (uint8_t)(
+                (((party == 0) ? (uint8_t)(d & e) : (uint8_t)0) ^
+                 (uint8_t)(d & t.b) ^ (uint8_t)(e & t.a) ^ t.c) & 1);
+            carry[b] = (uint8_t)(and_share ^ carry[b]);
+        }
     }
 
-    // --- root seed: this party's own OS-CSPRNG draw --------------------------
-    K.log_domain = L;
-    K.modulus = p;
-    K.seed = rng.u128();
-    K.t0 = (uint8_t)party;
-    K.sCW.assign((size_t)L, 0);
-    K.tLCW.assign((size_t)L, 0);
-    K.tRCW.assign((size_t)L, 0);
+    // --- root seeds: this party's own OS-CSPRNG draws ------------------------
+    keys.assign(B, spfss_host::DPFKey{});
+    std::vector<std::vector<Node>> nodes(B), next(B);
+    for (size_t b = 0; b < B; ++b) {
+        spfss_host::DPFKey &K = keys[b];
+        K.log_domain = L;
+        K.modulus = p;
+        K.seed = rng.u128();
+        K.t0 = (uint8_t)party;
+        K.sCW.assign((size_t)L, 0);
+        K.tLCW.assign((size_t)L, 0);
+        K.tRCW.assign((size_t)L, 0);
+        nodes[b].assign(1, Node{K.seed, (uint8_t)party});
+    }
 
-    std::vector<Node> nodes(1, Node{K.seed, (uint8_t)party});
-    std::vector<Node> next;
+    // --- Phase B: level-synchronous walk over the whole batch ----------------
     std::vector<U128> expL, expR;
     std::vector<uint8_t> expTL, expTR;
-
-    // --- Phase B: level-synchronous walk ------------------------------------
+    std::vector<U128> Z(B), masks(B), ot_m0(B), ot_m1(B), ot_out(B);
+    std::vector<U128> aggR(B);
+    std::vector<uint8_t> aggTL(B), aggTR(B), choices(B);
+    // Per level each tree opens 16 bytes of seed-CW share and 1 byte holding
+    // the two flag-CW shares; both are independent, so one stage carries them.
+    std::vector<uint8_t> level_mine(B * 17), level_theirs(B * 17);
     for (int i = 0; i < L; ++i) {
-        const int bi = L - 1 - i;  // MSB-first bit of alpha at this level
-        const size_t nn = nodes.size();
-        expL.resize(nn);
-        expR.resize(nn);
-        expTL.resize(nn);
-        expTR.resize(nn);
-        U128 aggL = 0, aggR = 0;
-        uint8_t taggL = 0, taggR = 0;
-        for (size_t k = 0; k < nn; ++k) {
-            prg_expand(nodes[k].s, expL[k], expTL[k], expR[k], expTR[k]);
-            aggL ^= expL[k];
-            aggR ^= expR[k];
-            taggL ^= expTL[k];
-            taggR ^= expTR[k];
+        const int bi = L - 1 - i;
+        for (size_t b = 0; b < B; ++b) {
+            const size_t nn = nodes[b].size();
+            expL.resize(nn);
+            expR.resize(nn);
+            expTL.resize(nn);
+            expTR.resize(nn);
+            U128 aL = 0, aR = 0;
+            uint8_t tL = 0, tR = 0;
+            for (size_t k = 0; k < nn; ++k) {
+                prg_expand(nodes[b][k].s, expL[k], expTL[k], expR[k], expTR[k]);
+                aL ^= expL[k];
+                aR ^= expR[k];
+                tL ^= expTL[k];
+                tR ^= expTR[k];
+            }
+            aggR[b] = aR;
+            aggTL[b] = tL;
+            aggTR[b] = tR;
+            Z[b] = aL ^ aR;
+            masks[b] = rng.u128();
+            ot_m0[b] = masks[b];
+            ot_m1[b] = masks[b] ^ Z[b];
+            choices[b] = abit[b * (size_t)L + (size_t)bi];
         }
-        const U128 Z = aggL ^ aggR;
-        const uint8_t a_mine = abit[(size_t)bi];
-
-        // Two string OTs realize a_i * Z with both operands XOR-shared. The
-        // schedule is fixed: party 0 sends first, so neither side blocks.
-        const U128 r = rng.u128();
-        U128 w = 0;
-        const std::vector<U128> m0(1, r), m1(1, (U128)(r ^ Z));
-        const std::vector<uint8_t> choice(1, a_mine);
+        // One OT batch per direction per level, fixed order (party 0 sends
+        // first) so the pair never blocks.
         if (party == 0) {
-            ch.ot_send_128(m0, m1);
-            w = ch.ot_recv_128(choice)[0];
+            ch.ot_send_128(ot_m0, ot_m1);
+            ot_out = ch.ot_recv_128(choices);
         } else {
-            w = ch.ot_recv_128(choice)[0];
-            ch.ot_send_128(m0, m1);
+            ot_out = ch.ot_recv_128(choices);
+            ch.ot_send_128(ot_m0, ot_m1);
         }
 
-        const U128 sCW_share = aggR ^ (a_mine ? Z : (U128)0) ^ w ^ r;
-        const U128 sCW = ch.open_u128(sCW_share, ch.costs.phase_b);
-
-        const uint8_t tL_share =
-            (uint8_t)((taggL ^ a_mine ^ ((party == 0) ? 1u : 0u)) & 1);
-        const uint8_t tR_share = (uint8_t)((taggR ^ a_mine) & 1);
-        const uint8_t flags_mine = (uint8_t)(tL_share | (uint8_t)(tR_share << 1));
-        const uint8_t flags = ch.open_bits(flags_mine, 2, ch.costs.phase_b);
-        const uint8_t tLCW = (uint8_t)(flags & 1);
-        const uint8_t tRCW = (uint8_t)((flags >> 1) & 1);
-
-        K.sCW[(size_t)i] = sCW;
-        K.tLCW[(size_t)i] = tLCW;
-        K.tRCW[(size_t)i] = tRCW;
-
-        next.resize(nn * 2);
-        for (size_t k = 0; k < nn; ++k) {
-            const uint8_t t = nodes[k].t;
-            const U128 sL = expL[k] ^ (t ? sCW : (U128)0);
-            const U128 sR = expR[k] ^ (t ? sCW : (U128)0);
-            const uint8_t tL = (uint8_t)((expTL[k] ^ (t ? tLCW : 0)) & 1);
-            const uint8_t tR = (uint8_t)((expTR[k] ^ (t ? tRCW : 0)) & 1);
-            next[2 * k] = Node{sL, tL};
-            next[2 * k + 1] = Node{sR, tR};
+        for (size_t b = 0; b < B; ++b) {
+            const uint8_t a_mine = choices[b];
+            const U128 sCW_share =
+                aggR[b] ^ (a_mine ? Z[b] : (U128)0) ^ ot_out[b] ^ masks[b];
+            std::memcpy(&level_mine[b * 17], &sCW_share, 16);
+            const uint8_t tL_share =
+                (uint8_t)((aggTL[b] ^ a_mine ^ ((party == 0) ? 1u : 0u)) & 1);
+            const uint8_t tR_share = (uint8_t)((aggTR[b] ^ a_mine) & 1);
+            level_mine[b * 17 + 16] =
+                (uint8_t)(tL_share | (uint8_t)(tR_share << 1));
         }
-        nodes.swap(next);
+        ch.exchange_bytes(level_mine.data(), level_theirs.data(), B * 17);
+        ch.costs.phase_b.logical_bits += 130ULL * (uint64_t)B;
+        ch.costs.phase_b.revealed_bits_sent += 130ULL * (uint64_t)B;
+        ch.costs.phase_b.revealed_bits_recv += 130ULL * (uint64_t)B;
+
+        for (size_t b = 0; b < B; ++b) {
+            U128 mine_cw = 0, theirs_cw = 0;
+            std::memcpy(&mine_cw, &level_mine[b * 17], 16);
+            std::memcpy(&theirs_cw, &level_theirs[b * 17], 16);
+            const U128 sCW = mine_cw ^ theirs_cw;
+            const uint8_t flags =
+                (uint8_t)(level_mine[b * 17 + 16] ^ level_theirs[b * 17 + 16]);
+            const uint8_t tLCW = (uint8_t)(flags & 1);
+            const uint8_t tRCW = (uint8_t)((flags >> 1) & 1);
+            keys[b].sCW[(size_t)i] = sCW;
+            keys[b].tLCW[(size_t)i] = tLCW;
+            keys[b].tRCW[(size_t)i] = tRCW;
+
+            const size_t nn = nodes[b].size();
+            next[b].resize(nn * 2);
+            for (size_t k = 0; k < nn; ++k) {
+                U128 sL, sR;
+                uint8_t tl, tr;
+                prg_expand(nodes[b][k].s, sL, tl, sR, tr);
+                const uint8_t t = nodes[b][k].t;
+                if (t) {
+                    sL ^= sCW;
+                    sR ^= sCW;
+                    tl = (uint8_t)(tl ^ tLCW);
+                    tr = (uint8_t)(tr ^ tRCW);
+                }
+                next[b][2 * k] = Node{sL, (uint8_t)(tl & 1)};
+                next[b][2 * k + 1] = Node{sR, (uint8_t)(tr & 1)};
+            }
+            nodes[b].swap(next[b]);
+        }
     }
 
-    // --- Phase C: payload correction word from three scalar OLEs -------------
-    Word A = 0, Fsum = 0;
-    for (const Node &nd : nodes) {
-        const Word conv = convert_zp(nd.s, p);
-        if (party == 0) {
-            A = mod_add(A, conv, p);
-            Fsum = mod_add(Fsum, nd.t, p);
-        } else {
-            A = mod_sub(A, conv, p);
-            Fsum = mod_sub(Fsum, nd.t, p);
+    // --- Phase C: payload correction words, three batched OLE stages ---------
+    std::vector<Word> A(B, 0), Fsum(B, 0);
+    for (size_t b = 0; b < B; ++b) {
+        for (const Node &nd : nodes[b]) {
+            const Word conv = convert_zp(nd.s, p);
+            if (party == 0) {
+                A[b] = mod_add(A[b], conv, p);
+                Fsum[b] = mod_add(Fsum[b], nd.t, p);
+            } else {
+                A[b] = mod_sub(A[b], conv, p);
+                Fsum[b] = mod_sub(Fsum[b], nd.t, p);
+            }
         }
     }
 
-    // OLE 1: additive shares of beta = beta_0 * beta_1.
-    const Word gamma = ringlpn_2pc::ole_p0_sender(ch, beta_factor, p, rng);
-    const Word d = mod_sub(gamma, A, p);
-    const Word s = Fsum;
-    // OLE 2: shares of d_0 * s_1. OLE 3: shares of s_0 * d_1.
-    const Word cross01 =
-        ringlpn_2pc::ole_p0_sender(ch, (party == 0) ? d : s, p, rng);
-    const Word cross10 =
-        ringlpn_2pc::ole_p0_sender(ch, (party == 0) ? s : d, p, rng);
-    const Word w_share =
-        mod_add(mod_add(mod_mul(d, s, p), cross01, p), cross10, p);
+    // OLE stage 1: additive shares of beta = beta_0 * beta_1 for every tree.
+    const std::vector<Word> gamma =
+        ringlpn_2pc::ole_batch_p0_sender(ch, beta_factors, p, rng);
+    std::vector<Word> d(B), s(B);
+    for (size_t b = 0; b < B; ++b) {
+        d[b] = mod_sub(gamma[b], A[b], p);
+        s[b] = Fsum[b];
+    }
+    // OLE stage 2: shares of d_0 * s_1. Stage 3: shares of s_0 * d_1.
+    const std::vector<Word> cross01 = ringlpn_2pc::ole_batch_p0_sender(
+        ch, (party == 0) ? d : s, p, rng);
+    const std::vector<Word> cross10 = ringlpn_2pc::ole_batch_p0_sender(
+        ch, (party == 0) ? s : d, p, rng);
 
+    std::vector<uint64_t> final_mine(B), final_theirs(B);
+    for (size_t b = 0; b < B; ++b) {
+        final_mine[b] = (uint64_t)mod_add(
+            mod_add(mod_mul(d[b], s[b], p), cross01[b], p), cross10[b], p);
+    }
     // Only the standard public key material is opened: never d, s, or the
     // hidden leaf-control sign (see the contract's Phase C decision).
-    K.finalCW = ch.open_field(w_share, p, ch.costs.phase_c);
+    ch.exchange_bytes(reinterpret_cast<const uint8_t *>(final_mine.data()),
+                      reinterpret_cast<uint8_t *>(final_theirs.data()),
+                      B * sizeof(uint64_t));
+    const uint64_t fbits = (uint64_t)ringlpn_2pc::field_bits(p);
+    ch.costs.phase_c.logical_bits += fbits * (uint64_t)B;
+    ch.costs.phase_c.revealed_bits_sent += fbits * (uint64_t)B;
+    ch.costs.phase_c.revealed_bits_recv += fbits * (uint64_t)B;
+    for (size_t b = 0; b < B; ++b) {
+        keys[b].finalCW =
+            mod_add((Word)final_mine[b], (Word)final_theirs[b], p);
+    }
     return true;
 }
 
 // ----- primitive self-tests (TEST-ONLY: they open private values) -----------
 
-bool selftest_primitives(int party, Word p, int rounds, PartyChannel &ch,
-                         PartyRandom &rng, int &triple_fail, int &ole_fail) {
+bool selftest_primitives(Word p, int rounds, PartyChannel &ch, PartyRandom &rng,
+                         int &triple_fail, int &ole_fail) {
     triple_fail = 0;
     ole_fail = 0;
     std::vector<BitTriple> triples;
     ringlpn_2pc::generate_bit_triples(ch, rounds, rng, triples);
+    std::vector<uint8_t> mine(3 * (size_t)rounds), theirs(3 * (size_t)rounds);
     for (int i = 0; i < rounds; ++i) {
-        uint8_t mine[3] = {triples[(size_t)i].a, triples[(size_t)i].b,
-                           triples[(size_t)i].c};
-        uint8_t theirs[3] = {0, 0, 0};
-        ch.exchange(mine, theirs, 3);
-        const uint8_t a = (uint8_t)(mine[0] ^ theirs[0]);
-        const uint8_t b = (uint8_t)(mine[1] ^ theirs[1]);
-        const uint8_t c = (uint8_t)(mine[2] ^ theirs[2]);
+        mine[3 * (size_t)i] = triples[(size_t)i].a;
+        mine[3 * (size_t)i + 1] = triples[(size_t)i].b;
+        mine[3 * (size_t)i + 2] = triples[(size_t)i].c;
+    }
+    ch.exchange_bytes(mine.data(), theirs.data(), mine.size());
+    for (int i = 0; i < rounds; ++i) {
+        const uint8_t a = (uint8_t)(mine[3 * (size_t)i] ^ theirs[3 * (size_t)i]);
+        const uint8_t b =
+            (uint8_t)(mine[3 * (size_t)i + 1] ^ theirs[3 * (size_t)i + 1]);
+        const uint8_t c =
+            (uint8_t)(mine[3 * (size_t)i + 2] ^ theirs[3 * (size_t)i + 2]);
         if (((a & b) & 1) != (c & 1)) ++triple_fail;
     }
+
+    std::vector<Word> x((size_t)rounds);
+    for (int i = 0; i < rounds; ++i) x[(size_t)i] = rng.field(p);
+    const std::vector<Word> share =
+        ringlpn_2pc::ole_batch_p0_sender(ch, x, p, rng);
+    std::vector<uint64_t> mine_f(2 * (size_t)rounds), theirs_f(2 * (size_t)rounds);
     for (int i = 0; i < rounds; ++i) {
-        const Word x = rng.field(p);
-        const Word share = ringlpn_2pc::ole_p0_sender(ch, x, p, rng);
-        Word mine[2] = {x, share};
-        Word theirs[2] = {0, 0};
-        ch.exchange(mine, theirs, sizeof(mine));
-        const Word prod = mod_mul(x, theirs[0], p);
-        const Word sum = mod_add(share, theirs[1], p);
+        mine_f[2 * (size_t)i] = (uint64_t)x[(size_t)i];
+        mine_f[2 * (size_t)i + 1] = (uint64_t)share[(size_t)i];
+    }
+    ch.exchange_bytes(reinterpret_cast<const uint8_t *>(mine_f.data()),
+                      reinterpret_cast<uint8_t *>(theirs_f.data()),
+                      mine_f.size() * sizeof(uint64_t));
+    for (int i = 0; i < rounds; ++i) {
+        const Word prod =
+            mod_mul(x[(size_t)i], (Word)theirs_f[2 * (size_t)i], p);
+        const Word sum = mod_add(share[(size_t)i],
+                                 (Word)theirs_f[2 * (size_t)i + 1], p);
         if (prod != sum) ++ole_fail;
     }
-    (void)party;
     return triple_fail == 0 && ole_fail == 0;
 }
 
@@ -310,6 +409,10 @@ Args parse_args(int argc, char **argv) {
         std::fprintf(stderr, "--log-domain out of range\n");
         std::exit(2);
     }
+    if (a.trees < 1) {
+        std::fprintf(stderr, "--trees must be >= 1\n");
+        std::exit(2);
+    }
     return a;
 }
 
@@ -321,19 +424,20 @@ int main(int argc, char **argv) {
     const int L = args.log_domain;
     const int field_bits = ringlpn_2pc::field_bits(p);
     const uint64_t half_domain = 1ULL << (L - 1);
+    const size_t B = (size_t)args.trees;
 
     PartyChannel ch(args.party, args.host, args.port);
-    PartyRandom rng;  // OS CSPRNG: protocol randomness and the root seed
-    // Public, per-party test inputs are derived from a documented input seed so
-    // the offline checker can recompute alpha and beta. They are protocol
-    // INPUTS, not protocol randomness.
+    PartyRandom rng;  // OS CSPRNG: protocol randomness and the root seeds
+    // Per-party test inputs come from a documented input seed so the offline
+    // checker can recompute alpha and beta. They are protocol INPUTS, not
+    // protocol randomness.
     PartyRandom input_rng(args.input_seed * 1000003ULL + (uint64_t)args.party);
 
     int triple_fail = 0, ole_fail = 0;
     bool selftest_ok = true;
     if (args.selftest > 0) {
-        selftest_ok = selftest_primitives(args.party, p, args.selftest, ch, rng,
-                                          triple_fail, ole_fail);
+        selftest_ok = selftest_primitives(p, args.selftest, ch, rng, triple_fail,
+                                          ole_fail);
         // Self-test traffic is diagnostic, not protocol cost; the base-OT count
         // belongs to setup and is preserved.
         const uint64_t base_ots = ch.costs.base_ots;
@@ -343,52 +447,49 @@ int main(int argc, char **argv) {
     const uint64_t bytes_before = ch.bytes_sent();
     const uint64_t switches_before = ch.direction_switches();
 
-    std::vector<spfss_host::DPFKey> keys;
-    std::vector<ringlpn_keyio::TestInput> inputs;
-    keys.reserve((size_t)args.trees);
-    inputs.reserve((size_t)args.trees);
-    const auto t_start = std::chrono::steady_clock::now();
-    int generated = 0, rejected = 0;
-    for (int tr = 0; tr < args.trees; ++tr) {
-        uint64_t off;
-        Word beta_factor;
-        if (tr == 0) {  // deterministic edge: alpha = 0, beta = p-1
-            off = 0;
-            beta_factor = (args.party == 0) ? 1 : (p - 1);
-        } else if (tr == 1) {  // deterministic edge: alpha = 2^L-2, beta = 1
-            off = half_domain - 1;
-            beta_factor = p - 1;
+    std::vector<uint64_t> offs(B);
+    std::vector<Word> beta_factors(B);
+    for (size_t b = 0; b < B; ++b) {
+        if (b == 0) {  // deterministic edge: alpha = 0, beta = p-1
+            offs[b] = 0;
+            beta_factors[b] = (args.party == 0) ? 1 : (p - 1);
+        } else if (b == 1) {  // deterministic edge: alpha = 2^L-2, beta = 1
+            offs[b] = half_domain - 1;
+            beta_factors[b] = p - 1;
         } else {
-            off = input_rng.u64() % half_domain;
-            beta_factor = 1 + input_rng.field(p - 1);
+            offs[b] = input_rng.u64() % half_domain;
+            beta_factors[b] = 1 + input_rng.field(p - 1);
         }
-        spfss_host::DPFKey K;
-        if (!two_party_dpf_gen(args.party, L, p, off, beta_factor, ch, rng, K)) {
-            ++rejected;
-            continue;
-        }
-        keys.push_back(std::move(K));
-        inputs.push_back(ringlpn_keyio::TestInput{off, (uint64_t)beta_factor});
-        ++generated;
     }
+
+    const auto t_start = std::chrono::steady_clock::now();
+    std::vector<spfss_host::DPFKey> keys;
+    const bool batch_ok = two_party_dpf_gen_batch(args.party, L, p, offs,
+                                                  beta_factors, ch, rng, keys);
     const double total_us = std::chrono::duration<double, std::micro>(
                                 std::chrono::steady_clock::now() - t_start)
                                 .count();
 
     const uint64_t protocol_bytes = ch.bytes_sent() - bytes_before;
     const uint64_t protocol_switches = ch.direction_switches() - switches_before;
+    const int generated = batch_ok ? (int)keys.size() : 0;
 
+    std::vector<ringlpn_keyio::TestInput> inputs(B);
+    for (size_t b = 0; b < B; ++b) {
+        inputs[b] = ringlpn_keyio::TestInput{offs[b], (uint64_t)beta_factors[b]};
+    }
     const std::string key_path =
         args.out_prefix + "_p" + std::to_string(args.party) + ".key";
     const std::string meta_path =
         args.out_prefix + "_p" + std::to_string(args.party) + ".testmeta";
-    const bool wrote_keys = ringlpn_keyio::write_keys(key_path, args.party, keys);
+    const bool wrote_keys =
+        batch_ok && ringlpn_keyio::write_keys(key_path, args.party, keys);
     const bool wrote_meta =
-        ringlpn_keyio::write_test_inputs(meta_path, args.party, inputs);
+        batch_ok && ringlpn_keyio::write_test_inputs(meta_path, args.party, inputs);
 
-    // Closed forms the frozen contract fixes for one tree, now measured on a
-    // real transport by each party independently.
-    const uint64_t trees = (uint64_t)(generated > 0 ? generated : 1);
+    // Closed forms the frozen contract fixes per tree, now measured on a real
+    // transport by each party independently. Batching must not change them.
+    const uint64_t trees = (uint64_t)B;
     const ringlpn_2pc::Counters &c = ch.costs;
     const bool accounting_ok =
         c.string_ots_128 == trees * 2ULL * (uint64_t)L &&
@@ -403,7 +504,7 @@ int main(int argc, char **argv) {
             trees * (4ULL * (uint64_t)(L - 1) + 260ULL * (uint64_t)L +
                      2ULL * (uint64_t)field_bits);
 
-    const bool all_ok = generated == args.trees && rejected == 0 && wrote_keys &&
+    const bool all_ok = batch_ok && generated == args.trees && wrote_keys &&
                         wrote_meta && accounting_ok && selftest_ok;
 
     ch.sync();  // both parties leave together, so neither sees a torn socket
@@ -411,45 +512,48 @@ int main(int argc, char **argv) {
     auto per_tree = [trees](uint64_t v) { return (double)v / (double)trees; };
     if (args.csv_header) {
         std::printf(
-            "party,modulus,log_domain,trees,generated,rejected,selftest_rounds,"
+            "party,modulus,log_domain,batch_trees,generated,selftest_rounds,"
             "selftest_triple_fail,selftest_ole_fail,string_ots_128_per_tree,"
             "triple_ots_per_tree,ole_ots_per_tree,bit_triples_per_tree,"
             "scalar_oles_per_tree,phase_a_logical_bits_per_tree,"
             "phase_b_logical_bits_per_tree,phase_c_logical_bits_per_tree,"
             "logical_opened_bits_per_tree,revealed_share_bits_per_tree,"
             "base_ots,setup_bytes_sent,setup_direction_switches,"
-            "protocol_bytes_sent_per_tree,protocol_direction_switches_per_tree,"
-            "us_per_tree,transcript_accounting,selftest,status\n");
+            "protocol_bytes_sent_batch,protocol_bytes_sent_per_tree,"
+            "protocol_direction_switches_batch,us_batch,us_per_tree,"
+            "transcript_accounting,selftest,status\n");
     }
     std::printf(
-        "%d,q62%s,%d,%d,%d,%d,%d,%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,"
-        "%.1f,%.1f,%llu,%llu,%llu,%.1f,%.1f,%.1f,%s,%s,%s\n",
+        "%d,q62%s,%d,%d,%d,%d,%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,"
+        "%.1f,%.1f,%llu,%llu,%llu,%llu,%.1f,%llu,%.1f,%.1f,%s,%s,%s\n",
         args.party, args.modulus_idx == 0 ? "" : "b", L, args.trees, generated,
-        rejected, args.selftest, triple_fail, ole_fail,
-        per_tree(c.string_ots_128), per_tree(c.triple_ots), per_tree(c.ole_ots),
-        per_tree(c.bit_triples), per_tree(c.scalar_oles),
-        per_tree(c.phase_a.logical_bits), per_tree(c.phase_b.logical_bits),
-        per_tree(c.phase_c.logical_bits), per_tree(c.logical_opened_bits()),
-        per_tree(c.revealed_share_bits()),
+        args.selftest, triple_fail, ole_fail, per_tree(c.string_ots_128),
+        per_tree(c.triple_ots), per_tree(c.ole_ots), per_tree(c.bit_triples),
+        per_tree(c.scalar_oles), per_tree(c.phase_a.logical_bits),
+        per_tree(c.phase_b.logical_bits), per_tree(c.phase_c.logical_bits),
+        per_tree(c.logical_opened_bits()), per_tree(c.revealed_share_bits()),
         (unsigned long long)c.base_ots,
         (unsigned long long)ch.setup_bytes_sent(),
-        (unsigned long long)ch.setup_rounds(), per_tree(protocol_bytes),
-        per_tree(protocol_switches), total_us / (double)trees,
-        accounting_ok ? "pass" : "FAIL",
+        (unsigned long long)ch.setup_rounds(),
+        (unsigned long long)protocol_bytes, per_tree(protocol_bytes),
+        (unsigned long long)protocol_switches, total_us,
+        total_us / (double)trees, accounting_ok ? "pass" : "FAIL",
         args.selftest > 0 ? (selftest_ok ? "pass" : "FAIL") : "skipped",
         all_ok ? "pass" : "FAIL");
 
     std::fprintf(stderr,
-                 "[two-party-dpf] party %d L=%d trees=%d/%d: %.0f string-OTs, "
+                 "[two-party-dpf] party %d L=%d batch=%d: %.0f string-OTs, "
                  "%.0f triple-OTs, %.0f OLE-OTs, %.0f logical-open bits, "
-                 "%.0f revealed-share bits, %.0f protocol bytes sent, "
-                 "%.0f direction switches, %.0f us per tree; setup %llu bytes / "
-                 "%llu switches; accounting %s; keys -> %s\n",
-                 args.party, L, generated, args.trees, per_tree(c.string_ots_128),
+                 "%.0f revealed-share bits per tree; batch %llu bytes sent, "
+                 "%llu direction switches, %.0f us (%.0f us/tree); setup %llu "
+                 "bytes / %llu switches; accounting %s; keys -> %s\n",
+                 args.party, L, args.trees, per_tree(c.string_ots_128),
                  per_tree(c.triple_ots), per_tree(c.ole_ots),
                  per_tree(c.logical_opened_bits()),
-                 per_tree(c.revealed_share_bits()), per_tree(protocol_bytes),
-                 per_tree(protocol_switches), total_us / (double)trees,
+                 per_tree(c.revealed_share_bits()),
+                 (unsigned long long)protocol_bytes,
+                 (unsigned long long)protocol_switches, total_us,
+                 total_us / (double)trees,
                  (unsigned long long)ch.setup_bytes_sent(),
                  (unsigned long long)ch.setup_rounds(),
                  accounting_ok ? "pass" : "FAIL", key_path.c_str());

@@ -193,6 +193,12 @@ class PartyChannel {
         }
     }
 
+    // Raw symmetric exchange for batched openings; the caller records the
+    // logical and per-direction share bits it actually opened.
+    void exchange_bytes(const uint8_t *mine, uint8_t *theirs, size_t nbytes) {
+        exchange(mine, theirs, (int)nbytes);
+    }
+
     // ---- openings (each records logical bits and both raw share directions) --
 
     uint8_t open_bits(uint8_t mine, int nbits, PhaseCosts &phase) {
@@ -380,44 +386,65 @@ inline void generate_bit_triples(PartyChannel &ch, int n, PartyRandom &rng,
     ch.costs.bit_triples += (uint64_t)n;
 }
 
-// ----- Gilboa Z_p scalar OLE ------------------------------------------------
-//
-// Sender holds x, receiver holds y; the pair ends with additive shares
-// u + v = x*y mod p. Cost: ceil(log2(p-1)) OTs of field elements.
+// ----- Gilboa Z_p scalar OLE (batched) --------------------------------------
 
-inline Word ole_send(PartyChannel &ch, Word x, Word p, PartyRandom &rng) {
+// Batched Gilboa OLE. For B sender inputs x_b and B receiver inputs y_b the
+// pair ends with additive shares u_b + v_b = x_b * y_b mod p. Cost:
+// B * ceil(log2(p-1)) OTs of field elements in ONE OT batch, so the number of
+// communication stages does not grow with B.
+
+inline std::vector<Word> ole_batch_send(PartyChannel &ch,
+                                        const std::vector<Word> &x, Word p,
+                                        PartyRandom &rng) {
     const int k = field_bits(p);
-    std::vector<Word> m0(k), m1(k);
-    Word acc = 0;
-    Word shifted = x % p;
-    for (int j = 0; j < k; ++j) {
-        const Word r = rng.field(p);
-        m0[j] = r;
-        m1[j] = mod_add(r, shifted, p);
-        acc = mod_add(acc, r, p);
-        shifted = mod_add(shifted, shifted, p);  // 2^(j+1) * x mod p
+    const size_t B = x.size();
+    std::vector<Word> m0(B * (size_t)k), m1(B * (size_t)k), out(B, 0);
+    for (size_t b = 0; b < B; ++b) {
+        Word acc = 0;
+        Word shifted = x[b] % p;
+        for (int j = 0; j < k; ++j) {
+            const Word r = rng.field(p);
+            m0[b * (size_t)k + (size_t)j] = r;
+            m1[b * (size_t)k + (size_t)j] = mod_add(r, shifted, p);
+            acc = mod_add(acc, r, p);
+            shifted = mod_add(shifted, shifted, p);  // 2^(j+1) * x mod p
+        }
+        out[b] = mod_sub(0, acc, p);  // u_b = -sum_j r_(b,j) mod p
     }
     ch.ot_send_field(m0, m1, k);
-    ch.costs.scalar_oles += 1;
-    return mod_sub(0, acc, p);  // u = -sum(r) mod p
+    ch.costs.scalar_oles += (uint64_t)B;
+    return out;
 }
 
-inline Word ole_recv(PartyChannel &ch, Word y, Word p) {
+inline std::vector<Word> ole_batch_recv(PartyChannel &ch,
+                                        const std::vector<Word> &y, Word p) {
     const int k = field_bits(p);
-    std::vector<uint8_t> choice(k);
-    for (int j = 0; j < k; ++j) choice[j] = (uint8_t)((y >> j) & 1);
+    const size_t B = y.size();
+    std::vector<uint8_t> choice(B * (size_t)k);
+    for (size_t b = 0; b < B; ++b) {
+        for (int j = 0; j < k; ++j) {
+            choice[b * (size_t)k + (size_t)j] = (uint8_t)((y[b] >> j) & 1);
+        }
+    }
     const std::vector<Word> got = ch.ot_recv_field(choice, k);
-    Word v = 0;
-    for (int j = 0; j < k; ++j) v = mod_add(v, got[j] % p, p);
-    ch.costs.scalar_oles += 1;
-    return v;
+    std::vector<Word> out(B, 0);
+    for (size_t b = 0; b < B; ++b) {
+        Word v = 0;
+        for (int j = 0; j < k; ++j) {
+            v = mod_add(v, got[b * (size_t)k + (size_t)j] % p, p);
+        }
+        out[b] = v;
+    }
+    ch.costs.scalar_oles += (uint64_t)B;
+    return out;
 }
 
 // Directional wrapper: party 0 is always the OLE sender in this protocol.
-inline Word ole_p0_sender(PartyChannel &ch, Word my_input, Word p,
-                          PartyRandom &rng) {
-    return ch.is_p0() ? ole_send(ch, my_input, p, rng)
-                      : ole_recv(ch, my_input, p);
+inline std::vector<Word> ole_batch_p0_sender(PartyChannel &ch,
+                                             const std::vector<Word> &my_inputs,
+                                             Word p, PartyRandom &rng) {
+    return ch.is_p0() ? ole_batch_send(ch, my_inputs, p, rng)
+                      : ole_batch_recv(ch, my_inputs, p);
 }
 
 }  // namespace ringlpn_2pc
