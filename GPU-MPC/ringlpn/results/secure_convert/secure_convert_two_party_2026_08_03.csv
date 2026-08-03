@@ -1,0 +1,9 @@
+party,requested_qbits,actual_qbits,bw,ell,conversions,and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,dabit_ots_per_conv,triple_ots_per_conv,logical_opened_bits_per_conv,meaningful_share_bits_per_conv,post_mask_dependency_rounds_per_conv,base_ots,setup_bytes_sent,setup_direction_switches,correlation_bytes_sent_batch,correlation_direction_switches_batch,online_bytes_sent_batch,online_direction_switches_batch,protocol_bytes_sent_batch,protocol_direction_switches_batch,correlation_us_batch,online_us_batch,correlation_selftest,transcript_accounting,status
+0,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,309556,6,10716,251,320272,257,2999.5,2782.9,pass,pass,pass
+1,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,235828,6,10716,251,246544,257,2982.2,2801.2,pass,pass,pass
+0,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,309556,6,10716,251,320272,257,2975.6,2789.8,pass,pass,pass
+1,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,235828,6,10716,251,246544,257,2960.1,2806.3,pass,pass,pass
+0,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,835432,6,20140,499,855572,505,5475.5,5360.2,pass,pass,pass
+1,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,688744,6,20140,499,708884,505,5470.2,5367.4,pass,pass,pass
+0,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,835432,6,20140,499,855572,505,6135.3,5513.7,pass,pass,pass
+1,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,688744,6,20140,499,708884,505,6125.6,5524.9,pass,pass,pass

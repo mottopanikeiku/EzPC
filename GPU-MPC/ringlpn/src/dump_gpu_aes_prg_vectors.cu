@@ -44,16 +44,15 @@ int main(int argc, char **argv) {
     if (count < 1) count = 1;
 
     std::vector<AESBlock> seeds((size_t)count);
-    // Deterministic, structurally varied seeds; the LSB is cleared exactly as
-    // the GPU keygen does before expansion.
+    // Deterministic, structurally varied full-width seeds, including both
+    // values of the low bit.
     for (int i = 0; i < count; ++i) {
         uint64_t lo = 0x0123456789ABCDEFULL * (uint64_t)(i + 1) + (uint64_t)i;
         uint64_t hi = 0xFEDCBA9876543210ULL ^ ((uint64_t)i << 13);
         if (i == 0) { lo = 0; hi = 0; }
         if (i == 1) { lo = 1; hi = 0; }
         if (i == 2) { lo = ~0ULL; hi = ~0ULL; }
-        seeds[(size_t)i] = ringlpn_spfss_zp::make_block(lo, hi) &
-                           ~static_cast<AESBlock>(1);
+        seeds[(size_t)i] = ringlpn_spfss_zp::make_block(lo, hi);
     }
 
     AESGlobalContext gaes;

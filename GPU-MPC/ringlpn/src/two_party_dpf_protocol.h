@@ -7,15 +7,16 @@
 // covers this implementation too.
 //
 // Every cross-party value goes through OT or through an explicitly counted
-// opening. Trees are processed level-synchronously: one OT batch and one opening
-// stage per level for the whole batch, plus three batched Gilboa OLE stages, so
-// the number of communication stages depends on the tree depth only.
+// opening. Trees are processed level-synchronously: one OT batch and one
+// opening dependency stage per level for the whole batch, plus three batched
+// Gilboa OLE stages. The measured direction-switch count depends on tree depth,
+// not batch size; it is not a network-round measurement.
 //
 // The expansion PRG is selectable: `kSplitmix` matches the unchanged host
 // evaluator `spfss_host::dpfEvalAll`; `kGpuAes` is the bit-identical twin of the
-// deployed GPU device PRG, so those keys are consumable by the unmodified GPU
-// evaluator. No security claim is attached to either (see the S1 contract
-// obligations D-SEED / P-RNG / P-KEY).
+// deployed four-call AES PRG with full 128-bit child seeds and independently
+// derived control bits. The latter removes D-SEED's 127-bit encoding defect;
+// P-RNG/P-DIST/P-KEY and the full reduction remain open.
 
 #pragma once
 
@@ -25,6 +26,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 namespace ringlpn_2pdpf {
@@ -83,9 +85,8 @@ struct Node {
 
 // Expansion PRG selector. `splitmix` matches the unchanged host evaluator
 // `spfss_host::dpfEvalAll`; `gpu_aes` is the bit-identical twin of the deployed
-// GPU device PRG (src/gpu_aes_prg_host.h), so keys generated with it are
-// consumable by the UNMODIFIED GPU evaluator. Neither choice changes the
-// protocol, the transcript, or the accounting.
+// four-call GPU device PRG (src/gpu_aes_prg_host.h), so its keys are consumable
+// by the GPU evaluator. The protocol transcript and accounting are unchanged.
 enum class PrgMode { kSplitmix, kGpuAes };
 
 inline void expand_node(PrgMode mode, U128 seed, U128 &sL, uint8_t &tL,
@@ -110,7 +111,13 @@ bool two_party_dpf_gen_batch(int party, int log_domain, Word p, PrgMode prg,
                              std::vector<spfss_host::DPFKey> &keys) {
     const int L = log_domain;
     const size_t B = offs.size();
-    if (B == 0 || beta_factors.size() != B) return false;
+    const size_t max_int =
+        static_cast<size_t>(std::numeric_limits<int>::max());
+    if ((party != 0 && party != 1) || L < 2 || L > 20 ||
+        (p != kPrime62 && p != kPrime62Crt2) || B == 0 ||
+        beta_factors.size() != B || B > max_int / size_t(L - 1)) {
+        return false;
+    }
     const uint64_t half_domain = 1ULL << (L - 1);
     for (size_t b = 0; b < B; ++b) {
         // Local input validation happens before any correlation is consumed.
@@ -162,16 +169,14 @@ bool two_party_dpf_gen_batch(int party, int log_domain, Word p, PrgMode prg,
         }
     }
 
-    // --- root seeds: this party's own OS-CSPRNG draws ------------------------
+    // --- root seeds: this party's own private-CSPRNG draws -------------------
     keys.assign(B, spfss_host::DPFKey{});
     std::vector<std::vector<Node>> nodes(B), next(B);
     for (size_t b = 0; b < B; ++b) {
         spfss_host::DPFKey &K = keys[b];
         K.log_domain = L;
         K.modulus = p;
-        K.seed = (prg == PrgMode::kGpuAes)
-                     ? ringlpn_gpu_prg::clear_tag(rng.u128())
-                     : rng.u128();
+        K.seed = rng.u128();
         K.t0 = (uint8_t)party;
         K.sCW.assign((size_t)L, 0);
         K.tLCW.assign((size_t)L, 0);

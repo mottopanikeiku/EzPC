@@ -75,13 +75,14 @@ Control/tag bits stay separate from seed material, following the formal BGI
 seed/tag separation. The S1 target does not derive tags from seed LSBs: it
 carries 128 secret seed bits and separate tags.
 
-The current GPU DPF implementation does not yet satisfy that target. Unlike
-the formal BGI16 construction's full-secret-seed plus separate-tag design
-(CCS 2016, DOI `10.1145/2976749.2978429`), it uses a Doerner--shelat-style low-bit control encoding; the GPU code masks each seed LSB and
-therefore has a 127-bit secret seed state; its centralized GPU keygen also
-derives all roots from one 64-bit `seed_base`. S3 must use independent
-OS-CSPRNG roots and widen the PRG/state (or lower the security target) before
-any 128-bit DPF claim.
+The deployed Ring-LPN GPU expansion reached that seed-format target on
+2026-08-03: four domain-separated AES calls produce full 128-bit child seeds
+and separate control bits; device/host parity and GPU key evaluation are
+gated. The two-party path uses OpenSSL-private-DRBG roots. The centralized
+benchmark keygen still derives roots from one 64-bit `seed_base` and is not a
+security realization. DPF distribution, CSPRNG state/composition, and
+single-key privacy reductions remain open, so there is still no end-to-end
+128-bit DPF-security claim.
 
 ## 2. Executable gates and regenerated evidence
 
@@ -195,10 +196,10 @@ The paper now:
   $10.67\times$;
 - adds scalar OLEs to Table 1 and excludes unmeasured real-OLE transport from
   the silent-OT communication estimate;
-- narrows the round claim to 14 sequential tree-walk batches and leaves
-  end-to-end rounds to M1 measurement;
+- records 72 measured direction switches at depth 11 while leaving
+  end-to-end network rounds unclaimed;
 - replaces the incoherent 3,790-bit figure with 1,908 logical opened bits and
-  3,816 revealed-share bits at depth 14, backed by per-phase executable
+  3,816 meaningful share bits at depth 14, backed by per-phase executable
   counters;
 - cites BCG+20's corrected IACR ePrint 2022/1035 full version,
   §5.2/Remark 5.1;
@@ -208,7 +209,7 @@ The paper now:
 - adds public FC admissibility bounds, exact modulo-$Q$ conversion semantics,
   source-aligned forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer
   mask and velocity topology, ideal-correlation consume-once identifiers,
-  abort-before-output rules, and the GPU 64-bit-root/127-bit-seed blockers.
+  abort-before-output rules, and the GPU benchmark-root/reduction blockers.
 - adds the S2 hard stops: exact `w=c*t` parameter mapping, accepted-estimator
   transcript with its unresolved reduction steps, DMPF/direct-ring prior art,
   and Cheddar/private-project provenance boundaries.

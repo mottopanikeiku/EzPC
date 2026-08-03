@@ -79,7 +79,7 @@
 //   openings and the raw payload of both parties' revealed shares. At 62-bit p
 //   these are
 //     2*(L-1) + 130*L + 62      logical opened bits, and
-//     4*(L-1) + 260*L + 124     revealed-share bits.
+//     4*(L-1) + 260*L + 124     meaningful share bits opened.
 //   It also verifies one fresh functionality-randomness draw per bit triple
 //   and two per scalar OLE, plus consume-once correlation IDs with a duplicate
 //   reuse negative control. None of these counters is measured network traffic.
@@ -155,7 +155,7 @@ inline Word convert_zp(U128 s, Word m) {
 
 struct OpeningCosts {
     uint64_t logical_bits = 0;       // common values reconstructed
-    uint64_t revealed_share_bits = 0; // sum of both parties' revealed shares
+    uint64_t meaningful_share_bits = 0; // sum of both parties' meaningful widths
 };
 
 struct Costs {
@@ -170,10 +170,10 @@ struct Costs {
     uint64_t logical_opened_bits() const {
         return phase_a.logical_bits + phase_b.logical_bits + phase_c.logical_bits;
     }
-    uint64_t revealed_share_bits() const {
-        return phase_a.revealed_share_bits +
-               phase_b.revealed_share_bits +
-               phase_c.revealed_share_bits;
+    uint64_t meaningful_share_bits() const {
+        return phase_a.meaningful_share_bits +
+               phase_b.meaningful_share_bits +
+               phase_c.meaningful_share_bits;
     }
     void reset() { *this = Costs{}; }
 };
@@ -238,26 +238,26 @@ struct Functionalities {
 
     uint8_t open_phase_a_bit(uint8_t sh0, uint8_t sh1) {
         costs->phase_a.logical_bits++;
-        costs->phase_a.revealed_share_bits += 2;
+        costs->phase_a.meaningful_share_bits += 2;
         return (uint8_t)((sh0 ^ sh1) & 1);
     }
 
     U128 open_phase_b_seed_cw(U128 sh0, U128 sh1) {
         costs->phase_b.logical_bits += 128;
-        costs->phase_b.revealed_share_bits += 2 * 128;
+        costs->phase_b.meaningful_share_bits += 2 * 128;
         return sh0 ^ sh1;
     }
 
     uint8_t open_phase_b_flag_cw(uint8_t sh0, uint8_t sh1) {
         costs->phase_b.logical_bits++;
-        costs->phase_b.revealed_share_bits += 2;
+        costs->phase_b.meaningful_share_bits += 2;
         return (uint8_t)((sh0 ^ sh1) & 1);
     }
 
     Word open_phase_c_final_cw(Word sh0, Word sh1, Word p) {
         const uint64_t bits = field_encoding_bits(p);
         costs->phase_c.logical_bits += bits;
-        costs->phase_c.revealed_share_bits += 2 * bits;
+        costs->phase_c.meaningful_share_bits += 2 * bits;
         return mod_add(sh0, sh1, p);
     }
 };
@@ -719,11 +719,13 @@ int main(int argc, char **argv) {
         costs.bit_triples == invocations * (uint64_t)(L - 1) &&
         costs.scalar_oles == invocations * 3 &&
         costs.phase_a.logical_bits == invocations * 2 * (uint64_t)(L - 1) &&
-        costs.phase_a.revealed_share_bits == invocations * 4 * (uint64_t)(L - 1) &&
+        costs.phase_a.meaningful_share_bits ==
+            invocations * 4 * (uint64_t)(L - 1) &&
         costs.phase_b.logical_bits == invocations * 130 * (uint64_t)L &&
-        costs.phase_b.revealed_share_bits == invocations * 260 * (uint64_t)L &&
+        costs.phase_b.meaningful_share_bits ==
+            invocations * 260 * (uint64_t)L &&
         costs.phase_c.logical_bits == invocations * field_bits &&
-        costs.phase_c.revealed_share_bits == invocations * 2 * field_bits;
+        costs.phase_c.meaningful_share_bits == invocations * 2 * field_bits;
     const bool ideal_mask_draw_accounting_ok =
         costs.functionality_random_words ==
         costs.bit_triples + 2 * costs.scalar_oles;
@@ -735,10 +737,13 @@ int main(int argc, char **argv) {
                     "corruption_controls,invalid_inputs_rejected,"
                     "old_sign_opening_leak_control,string_ots_per_tree,bit_triples_per_tree,"
                     "scalar_oles_per_tree,phase_a_logical_opened_bits_per_tree,"
-                    "phase_a_revealed_share_bits_per_tree,phase_b_logical_opened_bits_per_tree,"
-                    "phase_b_revealed_share_bits_per_tree,phase_c_logical_opened_bits_per_tree,"
-                    "phase_c_revealed_share_bits_per_tree,logical_opened_bits_per_tree,"
-                    "revealed_share_bits_per_tree,transcript_accounting,"
+                    "phase_a_meaningful_share_bits_per_tree,"
+                    "phase_b_logical_opened_bits_per_tree,"
+                    "phase_b_meaningful_share_bits_per_tree,"
+                    "phase_c_logical_opened_bits_per_tree,"
+                    "phase_c_meaningful_share_bits_per_tree,"
+                    "logical_opened_bits_per_tree,meaningful_share_bits_per_tree,"
+                    "transcript_accounting,"
                     "ideal_mask_draw_accounting,correlation_reuse_control,"
                     "keygen_plus_eval_us_per_tree,validation\n");
     }
@@ -762,13 +767,13 @@ int main(int argc, char **argv) {
                 per_tree(costs.bit_triples),
                 per_tree(costs.scalar_oles),
                 per_tree(costs.phase_a.logical_bits),
-                per_tree(costs.phase_a.revealed_share_bits),
+                per_tree(costs.phase_a.meaningful_share_bits),
                 per_tree(costs.phase_b.logical_bits),
-                per_tree(costs.phase_b.revealed_share_bits),
+                per_tree(costs.phase_b.meaningful_share_bits),
                 per_tree(costs.phase_c.logical_bits),
-                per_tree(costs.phase_c.revealed_share_bits),
+                per_tree(costs.phase_c.meaningful_share_bits),
                 per_tree(costs.logical_opened_bits()),
-                per_tree(costs.revealed_share_bits()),
+                per_tree(costs.meaningful_share_bits()),
                 transcript_accounting_ok ? "pass" : "FAIL",
                 ideal_mask_draw_accounting_ok ? "pass" : "FAIL",
                 correlation_reuse_control_ok ? "pass" : "FAIL",
@@ -780,7 +785,7 @@ int main(int argc, char **argv) {
                  "old-sign leak regression %s, transcript accounting %s, "
                  "ideal-mask-draw accounting %s, correlation-reuse control %s; per tree: "
                  "%.0f string-OTs, %.0f bit-triples, %.0f OLE, "
-                 "%.0f logical-open bits, %.0f revealed-share bits; "
+                 "%.0f logical-open bits, %.0f meaningful-share bits; "
                  "%.0f us/tree (incl. validation eval %.0f us)\n",
                  L, args.trees, pass, args.trees,
                  centralized_pass, centralized_expected,
@@ -794,7 +799,7 @@ int main(int argc, char **argv) {
                  per_tree(costs.bit_triples),
                  per_tree(costs.scalar_oles),
                  per_tree(costs.logical_opened_bits()),
-                 per_tree(costs.revealed_share_bits()),
+                 per_tree(costs.meaningful_share_bits()),
                  total_us / trees, eval_us / trees);
     return all_ok ? 0 : 1;
 }

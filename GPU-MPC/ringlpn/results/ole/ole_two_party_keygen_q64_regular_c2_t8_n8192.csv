@@ -1,5 +1,3 @@
-1,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,993664,71,129733.9,pass,pass
-party,c,t,noise_mode,log_domain,groups,trees,string_ots_per_tree,bit_triples_per_tree,scalar_oles_per_tree,logical_opened_bits_per_tree,revealed_share_bits_per_tree,base_ots,setup_bytes_sent,protocol_bytes_sent,protocol_direction_switches,keygen_us,transcript_accounting,status
-0,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,969856,71,129501.7,pass,pass
-1,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,993664,71,128465.7,pass,pass
-0,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,969856,71,128315.6,pass,pass
+1,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,993664,71,138718.7,pass,pass
+party,c,t,noise_mode,log_domain,groups,trees,string_ots_per_tree,bit_triples_per_tree,scalar_oles_per_tree,logical_opened_bits_per_tree,meaningful_share_bits_per_tree,base_ots,setup_bytes_sent,protocol_bytes_sent,protocol_direction_switches,keygen_us,transcript_accounting,status
+0,2,8,regular,11,15,256,22.0,10.0,3.0,1512.0,3024.0,256,21829,969856,71,138705.5,pass,pass

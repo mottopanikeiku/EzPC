@@ -15,13 +15,12 @@
 // The protocol code is the shared one in two_party_dpf_protocol.h (the same
 // implementation the standalone keygen artifact gates), run with the GPU
 // expansion PRG so the emitted keys are consumable by the unmodified GPU
-// evaluator. All trees of all groups go into ONE level-synchronous batch, so the
-// stage count depends on the tree depth only.
+// evaluator. All trees of all groups go into one level-synchronous batch; the
+// measured direction-switch count depends on tree depth, not tree count.
 //
-// No security claim: transports are real OT but not silent OT, the expansion PRG
-// keeps the GPU's low-bit control encoding (127-bit secret seed state), and the
-// noise itself is still sampled by the benchmark (labelled), not by a
-// distributed sampler.
+// No security claim: transports are real OT but not silent OT, the exact DPF
+// distribution/security reduction is still open, and the noise itself is
+// sampled by the benchmark (labelled), not by a distributed sampler.
 
 #include "dpf_key_io.h"
 #include "spfss_host.h"
@@ -29,6 +28,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <limits>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -102,8 +102,25 @@ int main(int argc, char **argv) {
     const int t = noise.t;
     const int L = noise.log_domain;
     const Word p = (Word)noise.modulus;
+    const uint64_t ct = uint64_t(c) * uint64_t(t);
+    const uint64_t max_int = uint64_t(std::numeric_limits<int>::max());
+    if (c <= 0 || t <= 0 || L < 2 || L > 20 ||
+        (p != ringlpn_2pdpf::kPrime62 &&
+         p != ringlpn_2pdpf::kPrime62Crt2) ||
+        ct == 0 || ct > max_int / ct ||
+        ct * ct > max_int / uint64_t(L - 1)) {
+        std::fprintf(stderr,
+                     "[two-party-spfss] unsupported public parameter set\n");
+        return 2;
+    }
     const int groups = noise.regular ? (2 * t - 1) : 1;
     const uint64_t half_domain = 1ULL << (L - 1);
+    if ((noise.regular &&
+         (noise.bucket <= 0 || uint64_t(noise.bucket) != half_domain)) ||
+        (!noise.regular && noise.bucket != 0)) {
+        std::fprintf(stderr, "[two-party-spfss] inconsistent noise layout\n");
+        return 2;
+    }
 
     // Build this party's private per-tree inputs in exactly the order the OLE
     // engine indexes its SPFSS keys: key_idx = (i + j*c) * groups + group.
@@ -162,7 +179,7 @@ int main(int argc, char **argv) {
     PartyRandom rng;
 
     const uint64_t setup_bytes = ch.setup_bytes_sent();
-    const uint64_t setup_switches = ch.setup_rounds();
+    const uint64_t setup_switches = ch.setup_direction_switches();
     const auto t_start = std::chrono::steady_clock::now();
     std::vector<spfss_host::DPFKey> keys;
     const bool ok = ringlpn_2pdpf::two_party_dpf_gen_batch(
@@ -210,7 +227,7 @@ int main(int argc, char **argv) {
         std::printf("party,c,t,noise_mode,log_domain,groups,trees,"
                     "string_ots_per_tree,bit_triples_per_tree,"
                     "scalar_oles_per_tree,logical_opened_bits_per_tree,"
-                    "revealed_share_bits_per_tree,base_ots,setup_bytes_sent,"
+                    "meaningful_share_bits_per_tree,base_ots,setup_bytes_sent,"
                     "protocol_bytes_sent,protocol_direction_switches,"
                     "keygen_us,transcript_accounting,status\n");
     }
@@ -221,7 +238,7 @@ int main(int argc, char **argv) {
                 groups, trees, per_tree(cost.string_ots_128),
                 per_tree(cost.bit_triples), per_tree(cost.scalar_oles),
                 per_tree(cost.logical_opened_bits()),
-                per_tree(cost.revealed_share_bits()),
+                per_tree(cost.meaningful_share_bits()),
                 (unsigned long long)cost.base_ots,
                 (unsigned long long)setup_bytes,
                 (unsigned long long)protocol_bytes,
@@ -229,7 +246,7 @@ int main(int argc, char **argv) {
                 accounting_ok ? "pass" : "FAIL", all_ok ? "pass" : "FAIL");
     std::fprintf(stderr,
                  "[two-party-spfss] party %d: %zu trees in %zu groups at L=%d, "
-                 "%llu protocol bytes, %llu stages, %.0f us -> %s (%s)\n",
+                 "%llu protocol bytes, %llu direction switches, %.0f us -> %s (%s)\n",
                  args.party, trees, group_sizes.size(), L,
                  (unsigned long long)protocol_bytes,
                  (unsigned long long)protocol_switches, total_us,

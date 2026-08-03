@@ -85,20 +85,19 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    size_t seed_mismatch = 0, left_mismatch = 0, right_mismatch = 0,
-           tag_mismatch = 0;
+    size_t left_mismatch = 0, right_mismatch = 0, tag_mismatch = 0;
     for (const Row &r : rows) {
         U128 sl = 0, sr = 0;
         uint8_t tl = 0, tr = 0;
         ringlpn_gpu_prg::gpu_aes_prg_expand(r.seed, sl, tl, sr, tr);
-        if (r.seed != ringlpn_gpu_prg::clear_tag(r.seed)) ++seed_mismatch;
         if (sl != r.sl) ++left_mismatch;
         if (sr != r.sr) ++right_mismatch;
         if (tl != r.tl || tr != r.tr) ++tag_mismatch;
     }
 
-    // Control: a one-bit seed change must change both children. Without this a
-    // constant-output bug would pass the comparison above on cleared seeds.
+    // Control: changing a high seed bit must change both children. The
+    // device-vector set itself includes both low-bit values, so parity also
+    // catches any reintroduction of the obsolete low-bit-clearing semantics.
     size_t insensitive = 0;
     for (const Row &r : rows) {
         U128 sl0 = 0, sr0 = 0, sl1 = 0, sr1 = 0;
@@ -110,15 +109,14 @@ int main(int argc, char **argv) {
     }
 
     const bool all_ok = left_mismatch == 0 && right_mismatch == 0 &&
-                        tag_mismatch == 0 && seed_mismatch == 0 &&
-                        insensitive == 0;
+                        tag_mismatch == 0 && insensitive == 0;
     if (csv_header) {
-        std::printf("vectors,rows,seed_not_cleared,left_mismatch,right_mismatch,"
-                    "tag_mismatch,seed_insensitive,parity\n");
+        std::printf("vectors,rows,left_mismatch,right_mismatch,tag_mismatch,"
+                    "seed_insensitive,parity\n");
     }
-    std::printf("%s,%zu,%zu,%zu,%zu,%zu,%zu,%s\n", path.c_str(), rows.size(),
-                seed_mismatch, left_mismatch, right_mismatch, tag_mismatch,
-                insensitive, all_ok ? "pass" : "FAIL");
+    std::printf("%s,%zu,%zu,%zu,%zu,%zu,%s\n", path.c_str(), rows.size(),
+                left_mismatch, right_mismatch, tag_mismatch, insensitive,
+                all_ok ? "pass" : "FAIL");
     std::fprintf(stderr,
                  "[gpu-aes-parity] %zu device vectors: left %zu / right %zu / "
                  "tag %zu mismatches, %zu seed-insensitive -> %s\n",

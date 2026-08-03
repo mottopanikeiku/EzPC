@@ -94,17 +94,21 @@ __device__ inline void aes_prg_expand(AESBlock seed,
                                       uint8_t &t_l,
                                       AESBlock &s_r,
                                       uint8_t &t_r) {
-    constexpr AESBlock kClearTag = ~static_cast<AESBlock>(1);
-    AESBlock key = seed & kClearTag;
-    AESBlock left = 0;
-    AESBlock right = 0;
-    applyAESPRGTwoTimes(aes, reinterpret_cast<u32 *>(&key), 0,
-                        reinterpret_cast<u32 *>(&left),
-                        reinterpret_cast<u32 *>(&right));
-    t_l = static_cast<uint8_t>(left & 1);
-    t_r = static_cast<uint8_t>(right & 1);
-    s_l = left & kClearTag;
-    s_r = right & kClearTag;
+    AESBlock left_seed = 0;
+    AESBlock left_tag = 0;
+    AESBlock right_seed = 0;
+    AESBlock right_tag = 0;
+    // Four domain-separated AES calls: plaintexts 0/2 produce full 128-bit
+    // child seeds; plaintexts 1/3 produce independent control bits.
+    applyAESPRGFourTimes(aes, reinterpret_cast<u32 *>(&seed),
+                         reinterpret_cast<u32 *>(&left_seed),
+                         reinterpret_cast<u32 *>(&left_tag),
+                         reinterpret_cast<u32 *>(&right_seed),
+                         reinterpret_cast<u32 *>(&right_tag));
+    s_l = left_seed;
+    s_r = right_seed;
+    t_l = static_cast<uint8_t>(left_tag & 1);
+    t_r = static_cast<uint8_t>(right_tag & 1);
 }
 
 __global__ void keygen_dpf_zp_kernel(int log_domain,
@@ -132,8 +136,6 @@ __global__ void keygen_dpf_zp_kernel(int log_domain,
                              splitmix64_stateless(seed_base ^ (0x94D049BB133111EBULL + 4ULL * idx)));
     AESBlock s1 = make_block(splitmix64_stateless(seed_base ^ (0x8538ECB5BD456EA3ULL + 4ULL * idx)),
                              splitmix64_stateless(seed_base ^ (0xC6BC279692B5C323ULL + 4ULL * idx)));
-    s0 &= ~static_cast<AESBlock>(1);
-    s1 &= ~static_cast<AESBlock>(1);
 
     seeds0[idx] = s0;
     seeds1[idx] = s1;

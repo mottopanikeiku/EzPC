@@ -9,34 +9,37 @@ Z_p SPFSS (sum of DPFs) → Figure 2 Ring-LPN OLE → slot-packed Beaver cross
 terms → Z_M→Z_2^bw conversion → byte-compatible Orca keys, validated through
 Orca's **unchanged** online path (`gpuMatmulBeaver`).
 
-**Status (2026-07-29):** the GPU chain works end-to-end with real Figure 2
-OLEs at q64/q128 and dense slot packing. The complete required-GPU checkpoint
-gate was freshly revalidated on idle GPU 3 and ended `ALL GATES PASS`.
-**The corrected M1 distributed-keygen protocol logic is implemented as a host
-prototype** (`src/test_distributed_dpf_keygen.cpp`): two-party DPF keygen from
-additively shared α and multiplicatively shared β, party-separated and
-functionally validated by the unchanged `spfss_host::dpfEvalAll` on 2,432
-trees (both primes, depths 4–14, two deterministic point/payload edges, eight
-centralized references). Six invalid encodings abort before correlation use;
-independent root-seed, `sCW`, `tLCW`, `tRCW`, and `finalCW` corruptions all
-fail evaluation as required (5/5).
-Phase C now uses three scalar OLEs and opens only the standard `finalCW`; an
-executable old-sign regression demonstrates why the
-removed sign opening leaked one point bit when conditioned on a party's key.
-The fresh host and required-GPU gates pass. This is a protocol-logic and compatibility
-prototype using ideal OT/triple/OLE functionalities and the evaluator's
-non-cryptographic correctness PRG — not evidence of computational privacy,
-128-bit security, or M1 completion. M1 still needs AES/CSPRNG evaluation, real
-silent OT/OLE, GPU batching and bytes, and round/traffic measurements. Two
-pipeline oracle boundaries remain: centralized SPFSS key generation in the
-GPU pipeline and dealer-style share-conversion correlations. The M1–M6
-proposal is **v2.3** (stable filename:
-`results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` + PDF),
-with corrected Table 1/Table 5 costs and bootstrap condition
-`3*c^2*t^2 < n`. See
-`results/reports/session_handoff_2026_07_21.md` and
-`results/reports/distributed_dpf_keygen_memo_2026_07_21.md`.
-The corrected host checkpoint and v2.2 evidence are committed at `28f8451`.
+**Status (2026-08-03):** the GPU chain works end-to-end with real Figure 2
+OLEs at q64/q128 and dense slot packing. The corrected M1 protocol logic
+(`src/test_distributed_dpf_keygen.cpp`) is party-separated and functionally
+validated by unchanged `spfss_host::dpfEvalAll` on 2,432 trees across both
+primes and depths 4–14. Phase C uses three scalar OLEs and opens only standard
+`finalCW`; five independent key corruptions, six invalid encodings, mask-draw
+accounting, correlation-ID reuse, and the removed-sign leakage regression are
+gated.
+
+The same keygen protocol runs as two OS processes over TCP with SCI/IKNP,
+Gilboa OLE, OT-backed Boolean triples, and OpenSSL-private-DRBG roots:
+369/369 host-reference key pairs pass across ten configurations. A corrected
+four-call AES expansion retains full 128-bit child seeds and derives control
+bits separately; 16 fresh device vectors match the host twin and 88
+two-process keys pass batched/per-tree GPU evaluation across both primes.
+These are correctness, compatibility, and transport results—not a DPF privacy
+proof.
+
+The standalone share-conversion artifact is also two-process and OT-backed:
+304/304 outputs pass exact boundary, random, forced-wrap, and layer-shaped
+checks across four q64/q128/bit-width cases, with a corrupted-output control
+and split setup/correlation/online traffic. It remains CPU-side, ripple-depth,
+IKNP rather than silent OT, plain TCP, and not integrated into the flagship FC
+transcript. The flagship still contains centralized in-process setup and exact
+conversion oracle boundaries.
+
+The M1–M6 proposal is **v2.4** (stable filename:
+`results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` + PDF).
+No parameter set or end-to-end security theorem is pinned; S2's reduction and
+estimator audit remains blocking. See the current reports indexed in
+`results/README.md`.
 The binding staged route to publication readiness is
 `results/reports/publication_readiness_plan_2026_07_21.md`; every completed
 stage must end in a gate-verified checkpoint commit.
@@ -150,22 +153,21 @@ has 78.8% net capacity at `n=2^18`. Bits at `n=2^16/2^17` for that candidate are
 being measured into
 `results/security/ringlpn_conservative_pin_n16_n17_2026_07_29.csv`.
 
-**Real two-party transport (2026-07-29, new).** The frozen keygen protocol now
-also runs as **two OS processes over TCP with real OT**:
+**Real two-party transport (2026-07-29; rerun 2026-08-03).** The frozen keygen
+protocol runs as **two OS processes over TCP with real OT**:
 `src/test_two_party_dpf_keygen.cpp` + `src/two_party_ot.h`, using this repo's
 unmodified SCI IKNP OT extension (header-only, links only OpenSSL), Gilboa
-`Z_p` OLE, OT-based boolean triples, and OS-CSPRNG party roots, **batched
-level-synchronously** so the number of communication stages is `6L+6` for depth
-`L` *independent of the batch size*. 369/369 key pairs across ten configurations
-(depths 4-14, both primes, batches 1-256) validate through the unchanged
-`dpfEvalAll` in a separate offline checker with a corrupted-key negative
-control; the measured logical/revealed-bit columns are bit-identical to the
-contract's closed forms at every batch size. The run adds what the
-single-process prototype could not: 256 base OTs + 21,829 setup bytes per party,
-and at `L=11` batch 1 -> 256 the per-tree bytes fall 52,626 -> 3,789 (13.9x) and
-per-tree time 11.3 ms -> 161 us (70x) with the stage count pinned at 72. IKNP is
-OT *extension*, not silent OT, and the expansion PRG is still splitmix64, so
-this is a transport/scheduling milestone, not a security claim. See
+`Z_p` OLE, OT-based Boolean triples, and OpenSSL-private-DRBG party roots.
+Keygen is **batched level-synchronously**: the measured direction-switch count
+is `6L+6` for depth `L`, independent of batch size. It is not a network-round
+count. 369/369 key pairs across ten configurations (depths 4–14, both primes,
+batches 1–256) validate through unchanged `dpfEvalAll` in a separate offline
+checker with a corrupted-key control. Logical/meaningful-share columns match
+the contract's closed forms at every batch size. Setup costs 256 base OTs and
+21,829 bytes per party; at `L=11`, batch 1 → 256 lowers per-tree bytes
+52,626 → 3,789 (13.9x) and loopback time 11.2 ms → 148 us (75x), with 72
+direction switches. IKNP is OT *extension*, not silent OT; splitmix mode is a
+host-reference correctness path, not a security claim. See
 `results/reports/two_party_dpf_transport_memo_2026_07_29.md`.
 
 **2026-07-29 owner pin + slice decision.** Conservative candidate pinned for
@@ -179,23 +181,22 @@ projection (expected reduced weight no longer fits `(c-1)*2^i`), leaving degree
 batched keygen with byte-identical GPU keys (M1 remainder), then drive the
 real-OLE GPU transcript from two-party keys (M2).
 
-**GPU key compatibility from the two-party protocol (2026-07-29, new).** The
-same two-process protocol can expand with a host PRG that is bit-identical to
-the deployed device PRG (`src/gpu_aes_prg_host.h` vs `aes_prg_expand` in
-`src/gpu_spfss_zp.cuh`): AES-128 key = the seed's 16 little-endian bytes with the
-low bit cleared, `left = AES_k(0^16)`, `right = AES_k(0x02||0^15)`, control bit =
-LSB, cleared from the child seed. Parity is gated against 16 device-dumped
-vectors (`results/dpf/gpu_aes_prg_vectors_2026_07_29.csv`, 0 mismatches, plus a
-seed-sensitivity control). With `--prg gpu-aes` the two-party keys are then
-accepted by the **unmodified** GPU evaluator: 88 pairs over four configurations
-(L=4/8/11, both primes) pass both batched-SPFSS and per-tree full-domain
-reconstruction with corrupted-CW controls firing
-(`scripts/run_two_party_gpu_dpf.sh`,
-`results/dpf/two_party_gpu_dpf_2026_07_29.csv`), and the check is wired into the
-required-GPU gate (`ALL GATES PASS` re-run on GPU 3). This is GPU *key
-compatibility and GPU-validated correctness*; the keygen itself is still
-CPU-side, and the GPU PRG's low-bit control encoding still leaves a 127-bit
-secret seed state, so `D-SEED` stays open and no 128-bit claim is attached.
+**GPU key compatibility from the two-party protocol (2026-07-29; full-width
+PRG correction 2026-08-03).** The deployed Ring-LPN device PRG and its host
+twin now use four domain-separated AES calls per node
+(`src/gpu_aes_prg_host.h` and `aes_prg_expand` in `src/gpu_spfss_zp.cuh`):
+plaintexts 0 and 2 produce full 128-bit child seeds; plaintexts 1 and 3
+produce separate control bits. Every GPU run regenerates 16 device vectors,
+including low-bit-one seeds; host parity reports zero left/right/tag
+mismatches plus a seed-sensitivity control. With `--prg gpu-aes`, 88
+two-process key pairs over four configurations (`L=4/8/11`, both primes) pass
+batched-SPFSS and per-tree full-domain GPU reconstruction with corrupted-CW
+controls firing (`scripts/run_two_party_gpu_dpf.sh`,
+`results/dpf/two_party_gpu_dpf_2026_07_29.csv`). This is GPU key compatibility
+and GPU-validated correctness, not a GPU implementation of keygen. The
+127-bit encoding defect is removed; D-DIST/P-RNG/P-KEY and the concrete
+single-key privacy reduction remain open, so no end-to-end 128-bit
+DPF-security claim is attached.
 
 **M2 core gate reached (2026-07-29, new): the real Ring-LPN OLE engine runs on
 two-party dealerless SPFSS keys.** `build_spfss_keys()` - the pipeline's
@@ -215,6 +216,23 @@ DMPF encoder advantage. Wired into the required-GPU gate (`ALL GATES PASS`). Sti
 oracles: benchmark-side noise sampling, dealer-labelled conversion correlations,
 single-process expansion measurement, IKNP instead of silent OT. See
 `results/reports/dealerless_ole_two_party_keys_memo_2026_07_29.md`.
+
+**Two-process conversion transport validated (2026-08-03).**
+`src/test_secure_convert.cpp` and `scripts/run_secure_convert_test.sh` replace
+the standalone prototype's labelled edaBit/daBit/AND-triple dealer with the
+live two-socket SCI/IKNP path. One exact daBit over `Z_(2^k)` uses one 128-bit
+OT; `ell` daBits over `Z_(2^ell)` compose an exact edaBit because the
+coefficient-one arithmetic share is uniform independently of the Boolean
+shares. Boolean triples use two one-bit OTs each. Independent processes write
+only party-local versioned records; the offline checker covers exact
+`0,Q-1,Q,2Q-2` boundaries, random inputs, forced wraps, and layer-shaped
+inner products, and requires a corruption control to fire. All 76 conversions
+in each of four q64/q128/bit-width configurations pass. Per-party rows
+separate base-OT setup, correlation, and online bytes/direction switches and
+gate `5ell-3` logical / `10ell-6` meaningful-share / `2ell-1` post-mask
+accounting. An invalid public-bound control rejects before opening a socket.
+Plain unauthenticated TCP, IKNP rather than silent OT, linear-depth ripple,
+CPU-only execution, and missing flagship integration remain explicit limits.
 
 ## Catch up in 10 minutes (read in this order)
 
@@ -257,7 +275,7 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 | File | What it is |
 |---|---|
 | `bench_ntt_cuda_cheddar.cu` | The GPU NTT backend (substantially Cheddar-derived merged-stage kernels, signed Montgomery, q32/q64/q128-CRT, negacyclic). Upstream MIT notice and reconstructed source/blob pin plus local delta are retained in `extern/Cheddar_MIT_LICENSE.txt` and `extern/Cheddar_PROVENANCE.txt`; cite Cheddar. Included by every GPU bench via `RINGLPN_DISABLE_MAIN`. Contains `run_full_polymul`, `run_polymul_prepared_lhs`, adaptive fused-INTT (`RINGLPN_NTT_NO_FUSE`/`FORCE_FUSE`), `host_polymul_reference` (the host oracle), `kConfig62`/`kConfig62Crt2` (the primes: 2^62−6·2^24+1, 2^62−7·2^24+1). |
-| `gpu_spfss_zp.cuh` | GPU DPF/SPFSS with additive Z_p payloads (`gpuKeyGenDPFZpPair`, `gpuDpfZpFullEvalSum`). The expand-side workhorse. **Security blockers:** unlike the formal BGI16 construction's full-`lambda` seed with separate tag outputs (CCS 2016, DOI 10.1145/2976749.2978429), it uses a Doerner--shelat-style low-bit control encoding; the GPU code masks each seed LSB and leaves 127 secret seed bits. Centralized GPU roots are also expanded from one 64-bit `seed_base`. S3 must use independent OS-CSPRNG roots and widen the PRG/state (or lower the security target) before a 128-bit DPF claim. |
+| `gpu_spfss_zp.cuh` | GPU DPF/SPFSS with additive Z_p payloads (`gpuKeyGenDPFZpPair`, `gpuDpfZpFullEvalSum`). The expansion uses four domain-separated AES calls: full 128-bit child seeds from plaintexts 0/2 and separate tags from 1/3, device/host parity gated. **Security blockers:** centralized benchmark roots still come from one 64-bit `seed_base`; the two-party path uses OpenSSL-private-DRBG roots, but D-DIST/P-RNG/P-KEY and the concrete single-key reduction remain open. |
 | `bench_ole_ringlpn_cuda.cu` | The Figure 2 Ring-LPN OLE engine (random ring OLE: z0+z1 = x0·x1 in Z_p[X]/(X^n+1)). Reusable via `#define RINGLPN_OLE_DISABLE_MAIN` + include; caches NTT(a)/NTT(a·a) across expand iterations. **`build_spfss_keys()` is the centralized-keygen oracle boundary.** |
 | `bench_linear_ole_ringlpn_cuda.cu` | Ring-polynomial matrix Beaver from two OLEs per ring product. |
 | `bench_vole_ringlpn.cu` | Older standalone VOLE expansion prototype. |
@@ -265,9 +283,9 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
 | `orca_fc_ideal_ole_transcript.cuh` + `bench_orca_fc_ideal_ole_transcript.cu` | Step-1 artifact: dealerless FC transcript with an *ideal* OLE oracle. Kept as reference; superseded by the real-OLE transcript. |
 | `bench_orca_fc_real_ole_transcript.cu` | **The flagship artifact.** Real Figure 2 OLE + slot packing (forward negacyclic NTT is a ring isomorphism on the fully-split ring → one ring OLE = up to n scalar OLEs) + per-slot derandomization + per-party Garner CRT lift (q128) + conversion + Orca key write, validated via unchanged `gpuMatmulBeaver`. Ring-OLE count: `2·limbs·ceil(MKN/n)`. |
 | `bench_orca_fc_ringlpn_demo.cu` | Byte-compatibility demo: forward + dW + dX key contracts at q64/q128. |
-| `test_secure_convert.cpp` | Step-2 artifact (host): party-separated Z_M→Z_2^bw conversion (edaBit-masked open, ripple comparator, daBit B2A). Bit-exact vs oracle, including deterministic sums `0,M-1,M,2M-2`; executable accounting separates `5ell-3` logical opened bits from `10ell-6` raw revealed-share bits and gates `2ell-1` post-mask dependency rounds. Ideal offline correlations; not yet wired into the transcript (proposal M3). |
+| `test_secure_convert.cpp` | **Validated two-process OT-backed partial S6 artifact (2026-08-03).** Party-separated Z_M→Z_2^bw conversion over SCI sockets: exact OT daBits/edaBits, OT-backed Boolean triples, batched ripple openings, versioned party-local records, TEST-ONLY correlation/output/corruption checks, invalid-bound rejection, and separate setup/correlation/online byte and direction-switch accounting. All four q64/q128/bit-width cases pass. Still plain unauthenticated TCP, IKNP rather than silent OT, linear-depth ripple, CPU-side, and not wired into the flagship transcript. |
 | `test_distributed_dpf_keygen.cpp` | **Corrected M1 host protocol-logic prototype (2026-07-29).** Two-party DPF keygen: secure adder for α's bits (L−1 bit triples), cancellation-lemma level walk (2 string OTs/level), and Phase C arithmetic-share multiplication (3 scalar OLEs) that opens only standard `finalCW`. Six invalid-input controls, five independent key corruptions (root seed, `sCW`, `tLCW`, `tRCW`, `finalCW`), omniscient old-sign regression, per-phase transcript accounting, ideal-functionality mask-draw accounting, and consume-once correlation-ID reuse control. Emits standard `spfss_host::DPFKey`s validated by unchanged `dpfEvalAll`; ideal OT/triple/OLE interfaces and non-cryptographic splitmix64 correctness PRG mean functional compatibility, not computational privacy. Party private-random-tape freshness is not executable evidence. `spfss_host.cpp` remains untouched. |
-| `two_party_ot.h` | **Real two-party transport (2026-07-29).** Wraps this repo's unmodified SCI OT stack (`SCI/src/OT/split-iknp.h`, `np.h`, `utils/net_io_channel.h`, header-only, links only OpenSSL) into: 1-of-2 128-bit string OT, boolean AND triples (2 one-bit OTs each), Gilboa `Z_p` scalar OLE (62 field-element OTs each), party-symmetric openings with per-direction bit accounting, OS-CSPRNG party randomness, and NetIO byte/direction-switch counters. IKNP is OT **extension**, not silent OT. |
+| `two_party_ot.h` | **Real two-party transport (2026-07-29; CSPRNG correction 2026-08-03).** Wraps the repo's unmodified SCI IKNP stack into 128-bit string OT, Boolean triples, and Gilboa `Z_p` OLE; protocol randomness comes from buffered `RAND_priv_bytes`, while `mt19937_64` is confined to explicitly seeded public test inputs. Reports semantic logical/meaningful share widths separately from encoded NetIO bytes and direction switches. IKNP is OT **extension**, not silent OT; plain TCP is unauthenticated. |
 | `dpf_key_io.h` | Versioned little-endian `spfss_host::DPFKey` batch serialization (magic `RLPNDPF1`) plus the explicitly TEST-ONLY private-input record the offline checker needs. |
 | `test_two_party_dpf_keygen.cpp` | **The two-PROCESS keygen artifact.** Same frozen protocol, but two OS processes over two TCP sockets with real OT/triples/OLE, each party writing only its own key file; gates the contract's closed forms in-process and reports measured wire bytes, direction switches, and setup cost. Primitive self-tests (`--selftest`) open triple/OLE shares in a labelled test-only mode. |
 | `test_two_party_dpf_validate.cpp` | TEST-ONLY offline checker: runs after both parties exit, reads both key files, validates `beta*[x=alpha]` through unchanged `dpfEvalAll`, requires identical public material and differing seeds, and includes a corrupted-`finalCW` negative control. |
@@ -298,11 +316,12 @@ Safe to state (every item gate-verified):
 - Slot packing resolves PCG amortization: 2 ring OLEs back 8192 scalar cross
   terms (vs 16,384 ideal-OLE calls); openings are the standard `d=a−X0`,
   `e=b−X1` derandomization messages.
-- Secure conversion prototype is bit-exact with measured cost
-  (124/248 AND triples, 125/249 post-mask dependency rounds, 312/622 logical
-  opened bits,
-  and 624/1,244 raw revealed-share bits per output at q64/q128); every row
-  reports `transcript_accounting=pass`.
+- The live two-process secure-conversion artifact passes 76 conversions in
+  each of four q64/q128/bit-width configurations: 124/248 AND triples,
+  125/249 post-mask dependency rounds, 312/622 logical opened bits, and
+  624/1,244 meaningful share bits per q64/q128 output. It separately reports
+  encoded setup/correlation/online bytes and direction switches; neither
+  semantic counter is wire traffic.
 - The distributed key-generation protocol logic is implemented
   party-separated and functionally validated by the unchanged evaluator,
   using ideal OT/triple/OLE functionalities and a non-cryptographic
@@ -312,26 +331,38 @@ Safe to state (every item gate-verified):
   executable transcript accounting reports `2*depth` string OTs,
   `depth-1` bit triples, 3 scalar OLEs,
   `2*(depth-1) + 130*depth + ceil(log2(p))` logical opened bits, and
-  `4*(depth-1) + 260*depth + 2*ceil(log2(p))` raw revealed-share bits. At
-  depth 14 and the 62-bit primes these are 1,908 and 3,816 bits. Neither is
-  measured real-transport traffic. This is not "M1 done".
+  `4*(depth-1) + 260*depth + 2*ceil(log2(p))` meaningful share bits. At
+  depth 14 and the 62-bit primes these are 1,908 and 3,816 bits. The real
+  transport separately measures bytes and direction switches. This is not
+  "M1 done".
+- The real DPF transport validates 369/369 host-reference key pairs across ten
+  depth/prime/batch configurations; SCI/IKNP, Gilboa OLE, OpenSSL-private-DRBG
+  roots, versioned party-local files, measured bytes/direction switches, and
+  invalid/corruption controls are executable. It is not silent OT and the
+  direction-switch counter is not a network-round count.
+- The full-width four-call AES path matches 16 freshly device-dumped vectors
+  and 88 two-process keys pass both batched and per-tree GPU evaluation across
+  both primes. This is correctness/compatibility evidence, not a DPF privacy
+  proof.
 - Baseline Orca is untouched with the flag off.
 
 NOT claimable yet (the honest boundaries — never blur these):
-- "Dealer removed": SPFSS keys are generated centrally; the transcript's
-  conversion reads both shares (oracle); benchmark RNG is common-seed.
+- \"Dealer removed\" or \"M3 complete\": the standalone conversion source now has
+  an OT-backed two-process path, but the flagship transcript still reads both
+  conversion shares through its exact oracle, and benchmark setup is not a
+  complete two-process composition.
 - Any concrete security level: c=2/t=8 are correctness parameters; the primes
   fully split the ring → **splittable** Ring-LPN assumption (stronger than
   irreducible). S2's preliminary audit is blocked on the sparse-projection
   selection and projected-noise reduction, so no parameter set is secure-pinned.
 - Anything about nonlinear layers (ReLU/truncation FSS keys are a separate
   dealer axis).
-- The host D1 artifact does not establish computational privacy, 128-bit
-  security, GPU byte compatibility, real transports, or two-process
-  isolation. The current GPU DPF uses a Doerner--shelat-style low-bit control
-  encoding and masks each seed LSB, leaving a 127-bit secret seed state;
-  centralized benchmark roots are
-  also derived from one 64-bit `seed_base`.
+- The ideal-functionality D1 artifact alone does not establish computational
+  privacy. The real transport and GPU-consumable path add process isolation,
+  measured bytes/direction switches, OpenSSL-private-DRBG roots, and full
+  128-bit seed/tag separation, but they still do not prove DPF key
+  distribution or single-key privacy. Centralized benchmark roots remain
+  derived from one 64-bit `seed_base` and are not a security realization.
 
 ## Binding execution order (S1–S10 plan; proposal components M1–M6)
 
@@ -348,13 +379,15 @@ baseline and the publication report.
 The full staged route and required atomic commits
 are in `results/reports/publication_readiness_plan_2026_07_21.md`.
 
-The host M1 protocol-logic slice is functionally validated
-(`test_distributed_dpf_keygen`), but remaining work includes independent
-OS-CSPRNG GPU roots, a full-128-bit AES seed state with separately generated
-tags, real silent OT/OLE transport, GPU batching, compatible GPU byte format,
-and measured network bytes/rounds. Design components remain D1–D5 in the v2.3
-proposal (D1=keygen, D2=conversion, D3=coin-tossed seeds, D4=two-process,
-D5=parameter audit); their numbering is not execution order.
+The ideal M1 protocol-logic slice, real two-process SCI/IKNP transport,
+OpenSSL-private-DRBG roots, GPU-consumable full-width AES keys, and measured
+bytes/direction switches are functionally validated. Remaining M1 work is a
+silent-OT backend, GPU-side batched keygen, independently generated GPU roots
+for any centralized security path, and actual network-round measurement.
+D-DIST/P-RNG/P-KEY and single-key privacy reductions remain open. Design
+components are D1–D5 in the v2.4 proposal (D1=keygen, D2=conversion,
+D3=coin-tossed seeds, D4=two-process, D5=parameter audit); their numbering is
+not execution order.
 
 ## Perf anchors (RTX 5000 Ada, this repo's gate configs)
 

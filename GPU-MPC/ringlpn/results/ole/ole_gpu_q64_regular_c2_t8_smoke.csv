@@ -1,2 +1,2 @@
 device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
-cuda_ringlpn_ole,figure2_spfss_regular,8192,13,11,64,62,regular,2048,2,8,8192,1,pass,pass,116544,5154,7188,0,1
+cuda_ringlpn_ole,figure2_spfss_regular,8192,13,11,64,62,regular,2048,2,8,8192,1,pass,pass,116544,7169,8683,0,1

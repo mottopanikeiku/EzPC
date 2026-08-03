@@ -220,17 +220,17 @@ under `src/` rather than code embedded in a benchmark.
 
 **Work:**
 
-1. Implement AES expansion over a full 128-bit secret seed and generate
-   control tags separately, matching the formal BGI seed/tag separation
-   (Boyle--Gilboa--Ishai, CCS 2016, DOI
-   `10.1145/2976749.2978429`). The current evaluator uses a Doerner--shelat-style
-   low-bit control encoding; the GPU code masks each seed LSB and leaves a
-   127-bit seed state. The centralized GPU keygen also derives
-   all roots from one 64-bit `seed_base`. Replace the latter with independent
-   OS-CSPRNG roots and update the internal PRG semantics while preserving the
-   public API/callsite. Validate every affected centralized/distributed
-   generator and evaluator together. Keep splitmix64 only in the labelled host
-   correctness reference.
+1. **Partially closed 2026-08-03:** the deployed Ring-LPN expansion now uses
+   four domain-separated AES calls: full 128-bit child seeds from plaintexts
+   0/2 and separate control tags from 1/3, matching the formal BGI seed/tag
+   separation (Boyle--Gilboa--Ishai, CCS 2016, DOI
+   `10.1145/2976749.2978429`). Device/host parity, centralized correctness,
+   two-process generation, and GPU evaluation are gated. Two-party roots use
+   OpenSSL's private DRBG. Still open: the centralized benchmark keygen derives
+   roots from one 64-bit `seed_base`; replace that benchmark-only root path
+   before treating it as a security realization. The DPF distribution and
+   single-key privacy reductions also remain S3/S8 obligations. splitmix64 is
+   confined to the labelled host correctness reference.
 2. Emit `GPUDPFZpKey`-compatible party keys: seeds, seed correction words,
    separate control correction bits, and final correction words. Define a
    versioned byte serialization with explicit endianness and bounds.

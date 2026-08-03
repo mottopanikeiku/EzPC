@@ -298,6 +298,17 @@ struct NoiseRecord {
 };
 
 inline bool write_noise(const std::string &path, const NoiseRecord &r) {
+    if ((r.party != 0 && r.party != 1) || r.c <= 0 || r.t <= 0 ||
+        r.log_domain < 2 || r.log_domain > 20 || r.modulus <= 1 ||
+        (r.regular ? r.bucket <= 0 : r.bucket != 0)) {
+        return false;
+    }
+    const size_t total = size_t(r.c) * size_t(r.t);
+    constexpr size_t kMaxNoiseTerms = size_t(1) << 20;
+    if (total > kMaxNoiseTerms || r.positions.size() != total ||
+        r.values.size() != total) {
+        return false;
+    }
     std::FILE *f = std::fopen(path.c_str(), "wb");
     if (!f) return false;
     bool ok = std::fwrite("RLPNNOIS", 1, 8, f) == 8;
@@ -309,8 +320,6 @@ inline bool write_noise(const std::string &path, const NoiseRecord &r) {
     ok = ok && detail::put<uint64_t>(f, r.modulus);
     ok = ok && detail::put<uint8_t>(f, (uint8_t)(r.regular ? 1 : 0));
     ok = ok && detail::put<int32_t>(f, (int32_t)r.bucket);
-    const size_t total = (size_t)r.c * (size_t)r.t;
-    if (r.positions.size() != total || r.values.size() != total) ok = false;
     for (size_t i = 0; ok && i < total; ++i) {
         ok = detail::put<uint64_t>(f, r.positions[i]) &&
              detail::put<uint64_t>(f, r.values[i]);
@@ -331,17 +340,31 @@ inline bool read_noise(const std::string &path, NoiseRecord &r) {
     ok = ok && detail::get<uint8_t>(f, party_byte) && party_byte <= 1;
     ok = ok && detail::get<int32_t>(f, c) && c > 0;
     ok = ok && detail::get<int32_t>(f, t) && t > 0;
-    ok = ok && detail::get<int32_t>(f, levels) && levels > 0;
+    ok = ok && detail::get<int32_t>(f, levels) && levels >= 2 && levels <= 20;
     ok = ok && detail::get<uint64_t>(f, r.modulus) && r.modulus > 1;
-    ok = ok && detail::get<uint8_t>(f, regular);
+    ok = ok && detail::get<uint8_t>(f, regular) && regular <= 1;
     ok = ok && detail::get<int32_t>(f, bucket);
+    if (!ok) {
+        std::fclose(f);
+        return false;
+    }
     r.party = (int)party_byte;
     r.c = (int)c;
     r.t = (int)t;
     r.log_domain = (int)levels;
     r.regular = regular != 0;
     r.bucket = (int)bucket;
+    ok = ok && (r.regular ? r.bucket > 0 : r.bucket == 0);
+    if (!ok) {
+        std::fclose(f);
+        return false;
+    }
     const size_t total = (size_t)r.c * (size_t)r.t;
+    constexpr size_t kMaxNoiseTerms = size_t(1) << 20;
+    if (total > kMaxNoiseTerms) {
+        std::fclose(f);
+        return false;
+    }
     r.positions.assign(total, 0);
     r.values.assign(total, 0);
     for (size_t i = 0; ok && i < total; ++i) {

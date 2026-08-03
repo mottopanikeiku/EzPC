@@ -12,30 +12,38 @@
 //   * Boolean AND triples: two 1-bit OTs per triple (Gilboa cross terms).
 //   * Z_p scalar OLE: Gilboa multiplication, ceil(log2(p-1)) OTs of field
 //     elements per OLE.
-//   * Party root seeds: OS CSPRNG (std::random_device), never a shared seed.
+//   * Party protocol randomness/root seeds: OpenSSL's private CSPRNG, never a
+//     shared seed. Fixed-seed mode exists only for reproducible public test inputs.
 //   * Every wire byte and every direction switch is counted by sci::NetIO
 //     (`counter`, `num_rounds`), per party and per socket.
 //
 // WHAT IS NOT CLAIMED
 //   * IKNP is OT *extension*, not silent OT. Ferret/Silver-class silent OT is
 //     future work; the measured byte counts here are therefore an upper bound
-//     for the setup material, not a silent-OT figure.
-//   * The DPF expansion PRG remains spfss_host's non-cryptographic splitmix64,
-//     because the independent consumer (`spfss_host::dpfEvalAll`) is unchanged.
-//     This artifact makes NO 128-bit DPF-security claim; see
-//     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md
-//     obligations D-SEED, P-RNG, P-KEY.
-//   * Semi-honest, authenticated point-to-point channels. Malicious security,
-//     active attacks, and side channels are out of scope.
+//     for setup material, not a silent-OT figure.
+//   * DPF expansion is outside this transport wrapper. The host-reference mode
+//     uses non-cryptographic splitmix64; the GPU-consumable mode uses four
+//     domain-separated AES calls with full 128-bit seeds. Device parity is
+//     gated, but P-RNG/P-DIST/P-KEY and the DPF reduction remain open; see
+//     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md.
+//   * The protocol model assumes one semi-honest corruption and authenticated
+//     point-to-point channels. SCI NetIO here is plain TCP: it does not
+//     authenticate or encrypt peers, so loopback experiments do not realize
+//     that channel assumption. Active attacks, external observers, denial of
+//     service, and side channels are out of scope.
 
 #pragma once
 
 #include "OT/split-iknp.h"
+#include <openssl/rand.h>
+
 #include "utils/net_io_channel.h"
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -81,10 +89,10 @@ inline U128 from_block(sci::block128 b) {
 
 // ----- transcript accounting -------------------------------------------------
 //
-// `logical_bits` counts the bits of each COMMON value the two parties
-// reconstruct. `revealed_bits_sent` / `revealed_bits_recv` split the raw share
-// payload by direction; their sum is the contract's `revealed_share_bits`,
-// which the single-process prototype could only report as one number.
+// `logical_bits` counts the meaningful bits of each common value reconstructed.
+// `revealed_bits_sent` / `revealed_bits_recv` count the meaningful bit width of
+// each share, not its byte-aligned encoding or measured wire traffic. Their sum
+// is exposed as `meaningful_share_bits()`.
 
 struct PhaseCosts {
     uint64_t logical_bits = 0;
@@ -93,7 +101,7 @@ struct PhaseCosts {
 };
 
 struct Counters {
-    uint64_t string_ots_128 = 0;  // 1-of-2 OT on 128-bit strings (Phase B MUX)
+    uint64_t string_ots_128 = 0;  // 1-of-2 OT on 128-bit strings
     uint64_t triple_ots = 0;      // 1-bit OTs consumed by AND triples
     uint64_t ole_ots = 0;         // field-element OTs consumed by Gilboa OLE
     uint64_t bit_triples = 0;     // AND triples produced
@@ -104,7 +112,7 @@ struct Counters {
     uint64_t logical_opened_bits() const {
         return phase_a.logical_bits + phase_b.logical_bits + phase_c.logical_bits;
     }
-    uint64_t revealed_share_bits() const {
+    uint64_t meaningful_share_bits() const {
         return phase_a.revealed_bits_sent + phase_a.revealed_bits_recv +
                phase_b.revealed_bits_sent + phase_b.revealed_bits_recv +
                phase_c.revealed_bits_sent + phase_c.revealed_bits_recv;
@@ -142,7 +150,7 @@ class PartyChannel {
         io_rev_->flush();
         costs.base_ots += 2 * 128;  // one base-OT batch per direction
         setup_bytes_sent_ = io_->counter + io_rev_->counter;
-        setup_rounds_ = io_->num_rounds + io_rev_->num_rounds;
+        setup_direction_switches_ = io_->num_rounds + io_rev_->num_rounds;
     }
 
     ~PartyChannel() {
@@ -172,7 +180,9 @@ class PartyChannel {
         return io_->num_rounds + io_rev_->num_rounds;
     }
     uint64_t setup_bytes_sent() const { return setup_bytes_sent_; }
-    uint64_t setup_rounds() const { return setup_rounds_; }
+    uint64_t setup_direction_switches() const {
+        return setup_direction_switches_;
+    }
 
     void sync() {
         io_->sync();
@@ -325,27 +335,69 @@ class PartyChannel {
     sci::SplitIKNP<sci::NetIO> *ot_straight_ = nullptr;
     sci::SplitIKNP<sci::NetIO> *ot_reversed_ = nullptr;
     uint64_t setup_bytes_sent_ = 0;
-    uint64_t setup_rounds_ = 0;
+    uint64_t setup_direction_switches_ = 0;
 };
 
-// ----- party-private randomness (OS CSPRNG, never shared) -------------------
+// ----- party-private randomness ---------------------------------------------
+//
+// The default stream is OpenSSL's private DRBG, seeded from the operating
+// system. `std::mt19937_64` is deliberately confined to explicit fixed-seed
+// mode for reproducible public test inputs; it is never protocol randomness.
 
 class PartyRandom {
   public:
-    PartyRandom() {
-        std::random_device rd;
-        std::seed_seq seq{rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd()};
-        gen_.seed(seq);
-    }
-    explicit PartyRandom(uint64_t fixed_seed) : gen_(fixed_seed) {}
+    PartyRandom() = default;
+    explicit PartyRandom(uint64_t fixed_seed)
+        : deterministic_(true), deterministic_gen_(fixed_seed) {}
 
-    uint64_t u64() { return gen_(); }
-    uint8_t bit() { return (uint8_t)(gen_() & 1); }
-    U128 u128() { return ((U128)gen_() << 64) | (U128)gen_(); }
-    Word field(Word p) { return (Word)(((U128)gen_() << 64 | (U128)gen_()) % p); }
+    uint64_t u64() {
+        if (deterministic_) return deterministic_gen_();
+        if (buffer_pos_ == buffer_.size()) refill();
+        return buffer_[buffer_pos_++];
+    }
+
+    uint8_t bit() {
+        if (bits_left_ == 0) {
+            bit_pool_ = u64();
+            bits_left_ = 64;
+        }
+        const uint8_t out = static_cast<uint8_t>(bit_pool_ & 1);
+        bit_pool_ >>= 1;
+        --bits_left_;
+        return out;
+    }
+
+    U128 u128() {
+        const uint64_t hi = u64();
+        const uint64_t lo = u64();
+        return (static_cast<U128>(hi) << 64) | static_cast<U128>(lo);
+    }
+
+    Word field(Word p) {
+        if (p == 0) throw std::invalid_argument("PartyRandom::field modulus is zero");
+        const U128 threshold = (U128(0) - U128(p)) % U128(p);
+        U128 x = 0;
+        do {
+            x = u128();
+        } while (x < threshold);
+        return static_cast<Word>(x % U128(p));
+    }
 
   private:
-    std::mt19937_64 gen_;
+    void refill() {
+        if (RAND_priv_bytes(reinterpret_cast<unsigned char *>(buffer_.data()),
+                            sizeof(buffer_)) != 1) {
+            throw std::runtime_error("OpenSSL RAND_priv_bytes failed");
+        }
+        buffer_pos_ = 0;
+    }
+
+    bool deterministic_ = false;
+    std::mt19937_64 deterministic_gen_{};
+    std::array<uint64_t, 512> buffer_{};
+    size_t buffer_pos_ = buffer_.size();
+    uint64_t bit_pool_ = 0;
+    int bits_left_ = 0;
 };
 
 // ----- boolean AND triples from two 1-bit OTs -------------------------------
@@ -390,8 +442,8 @@ inline void generate_bit_triples(PartyChannel &ch, int n, PartyRandom &rng,
 
 // Batched Gilboa OLE. For B sender inputs x_b and B receiver inputs y_b the
 // pair ends with additive shares u_b + v_b = x_b * y_b mod p. Cost:
-// B * ceil(log2(p-1)) OTs of field elements in ONE OT batch, so the number of
-// communication stages does not grow with B.
+// B * ceil(log2(p-1)) OTs of field elements in ONE OT batch, so the measured
+// direction-switch count does not grow with B.
 
 inline std::vector<Word> ole_batch_send(PartyChannel &ch,
                                         const std::vector<Word> &x, Word p,

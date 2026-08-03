@@ -139,16 +139,19 @@ separately prove single-key privacy.
 **Seed-format obligation D-SEED.** The target follows the formal seed/tag
 separation of Boyle--Gilboa--Ishai, *Function Secret Sharing: Improvements and
 Extensions*, CCS 2016, DOI `10.1145/2976749.2978429`: a full
-`lambda`-bit secret seed plus separate child control bits. The current GPU PRG
-instead uses a Doerner--shelat-style low-bit control encoding (*Scaling ORAM
-for Secure Computation*, CCS 2017): `gpu_spfss_zp.cuh` masks each AES-output
-LSB from the child seed, leaving `lambda=127` secret seed bits.
-More severely, the centralized GPU keygen deterministically expands every root
-from one 64-bit `seed_base`, so its root entropy is at most 64 bits. S3 must
-replace that benchmark root generation with independent OS-CSPRNG roots and
-either widen the PRG output/state to 128 secret seed bits plus separate tags or
-lower the concrete-security target. No 128-bit DPF-security claim is permitted
-while either mismatch remains.
+`lambda`-bit secret seed plus separate child control bits. The deployed
+Ring-LPN GPU expansion now makes four domain-separated AES calls per node:
+plaintexts 0 and 2 produce full 128-bit child seeds, while plaintexts 1 and 3
+produce the two control bits. The host twin matches 16 freshly device-dumped
+vectors with zero seed/tag mismatches; 88 two-process keys pass batched and
+per-tree GPU evaluation across both CRT primes. Party roots come from
+OpenSSL's private DRBG.
+
+The centralized benchmark-only GPU keygen still derives roots from one 64-bit
+`seed_base`; it is not a security realization and must not be used as one.
+The two-party transport closes the 127-bit encoding defect for its key path,
+but D-DIST, P-RNG state/composition review, P-KEY, and the concrete reduction
+still block a 128-bit DPF-security claim.
 
 **Position-distribution obligation D-POS.** `D-DIST` is conditional on the
 actual `(alpha,beta)`: it concerns the DPF key distribution, not whether
@@ -297,8 +300,9 @@ At bit `j`:
 At completion, `a_{j,0} xor a_{j,1}=bit_j(alpha)` for all `j`.
 
 **Accounting:** `L-1` bit triples and `2(L-1)` logical opened bits per tree.
-Each logical `delta` or `epsilon` opening sends one share from each party, so
-the raw revealed-share payload is `4(L-1)` bits. The carry dependency is
+Each logical `delta` or `epsilon` opening sends one meaningful bit from each
+party, so the meaningful share-width count is `4(L-1)` bits. This excludes
+byte padding, framing, setup, and OT traffic. The carry dependency is
 sequential; batching trees does not remove it.
 
 ### 4.2 Root keys
@@ -346,8 +350,8 @@ common correction words.
 **Accounting per level:** two 128-bit string OTs; one logical 128-bit `sCW`
 opening; and two logical one-bit flag openings. This is `130L` logical opened
 bits across the tree. The two parties reveal a share of every value, giving
-`260L` raw revealed-share bits. These are dependency stages, not a claim of
-network rounds; S4 must measure the real transport.
+`260L` meaningful share bits. These are neither byte-aligned wire bits nor a
+claim of network rounds; S4 must measure the real transport.
 
 ### 4.4 Phase C — multiplicative payload correction
 
@@ -377,10 +381,11 @@ Only `w_0,w_1` are revealed in Phase C. `d_0,d_1,s_0,s_1` and the sign
 standard output keys.
 
 **Accounting:** three scalar OLEs and one logical opened field element,
-`ell_p` bits. The two parties each reveal one field share, so raw
-revealed-share payload is `2 ell_p` bits. For the current 62-bit primes these
-are respectively 62 and 124 bits. The implementation's fixed-width encoding
-must use `ceil(log2 p)` after any parameter re-pin.
+`ell_p` bits. The two parties each reveal one field share, so the meaningful
+share-width count is `2 ell_p` bits. For the current 62-bit primes these are
+respectively 62 and 124 bits. This is not encoded wire traffic. The
+implementation's fixed-width encoding must use `ceil(log2 p)` after any
+parameter re-pin.
 
 ### 4.5 Complete per-tree accounting
 
@@ -389,15 +394,16 @@ string OTs                 = 2L
 bit triples                = L-1
 scalar OLEs                = 3
 logical opened bits        = 2(L-1) + 130L + ceil(log2 p)
-raw revealed-share bits    = 4(L-1) + 260L + 2 ceil(log2 p).
+meaningful share bits       = 4(L-1) + 260L + 2 ceil(log2 p).
 ```
 
 At the current `L=14`, 62-bit primes, these are 1,908 logical opened bits and
-3,816 raw revealed-share bits. The previously published 3,790 mixed Phase A's
-logical opening count with Phases B/C's transmitted shares and is therefore
+3,816 meaningful share bits. The previously published 3,790 mixed Phase A's
+logical opening count with Phases B/C's share-width count and is therefore
 not a coherent metric. Neither corrected counter is real network traffic:
-OT/OLE setup and payloads, framing, commitments, and retransmission remain
-absent from the host prototype. S4 replaces estimates with measured bytes.
+OT/OLE setup and payloads, byte padding, framing, commitments, and
+retransmission remain absent from the host prototype. S4 replaces estimates
+with measured bytes.
 
 ## 5. D2–D4 integrated FC transcript to be composed
 
@@ -464,20 +470,25 @@ For each accepted matmul invocation `mu`, the target two-process transcript is:
     handles. These local/adjacent operations use no Ring-LPN slot, but their
     handle identities and serialized key fields are part of `P-TOPO`.
 
-The selected D2 prototype realizes step 8 in the
-`(F_EDABIT,F_BT,F_DABIT)` hybrid. For
-`ell=ceil(log2(2Q))`, it opens the `ell`-bit masked value
+The live two-process D2 artifact realizes step 8 over the SCI/IKNP transport.
+For `ell=ceil(log2(2Q))`, one exact daBit uses one 128-bit OT, `ell` daBits
+compose one exact edaBit, and each Boolean triple uses two one-bit OTs. The
+online protocol opens the `ell`-bit masked value
 `A=(z_0+z_1+R) mod 2^ell`, evaluates two ripple adders using
 `2ell-2` fresh bit triples, opens one masked bit for B2A, and applies the local
 `Q*wrap` correction. This exposes `5ell-3` logical opened bits and
-`10ell-6` raw revealed-share bits per conversion; the wrap bit, edaBit, daBit,
-and input shares remain hidden. These are hybrid-protocol counts, not measured
-transport bytes or rounds.
+`10ell-6` meaningful share bits per conversion; the wrap bit, edaBit, daBit,
+and input shares remain hidden from each live party. These closed forms are
+not measured bytes or rounds; the artifact separately records encoded
+setup, correlation, and online traffic.
 
-Current code has four target-breaking boundaries: centralized
-`build_spfss_keys()`, conversion through `exactZmToRingShares()`, the clear
-value-dependent `buildCShare()` bound check, and shared deterministic benchmark
-seeding/direct memory in one process. S5, S6, and S7 replace them.
+The integrated FC artifact still has four target-breaking boundaries:
+centralized `build_spfss_keys()`, conversion through
+`exactZmToRingShares()`, the clear value-dependent `buildCShare()` bound
+check, and shared deterministic benchmark seeding/direct memory in one
+process. The standalone D2 transport now removes the conversion dealer for
+its component contract; integration, S5, S7, and S8 must remove the
+corresponding integrated boundaries.
 
 ### 5.1 Source-to-transcript map for the current prototypes
 
@@ -491,12 +502,12 @@ seeding/direct memory in one process. S5, S6, and S7 replace them.
 | `open_phase_c_final_cw` | `w_0,w_1` reconstruct `finalCW` | sole Phase C opening | mapped |
 | `consumed_correlation_ids` | rejects reuse before an ideal primitive releases output | all D1 hybrid calls | mapped executable control |
 | D1 validation helpers | read both generated keys and clear `(alpha,beta)` | test gate only | validation oracle; excluded from protocol |
-| `make_and_triple()` in `test_secure_convert.cpp` | dealer-generated Boolean triple shares | D2 `F_BT` calls | current ideal/dealer boundary; S6 replaces |
-| `make_edabit()` / `make_dabit()` | dealer-generated correlated arithmetic/Boolean shares | `F_EDABIT` / `F_DABIT` | current ideal/dealer boundaries; S6 replaces |
-| masked `A=(y0+y1) mod 2^ell` reconstruction | two revealed arithmetic shares | D2 step 8 masked opening | mapped one-process opening |
-| `secure_and()` | two shares each of Beaver `d,e` per AND | D2 ripple adders | mapped one-process openings |
-| B2A `e=wrap.clear() xor da.b.clear()` | two revealed shares of one masked bit | D2 B2A opening | mapped one-process opening |
-| `ConvOut.wrap` | returns clear wrap bit | D2 validation only | test oracle; excluded from protocol |
+| `generate_bit_triples()` in `test_secure_convert.cpp` | two OT-produced Boolean-triple share records per AND | D2 `F_BT` calls | live SCI/IKNP transport |
+| `gen_dabits()` / `gen_edabits()` | OT-produced correlated arithmetic/Boolean shares; exact coefficient-one edaBit composition | `F_DABIT` / `F_EDABIT` | live SCI/IKNP transport |
+| masked `A=(y0+y1) mod 2^ell` reconstruction | two transmitted arithmetic shares | D2 step 8 masked opening | mapped two-process opening |
+| `secure_and()` | two transmitted shares each of Beaver `d,e` per AND | D2 ripple adders | mapped two-process openings |
+| B2A masked-bit opening | two transmitted shares reconstruct one masked bit | D2 B2A opening | mapped two-process opening |
+| offline checker | reads both post-protocol party records, recomputes expected outputs, and applies corruption control | D2 validation only | test oracle; excluded from protocol |
 | `build_spfss_keys()` | reads both parties' Ring-LPN noise vectors | D1 inside `F_RINGOLE` realization | **centralized oracle; forbidden target behavior** |
 | `build_slot_ole` container | stores both parties' ring-OLE shares | step 4 | one-process container; target state is party-local |
 | slot/cross-identity checks | read both parties' slot or product shares | steps 5–7 | validation oracles; excluded from protocol |
@@ -689,19 +700,19 @@ composition, and implementation audit.
 | ID | Obligation | Current evidence | Status |
 |---|---|---|---|
 | `P-CORR` | Keys reconstruct `beta [x=alpha]` | 2,432/2,432 full-domain passes; both primes; two deterministic point/payload edges; 6/6 invalid-input rejections; root seed, `sCW`, `tLCW`, `tRCW`, and `finalCW` corruption controls (5/5) | executable evidence |
-| `P-DIST` | Joint output matches standard DPF distribution conditioned on party roots | No level-by-level coupling proof | open for S3/S8; blocks a security claim, not the S1 contract |
+| `P-DIST` | Joint output matches standard DPF distribution conditioned on party roots | Full-width four-call AES semantics and GPU correctness are gated, but no level-by-level distribution coupling proof exists | open for S3/S8; blocks a security claim |
 | `P-POS` | DPF points implement the exponent distribution induced by the exact uniform/regular Ring-LPN noise sampler | Non-wrapping position/offset sums specified; S2 reduction audit absent | contract fixed; open for S2 |
-| `P-KEY` | One standard key hides point/payload | Relies on the cited construction and exact PRG semantics | open for S3/S8 |
+| `P-KEY` | One standard key hides point/payload | Full 128-bit seed/tag separation is implemented; single-key privacy still depends on D-DIST and a concrete reduction | open for S3/S8 |
 | `P-ADD` | Ripple-adder view is simulatable for either party | Party-specific triple shares, sent/opened values, Beaver equations, and carry induction in §7.2–7.3 | closed in ideal-bit-triple hybrid |
 | `P-LEVEL` | OT/CW view is simulatable conditioned on each full key/local state | Both sender/receiver roles and seed/flag share complements in §7.2–7.3 | closed in ideal-OT hybrid |
 | `P-PAYLOAD` | Three-OLE Phase C realizes payload correction without sign leakage | Joint three-mask simulation for both parties; zero intermediates covered; old-sign regression | closed in ideal-OLE hybrid |
 | `P-BATCH` | D1 simulation preserves correlated/repeated tree inputs and public order | Joint state-conditioned sequential hybrid with unique IDs in §7.1–7.3 | closed in D1 hybrid; production batching open |
 | `P-FRESH` | No primitive correlation or private random-tape draw is reused | Ideal-functionality mask-draw accounting plus ideal-call duplicate-ID rejection; party private-tape draws are not counted | ideal-functionality control; private-tape/end-to-end freshness open for S3/S8 |
-| `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | S1 exposes party roots explicitly and replaces only honest hidden streams | open for S3/S8 |
+| `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | Two-process roots and masks use OpenSSL's private DRBG; GPU expansion uses four domain-separated AES calls with device/host parity | implementation evidence; state/composition audit open for S3/S8 |
 | `P-PCG` | Ring-LPN output is pseudorandom OLE at exact parameters/distribution | Figure-2 correctness; no S2 security audit | open/blocking |
-| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Party-separated correctness prototype; deterministic sums `0,Q-1,Q,2Q-2`; executable `5ell-3` logical / `10ell-6` raw-share / `2ell-1` post-mask dependency-round accounting; offline correlations still dealer-generated | open for S6/S8 |
+| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Two-process SCI/IKNP correctness artifact; deterministic and random sums; executable `5ell-3` logical / `10ell-6` meaningful-share / `2ell-1` post-mask dependency-round accounting; byte-accurate setup/correlation/online counters; corruption control | transport and correctness evidence; composition and cryptographic review open for S8 |
 | `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Source topology and serialization fixed in §3.2/§5; standalone artifact covers only one forward-shaped matmul | contract fixed; complete one-layer implementation required in S7 before S8; S9 scale only |
-| `P-PROC` | Two-process implementation matches the transcript | Not implemented | open/blocking |
+| `P-PROC` | Two-process implementation matches the transcript | DPF keygen and D2 conversion run as independent OS processes over TCP; Ring-LPN OLE and full FC composition remain one-process | component evidence only; full composition open/blocking |
 | `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps protocol messages, target oracles, and validation-only reads | closed for current artifacts |
 
 ## 9. S1 mechanical gate and review boundary
@@ -715,11 +726,11 @@ required user/advisor review below pass:
 2. every current D1 and D2–D4 cross-party value/read maps to this document or
    is named as a target or validation oracle;
 3. the D1 gate separately enforces logical openings
-   `2(L-1)`, `130L`, `ceil(log2 p)`, raw share payload
+   `2(L-1)`, `130L`, `ceil(log2 p)`, meaningful share widths
    `4(L-1)`, `260L`, `2 ceil(log2 p)`, ideal-mask-draw accounting, and
    ideal-call duplicate-ID rejection before output;
 4. the D2 gate separately enforces wrap/no-wrap boundaries, `2ell-2` triples,
-   `5ell-3` logical opened bits, `10ell-6` raw revealed-share bits,
+   `5ell-3` logical opened bits, `10ell-6` meaningful share bits,
    `2ell-1` post-mask dependency rounds, and exact modulo-`Q` conversion;
 5. the paper contains the ideal functionalities, stateful Orca mask topology,
    exact DPF transcript, complete joint D1 hybrid simulators, and open-obligation

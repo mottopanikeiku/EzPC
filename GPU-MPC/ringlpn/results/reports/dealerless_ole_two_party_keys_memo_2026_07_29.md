@@ -1,17 +1,18 @@
 # The real Ring-LPN OLE engine running on two-party dealerless keys (2026-07-29)
 
-**One sentence:** the Figure 2 Ring-LPN OLE engine's remaining centralized-keygen
-oracle (`build_spfss_keys()`) is now replaceable by **two OS processes talking
-real oblivious transfer**, and the engine's own validation passes on those keys
-in all four deployed configurations (q64/q128 x uniform/regular), with the
-expansion path, the evaluator and the validation code **unmodified**.
+**One sentence:** the Figure 2 Ring-LPN OLE engine's centralized-keygen oracle
+(`build_spfss_keys()`) is replaceable by **two OS processes talking real
+oblivious transfer**, and the engine's own validation passes on those keys in
+all four deployed configurations (q64/q128 × uniform/regular).
 
 This is milestone **M2's core gate**: "the existing suite passes with
 `build_spfss_keys()` replaced by the two-party protocol." It is *not* a security
-result: transports are real OT but not silent OT, the noise itself is still
-sampled by the benchmark (labelled), the expansion PRG keeps the GPU's low-bit
-control encoding (127-bit secret seed state), and the expansion measurement still
-runs in one process.
+result: OT is IKNP rather than silent OT, noise is still sampled by the
+benchmark (labelled), expansion measurement still runs in one process, and
+the DPF distribution/single-key privacy reductions remain open. The deployed
+expansion was corrected on 2026-08-03 to four domain-separated AES calls with
+full 128-bit child seeds and separate control-bit outputs; host/device parity
+and GPU evaluation are gated separately.
 
 ## 1. Why the structure fits exactly
 
@@ -62,7 +63,7 @@ behaves exactly as before.
 Keygen transcript per limb (`results/ole/ole_two_party_keygen_*.csv`), 256 trees
 per limb at `(c,t)=(2,8)`:
 
-| config | limbs | trees/limb | `L` | groups | stages/batch | P0 bytes | P1 bytes | keygen |
+| config | limbs | trees/limb | `L` | groups | direction switches/batch | P0 bytes | P1 bytes | keygen |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | q64 uniform | 1 | 256 | 14 | 1 | 89 | 1,033,792 | 1,057,600 | 0.90 s |
 | q64 regular | 1 | 256 | 11 | 15 | 71 | 969,856 | 993,664 | 0.13 s |
@@ -79,8 +80,9 @@ Engine result on those keys (`results/ole/ole_two_party_keys_*.csv`):
 | q128 regular | 2,048 | pass | pass | 1 | 233,088 |
 
 Per-tree correlation and opening counts are unchanged from the frozen contract
-(`1,908` logical / `3,816` revealed bits at `L=14`; `1,512` / `3,024` at `L=11`),
-and `transcript_accounting=pass` on every row.
+(`1,908` logical / `3,816` meaningful share bits at `L=14`; `1,512` / `3,024`
+at `L=11`), and `transcript_accounting=pass` on every row. Direction switches
+are an implementation counter, not measured network rounds.
 
 Two readings worth keeping:
 

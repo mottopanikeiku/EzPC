@@ -26,17 +26,18 @@ depth $L$:
    triangular exponent distribution of the unreduced polynomial product:
    uniform-noise positions lie in $[0,n)$ and regular-noise offsets lie in one
    public bucket pair. Cost: $L-1$ Beaver bit triples, $2(L-1)$ logical opened
-   bits, and $4(L-1)$ revealed-share bits. This is the concrete integration
+   bits, and $4(L-1)$ meaningful share bits. This is the concrete integration
    choice for arithmetic position shares, not a claim of ripple-adder novelty.
 2. **Phase B — level-synchronous tree walk.** Each party expands every current
    node and XORs its left/right seed and control-bit aggregates. Off-path
    nodes cancel across parties. A secret-bit MUX produces the seed correction
    word using two 128-bit string OTs per level; the parties open only the
    standard seed and control-bit correction words. Cost: $2L$ string OTs,
-   $130L$ logical opened bits, and $260L$ revealed-share bits. Control/tag bits
-   remain separate from seed material,
-   following the formal BGI seed/tag separation. The S1 target does not derive
-   tags from seed LSBs: it carries 128 secret seed bits and separate tags.
+   $130L$ logical opened bits, and $260L$ meaningful share bits. Control/tag
+   bits remain separate from seed material, following the formal BGI seed/tag
+   separation. The deployed GPU path reached full 128-bit seeds with separate
+   domain-separated tag outputs on 2026-08-03; this ideal host artifact still
+   uses its labelled splitmix correctness reference.
 3. **Phase C — payload correction word.** Let the signed leaf aggregates be
    $A_0,A_1,F_0,F_1$. The first of three scalar OLEs produces additive shares
    $\gamma_0+\gamma_1=\beta_0\beta_1=\beta$. Define
@@ -47,8 +48,8 @@ depth $L$:
    $w_0+w_1=(d_0+d_1)(s_0+s_1)$ and open only
    `finalCW = w0 + w1`, which is already present in each standard output key.
    They do not open $d_b$, $s_b$, or the sign.
-   This is one logical opened field element and two revealed field shares:
-   respectively $\lceil\log_2p\rceil$ and
+   This is one logical opened field element and two meaningful field-share
+   widths: respectively $\lceil\log_2p\rceil$ and
    $2\lceil\log_2p\rceil$ bits.
 
 The predecessor transcript opened both $F_b$ values. Marginal independence
@@ -88,7 +89,7 @@ it is a regression model, not a security proof.
 ./scripts/run_distributed_dpf_keygen.sh` completed without prototype compiler
 warnings and produced:
 
-| prime | depth | trees | pass | string OTs | bit triples | scalar OLEs | logical open bits | revealed-share bits |
+| prime | depth | trees | pass | string OTs | bit triples | scalar OLEs | logical open bits | meaningful share bits |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | p0 | 4  | 512 | 512/512 | 8  | 3  | 3 | 588   | 1,176 |
 | p0 | 8  | 512 | 512/512 | 16 | 7  | 3 | 1,116 | 2,232 |
@@ -118,13 +119,14 @@ Closed forms per tree:
 - scalar OLEs: $3$;
 - logical opened bits:
   $2(L-1)+130L+\lceil\log_2 p\rceil$;
-- raw revealed-share bits:
+- meaningful share bits:
   $4(L-1)+260L+2\lceil\log_2 p\rceil$.
 
 At depth 14 and either 62-bit prime these are 1,908 logical opened bits and
-3,816 revealed-share bits. The earlier 3,790 figure mixed Phase A's logical
-openings with Phases B/C's revealed shares and is superseded. Neither corrected
-counter includes OT/OLE payloads or framing; S4 must measure real transport.
+3,816 meaningful share bits. The earlier 3,790 figure mixed Phase A's logical
+openings with Phases B/C's share widths and is superseded. Neither corrected
+counter includes byte padding, OT/OLE payloads, or framing; the real transport
+artifact separately measures bytes and direction switches.
 The bootstrap condition is $3c^2t^2<n$; for $(c,t,n)=(2,8,8192)$, 768
 scalar-OLE slots are consumed and the output/input surplus is
 $8192/768=10.67\times$.

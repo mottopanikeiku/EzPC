@@ -11,17 +11,19 @@
 //     SCI code) instead of an ideal OT interface;
 //   * real Gilboa Z_p OLE and real OT-based boolean AND triples instead of
 //     ideal correlation oracles;
-//   * party root seeds from the OS CSPRNG instead of a benchmark seed;
+//   * party root seeds from OpenSSL's private CSPRNG instead of a benchmark seed;
 //   * measured wire bytes and direction switches per party, which the
 //     single-process prototype could not report;
-//   * all trees in a batch advance together, so the number of communication
-//     stages depends on the tree DEPTH only, not on the batch size. Per-tree
-//     correlation and opening counts are unchanged by batching.
+//   * all trees in a batch advance together, so the measured direction-switch
+//     count depends on tree depth, not batch size. Per-tree correlation and
+//     opening counts are unchanged by batching. A direction switch is not a
+//     network-round measurement.
 //
-// UNCHANGED and still NOT claimed: the DPF expansion PRG is spfss_host's
-// non-cryptographic splitmix64 (the independent consumer dpfEvalAll is
-// unmodified), so no 128-bit DPF-security claim is made here. Obligations
-// D-SEED / P-RNG / P-KEY in the contract remain open.
+// The expansion PRG is selectable. `splitmix` matches the unchanged host
+// evaluator and carries no security claim. `gpu-aes` is bit-identical to the
+// deployed four-call GPU AES expansion: child seeds retain all 128 bits and
+// control bits come from separate domain-separated calls. Device/host parity
+// is gated; P-RNG / P-DIST / P-KEY and the reduction remain open.
 //
 // Each party writes only its OWN key file. Correctness is checked afterwards by
 // the separate, explicitly TEST-ONLY checker test_two_party_dpf_validate, which
@@ -145,20 +147,17 @@ Args parse_args(int argc, char **argv) {
             std::exit(2);
         }
     }
-    if (a.party != 0 && a.party != 1) {
-        std::fprintf(stderr, "--party must be 0 or 1\n");
-        std::exit(2);
-    }
-    if (a.log_domain < 2 || a.log_domain > 20) {
-        std::fprintf(stderr, "--log-domain out of range\n");
-        std::exit(2);
-    }
-    if (a.trees < 1) {
-        std::fprintf(stderr, "--trees must be >= 1\n");
-        std::exit(2);
-    }
-    if (a.prg != "splitmix" && a.prg != "gpu-aes") {
-        std::fprintf(stderr, "--prg must be splitmix or gpu-aes\n");
+    constexpr int kMaxTrees = 1 << 16;
+    constexpr int kMaxSelftest = 1024;
+    if ((a.party != 0 && a.party != 1) || a.host.empty() ||
+        a.port < 1 || a.port > 65535 ||
+        a.log_domain < 2 || a.log_domain > 20 ||
+        a.trees < 1 || a.trees > kMaxTrees ||
+        (a.modulus_idx != 0 && a.modulus_idx != 1) ||
+        a.selftest < 0 || a.selftest > kMaxSelftest ||
+        a.out_prefix.empty() ||
+        (a.prg != "splitmix" && a.prg != "gpu-aes")) {
+        std::fprintf(stderr, "invalid arguments\n");
         std::exit(2);
     }
     return a;
@@ -175,7 +174,7 @@ int main(int argc, char **argv) {
     const size_t B = (size_t)args.trees;
 
     PartyChannel ch(args.party, args.host, args.port);
-    PartyRandom rng;  // OS CSPRNG: protocol randomness and the root seeds
+    PartyRandom rng;  // OpenSSL private CSPRNG: protocol randomness and roots
     // Per-party test inputs come from a documented input seed so the offline
     // checker can recompute alpha and beta. They are protocol INPUTS, not
     // protocol randomness.
@@ -250,7 +249,7 @@ int main(int argc, char **argv) {
         c.phase_a.logical_bits == trees * 2ULL * (uint64_t)(L - 1) &&
         c.phase_b.logical_bits == trees * 130ULL * (uint64_t)L &&
         c.phase_c.logical_bits == trees * (uint64_t)field_bits &&
-        c.revealed_share_bits() ==
+        c.meaningful_share_bits() ==
             trees * (4ULL * (uint64_t)(L - 1) + 260ULL * (uint64_t)L +
                      2ULL * (uint64_t)field_bits);
 
@@ -267,7 +266,7 @@ int main(int argc, char **argv) {
             "triple_ots_per_tree,ole_ots_per_tree,bit_triples_per_tree,"
             "scalar_oles_per_tree,phase_a_logical_bits_per_tree,"
             "phase_b_logical_bits_per_tree,phase_c_logical_bits_per_tree,"
-            "logical_opened_bits_per_tree,revealed_share_bits_per_tree,"
+            "logical_opened_bits_per_tree,meaningful_share_bits_per_tree,"
             "base_ots,setup_bytes_sent,setup_direction_switches,"
             "protocol_bytes_sent_batch,protocol_bytes_sent_per_tree,"
             "protocol_direction_switches_batch,us_batch,us_per_tree,"
@@ -282,10 +281,10 @@ int main(int argc, char **argv) {
         per_tree(c.triple_ots), per_tree(c.ole_ots), per_tree(c.bit_triples),
         per_tree(c.scalar_oles), per_tree(c.phase_a.logical_bits),
         per_tree(c.phase_b.logical_bits), per_tree(c.phase_c.logical_bits),
-        per_tree(c.logical_opened_bits()), per_tree(c.revealed_share_bits()),
+        per_tree(c.logical_opened_bits()), per_tree(c.meaningful_share_bits()),
         (unsigned long long)c.base_ots,
         (unsigned long long)ch.setup_bytes_sent(),
-        (unsigned long long)ch.setup_rounds(),
+        (unsigned long long)ch.setup_direction_switches(),
         (unsigned long long)protocol_bytes, per_tree(protocol_bytes),
         (unsigned long long)protocol_switches, total_us,
         total_us / (double)trees, accounting_ok ? "pass" : "FAIL",
@@ -295,18 +294,18 @@ int main(int argc, char **argv) {
     std::fprintf(stderr,
                  "[two-party-dpf] party %d L=%d batch=%d: %.0f string-OTs, "
                  "%.0f triple-OTs, %.0f OLE-OTs, %.0f logical-open bits, "
-                 "%.0f revealed-share bits per tree; batch %llu bytes sent, "
+                 "%.0f meaningful-share bits per tree; batch %llu bytes sent, "
                  "%llu direction switches, %.0f us (%.0f us/tree); setup %llu "
                  "bytes / %llu switches; accounting %s; keys -> %s\n",
                  args.party, L, args.trees, per_tree(c.string_ots_128),
                  per_tree(c.triple_ots), per_tree(c.ole_ots),
                  per_tree(c.logical_opened_bits()),
-                 per_tree(c.revealed_share_bits()),
+                 per_tree(c.meaningful_share_bits()),
                  (unsigned long long)protocol_bytes,
                  (unsigned long long)protocol_switches, total_us,
                  total_us / (double)trees,
                  (unsigned long long)ch.setup_bytes_sent(),
-                 (unsigned long long)ch.setup_rounds(),
+                 (unsigned long long)ch.setup_direction_switches(),
                  accounting_ok ? "pass" : "FAIL", key_path.c_str());
 
     return all_ok ? 0 : 1;

@@ -132,11 +132,12 @@ int main(int argc, char **argv) {
     const int L = K0s[0].log_domain;
     const Word domain = Word(1) << L;
 
-    // Every seed must carry the GPU's cleared control bit, and public material
-    // must be identical across parties while seeds differ.
-    size_t seed_tag_set = 0, public_mismatch = 0;
+    // Public material must agree while private roots differ. Count root low
+    // bits as a diagnostic: full-width AES seeds no longer reserve that bit.
+    size_t seed_low_bit_ones = 0, public_mismatch = 0;
     for (size_t i = 0; i < n; ++i) {
-        if ((K0s[i].seed & 1) != 0 || (K1s[i].seed & 1) != 0) ++seed_tag_set;
+        seed_low_bit_ones += size_t(K0s[i].seed & 1);
+        seed_low_bit_ones += size_t(K1s[i].seed & 1);
         if (K0s[i].sCW != K1s[i].sCW || K0s[i].tLCW != K1s[i].tLCW ||
             K0s[i].tRCW != K1s[i].tRCW || K0s[i].finalCW != K1s[i].finalCW ||
             K0s[i].seed == K1s[i].seed || K0s[i].t0 != 0 || K1s[i].t0 != 1) {
@@ -199,24 +200,24 @@ int main(int argc, char **argv) {
         }
     }
 
-    const bool all_ok = seed_tag_set == 0 && public_mismatch == 0 &&
-                        batch_mismatch == 0 && tree_fail == 0 &&
-                        tree_pass == n && negative_control_failed;
+    const bool all_ok = public_mismatch == 0 && batch_mismatch == 0 &&
+                        tree_fail == 0 && tree_pass == n &&
+                        negative_control_failed;
     if (csv_header) {
-        std::printf("prefix,keys,log_domain,modulus,seed_tag_set,"
+        std::printf("prefix,keys,log_domain,modulus,root_seed_low_bit_ones,"
                     "public_material_mismatch,batch_sum_mismatch,tree_pass,"
                     "tree_fail,negative_control,gpu_validation\n");
     }
     std::printf("%s,%zu,%d,%llu,%zu,%zu,%zu,%zu,%zu,%s,%s\n", prefix.c_str(), n,
-                L, (unsigned long long)p, seed_tag_set, public_mismatch,
+                L, (unsigned long long)p, seed_low_bit_ones, public_mismatch,
                 batch_mismatch, tree_pass, tree_fail,
                 negative_control_failed ? "failed_as_expected" : "DID_NOT_FAIL",
                 all_ok ? "pass" : "FAIL");
     std::fprintf(stderr,
                  "[two-party-gpu] %zu keys at L=%d: batch mismatch %zu, per-tree "
-                 "%zu/%zu, seed-tag violations %zu, public mismatch %zu, negative "
+                 "%zu/%zu, root low-bit ones %zu, public mismatch %zu, negative "
                  "control %s -> %s\n",
-                 n, L, batch_mismatch, tree_pass, n, seed_tag_set,
+                 n, L, batch_mismatch, tree_pass, n, seed_low_bit_ones,
                  public_mismatch,
                  negative_control_failed ? "failed as expected" : "DID NOT FAIL",
                  all_ok ? "pass" : "FAIL");

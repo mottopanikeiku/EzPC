@@ -1,0 +1,5 @@
+requested_qbits,actual_qbits,bw,ell,trials,forced_wraps,inner,boundary_trials,boundary_mismatch,random_trials,random_mismatch,forced_trials,forced_mismatch,layer_trials,layer_mismatch,conversions,headers,corruption_control,bit_exact_match,status
+64,62,16,63,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
+64,62,24,63,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
+128,124,16,125,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
+128,124,32,125,32,8,16,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass

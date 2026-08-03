@@ -33,10 +33,19 @@ mkdir -p "$OUTDIR" "$WORKDIR"
 : > "$LOG"
 rm -f "$CSV" "$VCSV"
 
+# Public-parameter validation must reject before a process opens a socket.
+invalid_rc=0
+"$BIN" --trees 65537 >/dev/null 2>>"$LOG" || invalid_rc=$?
+if [[ $invalid_rc -ne 2 ]]; then
+  echo "[two-party-dpf] invalid-input control returned $invalid_rc" | tee -a "$LOG"
+  exit 1
+fi
+echo "[two-party-dpf] invalid-input control rejected as expected" >>"$LOG"
+
 # config: log_domain batch_trees modulus_idx
 # The first block sweeps depth and both primes; the second block holds the depth
-# fixed and scales the batch, which is how the "stages depend on depth, not on
-# batch size" claim is measured.
+# fixed and scales the batch, which is how the "direction switches depend on
+# depth, not batch size" claim is measured.
 CONFIGS=(
   "4 8 0"
   "8 8 0"

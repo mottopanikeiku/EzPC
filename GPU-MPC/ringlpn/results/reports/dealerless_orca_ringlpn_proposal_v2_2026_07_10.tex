@@ -1,4 +1,4 @@
-% Dealerless Orca Ring-LPN proposal, v2.3 (2026-07-29).
+% Dealerless Orca Ring-LPN proposal, v2.4 (2026-08-03).
 % Restructured per advisor feedback on the 2026-06-10 draft:
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
@@ -37,10 +37,10 @@
 \newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
 \title{Removing the Trusted Dealer from Orca's Linear Layers:\\
-GPU-Accelerated Ring-LPN Preprocessing --- Status and Proposal (v2.3)}
+GPU-Accelerated Ring-LPN Preprocessing --- Status and Proposal (v2.4)}
 \author{Alp}
-\date{2026-07-29 \quad (v2.3; adds the S1 functionality, transcript, leakage,\\
-simulator, and proof-obligation contract of \S\ref{sec:s1contract})}
+\date{2026-08-03 \quad (v2.4; live two-process DPF/conversion evidence,\\
+full-width GPU AES seed/tag separation, and corrected measurement semantics)}
 
 \begin{document}
 \maketitle
@@ -325,8 +325,8 @@ $L,\Q$ & CRT limbs; $\Q=p_0p_1$ ($L{=}1$: ``q64'', $\Q=p_0$;
 $L{=}2$: ``q128'')\\
 $\dpfd$ & DPF depth ($\log_2(2n)$ for the uniform-noise artifact)\\
 $c,t$ & Ring-LPN noise parameters: $c$ sparse polynomials, weight $t$ each\\
-$\lambda$ & target symmetric parameter $128$; current GPU seed encoding
-retains only $127$ secret bits\\
+$\lambda$ & target symmetric parameter $128$; GPU expansion now uses full
+128-bit seeds with separate control-bit PRF outputs\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -483,12 +483,18 @@ both CRT primes, depths through $\log(2n)=14$. It uses ideal-functionality
 OT, bit triples, and three scalar OLEs, plus the evaluator's non-cryptographic
 correctness PRG; these are exactly why the executable is not evidence of
 computational privacy. At depth 14 it records 28 string OTs, 13 bit triples,
-3 scalar OLEs, 1{,}908 logical opened bits, and 3{,}816 raw revealed-share
-bits per tree. Neither bit count is measured real-transport traffic. The
-old-sign regression reconstructs the removed sign only in the omniscient
-harness and confirms that it selects a proper leaf-control-bit class
-containing the true point; this is a regression model of the old leak, not a
-privacy proof.
+3 scalar OLEs, 1{,}908 logical opened bits, and 3{,}816 meaningful share bits
+per tree. Neither bit count is measured transport traffic. The old-sign
+regression reconstructs the removed sign only in the omniscient harness and
+confirms that it selects a proper leaf-control-bit class containing the true
+point; this is a regression model of the old leak, not a privacy proof.
+
+A separate real-transport path runs the same protocol as two OS processes over
+SCI/IKNP and Gilboa OLE: 369/369 host-reference keys pass the unchanged
+evaluator; 88 full-width-AES keys pass batched and per-tree GPU evaluation.
+The run reports bytes and direction switches, not network rounds. This closes
+component correctness/transport obligations, not DPF distribution or
+single-key privacy.
 
 \subsection{S1 security contract for D1 and FC composition}
 \label{sec:s1contract}
@@ -558,8 +564,8 @@ functionality computes
  v=S-\mathit{wrap}\,Q,
 \]
 then returns uniform additive shares of $v\bmod 2^\bw$ and never opens
-$\mathit{wrap}$. Real transports and realizations of these ideal interfaces
-are later milestones, not current evidence.
+$\mathit{wrap}$. The standalone artifact now realizes these interfaces with
+SCI/IKNP OT; integration into the flagship FC transcript remains open.
 
 For canonical additive shares,
 $a_0+a_1<2^{\bw+1}$ and $b_0+b_1<2^{\bw+1}$, so a length-$K$
@@ -572,14 +578,15 @@ inadmissibility is independently exercised by the executable negative
 control in \texttt{test\_orca\_zp\_bridge}. The current
 \texttt{buildCShare} instead tests the clear, secret-mask-dependent
 \texttt{dot >= Q}; that is a centralized oracle and a forbidden
-value-dependent abort, not target behavior. Two further security blockers are
-in the current GPU SPFSS keygen: it uses a Doerner--shelat-style
-low-bit control encoding~\cite{doerner2017floram}; the GPU code masks each seed LSB, leaving 127 secret seed bits,
-while
-the centralized kernel derives every root deterministically from one 64-bit
-\texttt{seed\_base}. The S1 target uses independent OS-CSPRNG roots and 128
-secret seed bits with separately generated tags. S3 must change the PRG/root
-semantics or lower the security target; this draft makes no 128-bit
+value-dependent abort, not target behavior. The deployed Ring-LPN GPU
+expansion now uses four domain-separated AES calls per node: plaintexts 0 and
+2 produce full 128-bit child seeds, while plaintexts 1 and 3 produce separate
+control bits. Host/device parity and 88 two-process GPU-evaluated keys are
+gated. The centralized benchmark kernel still derives every root
+deterministically from one 64-bit \texttt{seed\_base}; it is not a security
+realization. The two-party path uses OpenSSL-private-DRBG roots, but the joint
+key-distribution proof, CSPRNG state/composition audit, and single-key privacy
+reduction remain open. This draft therefore makes no end-to-end 128-bit
 DPF-security claim.
 
 \paragraph{Leakage and abort contract.}
@@ -619,8 +626,8 @@ XOR-aggregates left/right seed and flag children, and defines
 $Z_b=S_b^{\mathrm L}\oplus S_b^{\mathrm R}$. Two directional 128-bit OTs
 share $a_i(Z_0\oplus Z_1)$. Parties reveal their shares of the standard
 seed correction word and two flag correction words, then advance locally.
-These are exactly $130\dpfd$ logical opened bits and $260\dpfd$ raw
-revealed-share bits.
+These are exactly $130\dpfd$ logical opened bits and $260\dpfd$ meaningful
+share bits.
 
 \emph{Phase C}: one OLE shares
 $\gamma_0+\gamma_1=\beta_0\beta_1$. With
@@ -632,7 +639,7 @@ $s_0+s_1$ is opened. Thus
 \[
 \begin{aligned}
 \text{logical opened bits}&=2(\dpfd-1)+130\dpfd+\lceil\log_2 p\rceil,\\
-\text{raw revealed-share bits}&=4(\dpfd-1)+260\dpfd+
+\text{meaningful share bits}&=4(\dpfd-1)+260\dpfd+
  2\lceil\log_2 p\rceil .
 \end{aligned}
 \]
@@ -751,8 +758,9 @@ prove consume-once identifiers; this draft does not.
 level-synchronously: the depth-14 tree walk has 14 sequential batched
 AES/PRG expansions and OT selections, independent of tree count. The secure
 ripple adder, correction-word openings, and two-stage payload multiplication
-introduce additional dependency stages. End-to-end network rounds therefore
-remain an M1 real-transport measurement, not a current result.
+add dependency stages. The current TCP implementation measures $6L+6$
+direction switches per batch, independent of tree count; this implementation
+counter is not an end-to-end network-round measurement.
 
 \paragraph{Cost model (per ring-OLE limb).} Each DPF tree of depth $d$ costs
 $\lambda d$ correlated-OT instances; Ferret-class silent OT amortizes each
@@ -803,30 +811,34 @@ whenever the integer share-sum wrapped past $\Q$ --- and that \emph{wrap bit}
 depends on both shares jointly, so computing it requires an actual secure
 protocol.
 
-\paragraph{The protocol (validated prototype).} For canonical
+\paragraph{The protocol (validated two-process artifact).} For canonical
 $z_b\in[0,\Q)$, let $S=z_0+z_1<2\Q$ and
 $\ell=\lceil\log_2 2\Q\rceil$ ($\ell{=}63$ at q64, $125$ at q128).
-An ideal edaBit samples uniform $R\in\Z_{2^\ell}$, an independent uniform
-arithmetic first share, and independent uniform XOR masks for its bits, then
-gives each party its consistent shares. An ideal daBit samples a random bit,
-an independent uniform Boolean first share, and an independent uniform
-$\Z_{2^\bw}$ first share, then complements each sharing. Under fresh
-identifiers: (1)~mask and open
+The edaBit functionality samples uniform $R\in\Z_{2^\ell}$, an independent
+uniform arithmetic first share, and independent uniform XOR masks for its
+bits; the daBit functionality analogously shares one random bit over
+$\Z_2$ and $\Z_{2^\bw}$. The live artifact realizes one exact daBit with one
+128-bit OT, composes one exact edaBit from $\ell$ daBits (the coefficient-one
+arithmetic share makes the sum uniform), and realizes each Boolean triple
+with two one-bit OTs. Under fresh correlations: (1)~mask and open
 $A=(z_0+z_1+R)\bmod 2^\ell$; (2)~a ripple adder recovers Boolean shares of
 $S=A-R$; (3)~a second adder obtains
 $w=[S\ge\Q]$ from the carry of $S+(2^\ell-\Q)$; (4)~the daBit converts $w$
 to arithmetic shares; and (5)~each party computes
 $r_i=(z_i-\Q w_i)\bmod 2^\bw$. Thus
 $r_0+r_1=((z_0+z_1)\bmod\Q)\bmod 2^\bw$ and $w$ is never opened.
-The prototype is bit-exact against the all-seeing oracle on 8{,}516
-conversions per configuration, including deterministic integer sums
-$0,\Q-1,\Q,2\Q-2$ on both sides of the wrap boundary. Its ripple circuit
-consumes $2(\ell-1)$ AND triples, $2\ell-1$ post-mask dependency rounds,
-$5\ell-3$ logical opened bits, and $10\ell-6$ raw revealed-share bits.
-The post-mask count begins after the masked-$A$ opening, includes the final
-daBit opening, and is not an end-to-end transport-round measurement.
 
-\paragraph{What D2 changes.} Two things. \emph{Sourcing:} AND triples come
+Independent processes over TCP pass 76 conversions in each of four q64/q128
+and bit-width configurations: exact boundary sums
+$0,\Q-1,\Q,2\Q-2$, random inputs, forced wraps, and layer-shaped inner
+products, with zero mismatches and a corrupted-output control. The ripple
+circuit consumes $2(\ell-1)$ AND triples, $2\ell-1$ post-mask dependency
+rounds, $5\ell-3$ logical opened bits, and $10\ell-6$ meaningful share bits.
+The last count excludes byte padding, framing, setup, and OT payloads; the
+artifact separately measures setup, correlation, and online bytes and
+direction switches. Neither counter is a network-round measurement.
+
+\paragraph{What remains for production D2.} Two things. \emph{Sourcing:} AND triples come
 from a binary PCG (the $\Z_2$ instantiation of our own pipeline, or
 expand-accumulate codes~\cite{couteau2021silver}; Ferret~\cite{yang2020ferret}
 yields them at $\sim$1 bit amortized), edaBits from random bit-shares by the
@@ -849,18 +861,19 @@ AND triples $=2(\ell{-}1)$ & 124 & 248\\
 edaBit bits $=\ell$        & 63  & 125\\
 daBits                     & 1   & 1\\
 logical opened bits $=5\ell-3$ & 312 & 622\\
-raw revealed-share bits $=10\ell-6$ & 624 & 1{,}244\\
+meaningful share bits $=10\ell-6$ & 624 & 1{,}244\\
 post-mask dependency rounds, ripple $=2\ell{-}1$ & 125 & 249\\
 post-mask dependency rounds, prefix target & $\sim$7 & $\sim$8\\
 \bottomrule
 \end{tabular}
-\caption{Measured conversion cost per output
-(\texttt{secure\_convert\_prototype.csv}) with executable transcript
-accounting, plus the prefix-comparator round target. The earlier 375/747
-column mixed the two transmitted shares of the masked-$A$ opening with
-logical AND/B2A openings; it was not a coherent opening or wire-payload
-metric. Prefix comparison changes correlation counts and must report its own
-measured logical/raw split.}
+\caption{Validated two-process conversion cost per output
+(\texttt{secure\_convert\_two\_party\_2026\_08\_03.csv}) with executable
+transcript accounting, plus the prefix-comparator dependency-depth target.
+The earlier 375/747 column mixed the two shares of the masked-$A$ opening with
+logical AND/B2A openings; it was not a coherent metric. ``Meaningful share
+bits'' is the sum of protocol-defined share widths, not encoded traffic;
+measured byte and direction-switch columns are reported separately. Prefix
+comparison changes correlation counts and must report its own split.}
 \label{tab:convert}
 \end{table}
 
@@ -1099,7 +1112,7 @@ keygen\_\allowbreak prototype.csv}. For tree depth $\dpfd$, per-tree counts
 match $2\dpfd$ string OTs,
 $\dpfd-1$ bit triples, three scalar OLEs,
 $2(\dpfd-1)+130\dpfd+\lceil\log_2 p\rceil$ logical opened bits, and
-$4(\dpfd-1)+260\dpfd+2\lceil\log_2 p\rceil$ raw revealed-share bits. Every row
+$4(\dpfd-1)+260\dpfd+2\lceil\log_2 p\rceil$ meaningful share bits. Every row
 reports \texttt{transcript\_accounting=pass},
 \texttt{ideal\_mask\_draw\_\allowbreak accounting=pass}, and
 \texttt{correlation\_reuse\_\allowbreak control=pass}. Timings are approximately
@@ -1114,8 +1127,10 @@ at the $t{=}8$ smoke point; at $t{=}64$: 881\,ms uniform vs.\ \textbf{61\,ms
 regular} ($14\times$), with pair-key bytes 283\,kB vs.\ 233\,kB. SPFSS
 full-domain evaluation dominates ($\sim$99\%); the NTT is under 1\% ---
 measured directly, and confirmed by the fact that a 2--8\% NTT-side
-improvement left expansion time unchanged. Conversion prototype: bit-exact on
-8{,}516 conversions per configuration at the costs of
+improvement left expansion time unchanged. The oracle-backed conversion stress
+artifact is bit-exact on 8{,}516 conversions per configuration; the live
+two-process OT-backed artifact passes 76 conversions in each of four
+q64/q128/bit-width configurations, at the costs of
 Table~\ref{tab:convert}. Byte-compatibility: with the integration flag off,
 baseline Orca output is byte-identical (verified through the real two-party
 FC test).

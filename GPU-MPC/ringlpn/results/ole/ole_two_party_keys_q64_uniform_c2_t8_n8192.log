@@ -193,16 +193,16 @@ Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   140 |                 std::vector<block> mBuffer;
       |                                   ^
 Built:
--rwxrwxr-x 1 fatih fatih 4519520 Jul 30 02:39 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
--rwxrwxr-x 1 fatih fatih 1218264 Jul 30 02:39 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
+-rwxrwxr-x 1 fatih fatih 4634208 Aug  3 08:48 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
+-rwxrwxr-x 1 fatih fatih 1332952 Aug  3 08:48 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
 [ole-two-party] stage 1: export per-party noise
 device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
 reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,458,13855,0,1
+cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,663,22027,0,1
 [ole-two-party] stage 2: dealerless SPFSS keygen for 1 limb(s)
-[two-party-spfss] party 1: 256 trees in 4 groups at L=14, 1057600 protocol bytes, 89 stages, 931459 us -> /home/fatih/EzPC/GPU-M[two-party-spfss] party 0: 256 trees in 4 groups at L=14, 1033792 protocol bytes, 89 stages, 930729 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/keys_limb0_p1.spfss (pass)
-PC/ringlpn/results/ole/two_party_keys/keys_limb0_p0.spfss (pass)
+[two-party-spfss] party 0: 256 trees in 4 groups at L=14, 1033792 protocol bytes, 89 direction switches, 946019 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/keys_limb0_p0.spfss (pass)
+[two-party-spfss] party 1: 256 trees in 4 groups at L=14, 1057600 protocol bytes, 89 direction switches, 947825 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/keys_limb0_p1.spfss (pass)
 [ole-two-party] stage 3: real OLE engine on dealerless keys
 device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
 reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,476,13232,0,1
+cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,492,21198,0,1

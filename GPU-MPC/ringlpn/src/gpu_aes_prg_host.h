@@ -6,22 +6,22 @@
 // has to agree with the device PRG on every bit.
 //
 // EXACT SEMANTICS (derived from GPU-MPC/fss/gpu_aes_shm.cu
-// `applyAESPRGTwoTimes` and verified against device-dumped vectors in
+// `applyAESPRGFourTimes` and verified against device-dumped vectors in
 // results/dpf/gpu_aes_prg_vectors_2026_07_29.csv):
 //   * the device reverses bytes inside each 32-bit word of the key before the
 //     key schedule, which is exactly the identity on the little-endian byte
-//     image of the 128-bit seed. So the AES-128 key is the seed's 16 bytes in
-//     little-endian order, with the low bit cleared.
-//   * left  = AES_k(0x00^16)
-//   * right = AES_k(0x02 || 0x00^15)
-//   * the same per-word byte reversal on the output makes the returned 128-bit
-//     value the little-endian image of the ciphertext bytes.
-//   * the child control bit is the LSB of that value and is cleared from the
-//     child seed (Doerner--shelat-style low-bit control encoding, so the secret
-//     seed state is 127 bits, not 128; see the S1 contract obligation D-SEED).
+//     image of the 128-bit seed. The AES-128 key is therefore the seed's 16
+//     bytes in little-endian order.
+//   * left seed  = AES_k(0x00 || 0^120)
+//   * left tag   = LSB(AES_k(0x01 || 0^120))
+//   * right seed = AES_k(0x02 || 0^120)
+//   * right tag  = LSB(AES_k(0x03 || 0^120))
+//   * the same per-word byte reversal on each output makes the returned 128-bit
+//     seed the little-endian image of the ciphertext bytes.
 //
-// This header makes no security claim: it reproduces the deployed GPU semantics
-// so the two-party protocol can drive the unmodified GPU consumer.
+// Seeds and control bits use distinct PRF outputs: the seed state retains all
+// 128 bits. This header reproduces the deployed GPU semantics; the surrounding
+// protocol/security reduction remains a separate claim.
 
 #pragma once
 
@@ -35,11 +35,10 @@ namespace ringlpn_gpu_prg {
 
 using U128 = unsigned __int128;
 
-inline U128 clear_tag(U128 seed) { return seed & ~static_cast<U128>(1); }
 
 // One AES-128-ECB context per thread: the key changes on every node but the
 // cipher does not, so re-keying a persistent context avoids an allocation per
-// expansion. Both children are produced in a single ECB update.
+// expansion. Both seeds and both tag blocks are produced in one ECB update.
 inline EVP_CIPHER_CTX *ecb_ctx() {
     static thread_local EVP_CIPHER_CTX *ctx = nullptr;
     if (ctx == nullptr) {
@@ -58,32 +57,34 @@ inline EVP_CIPHER_CTX *ecb_ctx() {
 inline void gpu_aes_prg_expand(U128 seed, U128 &s_l, uint8_t &t_l, U128 &s_r,
                                uint8_t &t_r) {
     uint8_t key[16];
-    const U128 masked = clear_tag(seed);
-    std::memcpy(key, &masked, 16);
+    std::memcpy(key, &seed, 16);
 
-    // Device plaintexts: byte 3 of word 0 is `pt` and `pt+2`, i.e. AES byte 0 is
-    // 0x00 for the left child and 0x02 for the right child.
-    uint8_t in[32];
+    // Device plaintexts 0,1,2,3 map to four consecutive AES input blocks.
+    uint8_t in[64];
     std::memset(in, 0, sizeof(in));
-    in[16] = 0x02;
+    in[16] = 0x01;
+    in[32] = 0x02;
+    in[48] = 0x03;
 
     EVP_CIPHER_CTX *ctx = ecb_ctx();
     if (EVP_EncryptInit_ex(ctx, nullptr, nullptr, key, nullptr) != 1) {
         throw std::runtime_error("EVP_EncryptInit_ex(key) failed");
     }
-    uint8_t out[32];
+    uint8_t out[64];
     int len = 0;
-    if (EVP_EncryptUpdate(ctx, out, &len, in, 32) != 1 || len != 32) {
+    if (EVP_EncryptUpdate(ctx, out, &len, in, 64) != 1 || len != 64) {
         throw std::runtime_error("EVP_EncryptUpdate failed");
     }
 
-    U128 lv = 0, rv = 0;
-    std::memcpy(&lv, out, 16);
-    std::memcpy(&rv, out + 16, 16);
-    t_l = static_cast<uint8_t>(lv & 1);
-    t_r = static_cast<uint8_t>(rv & 1);
-    s_l = clear_tag(lv);
-    s_r = clear_tag(rv);
+    U128 left_seed = 0, left_tag = 0, right_seed = 0, right_tag = 0;
+    std::memcpy(&left_seed, out, 16);
+    std::memcpy(&left_tag, out + 16, 16);
+    std::memcpy(&right_seed, out + 32, 16);
+    std::memcpy(&right_tag, out + 48, 16);
+    s_l = left_seed;
+    s_r = right_seed;
+    t_l = static_cast<uint8_t>(left_tag & 1);
+    t_r = static_cast<uint8_t>(right_tag & 1);
 }
 
 }  // namespace ringlpn_gpu_prg

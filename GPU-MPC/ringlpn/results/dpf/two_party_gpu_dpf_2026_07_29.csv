@@ -1,5 +1,5 @@
-prefix,keys,log_domain,modulus,seed_tag_set,public_material_mismatch,batch_sum_mismatch,tree_pass,tree_fail,negative_control,gpu_validation
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8,8,4,4611686018326724609,0,0,0,8,0,failed_as_expected,pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16,16,8,4611686018326724609,0,0,0,16,0,failed_as_expected,pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32,32,11,4611686018326724609,0,0,0,32,0,failed_as_expected,pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32,32,11,4611686018309947393,0,0,0,32,0,failed_as_expected,pass
+prefix,keys,log_domain,modulus,root_seed_low_bit_ones,public_material_mismatch,batch_sum_mismatch,tree_pass,tree_fail,negative_control,gpu_validation
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8,8,4,4611686018326724609,5,0,0,8,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16,16,8,4611686018326724609,17,0,0,16,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32,32,11,4611686018326724609,29,0,0,32,0,failed_as_expected,pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32,32,11,4611686018309947393,32,0,0,32,0,failed_as_expected,pass
