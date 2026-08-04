@@ -153,18 +153,22 @@ proof obligations are in
 The executable uses ideal OT/triple/OLE interfaces and the unchanged
 evaluator's splitmix64 correctness PRG, explicitly labelled
 non-cryptographic. It proves functional compatibility, edge correctness, and
-primitive accounting. It does **not** establish:
+primitive accounting. This ideal host artifact alone does **not** establish:
 
-- computational privacy;
-- 128-bit security;
+- computational privacy or 128-bit security;
 - M1 completion;
-- GPU byte compatibility;
-- real OT/OLE transports;
+- GPU compatibility;
+- real transport; or
 - two-process isolation.
 
-M1 still requires an AES/CSPRNG evaluator, real silent OT/OLE, GPU
-level-synchronous batching, the GPU key byte format, and measured network
-bytes and rounds.
+**Current-status note (2026-08-04):** the separate live forward-FC path now
+consumes full-width four-call GPU-AES-compatible distributed keys generated
+over real SCI/IKNP/Gilboa transport with OpenSSL-private roots, then performs
+party-local Ring-LPN expansion and exact conversion across two processes and
+GPUs. The security contract gives the exact correction-word coupling and
+role-specific hybrid simulators. Still open are silent OT, GPU-side batched
+key generation, concrete DPF/PRG and Ring-LPN parameter review, authenticated
+deployment, and actual dependency-round measurement.
 
 ## Reproduce and paper status
 
@@ -177,12 +181,11 @@ From `GPU-MPC/ringlpn`:
 ```
 
 The build/run pair is wired exactly once into the host section of
-`run_paper_checkpoint_smoke.sh`. Proposal
+`run_paper_checkpoint_smoke.sh`. Proposal source
 `dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` keeps its stable filename
-and is now v2.3 (2026-07-29), with the S1 functionality/transcript/leakage
-contract, corrected split accounting and Table 5, simulator obligations,
-GPU-NTT provenance, M1 status, and claims ladder.
+and is now v2.5 (2026-08-04). The checked-in PDF is the matching warning-free,
+page-inspected 21-page rendering.
 
-The root `.gitignore` ignores CSV/PDF files. If a later explicit commit is
-requested, force-add the generated CSV and PDF; this session does not stage or
-commit them.
+The root `.gitignore` ignores CSV/PDF files; checkpoint commits must
+deliberately force-add regenerated evidence that is part of the documented
+claim.

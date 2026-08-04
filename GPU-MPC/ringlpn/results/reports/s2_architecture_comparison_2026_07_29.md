@@ -10,6 +10,11 @@ the domain and point-count reduction the DMPF is designed to buy; no route can
 be frozen yet because every dealerless candidate is unavailable, unlicensed, or
 unimplemented.
 
+**Parameter correction (2026-08-04):** the primary-source audit invalidated
+the local “conservative pin” rule. No parameter or 128-bit claim is pinned;
+all parameter-dependent rows below remain architecture/feasibility evidence.
+See `../security/README.md` and `../../CLAUDE.md`.
+
 Evidence classes used below: `published` (printed in the cited paper),
 `reproduced` (unchanged local rerun), `adapted` (local rerun of licensed source
 with a recorded patch), `derived` (formula only). No cross-class speedup ratio
@@ -256,31 +261,36 @@ Three readings matter for the architecture question:
 
 | question | current evidence | what it does *not* settle |
 |---|---|---|
-| Which sparse encoder should the dealerless pipeline target? | layout-dependent: with uniform noise OKVS wins expansion 275x (candidate) / 329x (BCG scale), but at the **deployed regular layout** OKVS is 0.79x and big-state wins only 2.29x at 37x the key bytes | whether a 2.29x expansion win survives moving generation inside MPC, and whether the ranking changes at the conservatively pinned noise weight |
+| Which sparse encoder should the dealerless pipeline target? | layout-dependent: with uniform noise OKVS wins expansion 275x (candidate) / 329x (BCG scale), but at the **deployed regular layout** OKVS is 0.79x and big-state wins only 2.29x at 37x the key bytes | whether a 2.29x expansion win survives moving generation inside MPC, and whether the ranking changes at an eventually reviewed noise weight |
 | Is Reverse Cuckoo the dealerless answer? | it is the only construction whose ideal functionality matches our private-factor setting | its printed protocol does not currently type-check or rank-check, and no source exists to resolve it |
 | Can SLAMP replace the point DPF? | no: centralized `Gen`, XOR output algebra, distinct-point requirement | nothing; this is settled against |
 | Should Ring-LPN plus conversion be replaced? | native `Z_(2^bw)` is the only route that removes conversion by construction, and its plain-triple expansion runs here at `N=3^13`/`3^15` | its distributed setup, Orca Beaver semantics, and correctness are unimplemented; its published throughput is not reproducible from the released artifact; its `N=3^15` working set is 73-99 GB on one core |
 | Can any route be frozen now? | **no** | every dealerless candidate is unavailable, unlicensed, or unimplemented |
 
-## 7. Questions for the project owner
+## 7. Project-owner decisions (recorded 2026-07-29)
 
-These are the decisions this comparison cannot make:
+The owner reviewed Sections 6--7 and made four binding decisions:
 
-1. **Encoder scope.** Should the next implementation stage build a *dealerless
-   OKVS-style DMPF* for the Ring-LPN product support - accepting that its
-   in-MPC generation is the new research risk - or keep the per-point DPF and
-   spend the effort on real OT/OLE transports instead?
-2. **Reverse Cuckoo dependency.** Should we contact Agarwal, Raghuraman, and
-   Rindal for their artifact and for clarification of the Figure 7 padding/rank
-   and type gaps? Without that, the only fully distributed prior design cannot
-   be benchmarked or safely built on.
-3. **Conversion versus ring.** Is removing the `Z_M -> Z_(2^bw)` conversion
-   worth changing the algebra to a native `Z_(2^bw)` PCG, given that this
-   restarts parameter selection, NTT/GPU work, and the Orca key bridge?
-4. **Scope of the paper's measured claim.** Should the contribution be measured
-   on the current GPU Ring-LPN pipeline with a *documented* dealer-free
-   protocol-logic slice, or held until a real two-process dealerless run exists?
-   The first is achievable now; the second is the honest end state.
+1. **Encoder scope:** keep the per-point DPF and put implementation effort
+   into real silent-OT/OLE transports and a two-process deployment. At the
+   deployed regular layout, the best measured DMPF expansion gain is only
+   2.29x at 37x the key bytes and OKVS is 0.79x, so a dealerless DMPF remains
+   future work rather than the current pipeline lever.
+2. **Parameter discipline:** this decision originally requested an immediate
+   conservative pin. The 2026-08-04 primary-source audit invalidated that
+   selection rule: obtain a reviewed projection/distribution/tail/structured-
+   code and two-limb advantage analysis before another estimator sweep.
+   Existing rows remain feasibility-only; `n=2^17,c=4,t=34` remains a measured
+   implementation NO-GO without an accepted security estimate.
+3. **Claim scope:** withhold the paper's headline claim until a real
+   two-process dealerless FC run exists. Protocol-logic and component
+   transports are supporting evidence only.
+4. **Prior art:** retain the Reverse Cuckoo artifact/clarification request as
+   an unsent draft pending owner approval:
+   `../outreach/reverse_cuckoo_artifact_request_2026_07_29.md`.
+
+`../../CLAUDE.md` is the canonical source for later route, parameter, and gate
+updates.
 
 ## 8. Reproduction
 

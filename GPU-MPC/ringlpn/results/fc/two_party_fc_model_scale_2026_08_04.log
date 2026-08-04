@@ -1,0 +1,401 @@
+[two-party-fc-model] build
+In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/home/fatih/EzPC/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/fatih/EzPC/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/home/fatih/EzPC/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/home/fatih/EzPC/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/home/fatih/EzPC/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/home/fatih/EzPC/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(536): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(631): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(723): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(756): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(799): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/home/fatih/EzPC/SCI/src/OT/split-iknp.h(885): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/home/fatih/EzPC/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, bool)"
+      }
+      ^
+
+In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/home/fatih/EzPC/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/fatih/EzPC/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/home/fatih/EzPC/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/home/fatih/EzPC/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/home/fatih/EzPC/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/home/fatih/EzPC/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/home/fatih/EzPC/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, __nv_bool)"
+      }
+      ^
+
+/home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~  ~~~~~~~~~
+      |                                     |
+      |                                     uint64_t {aka long unsigned int}
+/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~             ~~~~~~~~~
+      |                                                |
+      |                                                uint64_t {aka long unsigned int}
+/home/fatih/EzPC/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/home/fatih/EzPC/SCI/src/utils/group_openssl.h:174:25: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/openssl/ec.h:883:52: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:46:21: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |          ~~~~~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:50:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/home/fatih/EzPC/SCI/src/utils/hash.h:55:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:65:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/home/fatih/EzPC/SCI/src/utils/hash.h:68:13: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:52: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                                                    ^~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:71:12: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                             ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                               ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                             ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                               ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                             ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                               ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   73 |     extern const std::array<block, 2> zeroAndAllOne;
+      |                                      ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                      ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                                                  ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   56 |         void ecbEncCounterMode(u64 baseIdx, span<block> ciphertext) const
+      |                                                  ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   81 |         MultiKeyAES(span<block> keys) { setKeys(keys); }
+      |                        ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   84 |         void setKeys(span<block> keys)
+      |                         ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+  140 |                 std::vector<block> mBuffer;
+      |                                   ^
+In file included from /home/fatih/EzPC/SCI/src/utils/utils.h:87,
+                 from /home/fatih/EzPC/SCI/src/utils/group.h:28,
+                 from /home/fatih/EzPC/SCI/src/utils/io_channel.h:31,
+                 from /home/fatih/EzPC/SCI/src/utils/emp-tool.h:1,
+                 from /home/fatih/EzPC/SCI/src/OT/ot.h:30,
+                 from /home/fatih/EzPC/SCI/src/OT/np.h:30,
+                 from /home/fatih/EzPC/SCI/src/OT/split-iknp.h:28,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:37,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h:3,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.cpp:1:
+/home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /home/fatih/EzPC/SCI/src/utils/group.h:97:
+/home/fatih/EzPC/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/home/fatih/EzPC/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /home/fatih/EzPC/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/fatih/EzPC/SCI/src/utils/emp-tool.h:15:
+/home/fatih/EzPC/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /home/fatih/EzPC/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/home/fatih/EzPC/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                        ^
+Built /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+===== ResNet18 classifier / warmup 0 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.62518e+07,pass
+===== ResNet18 classifier / warmup 0 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.62512e+07,pass
+===== ResNet18 classifier / warmup 0 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10841,1095.84,pass,pass,pass,pass
+===== ResNet18 classifier / measured 1 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.71055e+07,pass
+===== ResNet18 classifier / measured 1 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.71055e+07,pass
+===== ResNet18 classifier / measured 1 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10846.4,1097.15,pass,pass,pass,pass
+===== ResNet18 classifier / measured 2 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.63396e+07,pass
+===== ResNet18 classifier / measured 2 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.63396e+07,pass
+===== ResNet18 classifier / measured 2 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,11100.2,1095.84,pass,pass,pass,pass
+===== ResNet18 classifier / measured 3 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.62483e+07,pass
+===== ResNet18 classifier / measured 3 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.62484e+07,pass
+===== ResNet18 classifier / measured 3 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10920.3,1098.18,pass,pass,pass,pass
+===== ResNet18 classifier / measured 4 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.54982e+07,pass
+===== ResNet18 classifier / measured 4 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.54982e+07,pass
+===== ResNet18 classifier / measured 4 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10780,1106.74,pass,pass,pass,pass
+===== ResNet18 classifier / measured 5 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.50453e+07,pass
+===== ResNet18 classifier / measured 5 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.50453e+07,pass
+===== ResNet18 classifier / measured 5 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10737.5,1094.69,pass,pass,pass,pass
+===== ResNet18 classifier / measured 6 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.49808e+07,pass
+===== ResNet18 classifier / measured 6 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.49808e+07,pass
+===== ResNet18 classifier / measured 6 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10665.3,1101.01,pass,pass,pass,pass
+===== ResNet18 classifier / measured 7 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.59724e+07,pass
+===== ResNet18 classifier / measured 7 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.59724e+07,pass
+===== ResNet18 classifier / measured 7 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,11234.5,1106.14,pass,pass,pass,pass
+===== ResNet18 classifier / measured 8 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.52961e+07,pass
+===== ResNet18 classifier / measured 8 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.52961e+07,pass
+===== ResNet18 classifier / measured 8 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10484.2,1097.04,pass,pass,pass,pass
+===== ResNet18 classifier / measured 9 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.52584e+07,pass
+===== ResNet18 classifier / measured 9 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.52585e+07,pass
+===== ResNet18 classifier / measured 9 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,11102.2,1098.95,pass,pass,pass,pass
+===== ResNet18 classifier / measured 10 / party 0 =====
+reserved memory: 26843545600 18446744073709551615
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.63839e+07,pass
+===== ResNet18 classifier / measured 10 / party 1 =====
+reserved memory: 26843545600 18446744073709551615
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.63821e+07,pass
+===== ResNet18 classifier / measured 10 / post-exit checker =====
+reserved memory: 26843545600 18446744073709551615
+128,32,1,512,1000,63,4108096,10758.9,1102.1,pass,pass,pass,pass

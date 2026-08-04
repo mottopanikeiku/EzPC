@@ -17,7 +17,7 @@
 // integration, authenticated deployment, end-to-end realization, or malicious
 // security. --check is TEST-ONLY and reads both post-protocol party files.
 
-#include "two_party_ot.h"
+#include "secure_convert.h"
 
 #include <chrono>
 #include <cstdint>
@@ -31,13 +31,18 @@
 namespace {
 
 using U128 = ringlpn_2pc::U128;
-using ringlpn_2pc::BitTriple;
 using ringlpn_2pc::PartyChannel;
 using ringlpn_2pc::PartyRandom;
 
 constexpr uint64_t P0 = 4611686018326724609ULL;
 constexpr uint64_t P1 = 4611686018309947393ULL;
 constexpr char MAGIC[8] = {'R', 'L', 'P', 'N', 'C', 'V', 'T', '1'};
+constexpr int kMaxTrials = 4096;
+constexpr int kMaxInner = 4096;
+constexpr int kMaxSelftest = 1024;
+constexpr uint64_t kMaxRecords =
+    uint64_t(2) * kMaxTrials + kMaxTrials + 4;
+constexpr uint64_t kRecordSize = 1 + 16 + 8;
 
 enum class Mode : uint8_t {
     Boundary = 0,
@@ -48,6 +53,19 @@ enum class Mode : uint8_t {
 
 U128 modulus128() {
     return U128(P0) * U128(P1);
+}
+// This no-wrap condition applies only to the harness's generated Layer/FC
+// workload. It is not a precondition of generic Z_M conversion, whose shares
+// may be arbitrary elements of [0, M).
+bool layer_workload_admissible(int qbits, int bw, uint64_t inner) {
+    if ((qbits != 64 && qbits != 128) || bw <= 2 || bw > 32 ||
+        inner == 0) {
+        return false;
+    }
+    const U128 M = qbits == 128 ? modulus128() : U128(P0);
+    const unsigned shift = unsigned(2 * bw + 2);
+    const U128 scale = U128(1) << shift;
+    return U128(inner) <= (M - 1) / scale;
 }
 
 int bitlen(U128 x) {
@@ -67,9 +85,6 @@ U128 red(U128 x, int k) {
     return x & mask(k);
 }
 
-U128 sub(U128 a, U128 b, int k) {
-    return red(a - b, k);
-}
 
 uint64_t red64(U128 x, int k) {
     return uint64_t(red(x, k));
@@ -153,12 +168,9 @@ Args parse(int ac, char **av) {
             std::exit(2);
         }
     }
-    constexpr int kMaxTrials = 4096;
-    constexpr int kMaxInner = 4096;
-    constexpr int kMaxSelftest = 1024;
     const uint64_t max_value =
         (a.bw >= 3 && a.bw <= 32) ? ((uint64_t(1) << a.bw) - 1) : 0;
-    if ((a.party != 0 && a.party != 1) || a.port < 1 || a.port > 65535 ||
+    if ((a.party != 0 && a.party != 1) || a.port < 1 || a.port > 65534 ||
         a.host.empty() || a.prefix.empty() ||
         (a.qbits != 64 && a.qbits != 128) || a.bw <= 2 || a.bw > 32 ||
         a.trials < 1 || a.trials > kMaxTrials ||
@@ -169,7 +181,41 @@ Args parse(int ac, char **av) {
         std::fprintf(stderr, "invalid arguments\n");
         std::exit(2);
     }
+    if (!layer_workload_admissible(a.qbits, a.bw, uint64_t(a.inner))) {
+        std::fprintf(
+            stderr,
+            "invalid harness Layer/FC workload: require "
+            "inner*2^(2*bw+2)<M\n");
+        std::exit(2);
+    }
     return a;
+}
+bool agree_public_parameters(PartyChannel &ch, const Args &a) {
+    // Canonical fixed-width little-endian encoding, in protocol-work order:
+    // qbits,bw,trials,forced,inner,bound,input_seed,selftest.
+    uint8_t mine[40] = {};
+    uint8_t theirs[40] = {};
+    size_t pos = 0;
+    auto encode32 = [&](uint32_t x) {
+        for (int i = 0; i < 4; ++i) {
+            mine[pos++] = uint8_t(x >> (8 * i));
+        }
+    };
+    auto encode64 = [&](uint64_t x) {
+        for (int i = 0; i < 8; ++i) {
+            mine[pos++] = uint8_t(x >> (8 * i));
+        }
+    };
+    encode32(uint32_t(a.qbits));
+    encode32(uint32_t(a.bw));
+    encode32(uint32_t(a.trials));
+    encode32(uint32_t(a.forced));
+    encode32(uint32_t(a.inner));
+    encode64(a.bound);
+    encode64(a.input_seed);
+    encode32(uint32_t(a.selftest));
+    ch.exchange_bytes(mine, theirs, sizeof(mine));
+    return std::memcmp(mine, theirs, sizeof(mine)) == 0;
 }
 
 struct Input {
@@ -208,64 +254,16 @@ std::vector<Input> make_inputs(const Args &a, U128 M) {
     return v;
 }
 
-struct Dabit {
-    uint8_t bit = 0;
-    U128 arithmetic = 0;
-};
-
-std::vector<Dabit> gen_dabits(PartyChannel &ch, size_t n, int k,
-                              PartyRandom &r) {
-    std::vector<Dabit> o(n);
-    std::vector<uint8_t> b(n);
-    for (size_t i = 0; i < n; ++i) {
-        b[i] = r.bit();
-    }
-    if (ch.is_p0()) {
-        std::vector<U128> m0(n), m1(n);
-        for (size_t i = 0; i < n; ++i) {
-            U128 a0 = red(r.u128(), k);
-            o[i] = {b[i], a0};
-            m0[i] = sub(U128(b[i]), a0, k);
-            m1[i] = sub(U128(1 - b[i]), a0, k);
-        }
-        ch.ot_send_128(m0, m1);
-    } else {
-        auto a1 = ch.ot_recv_128(b);
-        for (size_t i = 0; i < n; ++i) {
-            o[i] = {b[i], red(a1[i], k)};
-        }
-    }
-    return o;
-}
-
-struct Edabit {
-    U128 arithmetic = 0;
-    std::vector<uint8_t> bits;
-};
-
-std::vector<Edabit> gen_edabits(PartyChannel &ch, size_t n, int ell,
-                                PartyRandom &r) {
-    auto d = gen_dabits(ch, n * size_t(ell), ell, r);
-    std::vector<Edabit> o(n);
-    for (size_t i = 0; i < n; ++i) {
-        o[i].bits.resize(size_t(ell));
-        for (int j = 0; j < ell; ++j) {
-            const auto &x = d[i * size_t(ell) + size_t(j)];
-            o[i].bits[size_t(j)] = x.bit;
-            o[i].arithmetic =
-                red(o[i].arithmetic + (x.arithmetic << j), ell);
-        }
-    }
-    return o;
-}
 
 bool correlation_selftest(PartyChannel &ch, int rounds, int ell, int bw,
                           PartyRandom &r) {
     if (rounds == 0) {
         return true;
     }
-    auto e = gen_edabits(ch, size_t(rounds), ell, r);
-    auto d = gen_dabits(ch, size_t(rounds), bw, r);
+    auto e = ringlpn_2pc::secure_convert_detail::generate_edabits(
+        ch, size_t(rounds), ell, r);
+    auto d = ringlpn_2pc::secure_convert_detail::generate_dabits(
+        ch, size_t(rounds), bw, r);
     std::vector<U128> mine(size_t(rounds) * 2);
     std::vector<U128> theirs(size_t(rounds) * 2);
     for (int i = 0; i < rounds; ++i) {
@@ -308,153 +306,6 @@ bool correlation_selftest(PartyChannel &ch, int rounds, int ell, int bw,
     return true;
 }
 
-struct Costs {
-    uint64_t conversions = 0;
-    uint64_t edabit_bits = 0;
-    uint64_t triples = 0;
-    uint64_t dabits = 0;
-    uint64_t logical = 0;
-    uint64_t sent = 0;
-    uint64_t recv = 0;
-    uint64_t post = 0;
-
-    uint64_t meaningful_share_bits() const {
-        return sent + recv;
-    }
-};
-
-std::vector<uint8_t> and_batch(const std::vector<uint8_t> &x,
-                               const std::vector<uint8_t> &y,
-                               const std::vector<BitTriple> &t, size_t &pos,
-                               PartyChannel &ch, Costs &c) {
-    size_t n = x.size();
-    std::vector<uint8_t> m(n), q(n), o(n);
-    for (size_t i = 0; i < n; ++i) {
-        m[i] = uint8_t(((x[i] ^ t[pos + i].a) & 1) |
-                       (((y[i] ^ t[pos + i].b) & 1) << 1));
-    }
-    ch.exchange_bytes(m.data(), q.data(), n);
-    for (size_t i = 0; i < n; ++i) {
-        uint8_t z = m[i] ^ q[i];
-        uint8_t d = z & 1;
-        uint8_t e = (z >> 1) & 1;
-        o[i] = uint8_t((t[pos + i].c ^ (d & t[pos + i].b) ^
-                        (e & t[pos + i].a) ^
-                        (ch.is_p0() ? (d & e) : 0)) &
-                       1);
-    }
-    pos += n;
-    c.triples += n;
-    c.logical += 2 * n;
-    c.sent += 2 * n;
-    c.recv += 2 * n;
-    c.post += n;
-    return o;
-}
-
-struct Ripple {
-    std::vector<uint8_t> carry;
-    std::vector<uint8_t> sum;
-};
-
-Ripple ripple(const std::vector<U128> &k, const std::vector<uint8_t> &x,
-              int cin, int ell, bool want, const std::vector<BitTriple> &t,
-              size_t &pos, PartyChannel &ch, Costs &c) {
-    size_t n = k.size();
-    Ripple r;
-    r.carry.assign(n, ch.is_p0() ? uint8_t(cin) : 0);
-    if (want) {
-        r.sum.assign(n * size_t(ell), 0);
-    }
-    for (int j = 0; j < ell; ++j) {
-        std::vector<uint8_t> xj(n), old = r.carry, next;
-        for (size_t i = 0; i < n; ++i) {
-            xj[i] = x[i * size_t(ell) + size_t(j)];
-            uint8_t b = uint8_t((k[i] >> j) & 1);
-            if (want) {
-                r.sum[i * size_t(ell) + size_t(j)] =
-                    uint8_t(xj[i] ^ old[i] ^ (ch.is_p0() ? b : 0));
-            }
-        }
-        if (j == 0) {
-            next.resize(n);
-            for (size_t i = 0; i < n; ++i) {
-                next[i] = uint8_t(xj[i] & cin);
-            }
-        } else {
-            next = and_batch(xj, old, t, pos, ch, c);
-        }
-        for (size_t i = 0; i < n; ++i) {
-            if ((k[i] >> j) & 1) {
-                next[i] ^= uint8_t(xj[i] ^ old[i]);
-            }
-        }
-        r.carry.swap(next);
-    }
-    return r;
-}
-
-std::vector<uint64_t> convert(const Args &a, U128 M,
-                              const std::vector<Input> &in,
-                              const std::vector<Edabit> &eda,
-                              const std::vector<Dabit> &da,
-                              const std::vector<BitTriple> &t,
-                              PartyChannel &ch, Costs &c) {
-    size_t n = in.size();
-    int ell = bitlen(2 * M - 1);
-    c.conversions = n;
-    c.edabit_bits = n * size_t(ell);
-    c.dabits = n;
-    std::vector<U128> m(n), q(n), A(n);
-    for (size_t i = 0; i < n; ++i) {
-        m[i] = red(in[i].z + eda[i].arithmetic, ell);
-    }
-    ch.exchange_bytes(reinterpret_cast<uint8_t *>(m.data()),
-                      reinterpret_cast<uint8_t *>(q.data()), n * sizeof(U128));
-    for (size_t i = 0; i < n; ++i) {
-        A[i] = red(m[i] + q[i], ell);
-    }
-    c.logical += n * ell;
-    c.sent += n * ell;
-    c.recv += n * ell;
-
-    std::vector<uint8_t> nr(n * size_t(ell));
-    for (size_t i = 0; i < n; ++i) {
-        for (int j = 0; j < ell; ++j) {
-            nr[i * size_t(ell) + size_t(j)] =
-                uint8_t(eda[i].bits[size_t(j)] ^ (ch.is_p0() ? 1 : 0));
-        }
-    }
-    size_t pos = 0;
-    auto s = ripple(A, nr, 1, ell, true, t, pos, ch, c);
-    std::vector<U128> threshold(n, red(-M, ell));
-    auto w = ripple(threshold, s.sum, 0, ell, false, t, pos, ch, c);
-
-    std::vector<uint8_t> em(n), et(n);
-    for (size_t i = 0; i < n; ++i) {
-        em[i] = uint8_t((w.carry[i] ^ da[i].bit) & 1);
-    }
-    ch.exchange_bytes(em.data(), et.data(), n);
-    c.logical += n;
-    c.sent += n;
-    c.recv += n;
-    c.post += n;
-
-    std::vector<uint64_t> o(n);
-    U128 Mbw = red(M, a.bw);
-    for (size_t i = 0; i < n; ++i) {
-        uint8_t e = uint8_t((em[i] ^ et[i]) & 1);
-        U128 wa = e == 0 ? da[i].arithmetic
-                         : (ch.is_p0() ? sub(1, da[i].arithmetic, a.bw)
-                                       : sub(0, da[i].arithmetic, a.bw));
-        o[i] = red64(sub(in[i].z, red(Mbw * wa, a.bw), a.bw), a.bw);
-    }
-    if (pos != t.size()) {
-        std::fprintf(stderr, "triple consumption mismatch\n");
-        std::exit(2);
-    }
-    return o;
-}
 
 void put32(std::ostream &o, uint32_t x) {
     for (int i = 0; i < 4; ++i) {
@@ -569,15 +420,42 @@ bool read_file(const std::string &p, File &x) {
         return false;
     }
     if (x.party > 1 || (x.qbits != 64 && x.qbits != 128) || x.bw <= 2 ||
-        x.bw > 32 || x.trials == 0 || x.forced == 0 || x.inner == 0) {
+        x.bw > 32 || x.trials == 0 || x.trials > kMaxTrials ||
+        x.forced == 0 || x.forced > kMaxTrials || x.inner == 0 ||
+        x.inner > kMaxInner) {
+        return false;
+    }
+    const uint64_t max_value = (uint64_t(1) << x.bw) - 1;
+    if (x.bound > max_value ||
+        !layer_workload_admissible(int(x.qbits), int(x.bw), x.inner)) {
         return false;
     }
     const U128 M = x.qbits == 128 ? modulus128() : U128(P0);
-    if (x.ell != uint32_t(bitlen(2 * M - 1)) ||
-        n != uint64_t(2) * x.trials + x.forced + 4) {
+    // The maxima above make this closed form overflow-free. The independent
+    // cap ensures no serialized count can request more records than parse()
+    // could generate.
+    const uint64_t expected =
+        uint64_t(2) * uint64_t(x.trials) + uint64_t(x.forced) + 4;
+    if (x.ell != uint32_t(bitlen(2 * M - 1)) || n != expected ||
+        n > kMaxRecords) {
         return false;
     }
-    x.records.resize(n);
+    const std::streampos records_begin = f.tellg();
+    f.seekg(0, std::ios::end);
+    const std::streampos records_end = f.tellg();
+    if (records_begin == std::streampos(-1) ||
+        records_end == std::streampos(-1)) {
+        return false;
+    }
+    const std::streamoff remaining = records_end - records_begin;
+    if (remaining < 0 || uint64_t(remaining) != n * kRecordSize) {
+        return false;
+    }
+    f.seekg(records_begin);
+    if (!f) {
+        return false;
+    }
+    x.records.resize(size_t(n));
     for (auto &r : x.records) {
         int m = f.get();
         if (m < 0 || m > 3 || !get128(f, r.z) || !get64(f, r.r) ||
@@ -667,58 +545,135 @@ int check(const Args &a) {
 int party(const Args &a) {
     U128 M = a.qbits == 128 ? modulus128() : U128(P0);
     int ell = bitlen(2 * M - 1);
+    const std::string path =
+        a.prefix + "_p" + std::to_string(a.party) + ".convert";
+    const std::string temporary_path = path + ".tmp";
+    std::remove(path.c_str());
+    std::remove(temporary_path.c_str());
+
+
+    // Open only the two raw sockets first. Public work parameters must agree
+    // before base OTs, TEST-ONLY selftest correlations, production
+    // correlations, or output generation.
+    PartyChannel ch(a.party, a.host, a.port, /*defer_ot_setup=*/true);
+    const uint64_t channel_open_bytes = ch.bytes_sent();
+    const uint64_t channel_open_switches = ch.direction_switches();
+    const uint64_t ab = ch.bytes_sent();
+    const uint64_t as = ch.direction_switches();
+    const bool agreed = agree_public_parameters(ch, a);
     auto in = make_inputs(a, M);
-    size_t n = in.size();
-    PartyChannel ch(a.party, a.host, a.port);
+    const size_t n = in.size();
+    std::vector<U128> own_z(n);
+    for (size_t i = 0; i < n; ++i) {
+        own_z[i] = in[i].z;
+    }
+    ringlpn_2pc::SecureConvertParams params{
+        a.input_seed, a.qbits, a.bw, n};
+    const bool locally_valid =
+        ringlpn_2pc::validate_secure_convert_inputs(params, own_z);
+    const uint8_t mine_valid = locally_valid ? 1 : 0;
+    uint8_t peer_valid = 0;
+    ch.exchange_bytes(&mine_valid, &peer_valid, 1);
+    const bool inputs_valid = locally_valid && peer_valid == 1;
+    const uint64_t abytes = ch.bytes_sent() - ab;
+    const uint64_t asw = ch.direction_switches() - as;
+    if (!agreed || !inputs_valid) {
+        std::fprintf(stderr,
+                     "[two-party-convert] public-parameter or local-input "
+                     "validation mismatch; aborting before OT setup and "
+                     "output\n");
+        return 2;
+    }
+
+    ch.setup_ots();
+    const uint64_t setup_bytes =
+        channel_open_bytes + ch.setup_bytes_sent();
+    const uint64_t setup_switches =
+        channel_open_switches + ch.setup_direction_switches();
+
     PartyRandom rng;
-    bool self = correlation_selftest(ch, a.selftest, ell, a.bw, rng);
-    uint64_t base = ch.costs.base_ots;
+    const uint64_t sb = ch.bytes_sent();
+    const uint64_t ss = ch.direction_switches();
+    const auto st = std::chrono::steady_clock::now();
+    const bool self = correlation_selftest(ch, a.selftest, ell, a.bw, rng);
+    const double sus = std::chrono::duration<double, std::micro>(
+                           std::chrono::steady_clock::now() - st)
+                           .count();
+    const uint64_t sbytes = ch.bytes_sent() - sb;
+    const uint64_t ssw = ch.direction_switches() - ss;
+
+    // Production accounting deliberately excludes the TEST-ONLY selftest,
+    // whose complete transport and wall time remain reported above.
+    const uint64_t base = ch.costs.base_ots;
     ch.costs = ringlpn_2pc::Counters{};
     ch.costs.base_ots = base;
 
-    uint64_t cb = ch.bytes_sent();
-    uint64_t cs = ch.direction_switches();
-    auto ct = std::chrono::steady_clock::now();
-    auto eda = gen_edabits(ch, n, ell, rng);
-    auto da = gen_dabits(ch, n, a.bw, rng);
-    std::vector<BitTriple> t;
-    size_t tn = n * size_t(2 * ell - 2);
-    ringlpn_2pc::generate_bit_triples(ch, int(tn), rng, t);
-    double cus = std::chrono::duration<double, std::micro>(
-                     std::chrono::steady_clock::now() - ct)
-                     .count();
-    uint64_t cbytes = ch.bytes_sent() - cb;
-    uint64_t csw = ch.direction_switches() - cs;
+    ringlpn_2pc::SecureConvertCounters cost;
+    std::vector<uint64_t> out;
+    const bool converted = ringlpn_2pc::secure_convert_batch(
+        params, own_z, ch, rng, out, cost);
+    const uint64_t pbytes = cost.preflight_bytes_sent;
+    const uint64_t psw = cost.preflight_direction_switches;
+    const double cus = cost.correlation_microseconds;
+    const uint64_t cbytes = cost.correlation_bytes_sent;
+    const uint64_t csw = cost.correlation_direction_switches;
+    const double ous = cost.online_microseconds;
+    const uint64_t obytes = cost.online_bytes_sent;
+    const uint64_t osw = cost.online_direction_switches;
 
-    uint64_t ob = ch.bytes_sent();
-    uint64_t os = ch.direction_switches();
-    auto ot = std::chrono::steady_clock::now();
-    Costs cost;
-    auto out = convert(a, M, in, eda, da, t, ch, cost);
-    double ous = std::chrono::duration<double, std::micro>(
-                     std::chrono::steady_clock::now() - ot)
-                     .count();
-    uint64_t obytes = ch.bytes_sent() - ob;
-    uint64_t osw = ch.direction_switches() - os;
-
-    uint64_t et = n * size_t(2 * ell - 2);
-    uint64_t elog = n * size_t(5 * ell - 3);
-    uint64_t erev = n * size_t(10 * ell - 6);
-    uint64_t epost = n * size_t(2 * ell - 1);
-    uint64_t edot = n * size_t(ell + 1);
+    const uint64_t et = n * size_t(2 * ell - 2);
+    const uint64_t elog = n * size_t(5 * ell - 3);
+    const uint64_t erev = n * size_t(10 * ell - 6);
+    const uint64_t epost = n * size_t(2 * ell - 1);
+    const uint64_t edot = n * size_t(ell + 1);
     bool accounting =
         ch.costs.string_ots_128 == edot && ch.costs.triple_ots == 2 * et &&
         ch.costs.bit_triples == et && cost.conversions == n &&
         cost.edabit_bits == n * size_t(ell) && cost.dabits == n &&
-        cost.triples == et && cost.logical == elog &&
-        cost.meaningful_share_bits() == erev &&
-        cost.post == epost;
-    std::string path =
-        a.prefix + "_p" + std::to_string(a.party) + ".convert";
-    bool wrote = write_file(path, a, ell, in, out);
-    bool all = self && accounting && wrote;
+        cost.triples == et && cost.logical_opened_bits == elog &&
+        cost.meaningful_share_bits == erev &&
+        cost.post_mask_dependencies == epost;
+    const bool staged =
+        agreed && self && converted && accounting &&
+        write_file(temporary_path, a, ell, in, out);
+
+    const uint64_t fb = ch.bytes_sent();
+    const uint64_t fs = ch.direction_switches();
     ch.sync();
-    double d = double(n);
+    const uint8_t mine_publishable = staged ? 1 : 0;
+    uint8_t peer_publishable = 0;
+    ch.exchange_bytes(&mine_publishable, &peer_publishable, 1);
+    const bool may_rename = staged && peer_publishable == 1;
+    const bool locally_renamed =
+        may_rename &&
+        std::rename(temporary_path.c_str(), path.c_str()) == 0;
+    const uint8_t mine_renamed = locally_renamed ? 1 : 0;
+    uint8_t peer_renamed = 0;
+    ch.exchange_bytes(&mine_renamed, &peer_renamed, 1);
+    const uint64_t fbytes = ch.bytes_sent() - fb;
+    const uint64_t fsw = ch.direction_switches() - fs;
+    const bool wrote = locally_renamed && peer_renamed == 1;
+    if (!wrote) {
+        std::remove(temporary_path.c_str());
+        std::remove(path.c_str());
+    }
+
+
+    // "protocol" is agreement + selftest + conversion preflight +
+    // correlation + online + final synchronization/publication agreement.
+    // "transport" is setup + protocol; both sums are explicit and checked
+    // against the channel's monotonic counters.
+    const uint64_t protocol_bytes =
+        abytes + sbytes + pbytes + cbytes + obytes + fbytes;
+    const uint64_t protocol_switches =
+        asw + ssw + psw + csw + osw + fsw;
+    const uint64_t transport_bytes = setup_bytes + protocol_bytes;
+    const uint64_t transport_switches = setup_switches + protocol_switches;
+    accounting =
+        accounting && transport_bytes == ch.bytes_sent() &&
+        transport_switches == ch.direction_switches();
+    const bool all = agreed && self && converted && accounting && wrote;
+    const double d = double(n);
 
     if (a.header) {
         std::printf(
@@ -726,40 +681,74 @@ int party(const Args &a) {
             "and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,"
             "dabit_ots_per_conv,triple_ots_per_conv,"
             "logical_opened_bits_per_conv,meaningful_share_bits_per_conv,"
-            "post_mask_dependency_rounds_per_conv,base_ots,setup_bytes_sent,"
-            "setup_direction_switches,correlation_bytes_sent_batch,"
+            "post_mask_dependency_stages_per_conv,base_ots,setup_bytes_sent,"
+            "setup_direction_switches,agreement_bytes_sent_batch,"
+            "agreement_direction_switches_batch,selftest_bytes_sent_batch,"
+            "selftest_direction_switches_batch,preflight_bytes_sent_batch,"
+            "preflight_direction_switches_batch,correlation_bytes_sent_batch,"
             "correlation_direction_switches_batch,online_bytes_sent_batch,"
-            "online_direction_switches_batch,protocol_bytes_sent_batch,"
-            "protocol_direction_switches_batch,correlation_us_batch,"
-            "online_us_batch,correlation_selftest,transcript_accounting,status\n");
+            "online_direction_switches_batch,final_sync_bytes_sent_batch,"
+            "final_sync_direction_switches_batch,protocol_bytes_sent_batch,"
+            "protocol_direction_switches_batch,transport_bytes_sent_batch,"
+            "transport_direction_switches_batch,selftest_us_batch,"
+            "correlation_us_batch,online_us_batch,public_parameter_agreement,"
+            "correlation_selftest,transcript_accounting,status\n");
     }
     std::printf(
         "%d,%d,%d,%d,%d,%llu,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,"
-        "%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%.1f,%.1f,%s,%s,%s\n",
+        "%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,"
+        "%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,"
+        "%.1f,%.1f,%.1f,%s,%s,%s,%s\n",
         a.party, a.qbits, a.qbits == 128 ? 124 : 62, a.bw, ell,
         (unsigned long long)n, cost.triples / d, cost.edabit_bits / d,
         cost.dabits / d, ch.costs.string_ots_128 / d,
-        ch.costs.triple_ots / d, cost.logical / d,
-        cost.meaningful_share_bits() / d,
-        cost.post / d, (unsigned long long)ch.costs.base_ots,
-        (unsigned long long)ch.setup_bytes_sent(),
-        (unsigned long long)ch.setup_direction_switches(),
+        ch.costs.triple_ots / d, cost.logical_opened_bits / d,
+        cost.meaningful_share_bits / d, cost.post_mask_dependencies / d,
+        (unsigned long long)ch.costs.base_ots,
+        (unsigned long long)setup_bytes,
+        (unsigned long long)setup_switches,
+        (unsigned long long)abytes,
+        (unsigned long long)asw,
+        (unsigned long long)sbytes,
+        (unsigned long long)ssw,
+        (unsigned long long)pbytes,
+        (unsigned long long)psw,
         (unsigned long long)cbytes,
-        (unsigned long long)csw, (unsigned long long)obytes,
-        (unsigned long long)osw, (unsigned long long)(cbytes + obytes),
-        (unsigned long long)(csw + osw), cus, ous, self ? "pass" : "FAIL",
+        (unsigned long long)csw,
+        (unsigned long long)obytes,
+        (unsigned long long)osw,
+        (unsigned long long)fbytes,
+        (unsigned long long)fsw,
+        (unsigned long long)protocol_bytes,
+        (unsigned long long)protocol_switches,
+        (unsigned long long)transport_bytes,
+        (unsigned long long)transport_switches, sus, cus, ous,
+        agreed ? "pass" : "FAIL", self ? "pass" : "FAIL",
         accounting ? "pass" : "FAIL", all ? "pass" : "FAIL");
     std::fprintf(
         stderr,
-        "[two-party-convert] party %d q%d bw=%d n=%zu: setup %llu/%llu; "
-        "correlations %llu/%llu; online %llu/%llu; selftest %s accounting %s; "
-        "output %s\n",
+        "[two-party-convert] party %d q%d bw=%d n=%zu: "
+        "setup %llu/%llu; agreement %llu/%llu; selftest %llu/%llu; "
+        "preflight %llu/%llu; correlations %llu/%llu; online %llu/%llu; "
+        "final-sync %llu/%llu; transport %llu/%llu; selftest %s "
+        "accounting %s; output %s\n",
         a.party, a.qbits, a.bw, n,
-        (unsigned long long)ch.setup_bytes_sent(),
-        (unsigned long long)ch.setup_direction_switches(),
+        (unsigned long long)setup_bytes,
+        (unsigned long long)setup_switches,
+        (unsigned long long)abytes,
+        (unsigned long long)asw,
+        (unsigned long long)sbytes,
+        (unsigned long long)ssw,
+        (unsigned long long)pbytes,
+        (unsigned long long)psw,
         (unsigned long long)cbytes,
-        (unsigned long long)csw, (unsigned long long)obytes,
-        (unsigned long long)osw, self ? "pass" : "FAIL",
+        (unsigned long long)csw,
+        (unsigned long long)obytes,
+        (unsigned long long)osw,
+        (unsigned long long)fbytes,
+        (unsigned long long)fsw,
+        (unsigned long long)transport_bytes,
+        (unsigned long long)transport_switches, self ? "pass" : "FAIL",
         accounting ? "pass" : "FAIL", path.c_str());
     return all ? 0 : 1;
 }

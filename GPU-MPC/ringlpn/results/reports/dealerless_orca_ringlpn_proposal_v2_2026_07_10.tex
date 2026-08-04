@@ -1,4 +1,4 @@
-% Dealerless Orca Ring-LPN proposal, v2.4 (2026-08-03).
+% Dealerless Orca Ring-LPN proposal, v2.5 (2026-08-04).
 % Restructured per advisor feedback on the 2026-06-10 draft:
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
@@ -36,50 +36,47 @@
 \newcommand{\Q}{Q}   % composite CRT modulus Q = p_0 p_1 (renamed from M to avoid clashing with the layer dimension M)
 \newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
-\title{Removing the Trusted Dealer from Orca's Linear Layers:\\
-GPU-Accelerated Ring-LPN Preprocessing --- Status and Proposal (v2.4)}
+\title{Dealerless Forward-FC Preprocessing for Orca:\\
+GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.5)}
 \author{Alp}
-\date{2026-08-03 \quad (v2.4; live two-process DPF/conversion evidence,\\
-full-width GPU AES seed/tag separation, and corrected measurement semantics)}
+\date{2026-08-04 \quad (v2.5; live two-process composition and model-scale evidence)}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Orca performs two-party secure neural-network training and inference on GPUs,
-but its preprocessing model requires a \emph{trusted dealer}: a third party
-that generates all correlated randomness and could, if compromised, break the
-privacy of every past computation at once. This document (1)~describes Orca's
-current preprocessing architecture and the precise sense in which our existing
-pipeline --- which already produces Orca's linear-layer keys from real
-Ring-LPN correlation generators on GPUs, validated through Orca's unchanged
-online code --- is \emph{not yet} dealerless; (2)~motivates removing the dealer
-with GPU-accelerated pseudorandom correlation generators (PCGs), using
-measured evidence for where the cost actually lives; (3)~proposes a concrete
-design of five components (distributed key generation, PCG-sourced share
-conversion, coin-tossed randomness, two-process deployment, and a security
-parameter audit) and shows how they compose to remove every remaining trust
-gap for the linear layers; and (4)~specifies the experimental setup: platform,
-validation methodology, the measured baseline, and six milestone experiments,
-each with a mechanical pass/fail gate. The first design component now has a
-party-separated host \emph{protocol-logic and compatibility prototype} using
-ideal OT/triple/OLE functionalities and the unchanged evaluator's explicitly
-non-cryptographic correctness PRG. It functionally validates 2{,}432
-two-party-generated DPF key pairs across six configurations up to the
-production tree depth, covers two deterministic point/payload edges, rejects
-six invalid encodings, and independently corrupts each of the five serialized
-key-field classes (all controls fail evaluation as required). It also models
-the distinguishing power of a sign opening removed in v2.2
-(\S\ref{sec:m1proto}). This is evidence of executable correctness and
-primitive accounting, not computational privacy or 128-bit security. The S1
-contract now fixes the target ideal functionality, exact message transcript,
-allowed leakage, simulator obligations for either corrupted party, and
-unresolved proof lemmas; it does not upgrade that security claim.
-The subsequent S2 audit found unresolved parameter-reduction and
-novelty/provenance hard stops: no parameter set or protocol contribution is
-pinned, and this draft remains internal pending advisor decisions.
-All performance claims are anchored in regenerated CSV artifacts; measured
-numbers, derived numbers, and estimates are labelled as such throughout.
+Orca's GPU secure-inference/training system uses trusted-dealer preprocessing
+for its linear layers. We remove that dealer from one complete forward
+fully-connected (FC) preprocessing path: two independent processes sample
+party-local masks and sparse Ring-LPN noise, jointly sample the full public
+polynomial, generate standard distributed point-function keys over SCI/IKNP
+and Gilboa OLE, expand Figure-2 Ring-LPN OLEs on separate GPUs, convert exact
+CRT shares to $\mathbb Z_{2^{32}}$, and emit byte-compatible Orca keys.
+Neither live process reads peer-private state; an omniscient checker runs only
+after both exit and validates the keys through Orca's unchanged
+\texttt{gpuMatmulBeaver}.
+
+The proof contribution is explicit and scoped. A level-by-level coupling shows
+that distributed key generation emits exactly the standard DPF correction
+words conditioned on the two roots; role-specific simulators cover correlated
+batches and the three-OLE payload step without the previously leaked control
+sign. A separate simulator proves the exact share conversion private in the
+edaBit/daBit/Boolean-triple hybrid. Under standard DPF/PRG and OT/OLE security,
+authenticated channels, and decisional Ring-LPN for the exact sparse
+distribution, these pieces give a conditional static-semi-honest theorem for
+forward FC.
+
+At the exact ResNet18 classifier-layer shape $1{\times}512{\times}1000$, ten measured
+local-loopback trials all pass. Median preprocessing is 35.735\,s and sends
+608{,}860{,}824 application bytes, versus 10.813\,ms for matched stock
+trusted-dealer key generation; final payload size remains 4{,}108{,}096 bytes
+per party and the unchanged two-share online checker takes 1.099\,ms. This is
+a forward-FC preprocessing/checker measurement, not full-model inference or
+truncation; the negative comparison establishes feasibility and the
+optimization target, not a speedup. The exercised $(n,c,t)=(8192,2,8)$ setting is a correctness point:
+the primary-source audit found no reviewed concrete-security parameter pin.
+The paper therefore makes no 128-bit-security, WAN, malicious-security,
+training-layer, or full-dealerless-Orca claim.
 \end{abstract}
 
 \section{Problem overview: Orca's preprocessing and its trusted dealer}
@@ -157,61 +154,54 @@ and its output keys are validated by the strongest referee available: Orca's
 \emph{unchanged} online code reconstructs the correct products
 (\S\ref{sec:baseline} gives the measured evidence).
 
-\subsection{Why this is not yet dealerless}
+\subsection{Historical gaps and current boundary}
 \label{sec:gaps}
 
-``The pipeline runs with real generators'' is not the same claim as ``the
-dealer is gone.'' Five gaps remain; each is a precise, code-level statement,
-and the design in \S\ref{sec:design} addresses them one for one.
+The original one-process transcript had four dealer/security gaps. The live
+forward artifact closes the first three at the executable level; the fourth
+still blocks a deployable security claim. Nonlinear keys remain out of scope.
 
 \begin{description}
-\item[G1 --- Centralized SPFSS key generation.] The correlation generator
-  compresses each party's sparse noise into sums of distributed point
-  functions (SPFSS; \S\ref{sec:motivation-pcg}). In our engine the function
-  \texttt{build\_spfss\_keys()} currently reads \emph{both} parties' noise
-  vectors and writes both key halves --- it is a dealer in miniature, marked
-  as an oracle boundary in the source.
-\item[G2 --- Dealer-supplied conversion correlations.] The pipeline computes
-  over prime fields, Orca over $\modtwo$; the share conversion between them
-  (\S\ref{sec:design-convert}) consumes edaBits, daBits and AND triples that a
-  validated prototype currently takes from a labelled dealer block, and the
-  end-to-end transcript still calls an exact conversion oracle.
-\item[G3 --- Common-seed randomness.] Benchmarks derive \emph{both} parties'
-  randomness from one \texttt{mt19937\_64} seed. A party knowing the seed can
-  recompute the other party's secret noise outright, so this voids all
-  security independently of every other parameter.
-\item[G4 --- Unaudited security parameters.] The deployed noise parameters
-  ($c{=}2$, $t{=}8$) are \emph{correctness} parameters for exercising the
-  machinery. No concrete bit-security has been established, and our
-  fully-splitting primes place us in the \emph{splittable} Ring-LPN regime,
-  whose parameters must be derived independently (\S\ref{sec:design-params}).
-\item[G5 --- Scope: nonlinear layers.] ReLU and truncation keys come from the
-  same dealer via a different key type (DCF). They are explicitly out of
-  scope for this proposal; \S\ref{sec:threat} states why the same machinery
-  extends to them.
+\item[G1 --- Centralized SPFSS setup: closed in the live path.] Each process
+  samples only its own sparse noise, participates in distributed GPU-AES DPF
+  key generation, and expands only its own Ring-LPN share. The older
+  one-process transcript retains \texttt{build\_spfss\_keys()} solely as a
+  diagnostic/validation artifact; none of its timings are presented as live
+  protocol measurements.
+\item[G2 --- Exact share conversion: closed in the hybrid and live path.]
+  Batched SCI/IKNP-generated edaBits, daBits, and Boolean triples implement
+  exact $\Z_Q\to\Z_{2^\bw}$ conversion. The wrap bit is never opened; the
+  simulator in \S\ref{sec:design-convert} proves privacy at the correlation
+  boundary. The current TCP transport is unauthenticated.
+\item[G3 --- Randomness separation: closed in the live path.] Private roots,
+  masks, and noise come from each process's OpenSSL private DRBG. For every
+  Ring-OLE correlation, the parties exchange full uniform field-coefficient
+  shares whose sum is an exact uniform public polynomial; a short revealed PRG
+  seed is not substituted for this distribution.
+\item[G4 --- Security parameters: open.] The deployed $(c,t)=(2,8)$ values are
+  feasibility parameters. The exact splittable Ring-LPN distribution and the
+  two-CRT-limb composition have no reviewed concrete classical/quantum
+  advantage bound or accepted parameter pin.
+\item[G5 --- Scope.] Stateful training transitions and nonlinear DCF keys are
+  not implemented by this artifact. The proved/exercised scope is one forward
+  FC matmul; ``dealerless Orca'' without that qualifier is false.
 \end{description}
 
-\paragraph{Contributions of this document.}
-(1)~A gap analysis (G1--G5) separating what is verified from what is trusted;
-(2)~a design of five components (D1--D5) that remove G1--G4, with the explicit
-composition argument in Table~\ref{tab:composition};
-(3)~a \emph{working host protocol-logic prototype of D1}, the distributed
-key-generation component: the two-party protocol implemented party-separated
-and functionally validated on 2{,}432 key pairs by the unchanged existing
-evaluator, using ideal transport functionalities and a non-cryptographic
-correctness PRG, with all primitive consumption measured
-(\S\ref{sec:m1proto});
-(4)~a re-derived, tree-accurate cost model for distributed key generation,
-including a bootstrap self-sustainability condition ($3c^2t^2 < n$) that
-couples the security audit to the key-generation design;
-(5)~an experimental plan of six milestone experiments with mechanical
-pass/fail gates, continuing the artifact discipline under which every number
-in this document was produced.
-These are document, artifact, and systems-design contributions. The S2 audit
-does not identify the per-point DPF protocol as new: BCG+20 already invokes
-distributed DPF setup, and newer DMPF work directly targets the same PCG
-bottleneck (\S\ref{sec:related}). The publication contribution boundary is
-therefore pending advisor review.
+\paragraph{Contributions.}
+(1)~A live, dealer/oracle-free two-process forward-FC preprocessing artifact
+whose party-local outputs are consumed by unchanged Orca code;
+(2)~an exact algebraic coupling of distributed DPF correction words to
+standard generation, plus complete role-specific batch simulators;
+(3)~a hybrid-model privacy proof and live realization of exact
+$\Z_Q\to\Z_{2^\bw}$ conversion;
+(4)~a source-to-transcript map and conditional forward-FC theorem with explicit
+leakage, assumptions, and nonclaims;
+(5)~a reproducible exact-ResNet18-classifier evaluation with ten trials and a
+matched stock trusted-dealer baseline.
+The point-DPF and Ring-LPN generator primitives are prior work, not claimed as
+novel. The systems result is currently a feasibility result: its $3286\times$
+median preprocessing/dealer ratio and unpinned Ring-LPN parameters are
+publication risks, not details hidden behind optimistic language.
 
 \section{Motivation: why dealerless, and why on GPUs}
 \label{sec:motivation}
@@ -331,17 +321,17 @@ $\lambda$ & target symmetric parameter $128$; GPU expansion now uses full
 \end{tabular}
 \end{table}
 
-\section{Proposed design: a fully dealerless linear-layer pipeline on GPUs}
+\section{Live dealerless forward-FC design on GPUs}
 \label{sec:design}
 
 \subsection{Design overview and principles}
 \label{sec:design-overview}
 
-Figure~\ref{fig:pipeline} shows the complete pipeline. Stages drawn solid are
-implemented and gate-verified today; the two dashed stages are the oracle
-boundaries G1 and G2, and the design components D1--D5 below replace them and
-close G3--G4. Three principles carry over from how the existing artifact was
-built:
+Figure~\ref{fig:pipeline} shows the composed live forward path. Every stage is
+implemented and gate-verified for the stated feasibility configurations.
+Components D1--D4 close the earlier centralized-keygen, conversion, randomness,
+and process-separation boundaries for this scope; D5 remains open. Three
+principles govern the artifact:
 
 \begin{enumerate}
 \item \textbf{The online path is untouchable.} Keys are written
@@ -370,15 +360,15 @@ built:
   tag/.style={font=\scriptsize\itshape, text=black!60, anchor=west},
   arr/.style={-{Stealth[length=1.8mm]}, black!70}
 ]
-\node[int] (coin) {\textbf{D3\ \ coin-tossed seed setup} --- commit--open; per-party AES-CTR streams};
+\node[int] (coin) {\textbf{D3\ \ exact public-$a$ coin} --- exchange/add full uniform field vectors; private state from per-party DRBG};
 \node[loc, below=of coin] (noise) {local sparse-noise sampling: $c$ polynomials, $t$ nonzeros per party};
-\node[ora, below=of noise] (kg) {\textbf{D1\ \ distributed SPFSS key generation} --- OT tree-walk, 14 level-synchronous batches\\ \textcolor{red!70!black}{today: oracle O1 = \texttt{build\_spfss\_keys()} sees both parties' noise (gap G1)}};
-\node[loc, below=of kg] (exp) {silent expansion (GPU): SPFSS full-domain eval $+$ cached-NTT polynomial arithmetic\\ $\Rightarrow$ ring OLE\quad $z_0+z_1 = x_0x_1$ in $\Ring_p$, per limb};
+\node[int, below=of noise] (kg) {\textbf{D1\ \ distributed SPFSS key generation} --- SCI/IKNP/Gilboa tree walk, level-synchronous batches\\ standard-format full-width GPU-AES keys; exact correction-word coupling};
+\node[loc, below=of kg] (exp) {party-local GPU expansion: SPFSS full-domain eval $+$ cached-NTT polynomial arithmetic\\ $\Rightarrow$ ring OLE\quad $z_0+z_1 = x_0x_1$ in $\Ring_p$, per limb};
 \node[loc, below=of exp] (slot) {slot decomposition: forward NTT (a ring isomorphism) $\Rightarrow$ up to $n$ scalar OLEs per ring OLE};
-\node[int, below=of slot] (der) {derandomization: open $d = a - X_0[s]$,\ $e = b - X_1[s]$ per cross term (the only per-layer traffic)};
+\node[int, below=of slot] (der) {derandomization: exchange $d = a - X_0[s]$,\ $e = b - X_1[s]$ per cross term};
 \node[loc, below=of der] (crt) {CRT/Garner lift to $\Z_\Q$ --- linear, each party lifts locally ($L{=}2$ only)};
-\node[ora, below=of crt] (conv) {\textbf{D2\ \ secure share conversion} $\Z_\Q \to \modtwo$ --- PCG-sourced edaBits/daBits/AND triples\\ \textcolor{red!70!black}{today: oracle O2 = exact carry oracle in the transcript; prototype consumes dealer-labelled correlations (gap G2)}};
-\node[loc, below=of conv] (wr) {byte-compatible Orca key write (\texttt{ORCA\_RINGLPN\_FC\_KEYS})};
+\node[int, below=of crt] (conv) {\textbf{D2\ \ exact secure share conversion} $\Z_\Q \to \modtwo$\\ live edaBit/daBit/Boolean-triple protocol over SCI/IKNP; hybrid privacy lemma};
+\node[loc, below=of conv] (wr) {transactional party-local byte-compatible Orca key record};
 \node[fin, below=of wr] (onl) {\textbf{unchanged Orca online path} (\texttt{gpuMatmulBeaver}) --- consumer \emph{and} independent validation oracle};
 \foreach \a/\b in {coin/noise, noise/kg, kg/exp, exp/slot, slot/der, der/crt, crt/conv, conv/wr, wr/onl}
   \draw[arr] (\a) -- (\b);
@@ -392,40 +382,40 @@ built:
 \node[tag, right=2mm of conv.east] {interactive};
 \node[tag, right=2mm of wr.east] {local};
 \end{tikzpicture}
-\caption{The proposed dealerless pipeline for one party (both parties run it
-symmetrically; D4 deploys them as two processes over TCP). Solid boxes are
-implemented and gate-verified today; dashed red boxes are the two oracle
-boundaries (gaps G1, G2) that components D1 and D2 replace. Blue-framed
-stages interact over the network; all others are local, and the heavy ones
-run on the GPU.}
+\caption{The live forward-FC pipeline; both parties run it as independent
+processes on distinct GPUs. Blue-framed stages exchange messages over TCP;
+all other stages are party-local, and Ring-LPN expansion runs on the GPU.
+The unchanged online consumer runs only in the post-exit checker for this
+artifact. The transport is loopback and unauthenticated.}
 \label{fig:pipeline}
 \end{figure}
 
 \subsection{Setting and threat model}
 \label{sec:threat}
 
-Two computationally bounded parties; \textbf{semi-honest} (honest-but-curious)
-adversary corrupting one of them. Assumptions: AES as PRG/PRF
-($\lambda{=}128$); security of the OT-extension machinery
-(Ferret-class~\cite{yang2020ferret}); hash-based commitments for coin tossing;
-and the \emph{splittable} Ring-LPN assumption
-(\S\ref{sec:design-params}). Out of scope, stated as claims discipline rather
-than fine print: \textbf{malicious security} (consistency checks over OT
-inputs and openings are known techniques and future work), and
-\textbf{nonlinear layers} (their DCF keys are a second dealer axis; the D1
-tree-walk machinery extends to them --- larger trees, different payload
-groups, identical level-synchronous OT pattern --- as the natural follow-on
-project). ``Dealerless Orca'' without the linear-layer qualifier is not
-claimable at any milestone in this document.
+Two computationally bounded parties; \textbf{static semi-honest}
+(honest-but-curious) corruption of one party. The conditional theorem assumes
+authenticated point-to-point channels, AES as a PRG/PRF
+($\lambda{=}128$), standard semi-honest security of IKNP OT/Gilboa OLE and
+BGI DPF, and decisional splittable Ring-LPN for the exact selected sparse-noise
+distribution (\S\ref{sec:design-params}). The live artifact instantiates
+AES/IKNP/Gilboa but communicates over unauthenticated loopback, so it is
+implementation/correctness evidence for the theorem rather than a secure
+network deployment.
 
-\paragraph{Target model versus current D1 evidence.} The assumptions above
-describe the \emph{target} pipeline: AES and real silent-OT/OLE transports.
-The host artifact of \S\ref{sec:m1proto} instead uses counted ideal
-OT/triple/OLE interfaces and the unchanged evaluator's splitmix64-based PRG,
-which its source explicitly labels as non-cryptographic and correctness-only.
-Accordingly, that artifact establishes protocol-logic compatibility, edge
-correctness, and primitive counts; it does not establish computational
-privacy or 128-bit security.
+Out of scope: malicious security, external packet attackers, timing and
+microarchitectural side channels, stateful training transitions, and nonlinear
+DCF keys. ``Dealerless Orca'' without the forward-linear/FC qualifier is not
+claimable.
+
+\paragraph{Current evidence boundary.} The host artifact of
+\S\ref{sec:m1proto} remains a counted ideal-functionality prototype using the
+noncryptographic splitmix64 correctness PRG.
+The live path separately uses full-width GPU AES and real SCI/IKNP/Gilboa
+transports, exact public-polynomial sampling, and separate process/GPU state.
+Its proof is conditional on the unpinned Ring-LPN assumption, and its TCP
+channel lacks authentication; therefore neither
+artifact establishes an end-to-end 128-bit-security claim.
 
 \subsection{D1: Distributed SPFSS key generation (removes G1)}
 \label{sec:design-keygen}
@@ -489,12 +479,13 @@ regression reconstructs the removed sign only in the omniscient harness and
 confirms that it selects a proper leaf-control-bit class containing the true
 point; this is a regression model of the old leak, not a privacy proof.
 
-A separate real-transport path runs the same protocol as two OS processes over
-SCI/IKNP and Gilboa OLE: 369/369 host-reference keys pass the unchanged
-evaluator; 88 full-width-AES keys pass batched and per-tree GPU evaluation.
-The run reports bytes and direction switches, not network rounds. This closes
-component correctness/transport obligations, not DPF distribution or
-single-key privacy.
+A real-transport path runs the same protocol as two OS processes over SCI/IKNP
+and Gilboa OLE: 369/369 host-reference keys pass the unchanged evaluator;
+88 full-width-AES keys pass batched and per-tree GPU evaluation. The exact
+coupling lemma below proves that its correction words equal conditioned
+standard DPF generation, so functional equality is no longer substituted for
+distribution equality. Single-key privacy still invokes the standard DPF/PRG
+theorem; this component result does not establish Ring-LPN security.
 
 \subsection{S1 security contract for D1 and FC composition}
 \label{sec:s1contract}
@@ -539,12 +530,11 @@ $(W,V_W,dW)\mapsto(W',V_W')$ and
 $(Y_{\rm bias},V_Y,dY)\mapsto(Y_{\rm bias}',V_Y')$.
 Current Orca initializes $W,Y_{\rm bias},V_W,V_Y$ to zero; $X$ comes from the
 preceding truncated output. These persistent operand/state masks are neither
-resampled nor assumed independent per invocation. Freshness applies instead
-to every OT/DPF/OLE/conversion correlation. S7 implements this complete
-forward/bias/truncation/$dW$/$dX$/bias-gradient/dual-optimizer handle and
-serialization transition before S8 composes its proof; S9 scales and measures
-that state machine. The present artifact exercises only a forward-shaped
-matmul.
+resampled nor assumed independent per invocation. Every OT/DPF/OLE/conversion
+correlation remains fresh even when a public mask handle is reused.
+The live artifact implements and checks one complete forward FC matmul.
+Bias/truncation, backward $dW/dX$, bias-gradient, and optimizer state
+transitions require a new stateful extension before any training-layer claim.
 
 All ideal calls carry
 $(\mathit{sid},\mathit{invocation},\mathit{tree/slot},\mathit{phase},
@@ -554,18 +544,19 @@ $(a,b,c=a\wedge b)$; the Beaver openings remain real protocol messages.
 $\mathcal F_{\mathrm{OT}}^{128}$ reveals only the selected sender string, and
 $\mathcal F_{\mathrm{OLE}}^p$ samples $g_0$ uniformly and sets
 $g_1=x_0x_1-g_0$. The composition additionally uses
-$\mathcal F_{\mathrm{COIN}}$ for one uniform public seed,
-$\mathcal F_{\mathrm{RINGOLE}}$ for private shares
-$(X_b,Z_b)$ with $Z_0+Z_1=X_0X_1$ in the public ring, and
-$\mathcal F_{\mathrm{CONV}}$. For canonical $z_b\in[0,Q)$, the last
-functionality computes
+$\mathcal F_{\mathrm{COIN}}^p$: each party sends a canonical uniform
+$c n$-coefficient field vector and their componentwise sum is the exact
+uniform public Ring-LPN polynomial. $\mathcal F_{\mathrm{RINGOLE}}$ returns
+private shares $(X_b,Z_b)$ with $Z_0+Z_1=X_0X_1$ in the public ring, and
+$\mathcal F_{\mathrm{CONV}}$ handles canonical CRT shares. For canonical
+$z_b\in[0,Q)$, this functionality computes
 \[
  S=z_0+z_1,\quad \mathit{wrap}=[S\ge Q],\quad
  v=S-\mathit{wrap}\,Q,
 \]
 then returns uniform additive shares of $v\bmod 2^\bw$ and never opens
-$\mathit{wrap}$. The standalone artifact now realizes these interfaces with
-SCI/IKNP OT; integration into the flagship FC transcript remains open.
+$\mathit{wrap}$. The live composition realizes these interfaces over
+SCI/IKNP and validates its finalized keys only after both party processes exit.
 
 For canonical additive shares,
 $a_0+a_1<2^{\bw+1}$ and $b_0+b_1<2^{\bw+1}$, so a length-$K$
@@ -575,19 +566,19 @@ $2^\bw$ then gives the intended mask product before any reduction modulo $Q$.
 This rules out q62/bw32 entirely, caps q62/bw24 at
 $K\leq2^{12}-1$, and is checked before masks are read; q62/bw32
 inadmissibility is independently exercised by the executable negative
-control in \texttt{test\_orca\_zp\_bridge}. The current
-\texttt{buildCShare} instead tests the clear, secret-mask-dependent
-\texttt{dot >= Q}; that is a centralized oracle and a forbidden
-value-dependent abort, not target behavior. The deployed Ring-LPN GPU
-expansion now uses four domain-separated AES calls per node: plaintexts 0 and
-2 produce full 128-bit child seeds, while plaintexts 1 and 3 produce separate
-control bits. Host/device parity and 88 two-process GPU-evaluated keys are
-gated. The centralized benchmark kernel still derives every root
-deterministically from one 64-bit \texttt{seed\_base}; it is not a security
-realization. The two-party path uses OpenSSL-private-DRBG roots, but the joint
-key-distribution proof, CSPRNG state/composition audit, and single-key privacy
-reduction remain open. This draft therefore makes no end-to-end 128-bit
-DPF-security claim.
+control in \texttt{test\_orca\_zp\_bridge}; the live FC path enforces the same
+public bound before private-mask sampling and never performs a clear
+value-dependent test. The deployed Ring-LPN GPU expansion uses four
+domain-separated AES calls per node: plaintexts 0 and 2 produce full 128-bit
+child seeds, while plaintexts 1 and 3 produce separate control bits.
+Host/device parity and 88 two-process GPU-evaluated keys are gated. The
+centralized benchmark kernel still derives roots from one 64-bit
+\texttt{seed\_base} and is not security evidence. The live path instead uses
+OpenSSL-private-DRBG roots/noise/masks and exchanges full uniform field vectors
+for the public Ring-LPN polynomial. The exact key-distribution coupling and
+conversion simulator close the algebraic hybrid obligations used by the
+conditional forward theorem. Concrete Ring-LPN security parameters and an
+authenticated deployment remain open; no end-to-end 128-bit claim is made.
 
 \paragraph{Leakage and abort contract.}
 Common leakage consists of protocol/session and party-role identifiers; the
@@ -596,8 +587,8 @@ counts; public layer shapes, layouts, invocation kind, wire-handle topology,
 slot/access order, serialized field lengths, fixed message lengths and
 dependency schedule; common DPF correction words and
 $\mathit{finalCW}$; masked openings
-$\epsilon,\delta,d,e$ and the specified conversion openings; public
-coin-toss commitments/reveals and seed; and common accept/abort stage.
+$\epsilon,\delta,d,e$ and the specified conversion openings; the full public
+Ring-LPN polynomial shares exchanged and their sum; and common accept/abort stage.
 $P_b$ additionally sees only its own DPF inputs/root draw, retained mask
 shares, local frontier/noise/output-mask state, sender/receiver
 OT view, triple/OLE shares, authenticated messages, output DPF keys, and
@@ -644,13 +635,49 @@ $s_0+s_1$ is opened. Thus
 \end{aligned}
 \]
 
+\paragraph{Exact coupling to standard DPF generation.}
+After any fixed common-CW prefix, pair the parties' states at each tree prefix.
+The standard invariant gives equal seed/tag states off the path of $\alpha$
+and opposite tags at its prefix, so all off-path values cancel from the joint
+XOR aggregates. With $a=a_0\oplus a_1$ and
+$Z_b=S_b^{\mathrm L}\oplus S_b^{\mathrm R}$, substituting the two selected OT
+outputs into the opened seed-CW shares gives
+\[
+\mathit{sCW}=
+S_0^{\mathrm R}\oplus S_1^{\mathrm R}\oplus
+a(Z_0\oplus Z_1)
+=
+\begin{cases}
+S_0^{\mathrm R}\oplus S_1^{\mathrm R},&a=0,\\
+S_0^{\mathrm L}\oplus S_1^{\mathrm L},&a=1.
+\end{cases}
+\]
+This is exactly the standard losing-branch seed correction. The flag words are
+\[
+\mathit{tLCW}=T_0^{\mathrm L}\oplus T_1^{\mathrm L}\oplus a\oplus1,
+\qquad
+\mathit{tRCW}=T_0^{\mathrm R}\oplus T_1^{\mathrm R}\oplus a,
+\]
+so induction preserves the invariant and matches every standard correction
+word. At the leaves cancellation gives
+$A=A_0+A_1=\operatorname{convert}(s_{0,\alpha})-\operatorname{convert}(s_{1,\alpha})$ and
+$F=F_0+F_1=t_{0,\alpha}-t_{1,\alpha}\in\{+1,-1\}$. Phase C reconstructs
+\[
+\mathit{finalCW}=(\beta-A)F,
+\]
+which is $\beta-A$ for tags $(1,0)$ and $A-\beta$ for $(0,1)$, exactly the
+standard final correction. Thus, conditioned on the supplied roots, both
+output keys equal standard generation deterministically; independent uniform
+roots give the same joint distribution. This algebraic coupling is separate
+from the standard single-key privacy theorem and its PRG assumption.
+
 \paragraph{D1 batch-simulation lemma at the ideal boundary.}
 Fix either corrupt party, its complete arbitrarily correlated input/root
 vector, public order and identifiers, and its full ideal output-key vector.
 Condition each key on the same root supplied by that party. The following
 algorithms generate the complete hybrid view with the real conditional
-distribution. This lemma does not yet prove that the emitted pair has the
-standard DPF distribution or instantiate concrete PRG/transport security.
+distribution. The exact coupling above identifies those conditioned outputs
+with standard DPF generation; concrete PRG/transport security is separate.
 
 \emph{Corrupt $P_0$.}
 For each tree, take the root seed and common correction words from $K_0$ and
@@ -699,10 +726,12 @@ party's stream and retained state remain consistent.
 ID & Proof obligation & Current status\\
 \midrule
 P-CORR & Keys reconstruct $\beta[x=\alpha]$. & 2{,}432/2{,}432 executable passes\\
-P-DIST/P-KEY & Couple correction words to standard DPF generation conditioned
-on both roots; instantiate single-key privacy. & open for S3/S8\\
+P-DIST & Couple correction words to standard DPF generation conditioned on
+both roots. & exact algebraic coupling above\\
+P-KEY & One standard key hides point/payload. & standard DPF/PRG theorem;
+concrete reduction review open\\
 P-POS & Prove the exact uniform/regular Ring-LPN exponent distribution. &
-contract fixed; S2 audit open\\
+contract fixed; distribution/reduction audit open\\
 P-ADD & Simulate either ripple-adder view with explicit triple/opening
 equations. & closed in bit-triple hybrid\\
 P-LEVEL & Simulate both OT roles and CW shares conditioned on each full key. &
@@ -710,19 +739,44 @@ closed in OT hybrid\\
 P-PAYLOAD & Simulate the three-OLE view without the removed sign, including
 zero intermediates. & closed in OLE hybrid\\
 P-BATCH/P-FRESH & Preserve correlated tree inputs and reject correlation-ID
-reuse before output. & D1 lemma + executable control\\
-P-RNG/P-PCG & Realize the random-tape interface and prove Ring-LPN OLE at the
-pinned parameters. & open for S2/S3/S8\\
+reuse before output. & D1 lemma + live distinct-SID controls\\
+P-RNG/P-PCG & Realize private tapes/exact public $a$ and prove Ring-LPN OLE at
+the selected distribution. & RNG implemented; PCG reduction/parameters open\\
 P-CONV & Realize exact modulo-$Q$ conversion without revealing wrap. &
-correctness/count gate; S6 proof open\\
-P-TOPO/P-PROC & Match stateful mask reuse, serialized fields, and a two-process
-implementation. & contract fixed; S7/S9 open\\
+closed in the edaBit/daBit/triple hybrid; transport assumptions explicit\\
+P-TOPO/P-PROC & Match stateful reuse/serialization and two-process execution. &
+forward FC closed; training state and authenticated deployment open\\
 \bottomrule
 \end{tabular}
 \caption{S1 proof contract. Closed rows are hybrid-transcript lemmas only,
 not a computational-security claim; open rows are binding later-stage gates.}
 \label{tab:s1proof}
 \end{table}
+
+\paragraph{Conditional forward-FC theorem.}
+Let $\chi_{\mathrm U}$ sample exactly $t$ distinct positions without
+replacement and $\chi_{\mathrm R}$ sample one position in each of $t$ public
+equal buckets; in both cases coefficients are independent uniform elements of
+$\Z_p^*$. Assume decisional Ring-LPN for the exact selected distribution:
+for uniform $a_1,\ldots,a_c\in R=\Z_p[X]/(X^n+1)$ and
+$e_i\leftarrow\chi$, $(a_1,\ldots,a_c,\sum_i a_i e_i)$ is
+indistinguishable from replacing the final component by uniform $R$.
+Also assume the four-call AES expansion is a PRG, the standard BGI single-key
+theorem, semi-honest IKNP/Gilboa security, authenticated channels, and the
+BCG+20 Figure-2 reduction.
+
+Under those assumptions, the live forward protocol realizes the forward-matmul
+restriction of $\mathcal F_{\mathrm{FC}}$ with the leakage above. The simulator
+sets the honest full-polynomial coin share to the ideal public $a$ minus the
+corrupt share; applies the complete D1 simulator and exact standard-key
+coupling; replaces Figure-2 expansion by ideal ring OLE; samples each opposing
+derandomization opening under its fresh hidden OLE share; applies the exact
+conversion simulator; and adds the fresh uniform output-mask share before
+serializing $A_b\Vert B_b\Vert C_b$. Every replacement conditions on prior
+batch state and a unique domain separator. This theorem excludes the live
+unauthenticated TCP transport, malicious parties, and the unimplemented
+training-state transitions. The measured $(n,c,t)=(8192,2,8)$ point is a
+feasibility configuration with no concrete-security claim.
 
 \paragraph{Bootstrapping (and why it is not circular).} Key generation
 consumes three scalar OLEs per DPF tree; expansion produces $n$ slot OLEs per
@@ -775,7 +829,7 @@ domain.\footnote{The 2026-06-10 draft priced the regular-noise row per SPFSS
 instances at $t{=}8$; the counts below are per DPF \emph{tree}, matching
 \texttt{build\_spfss\_keys()}, and supersede it. Regular noise's decisive
 advantage is expansion time and key size (measured $14\times$ and
-$283{\to}233$\,kB at $t{=}64$), not OT volume.}
+$9.04{\to}5.53$\,MB at $t{=}64$), not OT volume.}
 
 \begin{table}[ht]
 \centering
@@ -833,10 +887,27 @@ and bit-width configurations: exact boundary sums
 $0,\Q-1,\Q,2\Q-2$, random inputs, forced wraps, and layer-shaped inner
 products, with zero mismatches and a corrupted-output control. The ripple
 circuit consumes $2(\ell-1)$ AND triples, $2\ell-1$ post-mask dependency
-rounds, $5\ell-3$ logical opened bits, and $10\ell-6$ meaningful share bits.
+stages, $5\ell-3$ logical opened bits, and $10\ell-6$ meaningful share bits.
 The last count excludes byte padding, framing, setup, and OT payloads; the
 artifact separately measures setup, correlation, and online bytes and
-direction switches. Neither counter is a network-round measurement.
+direction switches. Dependency stages are semantic depth, not measured
+network rounds.
+
+\paragraph{Semi-honest privacy at the correlation boundary.}
+$A$ is uniform because $R$ is uniform. Every ripple-AND opening is one-time
+padded by a fresh Boolean triple, and the B2A opening is $w\oplus d$ for a
+fresh uniform daBit $d$; hence these opened values are simulatable and reveal
+neither $S$ nor $w$. The output-share distribution also matches the ideal
+functionality: $\Q$ is odd, so multiplication by $\Q$ permutes
+$\Z_{2^\bw}$; a uniform arithmetic daBit share makes each
+$z_i-\Q w_i$ uniform subject to the required sum. Given an ideal local output,
+the simulator solves uniquely for that local daBit share using
+$\Q^{-1}\bmod2^\bw$, samples all local Boolean/edaBit/triple shares with their
+real marginals, chooses every masked opening uniformly, and completes only the
+honest transmitted shares. This closes P-CONV in the
+$(\mathcal F_{\mathrm{edaBit}},\mathcal F_{\mathrm{daBit}},
+\mathcal F_{\mathrm{BT}})$ hybrid. The concrete path remains conditional on
+SCI/IKNP's semi-honest OT security and an authenticated channel.
 
 \paragraph{What remains for production D2.} Two things. \emph{Sourcing:} AND triples come
 from a binary PCG (the $\Z_2$ instantiation of our own pipeline, or
@@ -846,9 +917,9 @@ standard construction~\cite{escudero2020edabits} ($O(\ell)$ AND triples each,
 one-time batch), daBits from the same batch. \emph{Depth:} the ripple
 comparator becomes a parallel-prefix (Rabbit-style~\cite{makri2021rabbit})
 comparison --- carries obey an associative generate/propagate rule, so all of
-them come out of a $O(\log\ell)$-depth tree. Rounds are what network latency
-multiplies; this swap is what makes the two-process deployment (D4) tolerable
-over real wires.
+them come out of a $O(\log\ell)$-depth tree. That depth bounds the eventual
+interactive schedule, but actual network rounds must be measured after the
+prefix circuit is implemented and batched.
 
 \begin{table}[ht]
 \centering
@@ -862,47 +933,49 @@ edaBit bits $=\ell$        & 63  & 125\\
 daBits                     & 1   & 1\\
 logical opened bits $=5\ell-3$ & 312 & 622\\
 meaningful share bits $=10\ell-6$ & 624 & 1{,}244\\
-post-mask dependency rounds, ripple $=2\ell{-}1$ & 125 & 249\\
-post-mask dependency rounds, prefix target & $\sim$7 & $\sim$8\\
+post-mask dependency stages, ripple $=2\ell{-}1$ & 125 & 249\\
+post-mask dependency stages, prefix target & $\sim$7 & $\sim$8\\
 \bottomrule
 \end{tabular}
-\caption{Validated two-process conversion cost per output
-(\texttt{secure\_convert\_two\_party\_2026\_08\_03.csv}) with executable
+\caption{Validated two-process conversion cost per output with executable
 transcript accounting, plus the prefix-comparator dependency-depth target.
 The earlier 375/747 column mixed the two shares of the masked-$A$ opening with
 logical AND/B2A openings; it was not a coherent metric. ``Meaningful share
-bits'' is the sum of protocol-defined share widths, not encoded traffic;
-measured byte and direction-switch columns are reported separately. Prefix
-comparison changes correlation counts and must report its own split.}
+bits'' is the sum of protocol-defined share widths, not encoded traffic.
+Measured byte and direction-switch columns are separate; a prefix comparator
+changes correlation counts and must report its own split.}
 \label{tab:convert}
 \end{table}
 
-\subsection{D3: Coin-tossed seeds and transcript hygiene (removes G3)}
+\subsection{D3: Exact public coins and private randomness (removes G3)}
 \label{sec:design-seeds}
 
-Replace every common \texttt{mt19937\_64} stream: \emph{shared, public}
-randomness (the $a_i$, slot assignments) is derived from seeds fixed by
-commit-then-open coin tossing over the existing \texttt{SigmaPeer} channel;
-\emph{private} randomness comes from per-party AES-CTR streams; every derived
-stream is domain-separated by the (layer, epoch, direction, limb) tuple
-already used by \texttt{mixSeed}. This is bookkeeping, not research --- but it
-is a hard precondition for any security claim, because a party that knows the
-common seed can recompute the other party's sparse noise and simply read the
-``hidden'' correlations off (zero bits of security regardless of $(n,c,t)$).
+The live protocol uses two distinct randomness classes. Private DPF roots,
+masks, and sparse noise are drawn from each process's OpenSSL private DRBG.
+For the Ring-LPN public polynomial $a$, each party samples a full canonical
+uniform coefficient vector and exchanges it; componentwise addition modulo
+$p$ is exactly uniform if either contribution is uniform. This costs real
+traffic, but preserves the required distribution. Revealing one short PRG seed
+would instead restrict $a$ to the PRG image and is not substituted without a
+separate reduction. Session ID, direction, batch, and CRT limb domain-separate
+all invocations.
 
-\subsection{D4: Two-process deployment (turns the transcript into a protocol)}
+\subsection{D4: Two-process deployment (realized for forward FC)}
 \label{sec:design-deploy}
 
-Today's artifacts separate the parties logically within one process. D4
-promotes them to two OS processes on two GPUs over the existing
-\texttt{SigmaPeer} TCP layer (the same one Orca's two-party FC test uses).
-The wire traffic is fully enumerable, which is the point: the derandomization
-openings ($2\cdot 2\cdot MKN\cdot L$ field words per layer --- measured as
-\texttt{opened\_words}, e.g.\ $32{,}768$ words $\approx 256$\,kB for the
-full-capacity $16{\times}32{\times}16$ layer at q64), the per-level OT
-messages of D1, and the conversion openings of D2 ($MN$ outputs
-$\times$ Table~\ref{tab:convert}; note a layer has $MKN$ cross terms but only
-$MN$ outputs, so conversion amortizes to $1/K$ of the cross-term work).
+The composed artifact runs the parties as two OS processes on distinct GPUs
+over two SCI-style TCP channels. Each reads only its own sampled noise and
+emits only its own key record. The post-exit checker reads both records,
+reconstructs the clear masks only for validation, and invokes unchanged
+\texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver}. The runner rejects
+mismatched preflight manifests, stale output, malformed or swapped records,
+and unilateral publication, and removes raw party records after validation.
+
+Measured application traffic includes DPF OT/OLE setup, full public-polynomial
+exchange, cross-term derandomization openings, conversion correlation and
+online messages, and final synchronization. It excludes TCP/IP framing and
+base-OT setup. The current runner uses local loopback and the transport is not
+authenticated.
 
 \subsection{D5: Security parameter audit (removes G4)}
 \label{sec:design-params}
@@ -917,52 +990,65 @@ sparse low-degree factors. This is the BCG+20 reducible-ring setting, not
 directly the quasi-abelian group-algebra setting of
 Bombar et al.~\cite{bombar2023quasiabelian}.
 
-Parameter names matter: BCG+20's total weight is $w=ct$, so its 128-bit
-Table-1 row $(c,w)=(4,64)$ maps to this implementation's per-polynomial
-$t=16$, not $t=64$. We reran every sparse-factor projection over both exact
-deployed primes with the accepted EUROCRYPT 2024 estimator of Liu et
-al.~\cite{liu2024hardness}. For the degree-128 projection reported by BCG+20,
-the mapped instance is $(N,k,t)=(512,384,60)$ and the regular-noise attack
-estimate is 145.85 bits on either limb. This is \emph{not yet} a Ring-LPN
-security claim. The paper's literal usefulness test selects the smallest $i$
-with $w_i\le(c-1)2^i$; here it selects $i=4$ ($47.0967\le48$), while its
-Table~1 reports $i=7$. The separate PCG script replaces that inconsistency
-with a fitted constant that reproduces the table, not a theorem. The dependent
-projected-noise distribution also needs a proved mapping, tail/rounding bound,
-and advantage loss to the estimator's exact/regular input model. Treating every
-raw projection as useful exposes estimates below 128 bits.
+Parameter names matter: BCG+20's total weight is $w=ct$, so its Table-1 row
+$(c,w)=(4,64)$ maps to this implementation's per-polynomial $t=16$, not
+$t=64$. The corrected full version does not provide one reproducible
+projection rule: Section~8.2 derives
+$c d(1-(1-1/d)^t)$, whereas Section~9.1 uses
+$w-cd+(c(d-1)+w)(1-1/d)^{t-1}$; its literal smallest-factor test selects
+degree 16 for this row, while Table~1 reports degree 128.
 
-Therefore D5 has not pinned $n,c,t,p_0,p_1$. The preliminary engineering
-candidate uses $n=2^{14}$, $c=4$, $t=16$, and the current $p_0,p_1$. It
-satisfies the per-point bootstrap count
-$3c^2t^2=12{,}288<n=16{,}384$ and passed the q64/q128 GPU validator, but it is
-feasibility evidence only. The 2026 fully distributed DMPF prior
-art~\cite{agarwal2026dmpf} changes that setup count, so architecture and
-parameters must be reviewed together. The dated S2 audit in the results index
-records exact transcripts, provenance findings, and the open proof steps.
-M1/M3 performance work remains blocked until advisor and cryptographic review
-select the protocol route and close these reductions.
+A source audit also invalidated several preliminary estimator outputs. The
+accepted EUROCRYPT 2024 aggregate calls attack formulas containing
+$\binom{N-k}{t'}$ and $\binom{N-k-1}{t'}$, so a projected tuple must at least
+satisfy $t'\le N-k-1=d-1$. The artifact silently evaluates out-of-range
+combinations. Thus the recorded 57.293-bit $(c,t,d)=(4,16,16)$, 218.641-bit
+$(4,64,64)$, and 257.023-bit $(4,34,64)$ values are invalid function calls,
+not attack costs. Mechanically defined rows include 135.12 bits at
+$(4,16,64)$, BCG's degree-128 row at 145.85 bits, and 190.53 bits at
+$(2,128,256)$, but these remain hypothetical finite-field regular-noise model
+outputs rather than Ring-LPN security estimates.
 
-\subsection{How the components compose to ``dealerless''}
+Sparse-factor reduction creates dependent noise summarized only by an expected
+weight. Neither source proves its mapping to the estimator's global exact or
+regular distribution, a lower-tail and rounding bound, coefficient-cancellation
+loss, applicability to the structured projected code, or the distinguishing-
+advantage composition over both CRT limbs and the PCG hybrids. Therefore D5
+has not pinned $n,c,t,p_0,p_1$, and this proposal makes no 128-bit classical or
+quantum claim. All dated conservative-pin CSVs are historical failed-rule
+transcripts. The measured $n=2^{17},c=4,t=34$ implementation NO-GO remains
+valid independently: regular noise requires $t\mid n$, and the uniform layout
+would materialize 7,272,923,136 host slots (at least 123.6\,GB in one process).
+No replacement parameter is pinned.
+
+\subsection{Composition status}
 \label{sec:design-composition}
 \begin{table}[ht]
 \centering
 \small
-\begin{tabular}{lll>{\raggedright\arraybackslash}p{4.6cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{5.3cm}>{\raggedright\arraybackslash}p{2.7cm}}
 \toprule
-gap & removed by & verified at (gate) & claim unlocked\\
+boundary & status & executable/proof evidence & consequence\\
 \midrule
-G1 centralized keygen & D1 & M1, M2 & \emph{after M2:} keys from a two-party protocol whose only idealized part is the conversion\\
-G2 conversion correlations & D2 & M3 & conversion protocol-backed end-to-end\\
-G3 common-seed RNG & D3 & M4 (audited in review) & transcript-hygiene preconditions met\\
-(process/state separation) & D4 & M4 & two-process stateful implementation transcript complete; scoped security claim waits for S8 review\\
-G4 unaudited parameters & D5 & M5/S2 & pinned concrete-security claim; required before M1/M3 performance work\\
-G5 nonlinear layers & out of scope & --- & never claimed here; D1 machinery extends (future work)\\
+G1 centralized keygen & closed for forward FC & live distributed GPU-AES DPF
+keys in six cases and the model run; exact correction-word coupling &
+no dealer/oracle in DPF setup\\
+G2 share conversion & closed in hybrid & live SCI/IKNP conversion plus exact
+simulator; wrap remains hidden & conditional semi-honest privacy\\
+G3 shared/private RNG & closed for live artifact & per-party OpenSSL DRBG and
+full uniform public-polynomial share exchange & exact required distribution\\
+process/state separation & closed for live artifact & distinct processes,
+GPUs, input files, output records; post-exit checker & composition is
+executable\\
+G4 concrete parameters & \textbf{open} & source audit rejects prior pins; no
+reviewed replacement & no security-level claim\\
+G5 nonlinear/training & out of scope & one forward FC matmul only & no full
+Orca/training claim\\
 \bottomrule
 \end{tabular}
-\caption{Composition of the design: every gap of \S\ref{sec:gaps} maps to a
-component and to the milestone experiment (\S\ref{sec:milestones}) whose
-mechanical gate verifies its removal.}
+\caption{Current composition status. ``Closed'' is scoped to the stated live
+forward artifact; deployment still requires authenticated transport and a
+reviewed Ring-LPN parameter pin.}
 \label{tab:composition}
 \end{table}
 
@@ -994,11 +1080,13 @@ production epoch total remains an S2 gate.
 \label{sec:platform}
 
 All measurements in this document were produced on one host: $4\times$ NVIDIA
-RTX 5000 Ada (compute capability 8.9), CUDA 12.6, Linux. Builds run either on
-the host (\texttt{nvcc} on \texttt{PATH}) or in the project's
-\texttt{orca-dev} container; two-party tests run as two processes pinned to
-distinct GPUs via \texttt{CUDA\_VISIBLE\_DEVICES}, communicating over TCP
-loopback through Orca's \texttt{SigmaPeer} layer. The GPU NTT backend is a
+RTX 5000 Ada (32{,}760\,MiB each, compute capability 8.9; driver 560.35.03),
+CUDA 12.6, Linux 6.8, and a 32-core CPU allocation. Builds run on the host.
+Two-party tests run as separate processes pinned to distinct GPUs through
+\texttt{CUDA\_VISIBLE\_DEVICES}; current traffic uses a single-host IPv4
+loopback \texttt{PartyChannel}/SCI \texttt{NetIO} path. The live transport is
+not authenticated and the application-byte counter excludes TCP/IP and
+base-OT setup. The GPU NTT backend is a
 cheddar-derived merged-stage kernel family (signed Montgomery arithmetic;
 q32/q64/q128-CRT; negacyclic) with the Hadamard product adaptively fused into
 the inverse-NTT load and forward NTTs of fixed public vectors cached across
@@ -1016,24 +1104,25 @@ reconstructing the correct product. (2)~\emph{Party-separation discipline}:
 transcript artifacts compute each party's view in separated state; any read
 across the boundary is an explicitly named oracle. (3)~\emph{Mechanical
 gates}: every artifact ships source + build script + run script + CSV/MD/log;
-suites exit non-zero on any failure; one command re-validates every claim in
-this document ($\sim$15 min on one GPU):
+suites exit non-zero on failure. The canonical checkpoint revalidates all host
+and GPU component gates:
 \begin{center}
 {\small\verb+RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \+}\\
 {\small\verb+  scripts/run_paper_checkpoint_smoke.sh+}
 \end{center}
-which must print \texttt{ALL GATES PASS}.
+and must print \texttt{ALL GATES PASS}. The exact-shape repeated evaluation is
+separately regenerated by \texttt{scripts/run\_two\_party\_fc\_model\_scale.sh}.
 
-\subsection{Verified baseline (measured, 2026-06-10 artifacts)}
+\subsection{Verified artifacts and matched baseline}
 \label{sec:baseline}
 
-\paragraph{End-to-end real-generator transcript.} The flagship
+\paragraph{Single-process real-generator diagnostic.} The older
 suite\footnote{Artifact \texttt{bench\_orca\_fc\_real\_ole\_transcript}; per-case
-results in Table~\ref{tab:suite}'s source CSV.} (9 cases) drives the full
-pipeline of Figure~\ref{fig:pipeline} with the real BCG+20 generator ---
-oracles only at O1/O2 --- and validates through unchanged
-\texttt{gpuMatmulBeaver} at q64 ($\bw \le 16$) and q128 ($\bw = 32$, two CRT
-limbs, per-party Garner lift), under uniform and regular noise: 9/9 pass.
+results in Table~\ref{tab:suite}'s source CSV.} validates the Ring-LPN engine
+and slot/Orca algebra in nine q64/q128 uniform/regular cases. It uses
+centralized DPF key generation and clear exact conversion at explicitly named
+O1/O2 boundaries. Its narrow stage timings are diagnostic only and are not
+compared with the live end-to-end measurements.
 
 \begin{table}[ht]
 \centering
@@ -1046,7 +1135,7 @@ q64, $16{\times}32{\times}16$, $\bw{=}16$ & 2 & 16{,}384 & 8{,}192 & 32{,}768 & 
 q128, $16{\times}16{\times}16$, $\bw{=}32$ & 4 & 8{,}192 & 4{,}096 & 32{,}768 & pass\\
 \bottomrule
 \end{tabular}
-\caption{Representative rows of the flagship suite
+\caption{Representative rows of the single-process diagnostic
 (\texttt{orca\_fc\_real\_ole\_\allowbreak transcript\_\allowbreak
 transcript\_\allowbreak suite.csv}). ``Ideal-OLE equiv.''\ is the number of
 per-scalar OLE calls the same layer consumed before slot packing.}
@@ -1092,7 +1181,7 @@ re-validation (\S\ref{sec:methodology}).
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lrrrrrrrr}
 \toprule
-prime & depth & trees & pass & string OTs & triples & OLEs & logical open & revealed shares\\
+prime & depth & trees & pass & string OTs & triples & OLEs & logical open & meaningful share bits\\
 \midrule
 $p_0$ & 4  & 512 & 512/512 & 8  & 3  & 3 & 588   & 1{,}176\\
 $p_0$ & 8  & 512 & 512/512 & 16 & 7  & 3 & 1{,}116 & 2{,}232\\
@@ -1121,11 +1210,61 @@ run observations, not transport measurements. Table~\ref{tab:m1proto} proves
 functional compatibility, edge correctness, and ideal-primitive accounting,
 not computational privacy or 128-bit security.
 
+\paragraph{Live two-process ResNet18-classifier-layer preprocessing
+(2026-08-04).} The artifact evaluates the exact inference classifier-layer
+shape $1{\times}512{\times}1000$ from Orca's \texttt{cnn.h}, at $\bw=32$ and
+q128 (two approximately 62-bit CRT limbs, not 128-bit security). This is not a
+full ResNet18 inference or scale-10 truncation run.
+Each run launches one process per GPU, samples party-local masks/noise/DPF roots, jointly samples
+the full uniform public Ring-LPN polynomial, generates both OLE directions,
+securely converts every output, writes one party-local key record, exits both
+parties, and only then invokes the unchanged
+\texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver} checker.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+quantity & measured value\\
+\midrule
+warmup / measured trials & 1 / 10 (10/10 pass)\\
+regular feasibility parameters & $n=8192,\ c=2,\ t=8$\\
+Ring-OLE correlations / DPF trees, per party & 252 / 64{,}512\\
+critical-path preprocessing, median & 35.735\,s\\
+critical-path preprocessing, mean $\pm$ sample SD & $35.813\pm0.703$\,s\\
+application bytes sent, both parties & 608{,}860{,}824 (580.65\,MiB)\\
+public-$a$ coefficient shares, both parties & 8{,}257{,}536 words\\
+final key payload / serialized record, per party & 4{,}108{,}096 / 4{,}108{,}208\,B\\
+matched trusted-dealer keygen, median & 10.813\,ms\\
+preprocessing/dealer ratio, median of trial ratios & $3286\times$\\
+unchanged two-share online checker, median & 1.099\,ms\\
+\bottomrule
+\end{tabular}
+\caption{Exact-shape live evaluation. Timers are local-host observations.
+The matched dealer row executes stock \texttt{gpuKeygenMatmul} twice,
+sequentially on the checker GPU, with the same shape/masks/key bytes. The online
+row is likewise two sequential party calls on one GPU, not network latency.
+Source: \texttt{two\_party\_fc\_model\_scale\_2026\_08\_04.csv} and its
+summary/environment manifests.}
+\label{tab:modelscale}
+\end{table}
+
+The comparison is negative but decisive: the prototype preserves Orca's final
+key size and online consumer, but preprocessing is roughly three orders of
+magnitude slower than matched trusted-dealer key generation and sends
+609\,MB of application payload for one classifier layer. It is evidence of
+dealer/oracle removal and exact composition, not a speedup. The dominant
+remaining systems target is GPU-batched DPF generation plus silent
+correlation expansion; WAN performance and a security-parameter point are
+unmeasured.
+
 \paragraph{Performance anchors.}
 Ring-OLE expansion ($n{=}8192$, $c{=}2$): 13.3\,ms (q64) and 26.8\,ms (q128)
 at the $t{=}8$ smoke point; at $t{=}64$: 881\,ms uniform vs.\ \textbf{61\,ms
-regular} ($14\times$), with pair-key bytes 283\,kB vs.\ 233\,kB. SPFSS
-full-domain evaluation dominates ($\sim$99\%); the NTT is under 1\% ---
+regular} ($14\times$), with pair-key bytes 9{,}044{,}160 (9.04\,MB) vs.\
+5{,}529{,}408 (5.53\,MB). SPFSS full-domain evaluation dominates
+($\sim$99\%); the NTT is under 1\% ---
 measured directly, and confirmed by the fact that a 2--8\% NTT-side
 improvement left expansion time unchanged. The oracle-backed conversion stress
 artifact is bit-exact on 8{,}516 conversions per configuration; the live
@@ -1135,103 +1274,61 @@ Table~\ref{tab:convert}. Byte-compatibility: with the integration flag off,
 baseline Orca output is byte-identical (verified through the real two-party
 FC test).
 
-\subsection{Planned experiments: six milestones with mechanical gates}
+\subsection{Status gates and remaining experiments}
 \label{sec:milestones}
 
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[
-  m/.style={draw, rounded corners=2pt, font=\small, inner sep=4pt, minimum width=17mm, align=center},
-  arr/.style={-{Stealth[length=2mm]}, thick, black!70}
-]
-\node[m] (m5) {M5\\ \scriptsize parameters};
-\node[m, right=12mm of m5, yshift=8mm] (m1) {M1\\ \scriptsize dist.\ keygen};
-\node[m, right=12mm of m5, yshift=-8mm] (m3) {M3\\ \scriptsize conversion};
-\node[m, right=12mm of m1] (m2) {M2\\ \scriptsize keys $\to$ pipeline};
-\node[m, right=12mm of $(m2.east)!0.5!(m3.east)$] (m4) {M4\\ \scriptsize two processes};
-\node[m, right=12mm of m4] (m6) {M6\\ \scriptsize scale + report};
-\draw[arr] (m5) -- (m1);
-\draw[arr] (m5) -- (m3);
-\draw[arr] (m1) -- (m2);
-\draw[arr] (m2) -- (m4);
-\draw[arr] (m3) -- (m4);
-\draw[arr] (m4) -- (m6);
-\end{tikzpicture}
-\caption{Binding milestone dependencies. M5 pins the exact parameter regime
-before M1/M3 performance implementation. M1 and M3 may then proceed in
-parallel; M2 and M3 both gate M4, which gates M6.}
-\label{fig:milestones}
-\end{figure}
-
 \begin{description}
-\item[M5 --- Security parameter memo (first gate).] Implements D5.
-  \emph{Gate:} pinned $(n,c,t,p_0,p_1)$ with estimator evidence for
-  $\ge128$-bit splittable Ring-LPN security; headline tables regenerated at
-  the pinned parameters; condition~\eqref{eq:bootstrap}, NTT support, and GPU
-  memory re-checked.
-\item[M1 --- Distributed DPF keygen prototype (GPU-batched).]
-  Implements D1. \emph{Gate:} for random additively shared $\alpha$ and
-  multiplicatively shared $\beta$, the generated key halves full-domain
-  evaluate to the point function for every tree in a batch of $\ge256$.
-  Preserve the \texttt{gpuDpfZpFullEvalSum} API and key byte layout while
-  correcting its internal seed semantics to 128 secret bits with separate
-  tags; independently validate the centralized and distributed generators
-  against CPU/GPU evaluators, including seed-LSB-one controls.
-  \emph{Metrics:} real OT/OLE bytes, wall-clock per batch, and end-to-end
-  network rounds. \emph{Status:} the host artifact of
-  \S\ref{sec:m1proto} discharges only the protocol-logic and host-format
-  functional slice (batches $\ge256$, depth 14, unchanged host evaluator).
-  M1 still requires corrected full-128-bit AES/CSPRNG GPU semantics, real
-  silent-OT/OLE transport, GPU level-synchronous batching, compatible GPU
-  keys, and measured bytes and rounds.
-\item[M2 --- Real-generator transcript driven end-to-end by M1 keys.]
-  \emph{Gate:} the existing 9/9 suite passes with
-  \texttt{build\_spfss\_keys()} replaced by the two-party protocol; the only
-  remaining oracle is the conversion. (Because the key format is unchanged,
-  any new failure localizes to the new keygen.)
-\item[M3 --- PCG-sourced conversion + prefix comparator.] Implements D2.
-  \emph{Gate:} the conversion suite (\texttt{test\_secure\_convert}) passes
-  bit-exact with correlations consumed from the binary PCG instead of the
-  dealer block; measured round count drops to $O(\log\ell)$
-  (Table~\ref{tab:convert}).
-\item[M4 --- Two-process deployment over TCP.] Implements D4 (with D3's
-  coin-tossed seeds). \emph{Gate:} the full pipeline (M1 keygen $\to$ expand
-  $\to$ derandomize $\to$ convert $\to$ key write) runs as two OS processes on
-  two GPUs; the \texttt{gpuMatmulBeaver} contract passes; one complete FC
-  state sequence covers the forward and bias paths, truncation, $dW$, $dX$,
-  bias gradients, both optimizers, persistent mask/velocity handles, reduced
-  matmul fields, and next-state transitions. Communication is measured per
-  layer.
-\item[M6 --- Scale and report.] \emph{Gate:} dealerless preprocessing for the
-  FC layers of one Orca model, with separate trusted-dealer, oracle-backed, and
-  protocol-backed columns plus one closest dealerless-preprocessing baseline
-  selected by S2's novelty audit. Compare time, communication, rounds, and key
-  bytes at matched assumptions/shapes; if compatible baseline code is
-  unavailable, give a reproducible normalized comparison and explain why.
+\item[Closed --- component correctness.] Host and GPU evaluators, full-width
+  AES DPF semantics, distributed-key transport, Ring-OLE expansion, and exact
+  conversion pass their independent reference and negative-control suites.
+\item[Closed --- live forward composition.] Six small/multi-batch cases and
+  the exact classifier-layer run execute DPF key generation, Ring-LPN expansion,
+  derandomization, conversion, transactional key output, and the unchanged
+  Orca online contract across two processes and GPUs.
+\item[Closed conditionally --- proof boundary.] Exact DPF coupling,
+  role-specific batch simulators, the conversion simulator, and the
+  source-to-transcript map establish the forward theorem in the stated
+  ideal-functionality/standard-primitive hybrid. Independent review must be
+  repeated after source changes.
+\item[Open --- parameters.] A reviewed projection,
+  distribution/tail/structured-code and two-CRT-limb advantage analysis must
+  pin $(n,c,t,p_0,p_1)$ before any security-level claim. All performance rows
+  must then be rerun because the current point is feasibility-only.
+\item[Open --- performance engineering.] GPU-batched distributed DPF
+  generation and silent correlation expansion must replace the current
+  host/IKNP bottleneck. Required reporting includes stage time/bytes,
+  setup costs, dependency rounds, peak host/GPU memory, and repeated
+  exact-shape trials.
+\item[Open --- deployment.] Authenticate the transport and measure LAN/WAN
+  executions on distinct hosts. Loopback results cannot predict WAN latency.
+\item[Out of scope.] Stateful bias/truncation/backward/optimizer transitions,
+  nonlinear DCF keys, active security, and full-model dealer removal require
+  separate protocols and evaluations.
 \end{description}
 
 \subsection{Reporting and claims discipline}
 \label{sec:claims}
 
-The claims ladder is part of the experimental design. \emph{Already claimable
-(from \S\ref{sec:m1proto})}: ``the distributed key-generation protocol logic
-is implemented party-separated and functionally validated by the unchanged
-evaluator, using ideal OT/triple/OLE functionalities and a non-cryptographic
-correctness PRG.'' This is deliberately not a claim of computational
-privacy, 128-bit security, M1 completion, GPU byte compatibility, real
-transports, or two-process isolation. \emph{After M2}: ``linear-layer Beaver
-keys are generated by a two-party protocol whose only idealized component is
-the share conversion.'' \emph{After M4}: only ``the full protocol-backed
-preprocessing transcript runs as two processes''; the security claim remains
-blocked. \emph{Only after M5/S2 parameters and the S8 proof/implementation
-review}: ``Orca FC preprocessing is dealerless (two-party, semi-honest,
-splittable Ring-LPN, at the pinned parameters).'' \emph{Never claimable within
-this proposal's scope}: malicious security; any concrete security level
-before M5; ``dealerless Orca'' without the linear-layer qualifier.
-Every measured table in the final report carries the regenerating command;
-oracle-backed and protocol-backed numbers never share a column; decisions
-carry written reversal conditions (e.g., the NTT-backend choice re-opens if
-M5 re-pins primes below 61 bits).
+The current supported statement is: ``At unpinned feasibility parameters, a
+live local-loopback two-process implementation generates party-local
+forward-FC keys with no dealer/oracle in the execution path; those keys match
+the stock Orca format and pass its unchanged online computation. Conditional
+semi-honest security follows from the theorem's explicit DPF, OT/OLE,
+authenticated-channel, and exact-distribution Ring-LPN assumptions.''
+
+The only matched quantitative performance baseline is stock
+\texttt{gpuKeygenMatmul}, run at the identical classifier shape, bit width,
+masks, output bytes, allocator, synchronization boundary, and GPU. The older
+single-process Ring-OLE stage timers omit most live work and are not a baseline.
+Prior dealerless PCG systems expose different correlations, parameter
+assumptions, and applications; no compatible implementation has been measured
+under this artifact's contract, so no cross-paper speedup ratio is reported.
+
+Unsupported wording includes ``128-bit secure,'' ``faster than the dealer,''
+``WAN-ready,'' ``dealerless full Orca,'' and any training-layer or nonlinear
+claim. Every future performance table must identify topology, trust/oracle
+boundary, coverage, exact parameters, counter scope, warmups/trials, and
+environment; q64/q128 denote one/two 62-bit arithmetic limbs, not security.
 
 \section{Related work}
 \label{sec:related}
@@ -1276,25 +1373,43 @@ algorithms are separate work by \"Ozcan, Javeed, and
 Sava\c{s}~\cite{ozcan2023gpuntt,ozcan2025gpuntt} and are currently an external
 measured baseline. Neither backend is a contribution of this paper.
 
-\section{Summary}
+\section{Conclusion and publication assessment}
 \label{sec:summary}
 
-Orca's linear-layer preprocessing already runs, measured and gate-verified,
-from real Ring-LPN correlation generators on GPUs --- with exactly two
-idealized components left in that pipeline (key generation and share
-conversion) and three hygiene/audit obligations (seeds, deployment,
-parameters). D1 now has a host protocol-logic and compatibility prototype:
-2{,}432 standard key pairs pass the unchanged evaluator with edge, reference,
-corruption, and old-leak regression controls, using ideal transport
-functionalities and a non-cryptographic correctness PRG. This is research
-progress suitable for evaluating the M1 design, not evidence that M1 or
-computational privacy is complete. The S1 contract fixes the ideal
-functionality, exact transcript, leakage, simulators, and open proof
-obligations; it deliberately does not claim those obligations are discharged.
-D1--D5 remove the implementation boundaries along M1--M6. Only after the
-parameter gate and S8 proof/implementation review also close is ``dealerless
-Orca linear-layer preprocessing (two-party, semi-honest, splittable Ring-LPN,
-at the pinned parameters)'' an honest, reproducible claim.
+The concrete result is narrower and stronger than the earlier proposal
+language: a dealer/oracle-free \emph{forward-FC} preprocessing execution now
+runs across two processes and GPUs, emits stock-format per-party keys, and
+passes unchanged Orca online evaluation. The exact classifier experiment
+passes 10/10 measured trials. It also exposes the real current cost:
+35.735\,s median preprocessing and 608.9\,MB sent, versus 10.813\,ms matched
+trusted-dealer generation. The exact DPF coupling, batch simulators, and
+conversion simulator support a conditional static-semi-honest theorem; they do
+not supply a concrete Ring-LPN security level or authenticated deployment.
+
+\paragraph{Is it conference-ready?} Not yet. The artifact and proof boundary
+are strong enough for advisor review and for a reproducible systems research
+checkpoint, but the current manuscript is not ready for a competitive
+security/systems submission. Three blockers are decisive: no reviewed
+concrete-security parameter point, a roughly $3286\times$ median preprocessing
+gap to the matched dealer, and novelty currently centered on integration of
+known DPF/Ring-LPN/conversion primitives. A cryptography-paper claim would
+require a new protocol/reduction or parameter result; a systems-paper claim
+could instead be earned by a substantially faster, end-to-end implementation
+with convincing ML-scale coverage.
+
+\paragraph{Evidence needed next.}
+(1)~An independently reviewed reduction and concrete parameter pin for the
+exact regular/splittable distribution and two CRT limbs;
+(2)~GPU-batched DMPF/DPF generation with silent OT/VOLE, accompanied by
+stage-level time, bytes, dependency rounds, and peak memory;
+(3)~all forward linear layers of at least one real inference model, repeated
+at the pinned parameters, with matched dealer and closest reproducible
+dealerless-PCG baselines;
+(4)~two-host authenticated LAN and controlled-WAN measurements;
+(5)~a renewed source/proof audit after optimization and a clear novelty
+statement against the 2025--2026 DMPF/PCG literature.
+Training, nonlinear keys, and malicious security should remain explicit
+follow-on work unless separately implemented and evaluated.
 
 \begin{thebibliography}{99}
 \bibitem{jawalkar2024orca}
@@ -1318,8 +1433,8 @@ More}. CRYPTO 2019.
 \bibitem{boyle2020ringlpn}
 E.~Boyle, G.~Couteau, N.~Gilboa, Y.~Ishai, L.~Kohl, P.~Scholl.
 \emph{Efficient Pseudorandom Correlation Generators from Ring-LPN}.
-CRYPTO 2020; corrected full version, IACR ePrint 2022/1035 (2022),
-\S5.2 and Remark~5.1.
+CRYPTO 2020; corrected full version dated 2022-08-10,
+HAL \href{https://hal.science/hal-03374154/document}{hal-03374154}.
 \bibitem{boyle2022programmable}
 E.~Boyle, N.~Gilboa, Y.~Ishai, V.~I.~Kolobov.
 \emph{Programmable Distributed Point Functions}.

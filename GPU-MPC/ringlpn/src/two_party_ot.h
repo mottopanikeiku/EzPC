@@ -42,6 +42,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -131,7 +132,8 @@ struct Counters {
 
 class PartyChannel {
   public:
-    PartyChannel(int party, const std::string &peer_host, int base_port)
+    PartyChannel(int party, const std::string &peer_host, int base_port,
+                 bool defer_ot_setup = false)
         : party_(party) {
         const char *addr = (party == 0) ? nullptr : peer_host.c_str();
         io_ = new sci::NetIO(addr, base_port, /*full_buffer=*/false, /*quiet=*/true);
@@ -139,7 +141,20 @@ class PartyChannel {
         const int sci_party = (party == 0) ? sci::ALICE : sci::BOB;
         ot_straight_ = new sci::SplitIKNP<sci::NetIO>(sci_party, io_);
         ot_reversed_ = new sci::SplitIKNP<sci::NetIO>(3 - sci_party, io_rev_);
-        if (party == 0) {
+        if (!defer_ot_setup) {
+            setup_ots();
+        }
+    }
+
+    // Idempotent so callers may agree on public work parameters over the raw
+    // channels before paying for or deriving any OT correlation setup.
+    void setup_ots() {
+        if (ots_ready_) {
+            return;
+        }
+        const uint64_t bytes_before = bytes_sent();
+        const uint64_t switches_before = direction_switches();
+        if (party_ == 0) {
             ot_straight_->setup_send();
             ot_reversed_->setup_recv();
         } else {
@@ -149,8 +164,9 @@ class PartyChannel {
         io_->flush();
         io_rev_->flush();
         costs.base_ots += 2 * 128;  // one base-OT batch per direction
-        setup_bytes_sent_ = io_->counter + io_rev_->counter;
-        setup_direction_switches_ = io_->num_rounds + io_rev_->num_rounds;
+        setup_bytes_sent_ = bytes_sent() - bytes_before;
+        setup_direction_switches_ = direction_switches() - switches_before;
+        ots_ready_ = true;
     }
 
     ~PartyChannel() {
@@ -246,22 +262,23 @@ class PartyChannel {
 
     void ot_send_128(const std::vector<U128> &m0, const std::vector<U128> &m1) {
         const int n = (int)m0.size();
-        std::vector<sci::block128> b0(n), b1(n);
+        std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+        std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
         for (int i = 0; i < n; ++i) {
             b0[i] = to_block(m0[i]);
             b1[i] = to_block(m1[i]);
         }
-        sender_ot()->send(b0.data(), b1.data(), n);
+        sender_ot()->send(b0.get(), b1.get(), n);
         sender_io()->flush();
         costs.string_ots_128 += (uint64_t)n;
     }
 
     std::vector<U128> ot_recv_128(const std::vector<uint8_t> &choices) {
         const int n = (int)choices.size();
-        std::vector<uint8_t> raw(n);
-        for (int i = 0; i < n; ++i) raw[i] = choices[i] != 0;
-        std::vector<sci::block128> out(n);
-        receiver_ot()->recv(out.data(), reinterpret_cast<const bool *>(raw.data()), n);
+        std::unique_ptr<bool[]> raw(new bool[(size_t)n]);
+        for (int i = 0; i < n; ++i) raw[(size_t)i] = choices[(size_t)i] != 0;
+        std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+        receiver_ot()->recv(out.get(), raw.get(), n);
         receiver_io()->flush();
         costs.string_ots_128 += (uint64_t)n;
         std::vector<U128> res(n);
@@ -336,6 +353,7 @@ class PartyChannel {
     sci::SplitIKNP<sci::NetIO> *ot_reversed_ = nullptr;
     uint64_t setup_bytes_sent_ = 0;
     uint64_t setup_direction_switches_ = 0;
+    bool ots_ready_ = false;
 };
 
 // ----- party-private randomness ---------------------------------------------

@@ -1,3 +1,9 @@
+> **HISTORICAL DECISION REQUEST (partially superseded 2026-07-29).** The owner
+> later lifted only the implementation-stage ordering: component M1/S3--S6 work
+> may proceed. The unresolved advisor security, parameter, provenance, credit,
+> and circulation questions below still block claim advancement. Use
+> `../../CLAUDE.md` for current status and decisions.
+
 # Decision request: dealerless Orca Ring-LPN S2
 
 **Date:** 2026-07-29
@@ -148,6 +154,9 @@ Please answer each item explicitly:
    use a clean external backend boundary?
 
 The detailed evidence and source links are in
-`results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md`. Until
-these decisions are recorded, I will not start S3, import overlapping code,
-claim protocol novelty, claim 128-bit security, or circulate the paper.
+`results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md`. At the
+time of this request, I would not start S3, import overlapping code, claim
+protocol novelty, claim 128-bit security, or circulate the paper. The owner
+subsequently allowed implementation-only M1/S3--S6 work; that gate lift did not
+authorize private-code reuse or any security, novelty, parameter, end-to-end,
+or publication claim.

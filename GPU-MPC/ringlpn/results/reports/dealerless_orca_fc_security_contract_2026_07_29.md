@@ -1,20 +1,32 @@
-# Dealerless Orca FC preprocessing — security contract (S1 frozen for advisor review)
+# Dealerless Orca forward-FC preprocessing — security contract and proof boundary
 
-**Date:** 2026-07-29
-**Status:** frozen for advisor review after the user-requested Opus 5
-model-assisted audit; not an independent human cryptographic review, security
-proof, computational-security result, or publication-readiness claim
-**Target:** integrated dealerless Orca linear/FC preprocessing
-**Adversary:** one statically corrupted semi-honest party; authenticated point-to-point channels; external network observers, active attacks, denial of service, and side channels are out of scope
-**Proof structure selected with the user:** an end-to-end FC functionality with the distributed DPF as a named subfunction and theorem
-**Phase C decision:** freeze the corrected three-OLE transcript unless its simulator or composition proof exposes a concrete gap
+**Original freeze:** 2026-07-29  
+**Updated:** 2026-08-04  
+**Status:** exact forward-FC coupling, role-specific batch simulators,
+conversion simulator, source map, and conditional theorem are complete for the
+current live artifact. Two independent model-assisted reviews found no
+critical defect after fixes. This is not an independent human cryptographic
+review, a concrete Ring-LPN security result, an authenticated deployment, or a
+publication-readiness claim.  
+**Target:** one integrated dealerless Orca forward-FC matmul  
+**Adversary:** one statically corrupted semi-honest party; authenticated point-to-point channels; external network observers, active attacks, denial of service, and side channels are out of scope  
+**Proof structure:** an end-to-end forward-FC functionality with the distributed DPF as a named subfunction and theorem  
+**Phase C:** corrected three-OLE transcript; only `finalCW` is reconstructed  
 **Author:** Alp (sole author, by user direction; inherited work remains cited
 and its ownership/reuse boundary remains subject to S2)
 
-This document freezes what the implementation must realize and what the paper
-must prove. It is deliberately stronger than the current evidence. The
-2026-07-21 host artifact proves functional compatibility and primitive counts
-only; it uses ideal OT/triple/OLE calls, splitmix64, and one process.
+This document fixes what the current forward implementation realizes and what
+its conditional theorem proves. The older splitmix64/ideal-functionality host
+artifact remains a correctness reference. The live path separately uses real
+SCI/IKNP/Gilboa transport, full-width GPU AES, private OpenSSL DRBG state, exact
+public-polynomial exchange, GPU Ring-LPN expansion, exact conversion, and
+party-local Orca key records.
+
+The 2026-08-04 exact primary-source parameter audit is complete: it invalidated
+several out-of-domain estimator rows and found no reviewed mapping from the
+deployed projected distribution/structured code to the accepted finite-field
+models. No parameter or 128-bit classical/quantum claim is pinned; this
+strengthens, rather than closes, `P-POS` and `P-PCG`.
 
 ## 1. Contribution and provenance boundary
 
@@ -47,8 +59,8 @@ upstream code. This audit added the upstream copyright/license notice and
 paper citation and recorded the reconstructed source pin and local delta in
 `extern/Cheddar_PROVENANCE.txt`.
 
-**Questions to resolve with the professor in S2 before S3 implementation or
-external circulation:**
+**Questions to resolve with the professor before claim advancement or external
+circulation** (the owner separately allowed implementation-only S3--S6 work):
 
 1. Is the contribution the integrated dealerless Orca FC system, or is a new
    distributed-DPF protocol required?
@@ -60,8 +72,8 @@ external circulation:**
    `Z_(2^k)` and 2026 QA-SD/WHT PCGs?
 4. Who will approve the sparse-factor projection criterion, projected-noise
    mapping, advantage loss, and classical/quantum 128-bit interpretation?
-5. Should the parameter target use `n=2^20,c=4,t=16`, the preliminary
-   `n=2^14,c=4,t=16`, or another reviewed point?
+5. Which parameter should be measured after a reviewed projection/distribution,
+   structured-code, and two-limb advantage analysis establishes a valid set?
 6. Which contributors own each DPF, CPU/GPU PCG, GPU-NTT, PIM, integration,
    measurement, figure, and prose component in the private project; what may
    Alp reuse; and what citation, acknowledgement, or disclosure is required?
@@ -129,12 +141,14 @@ The functionality does not reveal `alpha`, `beta`, the other input shares, the
 other root seed, the other key, a hidden leaf-control sign, or intermediate
 adder/tree/OLE state.
 
-**Distribution obligation D-DIST.** Full-domain correctness is insufficient.
-The real protocol's correction words must equal those of standard
-`DPF.Gen(alpha,beta;root_0,root_1)` level by level, or its joint output must be
-computationally indistinguishable from that distribution. If only a new
-distribution can be proved, the functionality and paper must name it and
-separately prove single-key privacy.
+**Exact coupling theorem D-DIST.** Conditioned on the two supplied roots, the
+real protocol emits exactly the correction words and `finalCW` of
+`DPF.Gen(alpha,beta;root_0,root_1)`; this is equality, not merely
+computational indistinguishability. Section 4.5 proves the coupling by induction
+on the standard DPF prefix invariant and then identifies the Phase-C equation
+with the standard final correction. Uniform independent root draws therefore
+give the same joint key-pair distribution as standard generation. Single-key
+privacy remains the separate `D-KEY` reduction to the seed-expansion PRG.
 
 **Seed-format obligation D-SEED.** The target follows the formal seed/tag
 separation of Boyle--Gilboa--Ishai, *Function Secret Sharing: Improvements and
@@ -249,9 +263,15 @@ and returns common `abort` on reuse before releasing output.
 
 The end-to-end proof additionally names:
 
-- `F_COIN`: on a fresh identifier, sample and reveal one uniform public seed;
-  its real realization uses commit/open coin tossing and common abort.
-- `F_RINGOLE`: for public `R=Z_p[X]/(X^n+1)`, sample uniform
+- `F_COIN^p`: on a fresh identifier for `c` public degree-`<n` polynomials,
+  each party samples `c*n` independent uniform field elements, the parties
+  exchange canonical coefficient vectors, and both set the public vector to
+  their componentwise sum in `Z_p`. Conditioned on either party's contribution,
+  the honest contribution makes the result exactly uniform. The semi-honest
+  implementation uses one fixed-order exchange; a malicious extension would
+  require commit/open.
+- `F_RINGOLE`: for public `R=Z_p[X]/(X^n+1)` and the exact uniform public
+  polynomial vector from `F_COIN^p`, sample uniform
   `X_0,X_1,Z_0 in R`, set `Z_1=X_0 X_1-Z_0`, and deliver only `(X_b,Z_b)` to
   `P_b`. One call is made per direction, CRT limb, and slot batch.
 - `F_EDABIT^ell`: sample uniform `R in Z_(2^ell)`, sample uniform arithmetic
@@ -387,7 +407,57 @@ respectively 62 and 124 bits. This is not encoded wire traffic. The
 implementation's fixed-width encoding must use `ceil(log2 p)` after any
 parameter re-pin.
 
-### 4.5 Complete per-tree accounting
+### 4.5 Exact coupling to standard DPF generation
+
+**Lemma.** Fix canonical inputs, the two root seeds, and the PRG outputs. At
+every level the protocol's common seed and flag correction words equal those
+computed by standard BGI-style DPF generation for `(alpha,beta)`.
+
+**Proof.** After any fixed common-CW prefix, pair the two parties' frontier
+states at every tree prefix. The standard DPF invariant says that every
+off-path pair has equal seeds and equal tags, while the pair at the prefix of
+`alpha` has opposite tags. Hence all off-path terms cancel from the XOR
+aggregates. If the next point bit is `a=a_0 xor a_1`, then
+
+```text
+sCW_0 xor sCW_1
+ = S_0^R xor S_1^R xor (a_0 xor a_1)(Z_0 xor Z_1)
+ = S_0^R xor S_1^R                              when a=0
+ = S_0^L xor S_1^L                              when a=1.
+```
+
+The first equality substitutes
+`q_0=r_1 xor a_0 Z_1` and `q_1=r_0 xor a_1 Z_0`; both fresh OT masks cancel.
+The remaining aggregate is exactly the two path seeds on the losing branch,
+which is the standard seed correction. Likewise,
+
+```text
+tLCW = T_0^L xor T_1^L xor a xor 1
+tRCW = T_0^R xor T_1^R xor a,
+```
+
+the standard two flag corrections. Applying these words makes the losing child
+states equal and preserves opposite tags on the keeping child, establishing
+the invariant for the next level. The root state supplies the base case.
+
+At the leaves, the same cancellation gives
+`A=A_0+A_1=Convert(seed_0,alpha)-Convert(seed_1,alpha)` and
+`F=F_0+F_1=t_0,alpha-t_1,alpha in {+1,-1}`. The three OLEs reconstruct
+`gamma=beta`, both cross terms, and therefore
+
+```text
+w_0+w_1 = (d_0+d_1)(s_0+s_1) = (beta-A)F.
+```
+
+Because `F^(-1)=F`, this is exactly the standard final correction: `beta-A`
+when `(t_0,t_1)=(1,0)` and `A-beta` when `(t_0,t_1)=(0,1)`. Thus every common
+word and each party root field equals the conditioned standard output. QED.
+
+This is an algebraic distribution proof at the fixed-PRG boundary. It does not
+by itself prove that one key hides `alpha,beta`; that statement invokes the
+standard DPF single-key theorem and the concrete PRG assumption.
+
+### 4.6 Complete per-tree accounting
 
 ```text
 string OTs                 = 2L
@@ -405,7 +475,7 @@ OT/OLE setup and payloads, byte padding, framing, commitments, and
 retransmission remain absent from the host prototype. S4 replaces estimates
 with measured bytes.
 
-## 5. D2–D4 integrated FC transcript to be composed
+## 5. Live forward-FC transcript and target stateful extension
 
 For each accepted matmul invocation `mu`, the target two-process transcript is:
 
@@ -417,9 +487,10 @@ For each accepted matmul invocation `mu`, the target two-process transcript is:
    `K=2^12-1` at `bw=24`, and no `K>=1` at `bw=32`; q128 permits
    `K<2^90`, `K<2^74`, and `K<2^58`, respectively. A failure produces common
    `(abort,stage)` before reading masks or consuming correlation.
-2. `F_COIN` establishes domain-separated public seeds. Each party obtains its
-   private root randomness from an independent OS CSPRNG stream; public seeds
-   never seed private masks or DPF roots.
+2. `F_COIN^p` establishes the exact uniform public Ring-LPN polynomial by
+   exchanging and adding two canonical coefficient vectors. Each party obtains
+   all private roots, sparse noise, masks, and primitive randomness from its
+   independent OS CSPRNG; no public value seeds private state.
 3. Party `P_b` reads only its local shares of the operand handles fixed by
    `F_FC` and samples its share of the fresh output mask. Mask-handle reuse is
    dictated by the forward/`dW`/`dX` topology; correlation IDs remain fresh.
@@ -477,53 +548,87 @@ online protocol opens the `ell`-bit masked value
 `A=(z_0+z_1+R) mod 2^ell`, evaluates two ripple adders using
 `2ell-2` fresh bit triples, opens one masked bit for B2A, and applies the local
 `Q*wrap` correction. This exposes `5ell-3` logical opened bits and
-`10ell-6` meaningful share bits per conversion; the wrap bit, edaBit, daBit,
-and input shares remain hidden from each live party. These closed forms are
-not measured bytes or rounds; the artifact separately records encoded
-setup, correlation, and online traffic.
+`10ell-6` meaningful share bits per conversion. The wrap bit is neither
+reconstructed nor opened. The following lemma closes privacy in the
+`(F_DABIT,F_EDABIT,F_BT)` hybrid; transport security remains conditional on
+the semi-honest OT theorem and an authenticated channel. The closed forms are
+not measured bytes or rounds. Before base-OT setup, the parties exchange
+and acknowledge a fixed canonical encoding of every workload-shaping public
+parameter. The artifact separately records setup, agreement, TEST-ONLY
+selftest, production correlation, online, and final-sync bytes/direction
+switches, and gates their exact sum. Its Layer-mode generator also rejects
+public inputs outside `K*2^(2bw+2)<Q`; this bound is an FC intended-integer
+precondition, not a restriction on generic canonical share conversion.
 
-The integrated FC artifact still has four target-breaking boundaries:
-centralized `build_spfss_keys()`, conversion through
-`exactZmToRingShares()`, the clear value-dependent `buildCShare()` bound
-check, and shared deterministic benchmark seeding/direct memory in one
-process. The standalone D2 transport now removes the conversion dealer for
-its component contract; integration, S5, S7, and S8 must remove the
-corresponding integrated boundaries.
+**Exact-conversion lemma P-CONV.** Let `R` be the edaBit value. Because
+`R` is uniform in `Z_(2^ell)`, the opened
+`A=(z_0+z_1+R) mod 2^ell` is uniform and independent of the canonical input
+sum. The first ripple adder computes secret XOR shares of
+`A + bitwise-not(R) + 1 = z_0+z_1 mod 2^ell`; the second adds
+`2^ell-Q`, so its final carry is exactly `[z_0+z_1 >= Q]`, using
+`z_0+z_1<2Q<=2^ell`. Every AND opening is one-time-padded by a fresh bit
+triple and is simulated by choosing the common masked bits uniformly and
+complementing the honest sent shares. The B2A opening is
+`wrap xor d` for a fresh uniform daBit `d`, hence is also uniform and leaks no
+wrap bit. Finally each party returns
+`z_b-Q*d_b^A mod 2^bw`. Since `Q` is odd, multiplication by `Q` is a
+permutation of `Z_(2^bw)`; the local arithmetic daBit share is uniform, so
+either output share is uniform and the two shares sum to
+`(z_0+z_1-Q*wrap) mod 2^bw`, exactly `F_CONV`.
 
-### 5.1 Source-to-transcript map for the current prototypes
+For either corruption, a simulator takes the ideal uniform output share,
+solves uniquely for the corresponding local arithmetic daBit share using
+`Q^(-1) mod 2^bw`, samples the local Boolean/edaBit/triple shares with their
+real marginals, chooses the public masked sum and every masked opening
+uniformly, and sets only honest transmitted shares to the required
+complements. This reproduces the full conditional view. Sequential batching is
+valid because every daBit, edaBit, triple, and conversion SID is fresh.
+
+The live two-process artifact now realizes steps 1--10 for one forward-shaped
+matmul: party-local mask sampling, distributed GPU-AES DPF key generation,
+party-local Ring-LPN expansion, both derandomization directions, exact
+two-party conversion, transactional party-local key records, and post-exit
+unchanged-Orca validation. It contains no dealer/oracle in the live execution.
+The checker is intentionally omniscient and runs only after both party
+processes exit. The artifact does not implement the stateful training
+transitions in steps 11--12, authenticated transport, a malicious adversary, or
+the open Ring-LPN parameter/reduction obligation. Those remain named
+boundaries rather than hidden implementation gaps.
+
+### 5.1 Source-to-transcript map for the live composition
 
 | Current source boundary | Cross-party value or read | Contract line | Status |
 |---|---|---|---|
-| `Functionalities::bit_triple` + `shared_and` | fresh triple shares; transmitted shares of `delta_j,epsilon_j` | Phase A | mapped ideal interface plus concrete openings |
-| `Functionalities::ot` | one selected 128-bit string per direction and level | Phase B OT products `a_i Z_(1-b)` | mapped ideal interface |
-| `open_phase_b_seed_cw` | two 128-bit shares reconstruct `sCW_i` | Phase B seed-CW opening | mapped |
-| `open_phase_b_flag_cw` | two shares reconstruct each `tLCW_i,tRCW_i` | Phase B flag-CW openings | mapped |
-| three `Functionalities::ole` calls | shares of `beta_0 beta_1`, `d_0 s_1`, `s_0 d_1` | Phase C steps 1, 3, 4 | mapped ideal interfaces |
-| `open_phase_c_final_cw` | `w_0,w_1` reconstruct `finalCW` | sole Phase C opening | mapped |
-| `consumed_correlation_ids` | rejects reuse before an ideal primitive releases output | all D1 hybrid calls | mapped executable control |
-| D1 validation helpers | read both generated keys and clear `(alpha,beta)` | test gate only | validation oracle; excluded from protocol |
-| `generate_bit_triples()` in `test_secure_convert.cpp` | two OT-produced Boolean-triple share records per AND | D2 `F_BT` calls | live SCI/IKNP transport |
-| `gen_dabits()` / `gen_edabits()` | OT-produced correlated arithmetic/Boolean shares; exact coefficient-one edaBit composition | `F_DABIT` / `F_EDABIT` | live SCI/IKNP transport |
-| masked `A=(y0+y1) mod 2^ell` reconstruction | two transmitted arithmetic shares | D2 step 8 masked opening | mapped two-process opening |
-| `secure_and()` | two transmitted shares each of Beaver `d,e` per AND | D2 ripple adders | mapped two-process openings |
-| B2A masked-bit opening | two transmitted shares reconstruct one masked bit | D2 B2A opening | mapped two-process opening |
-| offline checker | reads both post-protocol party records, recomputes expected outputs, and applies corruption control | D2 validation only | test oracle; excluded from protocol |
-| `build_spfss_keys()` | reads both parties' Ring-LPN noise vectors | D1 inside `F_RINGOLE` realization | **centralized oracle; forbidden target behavior** |
-| `build_slot_ole` container | stores both parties' ring-OLE shares | step 4 | one-process container; target state is party-local |
-| slot/cross-identity checks | read both parties' slot or product shares | steps 5–7 | validation oracles; excluded from protocol |
-| `cross_share` | `P0` sends `d`; `P1` sends `e` per direction, limb, and used slot | step 6 | mapped one-process transcript model |
-| `exactZmToRingShares()` | reads both canonical `Z_Q` shares and the wrap predicate | step 8 | **dealer/oracle boundary; forbidden target behavior** |
-| `buildCShare(): dot >= Q` | reads clear mask operands and aborts on their product | public bound in step 1 | **value-dependent abort/oracle; forbidden target behavior** |
-| mask/key/online validation | reads both party arrays, clear masks, or outputs | steps 3, 9, 10 | validation oracle; excluded from protocol |
-| shared benchmark seed/process | common `mt19937_64` setup and direct memory access | `F_COIN`, private streams, transport | **one-process oracle boundary; forbidden target behavior** |
-| `gpuAddBias(mask_Z,mask_Y)` then `genGPUTruncateKey` | adds persistent bias-mask handle to fresh forward product-output handle; truncation returns next activation mask | §3.2 forward state transition | adjacent state boundary; S7 implementation and S8 composition required |
-| `getBiasGrad(mask_grad)` | row-sums incoming gradient-mask handle into bias-gradient-mask handle | §3.2 backward state transition | local linear handle transform; no new correlation |
-| weight/bias `genOptimizerKey` calls | read and update `(mask_W,mask_Vw,dW)` and `(mask_Y,mask_Vy,dY)` | §3.2 dual optimizer transition | adjacent state boundary; S7 implementation and S8 composition required |
+| `agree_fc_preflight()` | canonical dimensions, parameters, session ID, local-validity bit | step 1 | common rejection before OT/private-mask sampling/output |
+| `PartyRandom` + `sample_ring_words()` | no cross-party value; private `A_b,B_b,R_C,b` draws | steps 2--3 | OpenSSL private DRBG; party-local |
+| full public-`a` exchange in `generate_ring_ole()` | one canonical `c*n`-coefficient share vector from each party | `F_COIN^p`, step 2 | exact uniform public polynomial; separately counted |
+| `sample_party_noise()` | no cross-party value; one party's sparse noise only | step 4 | party-local independent draw |
+| `agree_spfss_public_manifest()` | public SPFSS dimensions/session plus local-validity bit | step 4 | common agreement before DPF output |
+| `two_party_dpf_gen_batch()` Phase A | bit-triple shares and transmitted `delta,epsilon` shares | §4.1 | mapped real SCI/IKNP triples and openings |
+| Phase-B directional OTs and CW exchange | selected 128-bit OT outputs; opened seed/flag CW shares | §4.3 | mapped; exact-CW coupling proved in §4.5 |
+| three batched Gilboa OLE calls + final-CW exchange | field OLE shares; one final-CW share per party | §4.4 | mapped; no sign/difference opening |
+| `pack_gpu_party_keys()` / `expand_ring_ole_party()` | no peer read; own noise/key and common public `a` only | steps 4--5 | party-local GPU expansion |
+| post-Ring-OLE status exchange | one generated/not-generated byte per direction/limb/batch from each party | step 4 abort boundary | common abort before any derandomization opening for that instance |
+| `exchange_openings()` | canonical operand-minus-slot word from each party per used slot | step 6 | mapped `d,e`; direction/limb/batch have distinct SIDs and fresh state |
+| `accumulate_local_products()` | no cross-party value | step 7 | party-local same-party products |
+| `secure_convert_batch()` preflight | canonical `Q,bw,count,sid` plus local-validity bit | step 8 | common agreement before conversion correlation |
+| conversion daBit/edaBit/triple generation | SCI/IKNP OT messages | `F_DABIT/F_EDABIT/F_BT` | live semi-honest transport |
+| conversion masked-sum/addition/B2A openings | fixed-width masked shares | step 8 | mapped; wrap is never opened |
+| post-conversion status exchange | one conversion-validity byte from each party | step 8 abort boundary | common abort before output-mask addition/publication |
+| `publish_record()` | staged-output-validity and rename-result bytes | step 9 | sibling temporary, owner-only mode, bilateral result exchange |
+| `PartyChannel::sync()` | no semantic value | transport accounting | counted separately from logical openings |
+| `run_check()` | reads both finalized records, reconstructs masks, runs matched dealer and unchanged online consumer | validation only | post-exit test oracle; absent from both live parties |
+| runner controls | mismatched preflight, stale output, rename failure, corrupt record, swapped records | abort/publication contract | all must reject or clean up |
 
-Every current cross-party read in D1 and the integrated FC artifact is either a
-mapped protocol message, a named target-breaking oracle, or an explicitly
-test-only validation oracle above. New reads/messages require a contract update
-before implementation.
+Every live cross-party send is mapped above. In the live source trace, neither
+party reads its peer's file or private arrays. Each party writes its own final
+key record, and the post-exit checker intentionally reads both. The current
+single-UID loopback runner does not enforce OS-level peer file isolation; that
+requires distinct UIDs/containers and inaccessible mounts. TCP is loopback and
+unauthenticated; raw private key records are deleted after the checker. The
+per-record SHA-256 is accidental-corruption detection, not authentication. The
+runner's `COMMITTED` marker is supervisor evidence that both processes exited
+and the checker passed, not a cryptographic commit protocol.
 
 ## 6. Leakage contract
 
@@ -538,7 +643,7 @@ before implementation.
 - common DPF correction words and `finalCW` contained in both output keys;
 - masked Beaver/derandomization openings `delta,epsilon,d,e` and the masked
   conversion openings specified in §5;
-- public coin-toss commitments/reveals and derived public seeds;
+- each party's full public-polynomial contribution and their modular sum;
 - accept/abort and the stage at which an abort occurs.
 
 ### 6.2 Permitted per-party view
@@ -550,7 +655,8 @@ In addition to common leakage, `P_b` sees only:
 - its OT sender inputs, receiver choices/outputs, bit-triple/OLE shares, local
   frontiers, noise shares, fresh output-mask shares, and correlation IDs;
 - its output DPF keys, emitted Orca key fields, and next-state mask shares;
-- authenticated messages it sends or receives.
+- messages it sends or receives (authenticated in the target functionality;
+  plain unauthenticated TCP in the current artifact).
 
 ### 6.3 Prohibited leakage
 
@@ -654,72 +760,109 @@ changes only fresh masks under a new ID. Sequential composition therefore
 preserves arbitrary input correlation and the public batching order. It does
 not assume that the hidden sign is marginally random.
 
-### 7.4 End-to-end FC simulator outline
+### 7.4 Conditional forward-FC theorem
 
-For a corrupt `P_b`, condition on its full persistent mask store, DPF root/input
-vector, public topology, and ideal `F_FC` outputs:
+Let `chi_U(p,n,t)` sample exactly `t` distinct positions without replacement,
+with independent coefficients uniform in `Z_p^*`. Let `chi_R(p,n,t)` divide
+the ring into `t` public equal buckets and sample one uniform position per
+bucket, again with independent uniform nonzero coefficients. These are the
+two distributions implemented by `sample_party_noise()`.
 
-1. Simulate the real commit/open transcript that yields each public seed.
-2. Execute the corrupt party's random tape and PRG computations consistently;
-   apply PRF replacements only to the honest party's hidden streams.
-3. Apply the joint D1 simulator above, then the future `P-DIST/P-KEY` result, to
-   replace distributed keygen with `F_DDPF`.
-4. Replace the Ring-LPN expansion by `F_RINGOLE` under the exact S2 assumption.
-5. For each fresh slot, compute the corrupt party's own `d` or `e` from its
-   operand and ring-OLE share; sample the honest opening uniformly from the
-   fresh hidden opposing share. Preserve repeated operand-mask handles but
-   never reuse the OLE slot/correlation.
-6. Invoke the future D2 simulator for the exact masked openings in §5 and
-   replace the result by `F_CONV`.
-7. Derive only the forward/`dW`/`dX` fields emitted in §3.2. Apply the
-   source-level bias add, forward/backward truncation, bias-gradient row sum,
-   and both weight/velocity and bias/velocity optimizer transitions to the
-   named local handles. Match the ideal party view. The `F_TRUNC` and `F_OPT`
-   reductions and implementation audit remain S8 obligations after S7
-   implements this complete state transition.
+**Exact decisional Ring-LPN assumption.** For the selected `chi` and
+`R=Z_p[X]/(X^n+1)`, if `a_1,...,a_c` are independent uniform ring elements and
+`e_1,...,e_c <- chi`, then
+`(a_1,...,a_c,sum_i a_i e_i)` is computationally indistinguishable from
+`(a_1,...,a_c,u)` for uniform `u in R`. The assumption is distribution- and
+parameter-specific. This document does not assign a bit-security level to the
+exercised `(n=8192,c=2,t=8)` feasibility point.
 
-The intended hybrid sequence is:
+**Theorem (forward only, conditional).** In the static semi-honest model with
+authenticated point-to-point channels, assuming (i) the four-call AES
+seed-expansion is a PRG, (ii) the used IKNP OT and Gilboa OLE realizations have
+their standard semi-honest security, (iii) the standard BGI DPF single-key
+theorem, and (iv) the exact decisional Ring-LPN assumption above together with
+the Figure-2 PCG reduction, the protocol in §5 realizes the forward-matmul
+restriction of `F_FC` with the leakage of §6.
+
+For a corrupt `P_b`, condition on its full mask store, DPF inputs/roots, public
+shape/order, and ideal forward key. The simulator proceeds as follows.
+
+1. For every public polynomial, sample the corrupt party's real uniform
+   coefficient contribution and set the honest contribution to
+   `a-public_contribution_b`; this exactly simulates `F_COIN^p`.
+2. Execute the corrupt party's private random tape and PRG computations
+   consistently. Replace only the honest party's hidden AES stream by ideal
+   randomness, paying the PRG advantage.
+3. Replace real triples/OTs/OLEs by their ideal functionalities. Apply the
+   joint D1 simulators in §§7.1--7.3; §4.5 identifies their conditioned output
+   with `F_DDPF`, and the standard single-key theorem hides the honest point,
+   payload factor, and root.
+4. Apply the Figure-2 reduction under the exact `chi`-Ring-LPN assumption to
+   replace each fresh party-local expansion by `F_RINGOLE`.
+5. For each unique slot, compute the corrupt party's own `d` or `e` from its
+   operand and OLE share. The opposing OLE share is fresh uniform in the
+   hybrid, so choose the honest opening uniformly and derive its sent share.
+   Reused operand handles do not reuse OLE slots or correlation IDs.
+6. Apply the exact-conversion simulator of §5 to replace the SCI/IKNP
+   conversion transcript by `F_CONV`.
+7. The corrupt output field is
+   `C_b=converted_b+R_(C,b) mod 2^bw`. Its fresh uniform `R_(C,b)` makes the
+   share uniform subject to the ideal sum, while `A_b,B_b` are the conditioned
+   operand-mask shares. Serialize exactly `A_b || B_b || C_b`.
+
+Each hybrid conditions on the complete prior batch state and consumes a fresh
+domain-separated identifier, so sequential composition preserves repeated or
+correlated private DPF inputs. The algebra in §5 proves that the two serialized
+keys reconstruct the ideal `AB+R_C` mask and therefore match the unchanged
+Orca consumer.
+
+The theorem does **not** cover the live TCP channel against an external
+attacker, malicious parties, training-state transitions, or a concrete
+security level. The current implementation is theorem-aligned source evidence
+for honest loopback execution; authenticating the channel and obtaining a
+reviewed parameter/reduction instantiation remain publication gates.
+
+The hybrid sequence is:
 
 ```text
-H0 real two-process protocol
-H1 honest-party CSPRNG/PRG streams -> ideal hidden random streams
-H2 real bit-triple/OT/OLE transports -> F_BT/F_OT/F_OLE
+H0 real forward protocol over an authenticated channel
+H1 honest AES stream -> ideal hidden random stream
+H2 IKNP/Gilboa/triple transports -> F_BT/F_OT/F_OLE
 H3 distributed DPF -> F_DDPF
-H4 splittable Ring-LPN expansion -> F_RINGOLE
-H5 protocol-backed conversion -> F_CONV
-H6 stateful FC preprocessing -> F_FC.
+H4 Figure-2 expansion -> F_RINGOLE under exact chi-Ring-LPN
+H5 conversion -> F_CONV
+H6 forward matmul preprocessing -> F_FC|forward.
 ```
 
-The role-specific D1 simulators are complete at S1's named ideal boundary. The
-end-to-end FC sequence remains an explicit outline: S2/S4/S6/S7 supply the real
-primitive protocols and S8 supplies reductions, advantages, adjacent-state
-composition, and implementation audit.
+The full training-layer statement remains an outline. It requires a separate
+bias/truncation/gradient/optimizer handle-state implementation, source map, and
+composition review extending this forward-only theorem.
 
 ## 8. Proof obligations and current evidence
 
 | ID | Obligation | Current evidence | Status |
 |---|---|---|---|
 | `P-CORR` | Keys reconstruct `beta [x=alpha]` | 2,432/2,432 full-domain passes; both primes; two deterministic point/payload edges; 6/6 invalid-input rejections; root seed, `sCW`, `tLCW`, `tRCW`, and `finalCW` corruption controls (5/5) | executable evidence |
-| `P-DIST` | Joint output matches standard DPF distribution conditioned on party roots | Full-width four-call AES semantics and GPU correctness are gated, but no level-by-level distribution coupling proof exists | open for S3/S8; blocks a security claim |
-| `P-POS` | DPF points implement the exponent distribution induced by the exact uniform/regular Ring-LPN noise sampler | Non-wrapping position/offset sums specified; S2 reduction audit absent | contract fixed; open for S2 |
-| `P-KEY` | One standard key hides point/payload | Full 128-bit seed/tag separation is implemented; single-key privacy still depends on D-DIST and a concrete reduction | open for S3/S8 |
-| `P-ADD` | Ripple-adder view is simulatable for either party | Party-specific triple shares, sent/opened values, Beaver equations, and carry induction in §7.2–7.3 | closed in ideal-bit-triple hybrid |
-| `P-LEVEL` | OT/CW view is simulatable conditioned on each full key/local state | Both sender/receiver roles and seed/flag share complements in §7.2–7.3 | closed in ideal-OT hybrid |
+| `P-DIST` | Joint output matches standard DPF distribution conditioned on party roots | §4.5 exact level-by-level CW and final-CW coupling; full-width AES/GPU compatibility gates | closed algebraically at fixed-PRG boundary |
+| `P-POS` | DPF points implement the exponent distribution induced by the exact uniform/regular Ring-LPN noise sampler | S2 source audit found block-conditioned inputs, dependent projected occupancy/cancellation, and no reviewed distribution/tail reduction to the estimator models | contract fixed; open/blocking |
+| `P-KEY` | One standard key hides point/payload | Exact D-DIST coupling reduces this to the standard BGI single-key theorem and the concrete four-call seed-expansion PRG | conditional on standard DPF/PRG theorem; concrete reduction review open |
+| `P-ADD` | Ripple-adder view is simulatable for either party | Party-specific triple shares, sent/opened values, Beaver equations, and carry induction in §7.2--7.3 | closed in ideal-bit-triple hybrid |
+| `P-LEVEL` | OT/CW view is simulatable conditioned on each full key/local state | Both sender/receiver roles and seed/flag share complements in §7.2--7.3 | closed in ideal-OT hybrid |
 | `P-PAYLOAD` | Three-OLE Phase C realizes payload correction without sign leakage | Joint three-mask simulation for both parties; zero intermediates covered; old-sign regression | closed in ideal-OLE hybrid |
-| `P-BATCH` | D1 simulation preserves correlated/repeated tree inputs and public order | Joint state-conditioned sequential hybrid with unique IDs in §7.1–7.3 | closed in D1 hybrid; production batching open |
-| `P-FRESH` | No primitive correlation or private random-tape draw is reused | Ideal-functionality mask-draw accounting plus ideal-call duplicate-ID rejection; party private-tape draws are not counted | ideal-functionality control; private-tape/end-to-end freshness open for S3/S8 |
-| `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | Two-process roots and masks use OpenSSL's private DRBG; GPU expansion uses four domain-separated AES calls with device/host parity | implementation evidence; state/composition audit open for S3/S8 |
-| `P-PCG` | Ring-LPN output is pseudorandom OLE at exact parameters/distribution | Figure-2 correctness; no S2 security audit | open/blocking |
-| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Two-process SCI/IKNP correctness artifact; deterministic and random sums; executable `5ell-3` logical / `10ell-6` meaningful-share / `2ell-1` post-mask dependency-round accounting; byte-accurate setup/correlation/online counters; corruption control | transport and correctness evidence; composition and cryptographic review open for S8 |
-| `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Source topology and serialization fixed in §3.2/§5; standalone artifact covers only one forward-shaped matmul | contract fixed; complete one-layer implementation required in S7 before S8; S9 scale only |
-| `P-PROC` | Two-process implementation matches the transcript | DPF keygen and D2 conversion run as independent OS processes over TCP; Ring-LPN OLE and full FC composition remain one-process | component evidence only; full composition open/blocking |
-| `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps protocol messages, target oracles, and validation-only reads | closed for current artifacts |
+| `P-BATCH` | D1 simulation preserves correlated/repeated tree inputs and public order | Joint state-conditioned sequential hybrid with unique IDs in §7.1--7.3 | closed in D1 hybrid |
+| `P-FRESH` | No primitive correlation or private random-tape draw is reused | Distinct derived SIDs for every tree group/direction/limb/batch/conversion chunk; duplicate-ID controls | live trace evidence; formal end-to-end ledger review open |
+| `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | Private roots/noise/masks use OpenSSL's private DRBG; public `a` is the sum of two full uniform field vectors; GPU DPF expansion uses four domain-separated AES calls | implementation evidence; concrete reduction review open |
+| `P-PCG` | Ring-LPN output is pseudorandom OLE at exact parameters/distribution | Figure-2 correctness only; S2 audit found BCG rule inconsistency, invalid estimator calls, no structured-code/two-limb advantage reduction, and no parameter pin | open/blocking |
+| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Exact-conversion lemma above plus two-process SCI/IKNP boundary/control runs | closed in daBit/edaBit/triple hybrid; real transport conditional on semi-honest OT and authenticated channels |
+| `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Live artifact covers one complete forward matmul only | forward closed; training-state extension open |
+| `P-PROC` | Two-process implementation matches the forward transcript | Live q64/q128 regular/uniform/multibatch runs use separate OS processes and GPUs; exact ResNet18 classifier-layer run added (not full inference/truncation) | forward component closed; authenticated deployment open |
+| `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps the complete live source and separates the post-exit checker | closed for current forward artifact; re-audit on source change |
 
-## 9. S1 mechanical gate and review boundary
+## 9. Review boundary and current disposition
 
-This checkpoint may be committed as **“protocol/proof contract frozen for
-review,” not “security proved,”** only after all internal conditions and the
-required user/advisor review below pass:
+The original S1 checkpoint was correctly committed as **“protocol/proof
+contract frozen for review,” not “security proved.”** Its mechanical
+conditions were:
 
 1. the user-approved functionality/theorem hierarchy and metric choice are
    recorded;
@@ -729,9 +872,11 @@ required user/advisor review below pass:
    `2(L-1)`, `130L`, `ceil(log2 p)`, meaningful share widths
    `4(L-1)`, `260L`, `2 ceil(log2 p)`, ideal-mask-draw accounting, and
    ideal-call duplicate-ID rejection before output;
-4. the D2 gate separately enforces wrap/no-wrap boundaries, `2ell-2` triples,
-   `5ell-3` logical opened bits, `10ell-6` meaningful share bits,
-   `2ell-1` post-mask dependency rounds, and exact modulo-`Q` conversion;
+4. the D2 gate separately enforces wrap/no-wrap boundaries, Layer-mode
+   admissibility, cross-party public-parameter agreement before base OT,
+   `2ell-2` triples, `5ell-3` logical opened bits, `10ell-6` meaningful share
+   bits, `2ell-1` post-mask dependency stages, exact modulo-`Q` conversion, and
+   complete traffic-category accounting;
 5. the paper contains the ideal functionalities, stateful Orca mask topology,
    exact DPF transcript, complete joint D1 hybrid simulators, and open-obligation
    table without upgrading claims;
@@ -741,18 +886,25 @@ required user/advisor review below pass:
 8. user/advisor or cryptography review reports no unresolved S1
    correctness/privacy blocker, and its disposition is recorded.
 
-**Review disposition (2026-07-29).** The requested Opus 5 model-assisted
-advisor audit found no remaining S1 freeze/commit blocker after the final
-functionality, topology, notation, evidence, and 18-page build corrections. It
-explicitly approved only the label **“contract frozen for advisor review.”**
-Independent human cryptographic review remains an S8 prerequisite before any
-computational-security or publication-readiness claim.
+**Original disposition (2026-07-29).** The requested Opus 5 model-assisted
+audit found no remaining S1 freeze/commit blocker and approved only the label
+“contract frozen for advisor review.”
 
-Open `P-DIST/P-KEY/P-PCG/P-CONV/P-RNG/P-PROC/P-TOPO` implementation or
-reduction work prevents a computational-security/publication claim but does not
-prevent freezing the explicit S1 contract that later stages must satisfy.
-The checkpoint commit is created only after condition 8; stage S2 does not start
-before that commit.
+**Current disposition (2026-08-04).** The exact DPF coupling, both joint batch
+simulators, conversion simulator, live source-to-transcript map, and
+conditional forward theorem now close `P-DIST`, `P-ADD`, `P-LEVEL`,
+`P-PAYLOAD`, `P-BATCH`, `P-CONV`, and the bounded forward portions of
+`P-TOPO/P-PROC/P-MAP` at their stated hybrid boundaries. Independent
+model-assisted proof and implementation reviews found no critical defect after
+the recorded fixes. Independent human cryptographic review is still required.
 
-**Intended checkpoint subject:**
-`ringlpn(proof): freeze semi-honest protocol and leakage contract`
+`P-POS` and `P-PCG` remain hard blockers because no reviewed
+distribution/structured-code/two-limb reduction or concrete parameter pin
+exists. `P-KEY` remains conditional on the standard DPF/PRG theorem;
+`P-RNG/P-FRESH` require renewed audit after any source change; the live TCP
+transport is unauthenticated. Therefore the honest claim is a
+*conditional forward-FC theorem and theorem-aligned executable artifact*,
+not “security proved,” “128-bit secure,” or publication-ready.
+
+**Next security checkpoint subject:**
+`ringlpn(security): close forward simulation boundary`

@@ -1,3 +1,3 @@
-device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
+device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,noise_source,key_source,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,spfss_key_load_us,ole_expand_mean_us,ole_expand_std_us,correct
 reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_regular,8192,13,11,64,62,regular,2048,2,8,8192,1,pass,pass,116544,465,8656,0,1
+cuda_ringlpn_ole,figure2_spfss_regular,8192,13,11,64,62,regular,party_records,two_party_files,2048,2,8,8192,1,pass,pass,116544,-1,493,9106,0,1

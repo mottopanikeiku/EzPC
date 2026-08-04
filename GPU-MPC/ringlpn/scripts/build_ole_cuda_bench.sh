@@ -34,9 +34,17 @@ COMMON_FLAGS=(
   -o "$OUT_DIR/bench_ole_ringlpn_cuda"
 
 "$NVCC" "${COMMON_FLAGS[@]}" \
+  -DRINGLPN_DEVICE_LABEL="\"${DEVICE_LABEL}_party\"" \
+  "$BASE_DIR/src/bench_ole_ringlpn_party.cu" \
+  "$PROJECT_ROOT/utils/gpu_mem.cu" \
+  -o "$OUT_DIR/bench_ole_ringlpn_party"
+
+"$NVCC" "${COMMON_FLAGS[@]}" \
   "$BASE_DIR/src/test_spfss_zp_cuda.cu" \
   "$PROJECT_ROOT/utils/gpu_mem.cu" \
   -o "$OUT_DIR/test_spfss_zp_cuda"
 
 echo "Built:"
-ls -la "$OUT_DIR/bench_ole_ringlpn_cuda" "$OUT_DIR/test_spfss_zp_cuda"
+ls -la "$OUT_DIR/bench_ole_ringlpn_cuda" \
+  "$OUT_DIR/bench_ole_ringlpn_party" \
+  "$OUT_DIR/test_spfss_zp_cuda"

@@ -43,6 +43,15 @@ scratch/
 # -- Build output (host-only artifacts; CUDA bin/ already ignored at top level) --
 host_bin/
 
+# -- Regenerable two-party protocol records / keys --
+results/dpf/two_party_keys/
+results/dpf/two_party_gpu_keys/
+results/ole/api_smoke/
+results/ole/two_party_keys/
+results/ole/two_party_keys_*/
+results/secure_convert/two_party_outputs/
+scripts/__pycache__/
+
 # -- Editor / OS cruft --
 *.swp
 *.swo

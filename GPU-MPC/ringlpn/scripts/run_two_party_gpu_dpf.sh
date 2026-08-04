@@ -67,7 +67,7 @@ rm -f "$CSV"
 # The host/device PRG parity gate must pass before any key is generated.
 echo "[two-party-gpu] host/device PRG parity" | tee -a "$LOG"
 "$PARITY" --vectors "$OUTDIR/gpu_aes_prg_vectors_2026_07_29.csv" \
-  >> "$LOG" 2>> "$LOG"
+  --csv-header >> "$LOG" 2>> "$LOG"
 
 # config: log_domain batch_trees modulus_idx
 CONFIGS=(
@@ -103,6 +103,17 @@ for cfg in "${CONFIGS[@]}"; do
   wait "$p1" || rc1=$?
   if [[ $rc0 -ne 0 || $rc1 -ne 0 ]]; then
     echo "[two-party-gpu] keygen FAILED (p0=$rc0 p1=$rc1) L=$L m=$MIDX" | tee -a "$LOG"
+    status=1
+  fi
+
+  # In-memory copies preserve the parsed record structure while changing only
+  # correction-array dimensions needed for the alternate L.  The validator
+  # must reject both within-file heterogeneity and a cross-file L mismatch
+  # through its normal pre-GPU validation function.
+  echo "[two-party-gpu] invalid metadata controls L=$L m=$MIDX" >> "$LOG"
+  if ! "$EVAL" --prefix "$prefix" --selftest-invalid >> "$LOG" 2>> "$LOG"; then
+    echo "[two-party-gpu] invalid metadata controls FAILED L=$L m=$MIDX" \
+      | tee -a "$LOG"
     status=1
   fi
 

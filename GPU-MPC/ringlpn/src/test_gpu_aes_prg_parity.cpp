@@ -95,9 +95,13 @@ int main(int argc, char **argv) {
         if (tl != r.tl || tr != r.tr) ++tag_mismatch;
     }
 
-    // Control: changing a high seed bit must change both children. The
-    // device-vector set itself includes both low-bit values, so parity also
-    // catches any reintroduction of the obsolete low-bit-clearing semantics.
+    // Controls: the high-bit perturbation catches broad seed insensitivity.
+    // More importantly, rows whose seeds differ only in bit 0 must produce
+    // different meaningful outputs for both children.  The device vector
+    // generator deterministically includes the pair 0 and 1; requiring a pair
+    // here makes that precondition non-vacuous.  Comparing both the dumped
+    // device outputs and fresh host outputs makes jointly clearing seed bit 0
+    // fail even when ordinary host/device parity still agrees.
     size_t insensitive = 0;
     for (const Row &r : rows) {
         U128 sl0 = 0, sr0 = 0, sl1 = 0, sr1 = 0;
@@ -108,19 +112,50 @@ int main(int argc, char **argv) {
         if (sl0 == sl1 || sr0 == sr1) ++insensitive;
     }
 
+    size_t low_bit_pairs = 0, low_bit_insensitive = 0;
+    for (const Row &r0 : rows) {
+        if ((r0.seed & 1) != 0) continue;
+        for (const Row &r1 : rows) {
+            if (r1.seed != (r0.seed ^ (U128)1)) continue;
+            ++low_bit_pairs;
+            U128 host_l0 = 0, host_r0 = 0, host_l1 = 0, host_r1 = 0;
+            uint8_t host_tl0 = 0, host_tr0 = 0, host_tl1 = 0, host_tr1 = 0;
+            ringlpn_gpu_prg::gpu_aes_prg_expand(
+                r0.seed, host_l0, host_tl0, host_r0, host_tr0);
+            ringlpn_gpu_prg::gpu_aes_prg_expand(
+                r1.seed, host_l1, host_tl1, host_r1, host_tr1);
+            // Tag bits may legitimately collide.  Each 128-bit child seed word
+            // itself must be sensitive to input seed bit 0 on both backends.
+            const bool device_left_same = r0.sl == r1.sl;
+            const bool device_right_same = r0.sr == r1.sr;
+            const bool host_left_same = host_l0 == host_l1;
+            const bool host_right_same = host_r0 == host_r1;
+            if (device_left_same || device_right_same || host_left_same ||
+                host_right_same) {
+                ++low_bit_insensitive;
+            }
+            break;
+        }
+    }
+
     const bool all_ok = left_mismatch == 0 && right_mismatch == 0 &&
-                        tag_mismatch == 0 && insensitive == 0;
+                        tag_mismatch == 0 && insensitive == 0 &&
+                        low_bit_pairs != 0 && low_bit_insensitive == 0;
     if (csv_header) {
         std::printf("vectors,rows,left_mismatch,right_mismatch,tag_mismatch,"
-                    "seed_insensitive,parity\n");
+                    "seed_insensitive,low_bit_pairs,low_bit_insensitive,"
+                    "parity\n");
     }
-    std::printf("%s,%zu,%zu,%zu,%zu,%zu,%s\n", path.c_str(), rows.size(),
-                left_mismatch, right_mismatch, tag_mismatch, insensitive,
+    std::printf("%s,%zu,%zu,%zu,%zu,%zu,%zu,%zu,%s\n", path.c_str(),
+                rows.size(), left_mismatch, right_mismatch, tag_mismatch,
+                insensitive, low_bit_pairs, low_bit_insensitive,
                 all_ok ? "pass" : "FAIL");
     std::fprintf(stderr,
                  "[gpu-aes-parity] %zu device vectors: left %zu / right %zu / "
-                 "tag %zu mismatches, %zu seed-insensitive -> %s\n",
+                 "tag %zu mismatches, %zu seed-insensitive; low-bit pairs %zu, "
+                 "%zu insensitive -> %s\n",
                  rows.size(), left_mismatch, right_mismatch, tag_mismatch,
-                 insensitive, all_ok ? "pass" : "FAIL");
+                 insensitive, low_bit_pairs, low_bit_insensitive,
+                 all_ok ? "pass" : "FAIL");
     return all_ok ? 0 : 1;
 }

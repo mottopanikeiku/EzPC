@@ -6,8 +6,9 @@
 #      gcc -O3 on this host) and every following `% modulus128` is invalid;
 #   2. the shipped harness runs c=3,t=27, the parameter set the artifact's own
 #      README declares insecure after ePrint 2025/892.
-# This script fixes (1) with a typed shift, moves (2) to the README's
-# recommended secure c=5,t=27, records a patch digest and peak RSS, and labels
+# This script fixes (1) with a typed shift and moves (2) to the artifact's
+# post-ePrint c=5,t=27 comparison grid. This is not a local security claim or
+# reproduction. It records a patch digest and peak RSS, and labels
 # every row `adapted`.
 set -euo pipefail
 
@@ -64,7 +65,7 @@ apply_patch() {
   test "$(grep -c '((uint64_t)1)<<(k+s)' "${WORK_DIR}/src/modular_bench.c")" -eq 2
   test "$(grep -c '((uint128_t)1)<<(k+s)' "${WORK_DIR}/src/modular_bench.c")" -eq 2
 
-  # (2) secure parameter set and bounded trial count in the shipped harness.
+  # (2) post-ePrint comparison parameter set and bounded trial count.
   python3 - "${WORK_DIR}/src/main.c" "${TRIALS}" "${n}" "${C}" "${T}" <<'PY'
 import re, sys
 path, trials, n, c, t = sys.argv[1], *sys.argv[2:]

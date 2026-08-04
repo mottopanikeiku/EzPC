@@ -13,6 +13,7 @@ CHECKCSV="$OUTDIR/secure_convert_two_party_check_2026_08_03.csv"
 LOG="$OUTDIR/secure_convert_two_party_2026_08_03.log"
 BASE_PORT="${BASE_PORT:-42600}"
 SELFTEST="${SELFTEST:-4}"
+MISMATCH_PORT="${MISMATCH_PORT:-42590}"
 
 if [[ ! -x "$BIN" ]]; then
   echo "secure-convert test not built. Run scripts/build_secure_convert_test.sh first."
@@ -22,15 +23,76 @@ mkdir -p "$OUTDIR" "$WORKDIR"
 : > "$LOG"
 rm -f "$CSV" "$CHECKCSV"
 
-# Public-parameter validation must reject before either process opens a socket.
-invalid_rc=0
-"$BIN" --qbits 64 --bw 16 --value-bound 65536 \
-  >/dev/null 2>>"$LOG" || invalid_rc=$?
-if [[ $invalid_rc -ne 2 ]]; then
-  echo "[two-party-convert] invalid-input control returned $invalid_rc" | tee -a "$LOG"
+# All local validation controls must reject with code 2 before opening sockets.
+expect_rejection() {
+  local name=$1
+  shift
+  local rc=0
+  timeout 10s "$BIN" "$@" >/dev/null 2>>"$LOG" || rc=$?
+  if [[ $rc -ne 2 ]]; then
+    echo "[two-party-convert] $name control returned $rc (expected 2)" | tee -a "$LOG"
+    exit 1
+  fi
+  echo "[two-party-convert] $name control rejected with code 2 as expected" >>"$LOG"
+}
+
+if [[ ! $BASE_PORT =~ ^(0|[1-9][0-9]*)$ ]] ||
+   (( BASE_PORT < 1 || BASE_PORT > 65514 )); then
+  echo "[two-party-convert] BASE_PORT must leave room for both sockets in all cases (1..65514)" >&2
+  exit 2
+fi
+if [[ ! $MISMATCH_PORT =~ ^(0|[1-9][0-9]*)$ ]] ||
+   (( MISMATCH_PORT < 1 || MISMATCH_PORT > 65534 )); then
+  echo "[two-party-convert] MISMATCH_PORT must be in 1..65534" >&2
+  exit 2
+fi
+if [[ ! $SELFTEST =~ ^(0|[1-9][0-9]*)$ ]] ||
+   (( SELFTEST < 0 || SELFTEST > 1024 )); then
+  echo "[two-party-convert] SELFTEST must be in 0..1024" >&2
+  exit 2
+fi
+if (( MISMATCH_PORT == BASE_PORT || MISMATCH_PORT == BASE_PORT + 4 ||
+      MISMATCH_PORT == BASE_PORT + 8 || MISMATCH_PORT == BASE_PORT + 12 )); then
+  echo "[two-party-convert] MISMATCH_PORT must be dedicated to the mismatch control" >&2
+  exit 2
+fi
+
+expect_rejection "invalid value-bound" \
+  --qbits 64 --bw 16 --value-bound 65536
+expect_rejection "base port 65535" \
+  --port 65535 --qbits 64 --bw 16 --inner 8 --value-bound 255
+expect_rejection "invalid Layer/FC no-wrap bound" \
+  --port "$MISMATCH_PORT" --qbits 64 --bw 32 --inner 1 --value-bound 255
+
+# Both peers exchange canonical public parameters on a dedicated port before
+# OT setup. A disagreement must terminate promptly and produce neither CSV nor
+# party output files.
+mismatch_prefix="$WORKDIR/public_parameter_mismatch"
+rm -f "${mismatch_prefix}_p0.convert" "${mismatch_prefix}_p1.convert"
+: >"$WORKDIR/mismatch_p0.csv"
+: >"$WORKDIR/mismatch_p1.csv"
+timeout 15s "$BIN" --party 0 --port "$MISMATCH_PORT" \
+  --qbits 64 --bw 16 --trials 1 --forced-wraps 1 --inner 1 \
+  --value-bound 255 --input-seed 99 --selftest "$SELFTEST" \
+  --out-prefix "$mismatch_prefix" >"$WORKDIR/mismatch_p0.csv" 2>>"$LOG" &
+mismatch_p0=$!
+sleep 0.2
+timeout 15s "$BIN" --party 1 --host 127.0.0.1 --port "$MISMATCH_PORT" \
+  --qbits 64 --bw 16 --trials 1 --forced-wraps 1 --inner 1 \
+  --value-bound 254 --input-seed 99 --selftest "$SELFTEST" \
+  --out-prefix "$mismatch_prefix" >"$WORKDIR/mismatch_p1.csv" 2>>"$LOG" &
+mismatch_p1=$!
+mismatch_rc0=0
+mismatch_rc1=0
+wait "$mismatch_p0" || mismatch_rc0=$?
+wait "$mismatch_p1" || mismatch_rc1=$?
+if [[ $mismatch_rc0 -ne 2 || $mismatch_rc1 -ne 2 ||
+      -s "$WORKDIR/mismatch_p0.csv" || -s "$WORKDIR/mismatch_p1.csv" ||
+      -e "${mismatch_prefix}_p0.convert" || -e "${mismatch_prefix}_p1.convert" ]]; then
+  echo "[two-party-convert] public-parameter mismatch control FAILED (p0=$mismatch_rc0 p1=$mismatch_rc1)" | tee -a "$LOG"
   exit 1
 fi
-echo "[two-party-convert] invalid-input control rejected as expected" >>"$LOG"
+echo "[two-party-convert] public-parameter mismatch rejected before OT setup/output as expected" >>"$LOG"
 
 # qbits bw trials forced_wraps inner value_bound input_seed
 CASES=(
@@ -85,6 +147,111 @@ for cfg in "${CASES[@]}"; do
   port=$((port + 4))
 done
 
+# Exercise the real version-1 read_file path with a hostile serialized count.
+# The layout is asserted before deriving the count offset; the checker must
+# reject promptly (code 1) rather than allocating from the forged value.
+malformed_prefix="$WORKDIR/malformed_record_count"
+if ! python3 - \
+    "$WORKDIR/q64_bw16_p0.convert" "$WORKDIR/q64_bw16_p1.convert" \
+    "${malformed_prefix}_p0.convert" "${malformed_prefix}_p1.convert" <<'PY'
+import struct
+import sys
+from pathlib import Path
+
+src0, src1, dst0, dst1 = map(Path, sys.argv[1:])
+header = struct.Struct("<8s8I3Q")
+data = bytearray(src0.read_bytes())
+peer = src1.read_bytes()
+assert header.size == 64 and len(data) >= header.size
+fields = header.unpack_from(data)
+magic, version = fields[0], fields[1]
+trials, forced, serialized_n = fields[6], fields[7], fields[11]
+assert magic == b"RLPNCVT1" and version == 1
+assert serialized_n == 2 * trials + forced + 4
+assert len(data) == header.size + serialized_n * 25
+struct.pack_into("<Q", data, header.size - 8, 1 << 63)
+dst0.write_bytes(data)
+dst1.write_bytes(peer)
+PY
+then
+  echo "[two-party-convert] malformed record-count fixture creation FAILED" | tee -a "$LOG"
+  status=1
+else
+  malformed_rc=0
+  timeout 10s "$BIN" --check --out-prefix "$malformed_prefix" \
+    >"$WORKDIR/malformed_check.csv" 2>>"$LOG" || malformed_rc=$?
+  if [[ $malformed_rc -ne 1 ]]; then
+    echo "[two-party-convert] malformed record-count control returned $malformed_rc (expected 1)" | tee -a "$LOG"
+    status=1
+  else
+    echo "[two-party-convert] oversized serialized record count rejected with code 1 before allocation" >>"$LOG"
+  fi
+fi
+
+# A zero session identifier must be rejected bilaterally before OT setup or
+# publication; --input-seed is the executable's public session identifier.
+zero_prefix="$WORKDIR/zero_sid"
+rm -f "${zero_prefix}_p0.convert" "${zero_prefix}_p1.convert" \
+      "${zero_prefix}_p0.convert.tmp" "${zero_prefix}_p1.convert.tmp"
+"$BIN" --party 0 --port "$port" --qbits 64 --bw 16 --trials 1 \
+  --forced-wraps 1 --inner 1 --value-bound 10 --input-seed 0 \
+  --selftest 0 --out-prefix "$zero_prefix" \
+  >"$WORKDIR/zero_sid_p0.csv" 2>>"$LOG" &
+zero_p0=$!
+sleep 0.2
+"$BIN" --party 1 --host 127.0.0.1 --port "$port" --qbits 64 --bw 16 \
+  --trials 1 --forced-wraps 1 --inner 1 --value-bound 10 --input-seed 0 \
+  --selftest 0 --out-prefix "$zero_prefix" \
+  >"$WORKDIR/zero_sid_p1.csv" 2>>"$LOG" &
+zero_p1=$!
+set +e
+wait "$zero_p0"; zero_rc0=$?
+wait "$zero_p1"; zero_rc1=$?
+set -e
+if [[ $zero_rc0 -ne 2 || $zero_rc1 -ne 2 ||
+      -e "${zero_prefix}_p0.convert" || -e "${zero_prefix}_p1.convert" ||
+      -e "${zero_prefix}_p0.convert.tmp" || -e "${zero_prefix}_p1.convert.tmp" ]]; then
+  echo "[two-party-convert] zero-session control FAILED (p0=$zero_rc0 p1=$zero_rc1)" | tee -a "$LOG"
+  status=1
+else
+  echo "[two-party-convert] zero session rejected bilaterally before OT/output" >>"$LOG"
+fi
+port=$((port + 4))
+
+# Transactional publication control: a non-empty directory at party 0's final
+# path forces only that local rename to fail. The second bilateral result
+# exchange must make party 1 delete its already-renamed final as well.
+rename_prefix="$WORKDIR/rename_failure"
+rm -rf "${rename_prefix}_p0.convert"
+rm -f "${rename_prefix}_p1.convert" \
+      "${rename_prefix}_p0.convert.tmp" "${rename_prefix}_p1.convert.tmp"
+mkdir -p "${rename_prefix}_p0.convert"
+printf 'force rename failure\n' >"${rename_prefix}_p0.convert/blocker"
+"$BIN" --party 0 --port "$port" --qbits 64 --bw 16 --trials 1 \
+  --forced-wraps 1 --inner 1 --value-bound 10 --input-seed 909 \
+  --selftest 0 --out-prefix "$rename_prefix" \
+  >"$WORKDIR/rename_failure_p0.csv" 2>>"$LOG" &
+rename_p0=$!
+sleep 0.2
+"$BIN" --party 1 --host 127.0.0.1 --port "$port" --qbits 64 --bw 16 \
+  --trials 1 --forced-wraps 1 --inner 1 --value-bound 10 \
+  --input-seed 909 --selftest 0 --out-prefix "$rename_prefix" \
+  >"$WORKDIR/rename_failure_p1.csv" 2>>"$LOG" &
+rename_p1=$!
+set +e
+wait "$rename_p0"; rename_rc0=$?
+wait "$rename_p1"; rename_rc1=$?
+set -e
+if [[ $rename_rc0 -ne 1 || $rename_rc1 -ne 1 ||
+      -e "${rename_prefix}_p1.convert" ||
+      -e "${rename_prefix}_p0.convert.tmp" ||
+      -e "${rename_prefix}_p1.convert.tmp" ]]; then
+  echo "[two-party-convert] bilateral rename-failure control FAILED (p0=$rename_rc0 p1=$rename_rc1)" | tee -a "$LOG"
+  status=1
+else
+  echo "[two-party-convert] bilateral rename failure removed both parties' staged/final records" >>"$LOG"
+fi
+rm -rf "${rename_prefix}_p0.convert"
 if grep -q "FAIL" "$CSV" || grep -q "FAIL" "$CHECKCSV"; then status=1; fi
 echo "wrote $CSV"
 echo "wrote $CHECKCSV"

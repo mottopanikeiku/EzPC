@@ -4,7 +4,7 @@ Configuration: ring-polynomial matrix multiplication over the single 62-bit prim
 
 | rows | inner | cols | n | c | t | noise | SPFSS domain | validation | shared operands | OLE instances | key bytes MiB | keygen us | linear expand mean us | linear expand std us |
 | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2 | 2 | 2 | 8192 | 2 | 8 | regular | 2048 | pass | 1 | 16 | 3.56 | 233,560.000 | 286,818.000 | 0.000 |
+| 2 | 2 | 2 | 8192 | 2 | 8 | regular | 2048 | pass | 1 | 16 | 3.56 | 231,361.000 | 286,644.000 | 0.000 |
 
 Notes:
 - This is the two-OLE-to-Beaver conversion applied to a linear layer whose entries are Ring-LPN polynomials.

@@ -1,31 +1,44 @@
 [two-party-gpu] host/device PRG parity
-[gpu-aes-parity] 16 device vectors: left 0 / right 0 / tag 0 mismatches, 0 seed-insensitive -> pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/gpu_aes_prg_vectors_2026_07_29.csv,16,0,0,0,0,pass
+[gpu-aes-parity] 16 device vectors: left 0 / right 0 / tag 0 mismatches, 0 seed-insensitive; low-bit pairs 1, 0 insensitive -> pass
+vectors,rows,left_mismatch,right_mismatch,tag_mismatch,seed_insensitive,low_bit_pairs,low_bit_insensitive,parity
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/gpu_aes_prg_vectors_2026_07_29.csv,16,0,0,0,0,1,0,pass
 === gpu-aes L=4 trees=8 modulus_idx=0 port=45200 ===
-[two-party-dpf] party 1 L=4 batch=8: 8 string-OTs, 6 triple-OTs, 186 OLE-OTs, 588 logical-open bits, 1176 meaningful-share bits [two-party-dpf] party 0 L=4 batch=8: 8 string-OTs, 6 triple-OTs, 186 OLE-OTs, 588 logical-open bits, 1176 meaningful-share bits per tree; batch 46742 bytes sent, 30 direction switches, 5509 us (689 us/tree); setup 21829 bytes / 6 switches; accounting pass;per tree; batch 45230 bytes sent, 30 direction switches, 5506 us (688 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8_p1.key
+[two-party-dpf] party 1 L=4 batch=8: 8 string-OTs, 6 triple-OTs, 186 OLE-OTs, 588 logical-open bits, 1176 meaningful-share bits [two-party-dpf] party 0 L=4 batch=8: 8 string-OTs, 6 triple-OTs, 186 OLE-OTs, 588 logical-open bits, 1176 meaningful-share bits per tree; batch 46742 bytes sent, 30 direction switches, 5503 us (688 us/tree); setup 21829 bytes / 6 switches; accounting pass;per tree; batch 45230 bytes sent, 30 direction switches, 5501 us (688 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8_p1.key
  keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8_p0.key
-1,q62,gpu-aes,4,8,8,8,0,0,8.0,6.0,186.0,3.0,3.0,6.0,520.0,62.0,588.0,1176.0,256,21829,6,46742,5842.8,30,5509.1,688.6,pass,pass,pass
-0,q62,gpu-aes,4,8,8,8,0,0,8.0,6.0,186.0,3.0,3.0,6.0,520.0,62.0,588.0,1176.0,256,21829,6,45230,5653.8,30,5505.9,688.2,pass,pass,pass
-[two-party-gpu] 8 keys at L=4: batch mismatch 0, per-tree 8/8, root low-bit ones 5, public mismatch 0, negative control failed as expected -> pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8,8,4,4611686018326724609,5,0,0,8,0,failed_as_expected,pass
+1,q62,gpu-aes,4,8,8,8,0,0,8.0,6.0,186.0,3.0,3.0,6.0,520.0,62.0,588.0,1176.0,256,21829,6,46742,5842.8,30,5503.1,687.9,pass,pass,pass
+0,q62,gpu-aes,4,8,8,8,0,0,8.0,6.0,186.0,3.0,3.0,6.0,520.0,62.0,588.0,1176.0,256,21829,6,45230,5653.8,30,5501.5,687.7,pass,pass,pass
+[two-party-gpu] invalid metadata controls L=4 m=0
+[two-party-gpu] invalid metadata control within-file heterogeneous L: rejected as expected (party 0 record 1 has heterogeneous log_domain 5 (expected 4))
+[two-party-gpu] invalid metadata control cross-file L mismatch: rejected as expected (party 1 record 0 has heterogeneous log_domain 5 (expected 4))
+[two-party-gpu] 8 keys at L=4: batch mismatch 0, per-tree 8/8, root low-bit ones 7/16, public mismatch 0, negative control failed as expected -> pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL4_m0_b8,8,4,4611686018326724609,7,0,0,8,0,failed_as_expected,pass
 === gpu-aes L=8 trees=16 modulus_idx=0 port=45204 ===
-[two-party-dpf] party 1 L=8 batch=16: 16 string-OTs, 14 triple-OTs, 186 OLE-OTs, 1116 logical-open bits, 2232 meaningful-share bits per tree; batch 92668 bytes sent, 54 direction switches, 9214 us (576 us/tree); setup 21829 bytes / 6 switches; accounting p[two-party-dpf] party 0 L=8 batch=16: 16 string-OTs, 14 triple-OTs, 186 OLE-OTs, 1116 logical-open bits, 2232 meaningful-share bass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16_p1.key
-its per tree; batch 89644 bytes sent, 54 direction switches, 9212 us (576 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16_p0.key
-1,q62,gpu-aes,8,16,16,8,0,0,16.0,14.0,186.0,7.0,3.0,14.0,1040.0,62.0,1116.0,2232.0,256,21829,6,92668,5791.8,54,9214.0,575.9,pass,pass,pass
-0,q62,gpu-aes,8,16,16,8,0,0,16.0,14.0,186.0,7.0,3.0,14.0,1040.0,62.0,1116.0,2232.0,256,21829,6,89644,5602.8,54,9211.7,575.7,pass,pass,pass
-[two-party-gpu] 16 keys at L=8: batch mismatch 0, per-tree 16/16, root low-bit ones 17, public mismatch 0, negative control failed as expected -> pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16,16,8,4611686018326724609,17,0,0,16,0,failed_as_expected,pass
+[two-party-dpf] party 1 L=8 batch=16: 16 string-OTs, 14 triple-OTs, 186 OLE-OTs, 1116 logical-open bits, 2232 meaningful-share b[two-party-dpf] party 0 L=8 batch=16: 16 string-OTs, 14 triple-OTs, 186 OLE-OTs, 1116 logical-open bits, 2232 meaningful-share bits per tree; batch 92668 bytes sent, 54 direction switches, 9654 us (603 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16_p1.key
+its per tree; batch 89644 bytes sent, 54 direction switches, 9653 us (603 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16_p0.key
+1,q62,gpu-aes,8,16,16,8,0,0,16.0,14.0,186.0,7.0,3.0,14.0,1040.0,62.0,1116.0,2232.0,256,21829,6,92668,5791.8,54,9653.9,603.4,pass,pass,pass
+0,q62,gpu-aes,8,16,16,8,0,0,16.0,14.0,186.0,7.0,3.0,14.0,1040.0,62.0,1116.0,2232.0,256,21829,6,89644,5602.8,54,9652.8,603.3,pass,pass,pass
+[two-party-gpu] invalid metadata controls L=8 m=0
+[two-party-gpu] invalid metadata control within-file heterogeneous L: rejected as expected (party 0 record 1 has heterogeneous log_domain 9 (expected 8))
+[two-party-gpu] invalid metadata control cross-file L mismatch: rejected as expected (party 1 record 0 has heterogeneous log_domain 9 (expected 8))
+[two-party-gpu] 16 keys at L=8: batch mismatch 0, per-tree 16/16, root low-bit ones 15/32, public mismatch 0, negative control failed as expected -> pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL8_m0_b16,16,8,4611686018326724609,15,0,0,16,0,failed_as_expected,pass
 === gpu-aes L=11 trees=32 modulus_idx=0 port=45208 ===
-[two-party-dpf] party 1 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share [two-party-dpf] party 0 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share bits per tree; batch 169776 bytes sent, 72 direction switches, 26103 us (816 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32_p1.key
-bits per tree; batch 163728 bytes sent, 72 direction switches, 26103 us (816 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32_p0.key
-0,q62,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,163728,5116.5,72,26103.4,815.7,pass,pass,pass
-1,q62,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,169776,5305.5,72,26103.4,815.7,pass,pass,pass
-[two-party-gpu] 32 keys at L=11: batch mismatch 0, per-tree 32/32, root low-bit ones 29, public mismatch 0, negative control failed as expected -> pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32,32,11,4611686018326724609,29,0,0,32,0,failed_as_expected,pass
+[two-party-dpf] party 1 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share bits per tree; batch 169776 bytes sent, 72 direction switches, 28148 us (880 us/tree); setup 21829 bytes / 6 switches; accountin[two-party-dpf] party 0 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share g pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32_p1.key
+bits per tree; batch 163728 bytes sent, 72 direction switches, 28146 us (880 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32_p0.key
+1,q62,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,169776,5305.5,72,28148.4,879.6,pass,pass,pass
+0,q62,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,163728,5116.5,72,28146.5,879.6,pass,pass,pass
+[two-party-gpu] invalid metadata controls L=11 m=0
+[two-party-gpu] invalid metadata control within-file heterogeneous L: rejected as expected (party 0 record 1 has heterogeneous log_domain 12 (expected 11))
+[two-party-gpu] invalid metadata control cross-file L mismatch: rejected as expected (party 1 record 0 has heterogeneous log_domain 12 (expected 11))
+[two-party-gpu] 32 keys at L=11: batch mismatch 0, per-tree 32/32, root low-bit ones 38/64, public mismatch 0, negative control failed as expected -> pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m0_b32,32,11,4611686018326724609,38,0,0,32,0,failed_as_expected,pass
 === gpu-aes L=11 trees=32 modulus_idx=1 port=45212 ===
-[two-party-dpf] party 1 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share bits per tree; batch 169776 bytes sent, 72 direction switches, 26913 us (841 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32_p1.key
-[two-party-dpf] party 0 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share bits per tree; batch 163728 bytes sent, 72 direction switches, 26928 us (841 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32_p0.key
-1,q62b,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,169776,5305.5,72,26912.7,841.0,pass,pass,pass
-0,q62b,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,163728,5116.5,72,26927.6,841.5,pass,pass,pass
-[two-party-gpu] 32 keys at L=11: batch mismatch 0, per-tree 32/32, root low-bit ones 32, public mismatch 0, negative control failed as expected -> pass
-/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32,32,11,4611686018309947393,32,0,0,32,0,failed_as_expected,pass
+[two-party-dpf] party 1 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share [two-party-dpf] party 0 L=11 batch=32: 22 string-OTs, 20 triple-OTs, 186 OLE-OTs, 1512 logical-open bits, 3024 meaningful-share bits per tree; batch 169776 bytes sent, 72 direction switches, 29261 us (914 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32_p1.key
+bits per tree; batch 163728 bytes sent, 72 direction switches, 29261 us (914 us/tree); setup 21829 bytes / 6 switches; accounting pass; keys -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32_p0.key
+1,q62b,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,169776,5305.5,72,29260.6,914.4,pass,pass,pass
+0,q62b,gpu-aes,11,32,32,8,0,0,22.0,20.0,186.0,10.0,3.0,20.0,1430.0,62.0,1512.0,3024.0,256,21829,6,163728,5116.5,72,29260.7,914.4,pass,pass,pass
+[two-party-gpu] invalid metadata controls L=11 m=1
+[two-party-gpu] invalid metadata control within-file heterogeneous L: rejected as expected (party 0 record 1 has heterogeneous log_domain 12 (expected 11))
+[two-party-gpu] invalid metadata control cross-file L mismatch: rejected as expected (party 1 record 0 has heterogeneous log_domain 12 (expected 11))
+[two-party-gpu] 32 keys at L=11: batch mismatch 0, per-tree 32/32, root low-bit ones 31/64, public mismatch 0, negative control failed as expected -> pass
+/home/fatih/EzPC/GPU-MPC/ringlpn/results/dpf/two_party_gpu_keys/gpuL11_m1_b32,32,11,4611686018309947393,31,0,0,32,0,failed_as_expected,pass

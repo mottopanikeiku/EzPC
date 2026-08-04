@@ -1,28 +1,42 @@
 invalid arguments
-[two-party-convert] invalid-input control rejected as expected
+[two-party-convert] invalid value-bound control rejected with code 2 as expected
+invalid arguments
+[two-party-convert] base port 65535 control rejected with code 2 as expected
+invalid harness Layer/FC workload: require inner*2^(2*bw+2)<M
+[two-party-convert] invalid Layer/FC no-wrap bound control rejected with code 2 as expected
+[two-party-convert] public-parameter or local-input validation mismatch; aborting before OT setup and output
+[two-party-convert] public-parameter or local-input validation mismatch; aborting before OT setup and output
+[two-party-convert] public-parameter mismatch rejected before OT setup/output as expected
 === qbits=64 bw=16 port=42600 ===
-[two-party-convert] party 1 q64 bw=16 n=76: setup 21829/6; correlations 235828/6; online 10716/251; selftest pass accounting pas[two-party-convert] party 0 q64 bw=16 n=76: setup 21829/6; correlations 309556/6; online 10716/251; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw16_p1.convert
-s; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw16_p0.convert
-party,requested_qbits,actual_qbits,bw,ell,conversions,and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,dabit_ots_per_conv,triple_ots_per_conv,logical_opened_bits_per_conv,meaningful_share_bits_per_conv,post_mask_dependency_rounds_per_conv,base_ots,setup_bytes_sent,setup_direction_switches,correlation_bytes_sent_batch,correlation_direction_switches_batch,online_bytes_sent_batch,online_direction_switches_batch,protocol_bytes_sent_batch,protocol_direction_switches_batch,correlation_us_batch,online_us_batch,correlation_selftest,transcript_accounting,status
-0,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,309556,6,10716,251,320272,257,2999.5,2782.9,pass,pass,pass
-1,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,235828,6,10716,251,246544,257,2982.2,2801.2,pass,pass,pass
+[two-party-convert] party 1 q64 bw=16 n=76: setup 21829/5; agreement 41/4; selftest 8576/6; preflight 25/2; correlations 235828/6; online 10716/251; final-sync 4/8; transport 277019/282; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlp[two-party-convert] party 0 q64 bw=16 n=76: setup 21829/5; agreement 41/4; selftest 8576/6; preflight 25/2; correlations 309556/n/results/secure_convert/two_party_outputs/q64_bw16_p1.convert
+6; online 10716/251; final-sync 4/8; transport 350747/282; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw16_p0.convert
+party,requested_qbits,actual_qbits,bw,ell,conversions,and_triples_per_conv,edabit_bits_per_conv,dabits_per_conv,dabit_ots_per_conv,triple_ots_per_conv,logical_opened_bits_per_conv,meaningful_share_bits_per_conv,post_mask_dependency_stages_per_conv,base_ots,setup_bytes_sent,setup_direction_switches,agreement_bytes_sent_batch,agreement_direction_switches_batch,selftest_bytes_sent_batch,selftest_direction_switches_batch,preflight_bytes_sent_batch,preflight_direction_switches_batch,correlation_bytes_sent_batch,correlation_direction_switches_batch,online_bytes_sent_batch,online_direction_switches_batch,final_sync_bytes_sent_batch,final_sync_direction_switches_batch,protocol_bytes_sent_batch,protocol_direction_switches_batch,transport_bytes_sent_batch,transport_direction_switches_batch,selftest_us_batch,correlation_us_batch,online_us_batch,public_parameter_agreement,correlation_selftest,transcript_accounting,status
+0,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,5,41,4,8576,6,25,2,309556,6,10716,251,4,8,328918,277,350747,282,886.8,3097.2,2765.9,pass,pass,pass,pass
+1,64,62,16,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,5,41,4,8576,6,25,2,235828,6,10716,251,4,8,255190,277,277019,282,890.5,3079.6,2780.4,pass,pass,pass,pass
 requested_qbits,actual_qbits,bw,ell,trials,forced_wraps,inner,boundary_trials,boundary_mismatch,random_trials,random_mismatch,forced_trials,forced_mismatch,layer_trials,layer_mismatch,conversions,headers,corruption_control,bit_exact_match,status
 64,62,16,63,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
 === qbits=64 bw=24 port=42604 ===
-[two-party-convert] party 1 q64 bw=24 n=76: setup 21829/6; correlations 235828/6; online 10716/251; selftest pass accounting pas[two-party-convert] party 0 q64 bw=24 n=76: setup 21829/6; correlations 309556/6; online 10716/251; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw24_p1.convert
-s; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw24_p0.convert
-0,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,309556,6,10716,251,320272,257,2975.6,2789.8,pass,pass,pass
-1,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,6,235828,6,10716,251,246544,257,2960.1,2806.3,pass,pass,pass
+[two-party-convert] party 1 q64 bw=24 n=76: setup 21829/5; agreement 41/4; selftest 8576/6; preflight 25/2; correlations 235828/[two-party-convert] party 0 q64 bw=24 n=76: setup 21829/5; agreement 41/4; selftest 8576/6; preflight 25/2; correlations 309556/6; online 10716/251; final-sync 4/8; transport 277019/282; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlp6; online 10716/251; final-sync 4/8; transport 350747/282; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q64_bw24_p1.convert
+n/results/secure_convert/two_party_outputs/q64_bw24_p0.convert
+0,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,5,41,4,8576,6,25,2,309556,6,10716,251,4,8,328918,277,350747,282,1883.4,4094.7,2882.4,pass,pass,pass,pass
+1,64,62,24,63,76,124.0,63.0,1.0,64.0,248.0,312.0,624.0,125.0,256,21829,5,41,4,8576,6,25,2,235828,6,10716,251,4,8,255190,277,277019,282,1779.9,4077.0,2902.5,pass,pass,pass,pass
 64,62,24,63,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
 === qbits=128 bw=16 port=42608 ===
-[two-party-convert] party 1 q128 bw=16 n=76: setup 21829/6; correlations 688744/6; online 20140/499; selftest pass accounting pa[two-party-convert] party 0 q128 bw=16 n=76: setup 21829/6; correlations 835432/6; online 20140/499; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw16_p1.convert
-ss; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw16_p0.convert
-0,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,835432,6,20140,499,855572,505,5475.5,5360.2,pass,pass,pass
-1,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,688744,6,20140,499,708884,505,5470.2,5367.4,pass,pass,pass
+[two-party-convert] party 1 q128 bw=16 n=76: setup 21829/5; agreement 41/4; selftest 12920/6; preflight 25/2; correlations 68874[two-party-convert] party 0 q128 bw=16 n=76: setup 21829/5; agreement 41/4; selftest 16760/6; preflight 25/2; correlations 835434/6; online 20140/499; final-sync 4/8; transport 743703/530; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ring2/6; online 20140/499; final-sync 4/8; transport 894231/530; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw16_p1.convert
+lpn/results/secure_convert/two_party_outputs/q128_bw16_p0.convert
+0,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,5,41,4,16760,6,25,2,835432,6,20140,499,4,8,872402,525,894231,530,913.1,6022.5,6344.7,pass,pass,pass,pass
+1,128,124,16,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,5,41,4,12920,6,25,2,688744,6,20140,499,4,8,721874,525,743703,530,920.6,6010.5,6354.2,pass,pass,pass,pass
 128,124,16,125,32,8,8,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
 === qbits=128 bw=32 port=42612 ===
-[two-party-convert] party 1 q128 bw=32 n=76: setup 21829/6; correlations 688744/6; online 20140/499; selftest pass accounting pa[two-party-convert] party 0 q128 bw=32 n=76: setup 21829/6; correlations 835432/6; online 20140/499; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw32_p1.convert
-ss; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw32_p0.convert
-0,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,835432,6,20140,499,855572,505,6135.3,5513.7,pass,pass,pass
-1,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,6,688744,6,20140,499,708884,505,6125.6,5524.9,pass,pass,pass
+[two-party-convert] party 1 q128 bw=32 n=76: setup 21829/5; agreement 41/4; selftest 12920/6; preflight 25/2; correlations 688744/6; online 20140/499; final-sync 4/8; transport 743703/530; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ring[two-party-convert] party 0 q128 bw=32 n=76: setup 21829/5; agreement 41/4; selftest 16760/6; preflight 25/2; correlations 83543lpn/results/secure_convert/two_party_outputs/q128_bw32_p1.convert
+2/6; online 20140/499; final-sync 4/8; transport 894231/530; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/q128_bw32_p0.convert
+0,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,5,41,4,16760,6,25,2,835432,6,20140,499,4,8,872402,525,894231,530,2090.4,6022.2,5551.3,pass,pass,pass,pass
+1,128,124,32,125,76,248.0,125.0,1.0,126.0,496.0,622.0,1244.0,249.0,256,21829,5,41,4,12920,6,25,2,688744,6,20140,499,4,8,721874,525,743703,530,2065.3,6014.1,5559.1,pass,pass,pass,pass
 128,124,32,125,32,8,16,4,0,32,0,8,0,32,0,76,pass,pass,pass,pass
+[two-party-convert] oversized serialized record count rejected with code 1 before allocation
+[two-party-convert] public-parameter or local-input validation mismatch; aborting before OT setup and output
+[two-party-convert] public-parameter or local-input validation mismatch; aborting before OT setup and output
+[two-party-convert] zero session rejected bilaterally before OT/output
+[two-party-convert] party 1 q64 bw=16 n=7: setup 21829/5; agreement 41/4; selftest 0/0; preflight 25/2; correlations 28889/6; online 987/251; final-sync 4/8; transport 51775/276; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/rename_failure_p1.convert
+[two-party-convert] party 0 q64 bw=16 n=7: setup 21829/5; agreement 41/4; selftest 0/0; preflight 25/2; correlations 30937/6; online 987/251; final-sync 4/8; transport 53823/276; selftest pass accounting pass; output /home/fatih/EzPC/GPU-MPC/ringlpn/results/secure_convert/two_party_outputs/rename_failure_p0.convert
+[two-party-convert] bilateral rename failure removed both parties' staged/final records

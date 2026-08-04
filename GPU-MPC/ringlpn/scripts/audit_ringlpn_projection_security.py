@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Emit the preliminary S2 finite-field attack-cost transcript.
+"""Emit mechanically valid finite-field projection-model diagnostics.
 
 Estimator source: IACR EUROCRYPT 2024 artifact 2024/a1, ``lpn-estimator.py``
 (accepted artifact, MIT): https://artifacts.iacr.org/eurocrypt/2024/a1/
 
-This script deliberately does not turn the projected attack costs into a
-Ring-LPN security claim. BCG+20's criterion for when a sparse-factor projection
-is distinguishing-useful, and the mapping of its dependent projected noise to
-the accepted estimator's exact/regular models, still require cryptographic
-review. The raw projection grid makes that unresolved step explicit.
+This script deliberately does not turn projected model costs into a Ring-LPN
+security claim. The sparse-factor projection has dependent noise and a fully
+split quasi-cyclic structure for which this repository has no reduction to the
+estimator's finite-field models. Calls outside the estimator's combinatorial
+domain are omitted explicitly.
 """
 
 import argparse
@@ -103,7 +103,10 @@ def main() -> int:
                 estimator_t = max(1, math.floor(expected))
                 lpn_n = c * degree
                 lpn_k = (c - 1) * degree
-                if expected <= 0 or estimator_t >= lpn_n:
+                if (
+                    expected <= 0
+                    or estimator_t > lpn_n - lpn_k - 1
+                ):
                     continue
                 with contextlib.redirect_stdout(io.StringIO()):
                     exact = estimator.analysisforq(lpn_n, lpn_k, estimator_t, prime)

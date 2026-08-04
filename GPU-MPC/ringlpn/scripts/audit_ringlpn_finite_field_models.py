@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
-"""Pin splittable Ring-LPN parameters under the CONSERVATIVE reading.
+"""Audit mechanically valid calls to the finite-field LPN estimator.
 
-Decision recorded 2026-07-29 by the project owner: where BCG+20's literal
-sparse-factor projection rule and its Table 1 disagree, adopt the *minimum*
-attack cost. Concretely, for a candidate ``(ring_logn, c, per_poly_t)`` this
-script reports
+This script does NOT pin Ring-LPN parameters or establish a security level.
+The deployed sparse-factor projection has dependent noise and a fully split
+quasi-cyclic structure. No reduction in this repository justifies replacing it
+with the estimator's exact-weight or regular-noise finite-field input models,
+and the accepted estimator does not analyze quasi-cyclic/DOOM effects.
 
-    conservative_bits = min over every projection degree the estimator accepts,
-                        and over both the exact and regular noise models,
-                        of the EUROCRYPT 2024 estimator's attack cost.
+The output is therefore diagnostic only: for each candidate it reports the
+minimum finite-field *model* cost among mechanically defined projected tuples,
+over both deployed primes and both estimator noise models. A missing valid
+result for either prime rejects the row. The process exits nonzero after
+printing the diagnostics so automation cannot mistake a high model cost for a
+parameter pin.
 
-That is strictly stronger than following either published reading: it assumes
-the adversary picks the cheapest projection available to it, not the one whose
-weight formula the paper highlights. A candidate passes only if its
-conservative cost is at least the target bit level for BOTH deployed primes.
-
-The script also reports the per-encoder bootstrap requirement, because a
-parameter set that is secure but cannot pay for its own next-epoch key
-generation is not usable:
-
-    per-point DPF encoder:  C_setup = 3 * c^2 * t^2  scalar-OLE slots
-    DMPF encoder:          C_setup = f * c^2         with f setup slots per
-                                                     packed multi-point function
+For an estimator call ``analysisforq(n, k, t, q)`` to be mechanically defined,
+its internal binomial coefficients require ``0 <= t <= n-k-1``. This check is
+performed before every call. Earlier versions omitted it and produced invalid
+2026-07-29 values for projected tuples including ``(n,k,t)=(128,96,111)``.
 
 Estimator source: IACR EUROCRYPT 2024 artifact 2024/a1 ``lpn-estimator.py``
-(accepted artifact, MIT), pinned by SHA-256.
+(accepted artifact, MIT), pinned by SHA-256. Its output is evidence about that
+model only, not about this Ring-LPN construction.
 """
 
 from __future__ import annotations
@@ -45,17 +42,15 @@ from audit_ringlpn_projection_security import (  # noqa: E402
 )
 
 
-def conservative_bits(estimator, ring_logn: int, c: int, per_poly_t: int, prime: int):
-    """Return (bits, degree, model) for the cheapest *useful* projection.
+def finite_field_model_bits(
+    estimator, ring_logn: int, c: int, per_poly_t: int, prime: int
+):
+    """Return (bits, degree, model) for the cheapest defined model tuple.
 
-    Validity uses BCG+20's own criterion: a sparse-factor projection helps the
-    attacker only while the expected reduced weight still fits the reduced
-    instance's dimension, ``w_i <= (c-1)*2^i``. Without that filter the sweep
-    admits near-full-weight instances (for example reduced weight 124.6 in a
-    dimension-128 instance at ``c=4,t=44``, degree 32), where the estimator is
-    outside its modelling regime and returns implausibly low costs; that made the
-    conservative minimum non-monotone in the noise weight. Non-finite estimator
-    outputs are also rejected rather than silently compared.
+    The ``expected <= lpn_k`` filter retains only BCG+20's potentially useful
+    sparse-factor projections. The stricter integer-weight bound enforces the
+    accepted estimator's actual combinatorial domain. Neither filter proves
+    that the projected dependent-noise distribution reduces to either model.
     """
     total_w = c * per_poly_t
     best = None
@@ -69,7 +64,12 @@ def conservative_bits(estimator, ring_logn: int, c: int, per_poly_t: int, prime:
         estimator_t = max(1, math.floor(expected))
         lpn_n = c * degree
         lpn_k = (c - 1) * degree
-        if expected <= 0 or expected > lpn_k or estimator_t >= lpn_n:
+        max_estimator_t = lpn_n - lpn_k - 1
+        if (
+            expected <= 0
+            or expected > lpn_k
+            or estimator_t > max_estimator_t
+        ):
             continue
         with contextlib.redirect_stdout(io.StringIO()):
             exact = float(estimator.analysisforq(lpn_n, lpn_k, estimator_t, prime))
@@ -87,7 +87,7 @@ def conservative_bits(estimator, ring_logn: int, c: int, per_poly_t: int, prime:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--estimator", required=True, type=Path)
-    parser.add_argument("--target-bits", type=float, default=128.0)
+    parser.add_argument("--reference-bits", type=float, default=128.0)
     parser.add_argument(
         "--logn", type=int, nargs="+", default=[13, 14, 16, 18, 20, 22]
     )
@@ -113,34 +113,34 @@ def main() -> int:
             "per_poly_t",
             "total_w",
             "raw_points",
-            "conservative_bits",
+            "finite_field_model_bits",
             "worst_prime",
             "worst_degree",
             "worst_model",
-            "meets_target",
+            "model_bits_ge_reference",
             "point_dpf_setup_slots",
             "point_dpf_bootstrap_ok",
             "point_dpf_net_slots",
-            "point_dpf_net_fraction",
             "encoder_indep_setup_slots_placeholder",
             "encoder_indep_bootstrap_ok",
         )
     )
 
-    passing = []
+    emitted = 0
     for ring_logn in args.logn:
         n = 1 << ring_logn
         for c in args.c:
             for per_poly_t in args.t:
-                worst = None
+                per_prime = []
                 for _limb, prime in PRIMES:
-                    got = conservative_bits(estimator, ring_logn, c, per_poly_t, prime)
-                    if got is None:
-                        continue
-                    if worst is None or got[0] < worst[0]:
-                        worst = (got[0], prime, got[1], got[2])
-                if worst is None:
+                    got = finite_field_model_bits(
+                        estimator, ring_logn, c, per_poly_t, prime
+                    )
+                    if got is not None:
+                        per_prime.append((got[0], prime, got[1], got[2]))
+                if len(per_prime) != len(PRIMES):
                     continue
+                worst = min(per_prime)
                 bits, prime, degree, model = worst
                 raw_points = c * c * per_poly_t * per_poly_t
                 point_slots = 3 * raw_points
@@ -160,7 +160,7 @@ def main() -> int:
                     prime,
                     degree,
                     model,
-                    "yes" if bits >= args.target_bits else "no",
+                    "yes" if bits >= args.reference_bits else "no",
                     point_slots,
                     "yes" if point_slots < n else "no",
                     point_net,
@@ -169,26 +169,14 @@ def main() -> int:
                     "yes" if dmpf_slots < n else "no",
                 )
                 writer.writerow(row)
-                if bits >= args.target_bits:
-                    passing.append(
-                        (raw_points, ring_logn, c, per_poly_t, bits, point_slots < n)
-                    )
+                emitted += 1
 
-    if not passing:
-        print(
-            f"# NO CANDIDATE reaches {args.target_bits} conservative bits in this grid",
-            file=sys.stderr,
-        )
-        return 1
-    passing.sort()
-    raw_points, ring_logn, c, per_poly_t, bits, point_ok = passing[0]
     print(
-        f"# conservative pin: n=2^{ring_logn}, c={c}, t={per_poly_t} "
-        f"-> {bits:.3f} bits, {raw_points} raw points, "
-        f"point-DPF bootstrap {'ok' if point_ok else 'IMPOSSIBLE'}",
+        f"# DIAGNOSTIC ONLY: emitted {emitted} mechanically defined finite-field "
+        "model rows; no Ring-LPN security level or parameter set is pinned",
         file=sys.stderr,
     )
-    return 0
+    return 1
 
 
 if __name__ == "__main__":

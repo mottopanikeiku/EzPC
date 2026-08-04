@@ -23,7 +23,7 @@ echo "[paper-smoke] running host Orca Zp-to-Z2k bridge smoke"
 "$ROOT/scripts/build_orca_zp_bridge_test.sh"
 "$ROOT/scripts/run_orca_zp_bridge_test.sh"
 
-echo "[paper-smoke] running host secure Zm-to-Z2k conversion prototype"
+echo "[paper-smoke] running host OT-backed Zm-to-Z2k share-conversion component"
 "$ROOT/scripts/build_secure_convert_test.sh"
 "$ROOT/scripts/run_secure_convert_test.sh"
 
@@ -62,10 +62,14 @@ if [[ "$RUN_REGULAR_SMOKE" == "1" ]]; then
   SMOKE=1 QBITS=128 NOISE=regular "$ROOT/scripts/run_ole_sweep.sh"
 fi
 
-echo "[paper-smoke] running the real OLE engine on two-party dealerless SPFSS keys"
-NOISE=regular BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+echo "[paper-smoke] running the real OLE engine on independently sampled per-party noise and two-party SPFSS keys"
+QBITS=64 NOISE=regular BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
   "$ROOT/scripts/run_ole_two_party_keys.sh"
-NOISE=uniform BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+QBITS=64 NOISE=uniform BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+  "$ROOT/scripts/run_ole_two_party_keys.sh"
+QBITS=128 NOISE=regular BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
+  "$ROOT/scripts/run_ole_two_party_keys.sh"
+QBITS=128 NOISE=uniform BASE_PORT="${OLE_TWO_PARTY_BASE_PORT:-46000}" \
   "$ROOT/scripts/run_ole_two_party_keys.sh"
 
 echo "[paper-smoke] building and running linear OLE-to-Beaver GPU smoke"
@@ -81,7 +85,7 @@ echo "[paper-smoke] building and running Orca FC Ring-LPN key-writer demo"
 "$ROOT/scripts/build_orca_fc_ringlpn_demo.sh"
 "$ROOT/scripts/run_orca_fc_ringlpn_demo.sh"
 
-echo "[paper-smoke] building and running ideal-OLE dealerless FC transcript"
+echo "[paper-smoke] building and running ideal-OLE FC transcript reference (oracle-backed; not dealerless)"
 "$ROOT/scripts/build_orca_fc_ideal_ole_transcript.sh"
 "$ROOT/scripts/run_orca_fc_ideal_ole_transcript.sh"
 

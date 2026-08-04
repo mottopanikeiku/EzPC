@@ -1,3 +1,6 @@
+> **HISTORICAL 2026-07-21 checkpoint handoff.** Superseded by `CLAUDE.md`;
+> statements below may describe an older state.
+
 # Session handoff — corrected M1 host artifact + proposal v2.3; S1/S2 update 2026-07-29
 
 **Read after `CLAUDE.md`.** This is the current handoff. The 2026-07-10

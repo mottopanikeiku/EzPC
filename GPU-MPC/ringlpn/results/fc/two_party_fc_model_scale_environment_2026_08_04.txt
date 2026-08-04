@@ -1,0 +1,25 @@
+measurement_timestamp=2026-08-04T20:04:53+00:00
+host=sn4622124096
+kernel=Linux 6.8.0-78-generic #78-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 11:34:18 UTC 2025 x86_64 GNU/Linux
+cpu_count=32
+process_gpu_map=party0:1,party1:3,checker:1
+network=single-host IPv4 loopback
+counter=PartyChannel application payload bytes; excludes TCP/IP and base-OT setup
+warmups=1
+measured_trials=10
+0, NVIDIA RTX 5000 Ada Generation, GPU-8b057a3c-18ab-a356-b4ab-724a127b753e, 560.35.03, 32760 MiB
+1, NVIDIA RTX 5000 Ada Generation, GPU-5a41b4d3-74a9-f6d5-c3fe-bec67098dbf0, 560.35.03, 32760 MiB
+2, NVIDIA RTX 5000 Ada Generation, GPU-e3def948-ecca-2fe7-5d33-0bdeff2cfc5a, 560.35.03, 32760 MiB
+3, NVIDIA RTX 5000 Ada Generation, GPU-697ecb06-062a-403c-ed17-d547b073d5bb, 560.35.03, 32760 MiB
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2024 NVIDIA Corporation
+Built on Tue_Oct_29_23:50:19_PDT_2024
+Cuda compilation tools, release 12.6, V12.6.85
+Build cuda_12.6.r12.6/compiler.35059454_0
+6bf156a963fd899f418583c55cc83378ba57635a71180c3842485bbcb2f102b1  /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+90861bdd83b5f153cdf09636d99a69f158bf1bc983776c22139e04a289e521ab  /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
+817dc0c0d98de0550f1902495f97499405df56930faa57c29f0a9058c4cb481b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss.h
+ed8940b11f61eb32f6ac164b31afa84cf305c7541b8ba33dc8ed4405aa9e43e7  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
+8d380417501a43a8750b37ec61a6b9d8437b44c7cdd6c41c8ef24fd051e23527  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h
+872e25272d2f53caa3995280c550b2e661f26d80d91ef143db087193a903a61b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/ringlpn_ole_party.cuh
+603dd62d8b1525636b083a29438f333dca9b7f20bacf42a4dc792077a45eb342  /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h

@@ -1,3 +1,6 @@
+> **HISTORICAL 2026-07-29 pre-sweep/pre-transport snapshot.** Superseded by
+> `CLAUDE.md`; statements below may describe an older state.
+
 # Session handoff: consultation-driven DMPF/PCG comparison (2026-07-29)
 
 ## Stop point

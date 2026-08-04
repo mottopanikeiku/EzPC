@@ -192,17 +192,118 @@ Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
 /home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
   140 |                 std::vector<block> mBuffer;
       |                                   ^
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(223): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(223): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(233): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(233): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(248): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(248): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(249): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(249): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(223): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(223): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(233): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(233): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(248): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(248): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(249): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+/usr/include/eigen3/Eigen/src/Core/DenseStorage.h(249): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   73 |     extern const std::array<block, 2> zeroAndAllOne;
+      |                                      ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                      ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                                                  ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   56 |         void ecbEncCounterMode(u64 baseIdx, span<block> ciphertext) const
+      |                                                  ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   81 |         MultiKeyAES(span<block> keys) { setKeys(keys); }
+      |                        ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   84 |         void setKeys(span<block> keys)
+      |                         ^
+/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+  140 |                 std::vector<block> mBuffer;
+      |                                   ^
 Built:
--rwxrwxr-x 1 fatih fatih 4634208 Aug  3 08:48 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
--rwxrwxr-x 1 fatih fatih 1332952 Aug  3 08:48 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
-[ole-two-party] stage 1: export per-party noise
-device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
+-rwxrwxr-x 1 fatih fatih 4664064 Aug  4 20:33 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
+-rwxrwxr-x 1 fatih fatih 4610056 Aug  4 20:33 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_party
+-rwxrwxr-x 1 fatih fatih 1332952 Aug  4 20:33 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
+[ole-two-party] stage 1: independently sample per-party noise and generate keys for 1 limb(s)
+[two-party-spfss-provenance] party=1 sid=1785875563252550943 noise_source=independent_os_drbg local_noise_sha256=e6ca467dafc3f29[two-party-spfss-provenance] party=0 sid=1785875563252550943 noise_source=independent_os_drbg local_noise_sha256=e0641b62b115b1016779e20b89afb134ac0c129a59dc9322d42bbce14be186d1 noise_content_sha256=502da4fa7d920c871688f32e5de859da669eaa44cf5cfcdece8bc5fecd7f68475d17670c335085b3aa50ecb34d35e4dcb3eb1d877d noise_content_sha256=62a0215940e7d88e0be574dffa481697ed982d28f920f593867cef780df5d157 public_manifest_sha256=4cc77c9e89b3495caace92bbfc46925de647f60e92978083a99454054835da1b common_cw_sha256=fb04ecdbf055c8429f2393 public_manifest_sha256=4cc77c9e89b3495caace92bbfc46925de647f60e92978083a99454054835da1b common_cw_sha256=fb04ecdbf055c840eeadae7addb3801b25b75c6c3b6dadc66734d0546bb74a78
+0eeadae7addb3801b25b75c6c3b6dadc66734d0546bb74a78
+[two-party-spfss] party 1: 256 trees in 4 groups at L=14, 1057600 protocol bytes, 89 direction switches, 974319 us -> /home/fati[two-party-spfss] party 0: 256 trees in 4 groups at L=14, 1033792 protocol bytes, 89 direction switches, 973075 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_uniform_c2_t8_n8192/keys_limb0_p1.spfss (pass)
+h/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_uniform_c2_t8_n8192/keys_limb0_p0.spfss (pass)
+[two-party-spfss-provenance] party=1 sid=1785875563252551944 noise_source=independent_os_drbg local_noise_sha256=5fc73a61ac37cd535420e7cffe3ee17d5935ed2977f0d40871a2060b30071d13 noise_content_sha256=60e73a8f0f7d6927bd58421f9fbad0474f5e434928bf20de7c499ef0b1b7a0c2 public_manifest_sha256=af8df0b266c0777464338a62a413443d33b7605897008ff00dbcd407fb618aeb common_cw_sha256=1c6060cb7453a83c803b2f87f507a13bf3828e5164638d58e544ac66102837fa
+[two-party-spfss-provenance] party=0 sid=1785875563252551944 noise_source=independent_os_drbg local_noise_sha256=efe3c954f4d0d21[two-party-spfss] party 1: 1 trees in 1 groups at L=14, 74452 protocol bytes, 89 direction switches, 17402 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_uniform_c2_t8_n8192/rename_failure_p1.spfss (FAIL)
+e25e5d1405ef15d56a5f1b78f1c2563b4482ad15dd6888732 noise_content_sha256=a13ddbba85be3588c906671b0046f88b2e2eb7b8c166d3b81981054da0131b48 public_manifest_sha256=af8df0b266c0777464338a62a413443d33b7605897008ff00dbcd407fb618aeb common_cw_sha256=1c6060cb7453a83c803b2f87f507a13bf3828e5164638d58e544ac66102837fa
+[two-party-spfss] party 0: 1 trees in 1 groups at L=14, 65068 protocol bytes, 89 direction switches, 17378 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_uniform_c2_t8_n8192/rename_failure_p0.spfss (FAIL)
+[ole-two-party] bilateral rename failure removed both parties' staged/final records
+[ole-two-party] stage 2: OLE engine consumes independently sampled noise and matching keys
+device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,noise_source,key_source,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,spfss_key_load_us,ole_expand_mean_us,ole_expand_std_us,correct
 reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,663,22027,0,1
-[ole-two-party] stage 2: dealerless SPFSS keygen for 1 limb(s)
-[two-party-spfss] party 0: 256 trees in 4 groups at L=14, 1033792 protocol bytes, 89 direction switches, 946019 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/keys_limb0_p0.spfss (pass)
-[two-party-spfss] party 1: 256 trees in 4 groups at L=14, 1057600 protocol bytes, 89 direction switches, 947825 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/keys_limb0_p1.spfss (pass)
-[ole-two-party] stage 3: real OLE engine on dealerless keys
-device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,ole_expand_mean_us,ole_expand_std_us,correct
-reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,16384,2,8,8192,1,pass,pass,141504,492,21198,0,1
+cuda_ringlpn_ole,figure2_spfss_uniform,8192,13,14,64,62,uniform,party_records,two_party_files,16384,2,8,8192,1,pass,pass,141504,-1,524,22125,0,1

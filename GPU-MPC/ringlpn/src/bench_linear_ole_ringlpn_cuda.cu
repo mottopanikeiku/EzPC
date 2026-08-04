@@ -227,6 +227,18 @@ static int linear_spfss_domain_size(const LinearArgs &args) {
     return args.noise == "regular" ? 2 * (args.n / args.t) : 2 * args.n;
 }
 
+static std::vector<Word> sample_dense(int n,
+                                      Word modulus,
+                                      std::mt19937_64 &rng) {
+    std::uniform_int_distribution<uint64_t> dist(0, modulus - 1);
+    std::vector<Word> out(static_cast<size_t>(n));
+    for (Word &coefficient : out) {
+        coefficient = dist(rng);
+    }
+    return out;
+}
+
+
 static std::vector<SparsePoly> sample_operand_share(const LinearArgs &args,
                                                     Word modulus,
                                                     std::mt19937_64 &rng) {

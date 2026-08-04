@@ -1,8 +1,21 @@
-# S2/M5 parameter, novelty, and provenance audit — preliminary hard-stop report
+# S2/M5 parameter, novelty, and provenance audit — corrected hard-stop report
 
 **Date:** 2026-07-29
 **Status:** **not passed; no parameter set or contribution boundary is pinned**
 **Circulation:** internal/advisor only
+
+**Status correction (2026-08-04):** the primary-source parameter reaudit is
+complete and strengthens the hard stop: no parameter is pinned and no 128-bit
+claim is supported. The saved 57.293-, 111.244-, 218.641-, and 257.023-bit
+selected rows feed out-of-range binomial parameters to the accepted estimator
+and are invalid attack-cost outputs. The mechanically defined 135.12-,
+145.85-, 190.53-, and 470.77-bit rows remain only hypothetical finite-field
+exact/regular-model outputs; the mapping from dependent projected Ring-LPN
+noise, its lower tail and coefficient cancellation, the structured code, and
+the two-limb/PCG advantage loss is unproved. All dated `conservative_pin`
+artifacts are invalid for parameter selection. The measured
+`n=2^17,c=4,t=34` implementation NO-GO remains valid independently: regular
+noise cannot satisfy `t | n`, and the uniform layout exceeds host memory.
 
 This report records the S2 work completed before implementation stage S3. It
 also records two hard stops that were not visible in the v2.3 proposal:
@@ -31,12 +44,13 @@ argument and a Ring-LPN claim for each 62-bit limb.
 
 For each party, the code samples `c` independent sparse polynomials and chooses
 every nonzero coefficient uniformly from `Z_p^*`. In `uniform` mode, each
-polynomial has exactly `t` distinct positions sampled uniformly without
-replacement from `[0,n)`. This is the accepted estimator's **exact
-fixed-weight** input model before any sparse-factor projection. In `regular`
-mode, `[0,n)` is split into `t` equal public contiguous bins and one position
-is sampled uniformly in each bin. Therefore the BCG+20 paper's total weight is
-`w=c*t`; this repository's command-line `--t` is the per-polynomial weight.
+polynomial separately has exact weight `t`, but concatenating `c` such
+polynomials conditions the support to exactly `t` positions in every block; it
+is not the estimator's global `HW_{ct,cn}` distribution. `regular` mode matches
+consecutive equal buckets before projection when `t | n`; after projection
+neither sampler has the estimator's exact or regular distribution. The BCG+20
+paper's total weight is `w=c*t`; this repository's command-line `--t` is the
+per-polynomial weight.
 The existing `c=2,t=8` rows are correctness smokes only.
 The BCG+20 Table-1 128-bit row `c=4,w=64` maps to this code's `c=4,t=16`, not
 `t=64`.
@@ -47,7 +61,7 @@ Ring-LPN setting analyzed in BCG+20. It is **not** directly an instance of the
 quasi-abelian group-algebra setting of Bombar et al.; `X^n+1` over the odd
 prime fields here is not the group algebra `F_p[C_{2n}]` or `F_p[C_n]`.
 
-## 2. Reproducible finite-field attack-cost transcript
+## 2. Historical finite-field function transcript and correction
 
 Inputs:
 
@@ -57,65 +71,53 @@ Inputs:
   (MIT, as declared by the authors);
 - exact downloaded `lpn-estimator.py` SHA-256:
   `c5771c88665415559b21cc1773dcdf3298ec60db2882f4fb3a8b3a833f2d34dc`;
-- runtime used for the recorded transcript: CPython 3.12.3 and NumPy 2.5.1
+- runtime used for the dated raw transcript: CPython 3.12.3 and NumPy 2.5.1
   in a fresh temporary virtual environment;
-- wrapper: `scripts/audit_ringlpn_projection_security.py`;
-- raw output:
-  `results/security/s2_projection_estimator_preliminary_2026_07_29.csv`.
+- historical wrapper: the pre-domain-check revision of
+  `scripts/audit_ringlpn_projection_security.py`;
+- immutable raw output:
+  `results/security/s2_projection_estimator_preliminary_2026_07_29.csv`,
+  SHA-256
+  `ae6ec67336b0a4d6da13a08212d77a415adbf0921e4d6ea314627aaab4a2646e`.
 
-Reproduction after installing the estimator's NumPy dependency:
+The current wrapper adds the missing aggregate-domain check and deliberately
+does not reproduce invalid rows. Do not overwrite the dated transcript or use
+its raw function outputs as security evidence; its disposition is recorded in
+`results/security/README.md`.
 
-```bash
-python scripts/audit_ringlpn_projection_security.py \
-  --estimator /path/to/pinned/lpn-estimator.py \
-  > /tmp/s2.csv
-sha256sum /tmp/s2.csv
-# ae6ec67336b0a4d6da13a08212d77a415adbf0921e4d6ea314627aaab4a2646e
-```
+For a projected tuple `(N',k',t')=(c*d,(c-1)*d,floor(expected))`, the accepted
+artifact's aggregate finite-field function unconditionally evaluates
+combinations `C(N'-k',t')` and `C(N'-k'-1,t')`. It is therefore mechanically
+defined only when `t' <= d-1`; this is a source-code domain check, not a proof
+that a projection is useful.
 
-For the literature-mapped `c=4,t=16` candidate, the BCG sparse-factor formula
-gives the following representative projections for **both** `p0` and `p1`
-(the two primes round to the same displayed costs):
+| local tuple | degree | `(N',k',t')` | domain | recorded result | status |
+|---|---:|---:|---|---:|---|
+| `c=4,t=16` | 16 | `(64,48,47)` | invalid (`47>15`) | 57.293 | withdraw |
+| `c=4,t=16` | 32 | `(128,96,52)` | invalid (`52>31`) | 128.932 | withdraw |
+| `c=4,t=16` | 64 | `(256,192,57)` | defined | 135.120 regular | model output only |
+| `c=4,t=16` | 128 | `(512,384,60)` | defined | 145.850 regular | model output only |
+| `c=2,t=128` | 256 | `(512,256,209)` | defined | 190.530 regular | model output only |
+| `c=4,t=64` | 64 | `(256,192,188)` | invalid (`188>63`) | 218.641 | withdraw |
+| `c=4,t=64` | 128 | `(512,384,210)` | invalid (`210>127`) | 505.207 | withdraw |
+| `c=4,t=64` | 256 | `(1024,768,229)` | defined | 470.770 regular | model output only |
+| `c=4,t=34` | 64 | `(256,192,110)` | invalid (`110>63`) | 257.023 | withdraw |
 
-| factor degree `2^i` | field-LPN `(N,k)` | expected projected weight | floor used | exact estimator | regular estimator |
-|---:|---:|---:|---:|---:|---:|
-| 16 (`i=4`) | `(64,48)` | 47.0967 | 47 | 57.293 | 57.293 |
-| 32 (`i=5`) | `(128,96)` | 52.7706 | 52 | 128.932 | 128.932 |
-| 64 (`i=6`) | `(256,192)` | 57.5145 | 57 | 179.364 | 135.120 |
-| 128 (`i=7`) | `(512,384)` | 60.5133 | 60 | 158.461 | 145.850 |
-| 256 (`i=8`) | `(1024,768)` | 62.1921 | 62 | 155.311 | 154.570 |
+BCG+20 is itself unresolved. Section 8.2 derives
+`c*d*(1-(1-1/d)^t)`, whereas Section 9.1 uses the different formula implemented
+locally. Its literal criterion selects degree 16 for `(c,w)=(4,64)`, while
+Table 1 reports degree 128. Moreover, BCG explicitly warns about lower-than-
+expected projected weights and proposes rejection sampling; the local sampler
+does not perform that projection check. The accepted estimator models global
+exact or regular finite-field noise and random linear codes, not this dependent
+projected distribution or structured Ring-LPN code.
 
-BCG+20 Table 1 reports `i=7,w_i=60` for its `c=4,w=64`, 128-bit row over a
-field of about 128 bits. The accepted 2024 estimator gives 145.85 bits for the
-corresponding regular finite-field instance over either deployed 62-bit prime.
-That number is **not yet a Ring-LPN security claim** for two reasons:
-
-1. The CRYPTO 2020 paper says the adversary chooses the smallest `i` with
-   `w_i <= (c-1)2^i`, so the reduced instance is uniquely decodable and not
-   statistically close to random. Applied literally to `c=4,w=64`, this selects
-   `i=4` because `47.0967 <= 48`, whereas Table 1 reports `i=7,w_i=60`.
-   Running the separate PCG repository's `bench/derive_params.py --test
-   --criterion paper` reproduces only one of the six Table-1 rows. Its
-   `--criterion calibrated` instead uses `w_i <= 3.3*2^i/c`; the comments state
-   that `3.3` was fitted to reproduce all six rows, which the self-test does.
-   Thus the published prose/table do not yield one reproducible executable
-   rule, and a fitted replacement is not a security reduction. Applying the
-   accepted estimator to every projection exposes the 57.293-bit `i=4` row;
-   selecting the table's `i=7` yields 145.85 bits. S2 cannot choose by
-   convention.
-2. Reduction modulo a sparse factor produces a dependent projected-noise
-   distribution summarized by an expected weight. The accepted estimator takes
-   exact or regular finite-field LPN. A proof or cryptographic review must
-   justify the mapping, tail bound, rounding, and advantage loss instead of
-   substituting the expected weight directly.
-
-The 2024 analysis also explains why the older BCG attack formulas are
-insufficient by themselves: it corrects Pooled-Gauss, field-size-sensitive ISD,
-and statistical-decoding estimates and includes attacks on regular noise.
-
-**Parameter disposition:** no `(n,c,t,p0,p1)` set is pinned. The preliminary
-performance candidate is `(n=2^14,c=4,t=16,p0,p1)`, conditional on resolving
-both proof gaps above and on advisor direction about the newer DMPF route.
+**Parameter disposition:** no `(n,c,t,p0,p1)` set is pinned. The raw projection
+CSV is retained only as a function transcript with the current erratum in
+`results/security/README.md`; every dated `conservative_pin` result is invalid
+for parameter selection. A reviewed projection-distribution/tail/structured-
+code lemma, advantage budget for both limbs, and BCG rule clarification are
+required before another estimator sweep.
 
 ## 3. Candidate feasibility, not security
 
@@ -171,7 +173,7 @@ art would change the number and shape of setup correlations and invalidate the
 
 | Work | Established before this project | Consequence here |
 |---|---|---|
-| Boyle et al., CRYPTO 2020; corrected full version ePrint 2022/1035 | Ring-LPN PCGs for OLE/triples/bilinear correlations; fully split slot packing; semi-honest distributed setup using generic 2PC plus Doerner--shelat DPF generation on shared positions/payloads | Generator algebra, slot decomposition, and dealerless setup blueprint are inherited, not contributions |
+| Boyle et al., CRYPTO 2020; corrected full version HAL `hal-03374154` (2022-08-10) | Ring-LPN PCGs for OLE/triples/bilinear correlations; fully split slot packing; semi-honest distributed setup using generic 2PC plus Doerner--shelat DPF generation on shared positions/payloads | Generator algebra, slot decomposition, and dealerless setup blueprint are inherited, not contributions |
 | Doerner--shelat, CCS 2017 | OT-based distributed DPF key generation | A level-walk distributed DPF is prior art |
 | Boyle et al., *Programmable DPFs*, CRYPTO 2022, ePrint 2022/1060 | `O(1)`-round distributed DPF generation for feasible/full-domain settings | The current logarithmic-round tree walk is not the round-complexity frontier |
 | Boyle, Gilboa, Hamilis, Ishai, Tu, IEEE S&P 2025 | Improved DMPFs with optimized implementations and PCG applications | Naively summing point DPFs already has a stronger public implementation baseline |
@@ -255,8 +257,8 @@ S2 remains blocked until the professor answers all of these in writing:
 4. Who will review and approve the sparse-factor reduction-usefulness criterion,
    projected-noise mapping, advantage loss, and classical/quantum security
    interpretation before parameters are called 128-bit secure?
-5. Should the performance pin use the literature-scale `n=2^20,c=4,t=16`, the
-   preliminary bootstrap-sized `n=2^14,c=4,t=16`, or another reviewed point?
+5. Which parameter should be measured after a reviewed projection/distribution,
+   structured-code, and two-limb advantage analysis establishes a valid set?
 6. For the private PCG/PIM project, which contributors own the DPF, CPU PCG,
    GPU DPF/NTT, PIM, measurements, figures, and integration work; what may Alp
    reuse; and what citation/acknowledgement/overlap disclosure is required?
@@ -265,9 +267,12 @@ S2 remains blocked until the professor answers all of these in writing:
 8. May the now-attributed Cheddar-derived backend remain, or should
    publication use a clean external backend boundary?
 
-Until these are answered: do not start S3, do not import private-project code,
-do not call any parameter set 128-bit secure, do not present the per-point DPF
-as novel, and do not circulate the paper externally.
+The owner later lifted only the implementation ordering: M1 GPU
+distributed-keygen core work and real-transport/component S3--S6 work may
+proceed without security, parameter, end-to-end, or publication claims. Do not
+import private-project code, call any parameter set 128-bit secure, present the
+per-point DPF as novel, or circulate the paper externally until the remaining
+advisor, proof, and provenance decisions are closed.
 
 ## 7. Consultation-driven matched architecture comparison
 
@@ -504,7 +509,7 @@ incompatible published throughput.
 
 ## 8. Primary sources
 
-- BCG+20 corrected full-version record: <https://eprint.iacr.org/2022/1035>
+- BCG+20 corrected full version (2022-08-10): <https://hal.science/hal-03374154/document>
 - Programmable DPF: <https://eprint.iacr.org/2022/1060>
 - Stationary Syndrome Decoding: <https://eprint.iacr.org/2025/295>
 - Fully Distributed Multi-Point Functions: <https://eprint.iacr.org/2025/2294>

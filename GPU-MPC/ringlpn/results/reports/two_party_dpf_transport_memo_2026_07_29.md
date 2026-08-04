@@ -8,10 +8,11 @@ the *unchanged* evaluator while reproducing the contract's opening accounting
 bit-for-bit.
 
 This closes the "ideal transports" half of the S1 artifact gap. It does **not**
-close the PRG/seed-format obligations (`D-SEED`, `P-RNG`, `P-KEY`): the DPF
-expansion PRG is still `spfss_host`'s non-cryptographic splitmix64, because the
-independent consumer `spfss_host::dpfEvalAll` is unmodified. **No 128-bit
-security claim is made here.**
+close the remaining `D-SEED`, `P-RNG`, and `P-KEY` obligations. The unchanged
+host-reference evaluator still uses non-cryptographic splitmix64, while the
+deployed GPU path uses the separately gated full-width, four-call AES
+expansion described in Section 3.4. **Neither path establishes a DPF-security
+or 128-bit security claim.**
 
 ## 1. What became real
 
@@ -50,8 +51,9 @@ It is also wired into the canonical checkpoint gate
 - `results/dpf/two_party_dpf_validate_2026_07_29.csv` — offline validation rows;
 - `results/dpf/two_party_dpf_keygen_2026_07_29.log` — raw stdout and stderr.
 
-The displayed CSV paths were rerun on 2026-08-03 after moving party-private
-randomness to OpenSSL's private DRBG; all 369 pairs and controls passed.
+The displayed CSV paths were freshly rerun by the full canonical gate on
+2026-08-04 after moving party-private randomness to OpenSSL's private DRBG;
+all 369 pairs and controls passed.
 
 Build dependency note: SCI's OT and IO headers are header-only, so the binaries
 link only `-lcrypto -lssl -pthread`. SEAL, GMP and libOTe are **not** needed.
@@ -67,14 +69,14 @@ checks (opened triples and OLE shares) found 0 failures.
 
 ### 3.1 Depth sweep (both CRT primes)
 
-| `L` | prime | batch | string OTs/tree | triple OTs/tree | OLE OTs/tree | logical bits/tree | meaningful share bits/tree | P0 batch bytes | P1 batch bytes | direction switches/batch | us/tree |
+| `L` | prime | batch | string OTs/tree | triple OTs/tree | OLE OTs/tree | logical bits/tree | meaningful share bits/tree | P0 batch bytes | P1 batch bytes | direction switches/batch | us/tree, P0--P1 |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 4 | q62 | 8 | 8 | 6 | 186 | 588 | 1,176 | 45,230 | 46,742 | 30 | 662 |
-| 8 | q62 | 8 | 16 | 14 | 186 | 1,116 | 2,232 | 63,254 | 64,766 | 54 | 1,080 |
-| 11 | q62 | 4 | 22 | 20 | 186 | 1,512 | 3,024 | 62,974 | 63,718 | 72 | 3,102 |
-| 14 | q62 | 2 | 28 | 26 | 186 | 1,908 | 3,816 | 68,671 | 75,175 | 90 | 7,214 |
-| 8 | q62b | 8 | 16 | 14 | 186 | 1,116 | 2,232 | 63,254 | 64,766 | 54 | 1,038 |
-| 14 | q62b | 2 | 28 | 26 | 186 | 1,908 | 3,816 | 68,671 | 75,175 | 90 | 7,133 |
+| 4 | q62 | 8 | 8 | 6 | 186 | 588 | 1,176 | 45,230 | 46,742 | 30 | 681.7--682.2 |
+| 8 | q62 | 8 | 16 | 14 | 186 | 1,116 | 2,232 | 63,254 | 64,766 | 54 | 1,220.6--1,221.1 |
+| 11 | q62 | 4 | 22 | 20 | 186 | 1,512 | 3,024 | 62,974 | 63,718 | 72 | 3,069.8--3,070.2 |
+| 14 | q62 | 2 | 28 | 26 | 186 | 1,908 | 3,816 | 68,671 | 75,175 | 90 | 8,061.7--8,068.7 |
+| 8 | q62b | 8 | 16 | 14 | 186 | 1,116 | 2,232 | 63,254 | 64,766 | 54 | 1,152.1--1,152.6 |
+| 14 | q62b | 2 | 28 | 26 | 186 | 1,908 | 3,816 | 68,671 | 75,175 | 90 | 7,565.7--7,573.5 |
 
 Measured direction-switch count per batch is exactly `6L+6` (30, 54, 72, 90
 at `L`=4, 8, 11, 14). Setup, once per connection per party: **256 base OTs,
@@ -85,10 +87,10 @@ direction).
 
 | batch trees | direction switches/batch | P0 bytes/tree | us/tree | per-tree correlations and openings |
 |---:|---:|---:|---:|---|
-| 1 | 72 | 52,626 | 11,163 | 22 / 20 / 186, 1,512 / 3,024 |
-| 16 | 72 | 6,524 | 734 | identical |
-| 64 | 72 | 4,349 | 336 | identical |
-| 256 | 72 | 3,789 | 148 | identical |
+| 1 | 72 | 52,626 | 11,568.3 | 22 / 20 / 186, 1,512 / 3,024 |
+| 16 | 72 | 6,524 | 774.2 | identical |
+| 64 | 72 | 4,349 | 328.5 | identical |
+| 256 | 72 | 3,789 | 145.7 | identical |
 
 Three readings:
 
@@ -98,8 +100,9 @@ Three readings:
 2. **Bytes per tree fall 13.9x** from batch 1 to 256, because the IKNP extension
    and base-OT setup costs amortise; the residual 3.8 kB/tree is the actual
    per-tree payload floor of this protocol shape.
-3. **Wall clock per tree falls 75x** (11.2 ms -> 148 us) on loopback. This is a
-   scheduling result, not a cryptographic one, and it is single-threaded CPU.
+3. **Wall clock per tree falls about 79x** (11.6 ms -> 146 us) on loopback.
+   This is a scheduling result, not a cryptographic one, and it is
+   single-threaded CPU.
 
 Timings are loopback, single-threaded; they are not a throughput claim. The
 direction-switch count characterizes this implementation's schedule and is
@@ -146,12 +149,12 @@ the GPU evaluator used by the Ring-LPN OLE engine.
 Measured on one RTX 5000 Ada (`scripts/run_two_party_gpu_dpf.sh`,
 `results/dpf/two_party_gpu_dpf_2026_07_29.csv`):
 
-| `L` | prime | keys | batched SPFSS mismatch | per-tree pass | root seed low-bit ones | public-material mismatch | negative control |
+| `L` | prime | keys | batched SPFSS mismatch | per-tree pass | root seed low-bit ones (diagnostic) | public-material mismatch | negative control |
 |---:|---|---:|---:|---:|---:|---:|---|
 | 4 | q62 | 8 | 0 | 8/8 | 9 | 0 | failed as expected |
-| 8 | q62 | 16 | 0 | 16/16 | 16 | 0 | failed as expected |
-| 11 | q62 | 32 | 0 | 32/32 | 35 | 0 | failed as expected |
-| 11 | q62b | 32 | 0 | 32/32 | 34 | 0 | failed as expected |
+| 8 | q62 | 16 | 0 | 16/16 | 17 | 0 | failed as expected |
+| 11 | q62 | 32 | 0 | 32/32 | 34 | 0 | failed as expected |
+| 11 | q62b | 32 | 0 | 32/32 | 29 | 0 | failed as expected |
 
 88 key pairs, two checks each: the batch must reconstruct
 `sum_b beta_b [x = alpha_b]` (SPFSS semantics, as the OLE engine consumes it) and
@@ -182,6 +185,15 @@ reads files:
   failures on every configuration;
 - every batch covers two deterministic edges (`alpha = 0` with `beta = p-1`, and
   `alpha = 2^L-2` with `beta = 1`) plus random legal inputs.
+- the deterministic GPU parity gate requires an actual `s,s XOR 1` device
+  vector pair and independently requires both device and host left/right
+  128-bit child seeds to change, so joint reintroduction of LSB-clearing
+  semantics fails without making CSPRNG root coverage a probabilistic gate;
+- before GPU setup, the offline consumer rejects heterogeneous
+  log-domain/modulus metadata, malformed correction arrays/control bits,
+  out-of-range final words, wrong party roots, or mismatched public material.
+  In-memory parseable within-file and cross-file dimension controls exercise
+  that same validator and must reject.
 
 The `.testmeta` files exist only so an offline checker can recompute
 `alpha`/`beta`; they are explicitly test-only and are never read by the
@@ -194,16 +206,20 @@ protocol.
   protocol shape, not a silent-OT figure.
 - **Semi-honest only**, authenticated point-to-point channels assumed. No
   malicious security, no active-attack handling, no side-channel scope.
-- **Non-cryptographic expansion PRG** (splitmix64) inherited from the unchanged
-  evaluator; the GPU path additionally still packs a control bit into the seed
-  LSB. `D-SEED`, `P-RNG`, `P-DIST` and `P-KEY` stay open.
+- **Host-reference expansion PRG.** The unchanged host evaluator still uses
+  splitmix64 and carries no security claim. The deployed GPU path now uses four
+  domain-separated AES calls per node, retaining full 128-bit child seeds and
+  emitting separate control bits. Device/host parity and GPU evaluation are
+  executable correctness gates; `D-SEED`, `P-RNG`, `P-DIST`, and `P-KEY`
+  remain open proof obligations.
 - **Loopback measurements.** No WAN/LAN profile, no bandwidth cap, no latency
   injection.
-- This artifact generates DPF keys for the SPFSS/Ring-LPN pipeline; it is not
-  yet wired into the GPU OLE transcript, and the FC preprocessing pipeline still
-  runs in one process with dealer-labelled conversion correlations.
-- Keygen is CPU-side. GPU-side batched keygen and byte-identical GPU key
-  emission remain M1 work.
+- The two-process keys now drive the real Figure 2 OLE engine and pass its GPU
+  validation. That engine and the FC composition still run in one process.
+  The standalone conversion uses real OT-backed correlations in two processes,
+  but it is not wired into the FC transcript.
+- Keygen is CPU-side. GPU-side batched keygen remains future work; emitted keys
+  are already byte-compatible with, and evaluated by, the GPU path.
 
 ## 6. Where this sits in the plan
 
@@ -211,6 +227,7 @@ Milestone M1 requires real silent OT/OLE transport, GPU batching and bytes, and
 round/traffic measurement. This artifact discharges the **real two-party
 transport, level-synchronous batching, measured bytes, and measured
 direction-switch** parts for host keygen with real OT rather than silent OT.
-Direction switches are not a network-round measurement. Still open for M1: a
-silent-OT backend, GPU-side batched keygen, byte-identical GPU key emission,
-and driving the real-OLE GPU transcript from these keys (M2).
+Direction switches are not a network-round measurement. GPU-consumable key
+emission and the M2 real-OLE-on-two-party-keys gate are now closed. Still open
+for M1: a silent-OT backend, GPU-side batched keygen, and the DPF distribution
+and single-key privacy reductions.

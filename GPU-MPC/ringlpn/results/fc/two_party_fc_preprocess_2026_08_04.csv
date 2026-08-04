@@ -1,0 +1,6 @@
+case,qbits,bw,rows,inner,cols,noise,ring_batches,p0_ring_oles,p1_ring_oles,p0_dpf_trees,p1_dpf_trees,p0_public_a_words,p1_public_a_words,p0_protocol_bytes,p1_protocol_bytes,p0_total_us,p1_total_us,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online,status
+q64_regular_small,64,16,2,2,2,regular,1,2,2,512,512,32768,32768,2219232,2266848,602952,602955,96,10016.7,97.962,pass,pass,pass,pass
+q64_uniform_small,64,16,2,2,2,uniform,1,2,2,512,512,32768,32768,2347104,2394720,2.20511e+06,2.20512e+06,96,9791.68,91.953,pass,pass,pass,pass
+q128_regular_small,128,32,2,2,2,regular,1,4,4,1024,1024,65536,65536,4438112,4529504,833253,833294,96,9973.79,98.055,pass,pass,pass,pass
+q128_uniform_small,128,32,2,2,2,uniform,1,4,4,1024,1024,65536,65536,4693856,4785248,4.11596e+06,4.11597e+06,96,10697.2,96.318,pass,pass,pass,pass
+q64_regular_multibatch,64,16,8,65,16,regular,2,4,4,1024,1024,65536,65536,5075268,5043524,824432,824439,13504,10253.2,218.989,pass,pass,pass,pass
