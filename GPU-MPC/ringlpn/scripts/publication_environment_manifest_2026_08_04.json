@@ -96,6 +96,7 @@
     "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.csv",
     "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_summary_2026_08_04.csv",
     "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_environment_2026_08_04.txt",
+    "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
     "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf"
   ],
   "secrets_policy": "SSH identities, known_hosts files, credentials, private datasets, and private party records are runtime mounts/arguments only and must never be copied into the image or emitted into a manifest."
