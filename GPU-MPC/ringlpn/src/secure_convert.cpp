@@ -1,4 +1,5 @@
 #include "secure_convert.h"
+#include <algorithm>
 
 #include <array>
 #include <chrono>
@@ -60,27 +61,32 @@ bool agree_convert_preflight(const SecureConvertParams &params,
     // Canonical public context followed by one local-validity byte. Both
     // parties execute this exchange even when local validation fails, so a
     // malformed share produces one common abort instead of a peer hang.
-    std::array<uint8_t, 25> mine{};
-    std::array<uint8_t, 25> peer{};
+    std::array<uint8_t, 57> mine{};
+    std::array<uint8_t, 57> peer{};
     store_u64_le(mine.data(), params.sid);
     store_u32_le(mine.data() + 8, uint32_t(params.qbits));
     store_u32_le(mine.data() + 12, uint32_t(params.bw));
     store_u64_le(mine.data() + 16, uint64_t(params.count));
-    mine[24] = locally_valid ? 1 : 0;
+    std::copy(params.correlation_id.begin(), params.correlation_id.end(),
+              mine.begin() + 24);
+    mine[56] = locally_valid ? 1 : 0;
     channel.exchange_bytes(mine.data(), peer.data(), mine.size());
-    for (size_t i = 0; i < 24; ++i) {
+    for (size_t i = 0; i < 56; ++i) {
         if (mine[i] != peer[i]) {
             return false;
         }
     }
-    return mine[24] == 1 && peer[24] == 1;
+    return mine[56] == 1 && peer[56] == 1;
 }
 
 
 bool validate_inputs(const SecureConvertParams &params,
                      const std::vector<U128> &own_z, int &ell,
                      U128 &modulus) {
-    if (params.sid == 0 ||
+    const bool correlation_id_nonzero =
+        std::any_of(params.correlation_id.begin(), params.correlation_id.end(),
+                    [](uint8_t byte) { return byte != 0; });
+    if (params.sid == 0 || !correlation_id_nonzero ||
         (params.qbits != 64 && params.qbits != 128) || params.bw <= 2 ||
         params.bw > 32 || params.count == 0 ||
         params.count > kMaxSecureConvertBatch || own_z.size() != params.count) {

@@ -19,11 +19,11 @@
 //     opening counts are unchanged by batching. A direction switch is not a
 //     network-round measurement.
 //
-// The expansion PRG is selectable. `splitmix` matches the unchanged host
-// evaluator and carries no security claim. `gpu-aes` is bit-identical to the
-// deployed four-call GPU AES expansion: child seeds retain all 128 bits and
-// control bits come from separate domain-separated calls. Device/host parity
-// is gated; P-RNG / P-DIST / P-KEY and the reduction remain open.
+// This executable is the explicit CPU-generation baseline. Its expansion PRG
+// remains selectable: `splitmix` matches the host evaluator, while `gpu-aes`
+// emits material compatible with the deployed four-call GPU AES evaluator.
+// Full 128-bit child seeds and independent control-bit calls are preserved.
+// The live FC publication path uses the GPU-batched generator instead.
 //
 // Each party writes only its OWN key file. Correctness is checked afterwards by
 // the separate, explicitly TEST-ONLY checker test_two_party_dpf_validate, which
@@ -49,7 +49,7 @@ using ringlpn_2pdpf::Node;
 using ringlpn_2pdpf::PrgMode;
 using ringlpn_2pdpf::kPrime62;
 using ringlpn_2pdpf::kPrime62Crt2;
-using ringlpn_2pdpf::two_party_dpf_gen_batch;
+using ringlpn_2pdpf::two_party_dpf_gen_batch_cpu_baseline;
 using ringlpn_2pc::BitTriple;
 using ringlpn_2pc::PartyChannel;
 using ringlpn_2pc::PartyRandom;
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     std::vector<spfss_host::DPFKey> keys;
     const PrgMode prg_mode =
         (args.prg == "gpu-aes") ? PrgMode::kGpuAes : PrgMode::kSplitmix;
-    const bool batch_ok = two_party_dpf_gen_batch(
+    const bool batch_ok = two_party_dpf_gen_batch_cpu_baseline(
         args.party, L, p, prg_mode, offs, beta_factors, ch, rng, keys);
     const double total_us = std::chrono::duration<double, std::micro>(
                                 std::chrono::steady_clock::now() - t_start)

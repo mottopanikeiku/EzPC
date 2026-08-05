@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+# No source, credentials, datasets, weights, or generated evidence are copied in.
+# Bind-mount a clean recursive clone at /work/EzPC and mount SSH material read-only.
+FROM nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+
+LABEL org.opencontainers.image.title="Ring-LPN publication reproduction environment" \
+      org.opencontainers.image.created="2026-08-04" \
+      org.opencontainers.image.base.name="nvidia/cuda:12.6.3-devel-ubuntu24.04" \
+      org.opencontainers.image.base.digest="sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade"
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      gcc-13=13.3.0-6ubuntu2~24.04.1 \
+      g++-13=13.3.0-6ubuntu2~24.04.1 \
+      cmake=3.28.3-1build7 \
+      libmpfr-dev=4.2.1-1build1.1 \
+      libgmp-dev=2:6.3.0+dfsg-2ubuntu6.1 \
+      python3=3.12.3-0ubuntu2.1 \
+      git=1:2.43.0-1ubuntu7.3 \
+      make=4.3-4.1build2 \
+      openssh-client=1:9.6p1-3ubuntu13.18 \
+      libssl-dev=3.0.13-0ubuntu3.12 \
+      ca-certificates=20260601~24.04.1 \
+      texlive-latex-base=2023.20240207-1 \
+      texlive-latex-recommended=2023.20240207-1 \
+      texlive-pictures=2023.20240207-1 \
+ && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG REPRO_UID=1000
+ARG REPRO_GID=1000
+RUN groupadd --gid "${REPRO_GID}" repro \
+ && useradd --uid "${REPRO_UID}" --gid "${REPRO_GID}" --create-home repro
+
+ENV CUDA_ARCH=89 \
+    GPU_ARCH=89 \
+    PATH=/usr/local/cuda/bin:/usr/bin:/bin \
+    RINGLPN_REPRO_CONTAINER_DIGEST=sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+USER repro
+WORKDIR /work/EzPC/GPU-MPC/ringlpn
+ENTRYPOINT ["./scripts/reproduce_publication.sh"]

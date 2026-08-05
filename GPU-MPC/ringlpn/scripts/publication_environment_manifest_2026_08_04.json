@@ -1,0 +1,102 @@
+{
+  "schema": "ringlpn-publication-environment/v1",
+  "date": "2026-08-04",
+  "classification": "internal/advisor",
+  "claim_boundary": "Feasibility and systems reproduction only; no concrete Ring-LPN security claim.",
+  "platform": {
+    "os": "Ubuntu 24.04 amd64",
+    "container_image": "nvidia/cuda:12.6.3-devel-ubuntu24.04@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade",
+    "container_manifest_list_digest": "sha256:392c0df7b577ecae17a17f6ba7f2009c217bb4422f8431c053ae9af61a8c148a",
+    "cuda_toolkit": "12.6.3",
+    "nvcc": "12.6.85",
+    "minimum_nvidia_driver": "560.35.03",
+    "gpu": "NVIDIA RTX 5000 Ada Generation",
+    "compute_capability": "8.9",
+    "cuda_arch": "sm_89"
+  },
+  "compilers": {
+    "gcc": "13.3.0",
+    "g++": "13.3.0",
+    "cmake": "3.28.3",
+    "python": "3.12.3",
+    "pdftex_distribution": "TeX Live 2023"
+  },
+  "container_packages": {
+    "gcc-13": "13.3.0-6ubuntu2~24.04.1",
+    "g++-13": "13.3.0-6ubuntu2~24.04.1",
+    "cmake": "3.28.3-1build7",
+    "libmpfr-dev": "4.2.1-1build1.1",
+    "libgmp-dev": "2:6.3.0+dfsg-2ubuntu6.1",
+    "python3": "3.12.3-0ubuntu2.1",
+    "git": "1:2.43.0-1ubuntu7.3",
+    "make": "4.3-4.1build2",
+    "openssh-client": "1:9.6p1-3ubuntu13.18",
+    "libssl-dev": "3.0.13-0ubuntu3.12",
+    "ca-certificates": "20260601~24.04.1",
+    "texlive-latex-base": "2023.20240207-1",
+    "texlive-latex-recommended": "2023.20240207-1",
+    "texlive-pictures": "2023.20240207-1"
+  },
+  "build": {
+    "publication_source": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex",
+    "publication_pdf": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf",
+    "pdf_command": "pdflatex -interaction=nonstopmode -halt-on-error (twice)",
+    "fc_builder": "GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh",
+    "fc_flags": [
+      "-O2",
+      "-std=c++17",
+      "-arch=sm_89",
+      "-diag-suppress=20012",
+      "-Xcompiler=-fpermissive,-maes,-msse4.1,-mpclmul,-mavx2,-mrdseed,-pthread",
+      "-lcurand",
+      "-lcrypto",
+      "-lssl",
+      "-lpthread"
+    ]
+  },
+  "sources": [
+    {"path":"SCI/extern/SEAL","url":"https://github.com/Microsoft/SEAL","revision":"1d5c8169aa5aca9deb75c4079e53ea8d5e94007d","license":"MIT","license_file":"SCI/extern/SEAL/LICENSE","license_sha256":"27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"},
+    {"path":"SCI/extern/SEAL/native/tests/thirdparty/googletest","url":"https://github.com/google/googletest","revision":"7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c","license":"BSD-3-Clause","license_file":"SCI/extern/SEAL/native/tests/thirdparty/googletest/LICENSE","license_sha256":"9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"},
+    {"path":"SCI/extern/eigen","url":"https://gitlab.com/libeigen/eigen","revision":"603e213d13311af286c8c1abd4ea14a8bd3d204e","license":"MPL-2.0","license_file":"SCI/extern/eigen/COPYING.MPL2","license_sha256":"fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"},
+    {"path":"GPU-MPC/experiments/orca/weights","url":"https://github.com/neha-jawalkar/weights.git","revision":"89fb0e0b35d5374f1bcd72528c05056725637719","license":"NOASSERTION"},
+    {"path":"GPU-MPC/experiments/orca/datasets/mnist","url":"https://github.com/neha-jawalkar/mnist.git","revision":"09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e","license":"NOASSERTION"},
+    {"path":"GPU-MPC/ext/cutlass","url":"https://github.com/NVIDIA/cutlass.git","revision":"66d9cddc832c1cdc2b30a8755274f7f74640cfe6","license":"BSD-3-Clause","license_file":"GPU-MPC/ext/cutlass/LICENSE.txt","license_sha256":"5f0ea053230eb92267e9e80ed67ec08899ebc55d093eff4a2273a7b340a48cca"},
+    {"path":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL","url":"https://github.com/microsoft/SEAL.git","revision":"1d5c8169aa5aca9deb75c4079e53ea8d5e94007d","license":"MIT","license_file":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/LICENSE","license_sha256":"27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"},
+    {"path":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest","url":"https://github.com/google/googletest","revision":"7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c","license":"BSD-3-Clause","license_file":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest/LICENSE","license_sha256":"9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"},
+    {"path":"GPU-MPC/ringlpn/extern/NFLlib","url":"https://github.com/quarkslab/NFLlib.git","revision":"5cf40ed6a4929bfc304f3283aafd62c4149c55e2","license":"MIT","license_file":"GPU-MPC/ringlpn/extern/NFLlib/MIT_LICENSE.txt","license_sha256":"24b21400bf5027195428484e8f116fc09243b5df56e83a9f38321c3d5ec5ccc5"},
+    {"path":"GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu","url":"https://github.com/scale-snu/cheddar-fhe","revision":"307b49cbe03e7f8f14bf31485f716c1090c9ec9d","upstream_blob":"b681f4c68f56b6fafd1db13c5dd58822ed6d2d51","license":"MIT","license_file":"GPU-MPC/ringlpn/extern/Cheddar_MIT_LICENSE.txt","license_sha256":"dd73a32f39b0b9fa8cf1c3932c153a3ce90bbac6e7a6b2f0fd7ee66af0d7a2c7"}
+  ],
+  "data_inputs": {
+    "required": [],
+    "reason": "The publication gates generate deterministic public test inputs and use only the ResNet18 classifier shape; they do not consume datasets or trained weights.",
+    "excluded_optional_snapshots": [
+      {"path":"GPU-MPC/experiments/orca/weights","revision":"89fb0e0b35d5374f1bcd72528c05056725637719","git_archive_sha256":"4355e51144d4fbb2e9a21e474df5eb6d6f610715058bb1cdfd4ca5aa5444be60","license":"NOASSERTION"},
+      {"path":"GPU-MPC/experiments/orca/datasets/mnist","revision":"09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e","git_archive_sha256":"4126216f7204a9ef89094a1d61445c9ad7383a94524ae373e6f835eec9d0131b","license":"NOASSERTION"}
+    ]
+  },
+  "gates": {
+    "local_smoke": [
+      "rebuild publication PDF",
+      "RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 RUN_REGULAR_SMOKE=1 GPU_ARCH=89 scripts/run_paper_checkpoint_smoke.sh"
+    ],
+    "two_host_publication_required": [
+      "all local-smoke gates",
+      "scripts/run_two_party_fc_preprocess.sh",
+      "MODELS=ResNet18 WORKLOAD=classifier WARMUPS=1 TRIALS=10 scripts/run_two_party_fc_model_scale.sh",
+      "scripts/build_two_party_fc_preprocess.sh on both clean hosts",
+      "scripts/run_two_host_authenticated.sh with an explicit SSH identity, pinned known_hosts, distinct hosts, fresh session id, and explicit public FC parameters",
+      "scripts/peer_private_execution.py verify-manifest for party 0, party 1, post-exit checker, and bound durable COMMITTED manifests",
+      "postflight ownership and retained-evidence gates"
+    ],
+    "publication_success_marker": "[ringlpn-reproduce] TWO-HOST PUBLICATION GATES PASS"
+  },
+  "required_tracked_evidence": [
+    "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.csv",
+    "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_controls_2026_08_04.csv",
+    "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.csv",
+    "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_summary_2026_08_04.csv",
+    "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_environment_2026_08_04.txt",
+    "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf"
+  ],
+  "secrets_policy": "SSH identities, known_hosts files, credentials, private datasets, and private party records are runtime mounts/arguments only and must never be copied into the image or emitted into a manifest."
+}

@@ -1,0 +1,2 @@
+# Unified patch context markers are semantically required whitespace.
+scripts/libote_reverse_cuckoo_p0.patch -whitespace

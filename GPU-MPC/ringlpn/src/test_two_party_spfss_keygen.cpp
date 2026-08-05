@@ -13,9 +13,9 @@
 // each process samples only its own noise in memory; external noise-record
 // ingestion is retained solely as a labelled TEST-ONLY artifact path.
 //
-// Party-local preparation and grouping live in two_party_spfss.h. That API
-// calls the shared protocol in two_party_dpf_protocol.h with the GPU expansion
-// PRG, so the grouped host keys remain consumable by a party-local GPU packer.
+// Party-local preparation and grouping live in two_party_spfss.h. This
+// standalone host executable intentionally selects the explicit CPU baseline
+// with the GPU-AES-compatible PRG; the live FC path selects GPU-batched keygen.
 // All groups use one level-synchronous batch; direction switches depend on tree
 // depth, not tree count.
 //
@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
     const auto t_start = std::chrono::steady_clock::now();
     ringlpn_spfss::GroupedHostKeys grouped;
     ringlpn_spfss::DpfCounters dpf_counters;
-    const bool ok = ringlpn_spfss::generate_party_spfss_keys(
+    const bool ok = ringlpn_spfss::generate_party_spfss_keys_cpu_baseline(
         args.party, params, batch, ch, rng, grouped, dpf_counters);
     const double total_us = std::chrono::duration<double, std::micro>(
                                 std::chrono::steady_clock::now() - t_start)

@@ -6,7 +6,7 @@ In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
 /home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
@@ -75,7 +75,7 @@ In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
 /home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
@@ -172,24 +172,24 @@ Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                                                    ^~         
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                               ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                               ^
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                               ^
 /home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
 /home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
@@ -220,7 +220,7 @@ In file included from /home/fatih/EzPC/SCI/src/utils/utils.h:87,
                  from /home/fatih/EzPC/SCI/src/OT/ot.h:30,
                  from /home/fatih/EzPC/SCI/src/OT/np.h:30,
                  from /home/fatih/EzPC/SCI/src/OT/split-iknp.h:28,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:37,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:38,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h:3,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.cpp:1:
 /home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
@@ -289,113 +289,113 @@ In file included from /home/fatih/EzPC/SCI/src/utils/hash.h:33:
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                           ^~~~~~~~~~~
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
-      |                                        ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
-      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
-      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
 Built /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
-===== ResNet18 classifier / warmup 0 / party 0 =====
+===== ResNet18 gemm48 / warmup 0 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.62518e+07,pass
-===== ResNet18 classifier / warmup 0 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.5683e+07,pass,10338,102.145,21458.3,303519,2.59943e+06,2.03398e+07,2394.51,68440.6,1.70527e+06,89354.4,53670,7319.13,1952.96,142651392,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,5c557d84224151aa8cd19aa48544d1fb,d7da644459b316e2caadde4e1e3a3a6416f7b7059e7946ec01c82899b7d0c411,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / warmup 0 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.62512e+07,pass
-===== ResNet18 classifier / warmup 0 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.5683e+07,pass,10338,503.755,21475.7,303499,2.6002e+06,2.03394e+07,2405.01,68679.7,1.69552e+06,77692.2,53696.5,9212.48,55.978,140886016,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,5c557d84224151aa8cd19aa48544d1fb,d7da644459b316e2caadde4e1e3a3a6416f7b7059e7946ec01c82899b7d0c411,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / warmup 0 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10841,1095.84,pass,pass,pass,pass
-===== ResNet18 classifier / measured 1 / party 0 =====
+128,32,1,512,1000,63,4108096,10611.4,1100.88,pass,pass,pass,pass,429273,169689088,27259961344,6566576128,5c557d84224151aa8cd19aa48544d1fb,d7da644459b316e2caadde4e1e3a3a6416f7b7059e7946ec01c82899b7d0c411
+===== ResNet18 gemm48 / measured 1 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.71055e+07,pass
-===== ResNet18 classifier / measured 1 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.5618e+07,pass,10338,57.322,21180.8,303288,2.59198e+06,2.03248e+07,2470.79,69367.3,1.6975e+06,91973.5,54795.5,7373.07,2024.35,141848576,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,e3ba680d1dc2fcb75043ff1503acab14,54dbb8ababa703bdc65bd878154ca0fa77208d392bee34abe658395ce903d98b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 1 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.71055e+07,pass
-===== ResNet18 classifier / measured 1 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.5618e+07,pass,10338,190.509,21180.4,303286,2.59242e+06,2.03247e+07,2503.72,70620.2,1.69711e+06,76816,54823.2,9336.05,57.714,141254656,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,e3ba680d1dc2fcb75043ff1503acab14,54dbb8ababa703bdc65bd878154ca0fa77208d392bee34abe658395ce903d98b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 1 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10846.4,1097.15,pass,pass,pass,pass
-===== ResNet18 classifier / measured 2 / party 0 =====
+128,32,1,512,1000,63,4108096,10553.1,1100.29,pass,pass,pass,pass,383780,169226240,27259961344,6566576128,e3ba680d1dc2fcb75043ff1503acab14,54dbb8ababa703bdc65bd878154ca0fa77208d392bee34abe658395ce903d98b
+===== ResNet18 gemm48 / measured 2 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.63396e+07,pass
-===== ResNet18 classifier / measured 2 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.55868e+07,pass,10338,59.453,22011.5,299622,2.56866e+06,2.03181e+07,2398.71,67284.3,1.70121e+06,90063.4,53780.3,7578.04,2271.52,142516224,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,dfb38c3d002656d257eb5174380ea21c,2881cc5d41e39d0506fdb5c50f5b84abebeffb57033a1595b99110f64243f6cd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 2 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.63396e+07,pass
-===== ResNet18 classifier / measured 2 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.55858e+07,pass,10338,471.353,23049.4,299590,2.5692e+06,2.0318e+07,2315.85,67501,1.69454e+06,77479.9,54055.1,9780.65,64.192,141578240,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,dfb38c3d002656d257eb5174380ea21c,2881cc5d41e39d0506fdb5c50f5b84abebeffb57033a1595b99110f64243f6cd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 2 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,11100.2,1095.84,pass,pass,pass,pass
-===== ResNet18 classifier / measured 3 / party 0 =====
+128,32,1,512,1000,63,4108096,10740.3,1101.73,pass,pass,pass,pass,384307,168964096,27259961344,6566576128,dfb38c3d002656d257eb5174380ea21c,2881cc5d41e39d0506fdb5c50f5b84abebeffb57033a1595b99110f64243f6cd
+===== ResNet18 gemm48 / measured 3 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.62483e+07,pass
-===== ResNet18 classifier / measured 3 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57193e+07,pass,10338,105.077,25081.8,303421,2.58005e+06,2.04377e+07,2346.25,67472.3,1.7038e+06,89944.2,54243.3,7505.31,1879.32,142471168,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,5f594972aca8f251958a2d721e5e9288,10f4aa775e0a8bcf09570b2fce48c7c98b404bf0ab49f666d94d1e48ae7421ed,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 3 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.62484e+07,pass
-===== ResNet18 classifier / measured 3 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.57193e+07,pass,10338,498.125,25099.7,303344,2.58093e+06,2.04375e+07,2666.25,68081.4,1.70057e+06,77085.2,54271,9318.78,56.108,140013568,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,5f594972aca8f251958a2d721e5e9288,10f4aa775e0a8bcf09570b2fce48c7c98b404bf0ab49f666d94d1e48ae7421ed,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 3 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10920.3,1098.18,pass,pass,pass,pass
-===== ResNet18 classifier / measured 4 / party 0 =====
+128,32,1,512,1000,63,4108096,10818.4,1126.75,pass,pass,pass,pass,429868,169648128,27259961344,6566576128,5f594972aca8f251958a2d721e5e9288,10f4aa775e0a8bcf09570b2fce48c7c98b404bf0ab49f666d94d1e48ae7421ed
+===== ResNet18 gemm48 / measured 4 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.54982e+07,pass
-===== ResNet18 classifier / measured 4 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57258e+07,pass,10338,97.015,24615.2,303464,2.587e+06,2.0441e+07,2343.92,68524.5,1.69994e+06,90608.3,53993.4,8541.61,3973.99,143269888,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,e7ef601703416d9cbd792c95acad9c95,09b7a11912a94c7e4b82ff26af596982a4739245c3dba2b3ea7d9e3be8cf44fb,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 4 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.54982e+07,pass
-===== ResNet18 classifier / measured 4 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.57258e+07,pass,10338,471.465,24629.8,303498,2.58782e+06,2.04403e+07,2460.05,70239.9,1.69789e+06,76831.3,54017.9,12434.8,78.953,140840960,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,e7ef601703416d9cbd792c95acad9c95,09b7a11912a94c7e4b82ff26af596982a4739245c3dba2b3ea7d9e3be8cf44fb,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 4 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10780,1106.74,pass,pass,pass,pass
-===== ResNet18 classifier / measured 5 / party 0 =====
+128,32,1,512,1000,63,4108096,10568.1,1106.85,pass,pass,pass,pass,434740,169660416,27259961344,6566576128,e7ef601703416d9cbd792c95acad9c95,09b7a11912a94c7e4b82ff26af596982a4739245c3dba2b3ea7d9e3be8cf44fb
+===== ResNet18 gemm48 / measured 5 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.50453e+07,pass
-===== ResNet18 classifier / measured 5 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57807e+07,pass,10338,97.005,21284.5,305633,2.58882e+06,2.0458e+07,2381.51,69412,1.72094e+06,92400.9,52747.1,7668.13,2164.45,142569472,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,0596c9d549065ca088e3266b7648447b,bac32b634dcfc8ccaea79c9f255f1fe7f370688c0dfa6d5452d4f2bf96d814ab,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 5 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.50453e+07,pass
-===== ResNet18 classifier / measured 5 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.57807e+07,pass,10338,513.71,21297.5,305562,2.58944e+06,2.04574e+07,2383.8,69706.4,1.70849e+06,78076.2,52769.4,9766.18,61.835,141074432,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,0596c9d549065ca088e3266b7648447b,bac32b634dcfc8ccaea79c9f255f1fe7f370688c0dfa6d5452d4f2bf96d814ab,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 5 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10737.5,1094.69,pass,pass,pass,pass
-===== ResNet18 classifier / measured 6 / party 0 =====
+128,32,1,512,1000,63,4108096,10739.7,1107.78,pass,pass,pass,pass,392609,168902656,27259961344,6566576128,0596c9d549065ca088e3266b7648447b,bac32b634dcfc8ccaea79c9f255f1fe7f370688c0dfa6d5452d4f2bf96d814ab
+===== ResNet18 gemm48 / measured 6 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.49808e+07,pass
-===== ResNet18 classifier / measured 6 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.569e+07,pass,10338,107.346,22771,305228,2.57667e+06,2.04135e+07,2373.69,66864.9,1.70384e+06,90223.5,50130.1,8224.6,2098.49,142749696,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,4ada2c16214af807703467e39827dd65,e304b3daa2dae5f6c37a9fc08957dfb16101444c50ccadf62d337507b7f1ce13,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 6 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.49808e+07,pass
-===== ResNet18 classifier / measured 6 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.569e+07,pass,10338,503.13,22785.8,305169,2.57739e+06,2.04135e+07,2539.4,67867.4,1.69845e+06,78228.7,50534.8,10256.4,58.554,141029376,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,4ada2c16214af807703467e39827dd65,e304b3daa2dae5f6c37a9fc08957dfb16101444c50ccadf62d337507b7f1ce13,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 6 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10665.3,1101.01,pass,pass,pass,pass
-===== ResNet18 classifier / measured 7 / party 0 =====
+128,32,1,512,1000,63,4108096,10630,1106.12,pass,pass,pass,pass,434778,169000960,27259961344,6566576128,4ada2c16214af807703467e39827dd65,e304b3daa2dae5f6c37a9fc08957dfb16101444c50ccadf62d337507b7f1ce13
+===== ResNet18 gemm48 / measured 7 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.59724e+07,pass
-===== ResNet18 classifier / measured 7 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57417e+07,pass,10338,111.998,22974.5,299165,2.59624e+06,2.04451e+07,2363.99,68137.1,1.70227e+06,88660.9,55725.1,8377.45,1582.65,141938688,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,22061216a9972b75ca0d5956cbc731e8,0dfec7cbba3f6c05c78c3fbadc958ea4d0c59408edea0fb767d4ae4a09335ba5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 7 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.59724e+07,pass
-===== ResNet18 classifier / measured 7 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.57417e+07,pass,10338,467.267,22987.3,299101,2.59691e+06,2.0445e+07,2378.68,69039.5,1.69438e+06,77092.2,55742.8,9898.07,61.353,140451840,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,22061216a9972b75ca0d5956cbc731e8,0dfec7cbba3f6c05c78c3fbadc958ea4d0c59408edea0fb767d4ae4a09335ba5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 7 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,11234.5,1106.14,pass,pass,pass,pass
-===== ResNet18 classifier / measured 8 / party 0 =====
+128,32,1,512,1000,63,4108096,10603,1104.8,pass,pass,pass,pass,432394,169422848,27259961344,6566576128,22061216a9972b75ca0d5956cbc731e8,0dfec7cbba3f6c05c78c3fbadc958ea4d0c59408edea0fb767d4ae4a09335ba5
+===== ResNet18 gemm48 / measured 8 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.52961e+07,pass
-===== ResNet18 classifier / measured 8 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.56894e+07,pass,10338,110.303,22857.7,298011,2.55577e+06,2.04322e+07,2325.42,68714.7,1.69874e+06,89490.6,52223.6,8236.19,2054.17,142348288,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,87a2ba740dd0dbbbc068d1fd2e8d5d2d,b11d031ea224e44ec6ce21d7b8a86c07e2a21be2fdcafb33e6a474b9910e04ca,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 8 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.52961e+07,pass
-===== ResNet18 classifier / measured 8 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.5689e+07,pass,10338,488.54,22876.5,298061,2.55636e+06,2.04322e+07,2359.29,70346.1,1.70433e+06,77537.6,52487.4,10081.6,204.354,141123584,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,87a2ba740dd0dbbbc068d1fd2e8d5d2d,b11d031ea224e44ec6ce21d7b8a86c07e2a21be2fdcafb33e6a474b9910e04ca,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 8 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10484.2,1097.04,pass,pass,pass,pass
-===== ResNet18 classifier / measured 9 / party 0 =====
+128,32,1,512,1000,63,4108096,10654.2,1112.16,pass,pass,pass,pass,430783,169426944,27259961344,6566576128,87a2ba740dd0dbbbc068d1fd2e8d5d2d,b11d031ea224e44ec6ce21d7b8a86c07e2a21be2fdcafb33e6a474b9910e04ca
+===== ResNet18 gemm48 / measured 9 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.52584e+07,pass
-===== ResNet18 classifier / measured 9 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57281e+07,pass,10338,105.92,22823.1,299669,2.58658e+06,2.0431e+07,2365.47,67232.4,1.70471e+06,92486.6,53128.2,8033.29,2046.81,142229504,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,e57c94642ef39c5f1205457b96655aec,b69f4d4a70fb89ea8b93c9d08905ca9b6444c0cdd47ecda5da3e96a093d0a773,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 9 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.52585e+07,pass
-===== ResNet18 classifier / measured 9 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.5728e+07,pass,10338,579.215,22937.9,299653,2.58732e+06,2.04306e+07,2377.14,68426,1.70644e+06,77331,53159,10019.5,57.018,140451840,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,e57c94642ef39c5f1205457b96655aec,b69f4d4a70fb89ea8b93c9d08905ca9b6444c0cdd47ecda5da3e96a093d0a773,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 9 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,11102.2,1098.95,pass,pass,pass,pass
-===== ResNet18 classifier / measured 10 / party 0 =====
+128,32,1,512,1000,63,4108096,10592.3,1105.52,pass,pass,pass,pass,386717,169492480,27259961344,6566576128,e57c94642ef39c5f1205457b96655aec,b69f4d4a70fb89ea8b93c9d08905ca9b6444c0cdd47ecda5da3e96a093d0a773
+===== ResNet18 gemm48 / measured 10 / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,302389836,21177,3.63839e+07,pass
-===== ResNet18 classifier / measured 10 / party 1 =====
+0,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,285882860,21177,2.57102e+07,pass,10338,105.042,25253.3,303612,2.58743e+06,2.04238e+07,2493.35,68983.2,1.69152e+06,89061.3,55007.9,7787.21,1958.55,142712832,27241086976,6585450496,260021517,NA,25883333,NA,256,21829,NA,yes,NA,c74470ccd237a4cab6f8afca77c218ce,9e36e079a569afdfafcb3c32067f357cb19ad77f865841b1d9283298d14de2cf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 10 / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,4128768,2048000,1000,622000,1244000,306470988,21177,3.63821e+07,pass
-===== ResNet18 classifier / measured 10 / post-exit checker =====
+1,128,32,1,512,1000,8192,2,8,regular,63,252,2048000,64512,1419264,645120,193536,97542144,195084288,14684544,2064384,2048000,1000,622000,1244000,289964012,21177,2.57102e+07,pass,10338,558.208,25235.6,303680,2.58822e+06,2.04235e+07,2315.97,70634.5,1.69372e+06,77493.2,55284.8,9682.89,58.966,141852672,27241086976,6585450496,267045666,NA,22940336,NA,256,21829,NA,yes,NA,c74470ccd237a4cab6f8afca77c218ce,9e36e079a569afdfafcb3c32067f357cb19ad77f865841b1d9283298d14de2cf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
+===== ResNet18 gemm48 / measured 10 / post-exit checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,63,4108096,10758.9,1102.1,pass,pass,pass,pass
+128,32,1,512,1000,63,4108096,10919.6,1106.72,pass,pass,pass,pass,430944,169037824,27259961344,6566576128,c74470ccd237a4cab6f8afca77c218ce,9e36e079a569afdfafcb3c32067f357cb19ad77f865841b1d9283298d14de2cf

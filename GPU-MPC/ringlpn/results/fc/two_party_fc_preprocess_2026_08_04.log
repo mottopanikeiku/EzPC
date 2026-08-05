@@ -6,7 +6,7 @@ In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
 /home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
@@ -75,7 +75,7 @@ In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
                  from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:20:
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
 /home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
@@ -172,24 +172,24 @@ Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                                                    ^~         
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                               ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                               ^
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                               ^
 /home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
 /home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
@@ -220,7 +220,7 @@ In file included from /home/fatih/EzPC/SCI/src/utils/utils.h:87,
                  from /home/fatih/EzPC/SCI/src/OT/ot.h:30,
                  from /home/fatih/EzPC/SCI/src/OT/np.h:30,
                  from /home/fatih/EzPC/SCI/src/OT/split-iknp.h:28,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:37,
+                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:38,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h:3,
                  from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.cpp:1:
 /home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
@@ -289,67 +289,92 @@ In file included from /home/fatih/EzPC/SCI/src/utils/hash.h:33:
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                           ^~~~~~~~~~~
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:265:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  265 |         std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
-      |                                        ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:266:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  266 |         std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
-      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
 /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:280:40: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  280 |         std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
-      |                                        ^
+/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
 Built /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
 
 ===== q64_regular_small / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,32768,16,4,1248,2496,2219232,429,602952,pass
+0,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,16384,16,4,1248,2496,2088256,429,541225,pass,214,32.128,27296.6,2263.21,32119,168526,15.379,477.155,15369,49.505,4261.64,127.435,55.722,124706816,27241086976,6585450496,1917025,NA,193221,NA,256,21829,NA,yes,NA,77689f19d58121337a96be5e6eed2d64,329bc6a4a8b451189152ebf604ec4aacae5ab96d2e9aacd55620e319c2e7729e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_regular_small / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,32768,16,4,1248,2496,2266848,429,602955,pass
+1,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,16384,16,4,1248,2496,2135872,429,540120,pass,214,32.986,28395.1,2261.79,32109.7,168543,20.179,541.413,14121.6,52.503,4258.27,130.757,49.816,124645376,27241086976,6585450496,1967402,NA,190460,NA,256,21829,NA,yes,NA,77689f19d58121337a96be5e6eed2d64,329bc6a4a8b451189152ebf604ec4aacae5ab96d2e9aacd55620e319c2e7729e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_regular_small / offline checker =====
 reserved memory: 26843545600 18446744073709551615
-64,16,2,2,2,1,96,10016.7,97.962,pass,pass,pass,pass
+64,16,2,2,2,1,96,10852.6,97.124,pass,pass,pass,pass,442543,129781760,27243184128,6583353344,77689f19d58121337a96be5e6eed2d64,329bc6a4a8b451189152ebf604ec4aacae5ab96d2e9aacd55620e319c2e7729e
 
 ===== q64_uniform_small / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,64,16,2,2,2,8192,2,8,uniform,1,2,16,512,14336,6656,1536,976896,1953792,141504,32768,16,4,1248,2496,2347104,465,2.20511e+06,pass
+0,64,16,2,2,2,8192,2,8,uniform,1,2,16,512,14336,6656,1536,976896,1953792,141504,16384,16,4,1248,2496,2216128,465,1.0738e+07,pass,232,105.702,21090,2740.26,41168.1,1.03839e+07,15.436,620.176,26095.2,66.504,5226.53,127.857,50.948,124923904,27241086976,6585450496,1995745,NA,242373,NA,256,21829,NA,yes,NA,1895ffe43b76007af568b20f3dbcb4d7,52874a4fbd9215e2e0cff3d35c3628e3c19fdb82c302eeb590dbad96419ab649,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_uniform_small / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,64,16,2,2,2,8192,2,8,uniform,1,2,16,512,14336,6656,1536,976896,1953792,141504,32768,16,4,1248,2496,2394720,465,2.20512e+06,pass
+1,64,16,2,2,2,8192,2,8,uniform,1,2,16,512,14336,6656,1536,976896,1953792,141504,16384,16,4,1248,2496,2263744,465,1.0738e+07,pass,232,513.309,21105,2739.71,41176.2,1.03839e+07,16.477,502.567,26702.2,149.801,5229.43,131.682,42.44,125100032,27241086976,6585450496,2045738,NA,239996,NA,256,21829,NA,yes,NA,1895ffe43b76007af568b20f3dbcb4d7,52874a4fbd9215e2e0cff3d35c3628e3c19fdb82c302eeb590dbad96419ab649,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_uniform_small / offline checker =====
 reserved memory: 26843545600 18446744073709551615
-64,16,2,2,2,1,96,9791.68,91.953,pass,pass,pass,pass
+64,16,2,2,2,1,96,10150.8,95.928,pass,pass,pass,pass,391159,129961984,27243184128,6583353344,1895ffe43b76007af568b20f3dbcb4d7,52874a4fbd9215e2e0cff3d35c3628e3c19fdb82c302eeb590dbad96419ab649
 
 ===== q128_regular_small / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,2,2,2,8192,2,8,regular,1,4,32,1024,22528,10240,3072,1548288,3096576,233088,65536,32,4,2488,4976,4438112,841,833253,pass
+0,128,32,2,2,2,8192,2,8,regular,1,4,32,1024,22528,10240,3072,1548288,3096576,233088,32768,32,4,2488,4976,4176128,841,683858,pass,418,52.454,19842.5,5137.19,53438.8,323399,48.052,1109.96,27587.6,100.295,7244.13,131.44,56.379,125693952,27241086976,6585450496,3824673,NA,373445,NA,256,21829,NA,yes,NA,74669cedf5c23fc4d277c14ded0a07f6,94744b098d2e2c7e7fec9f03b158797feb20c714426fc01f8b5f4f15872312d6,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q128_regular_small / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,2,2,2,8192,2,8,regular,1,4,32,1024,22528,10240,3072,1548288,3096576,233088,65536,32,4,2488,4976,4529504,841,833294,pass
+1,128,32,2,2,2,8192,2,8,regular,1,4,32,1024,22528,10240,3072,1548288,3096576,233088,32768,32,4,2488,4976,4267520,841,683858,pass,418,66.023,19841.3,5135.06,53445.7,323404,50.238,1000.43,27864.8,102.699,7244.32,138.679,51.393,124698624,27241086976,6585450496,3917422,NA,372088,NA,256,21829,NA,yes,NA,74669cedf5c23fc4d277c14ded0a07f6,94744b098d2e2c7e7fec9f03b158797feb20c714426fc01f8b5f4f15872312d6,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q128_regular_small / offline checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,2,2,2,1,96,9973.79,98.055,pass,pass,pass,pass
+128,32,2,2,2,1,96,10431,97.479,pass,pass,pass,pass,441790,130560000,27243184128,6583353344,74669cedf5c23fc4d277c14ded0a07f6,94744b098d2e2c7e7fec9f03b158797feb20c714426fc01f8b5f4f15872312d6
 
 ===== q128_uniform_small / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,128,32,2,2,2,8192,2,8,uniform,1,4,32,1024,28672,13312,3072,1953792,3907584,283008,65536,32,4,2488,4976,4693856,913,4.11596e+06,pass
+0,128,32,2,2,2,8192,2,8,uniform,1,4,32,1024,28672,13312,3072,1953792,3907584,283008,32768,32,4,2488,4976,4431872,913,2.09767e+07,pass,454,109.924,22715.1,5540.06,74440.1,2.05453e+07,30.081,1172.79,52593.7,125.86,7134.21,119.813,56.989,124809216,27241086976,6585450496,3982113,NA,471749,NA,256,21829,NA,yes,NA,f0f0d59b4b52e4572f8240d980868a0f,fdbcadb73dae44f8b533acd5129667adfcbf05d56fa30ec4ce1f71dd773a8e2b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q128_uniform_small / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,128,32,2,2,2,8192,2,8,uniform,1,4,32,1024,28672,13312,3072,1953792,3907584,283008,65536,32,4,2488,4976,4785248,913,4.11597e+06,pass
+1,128,32,2,2,2,8192,2,8,uniform,1,4,32,1024,28672,13312,3072,1953792,3907584,283008,32768,32,4,2488,4976,4523264,913,2.09767e+07,pass,454,651.518,22732.2,5542.42,74449.2,2.05453e+07,32.869,1275.32,52956.7,101.27,7164.85,140.396,51.973,124882944,27241086976,6585450496,4074094,NA,471160,NA,256,21829,NA,yes,NA,f0f0d59b4b52e4572f8240d980868a0f,fdbcadb73dae44f8b533acd5129667adfcbf05d56fa30ec4ce1f71dd773a8e2b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q128_uniform_small / offline checker =====
 reserved memory: 26843545600 18446744073709551615
-128,32,2,2,2,1,96,10697.2,96.318,pass,pass,pass,pass
+128,32,2,2,2,1,96,10619.1,97.857,pass,pass,pass,pass,446307,129933312,27243184128,6583353344,f0f0d59b4b52e4572f8240d980868a0f,fdbcadb73dae44f8b533acd5129667adfcbf05d56fa30ec4ce1f71dd773a8e2b
 
 ===== q64_regular_multibatch / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,64,16,8,65,16,8192,2,8,regular,2,4,16640,1024,22528,10240,3072,1548288,3096576,233088,65536,16640,128,39936,79872,5075268,593,824432,pass
+0,64,16,8,65,16,8192,2,8,regular,2,4,16640,1024,22528,10240,3072,1548288,3096576,233088,32768,16640,128,39936,79872,4813284,593,697758,pass,294,62.574,23165.8,5041.32,48105.5,321566,40.572,1077.79,27195.1,725.389,5984.58,128.852,55.529,125153280,27241086976,6585450496,4224261,NA,611013,NA,256,21829,NA,yes,NA,b6c246b83e693842fe821f73b59d351a,9321ca0ef0aae34edd8225d6093aca46db9908b04237f662d72c4ecf33edc980,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_regular_multibatch / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,64,16,8,65,16,8192,2,8,regular,2,4,16640,1024,22528,10240,3072,1548288,3096576,233088,65536,16640,128,39936,79872,5043524,593,824439,pass
+1,64,16,8,65,16,8192,2,8,regular,2,4,16640,1024,22528,10240,3072,1548288,3096576,233088,32768,16640,128,39936,79872,4781540,593,697762,pass,294,504.222,23160.5,5041.46,48114.3,321567,38.06,1045.23,27252.6,621.871,5985.37,144.268,48.576,125706240,27241086976,6585450496,4427722,NA,375808,NA,256,21829,NA,yes,NA,b6c246b83e693842fe821f73b59d351a,9321ca0ef0aae34edd8225d6093aca46db9908b04237f662d72c4ecf33edc980,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== q64_regular_multibatch / offline checker =====
 reserved memory: 26843545600 18446744073709551615
-64,16,8,65,16,2,13504,10253.2,218.989,pass,pass,pass,pass
+64,16,8,65,16,2,13504,10703.7,223.534,pass,pass,pass,pass,449158,130498560,27243184128,6583353344,b6c246b83e693842fe821f73b59d351a,9321ca0ef0aae34edd8225d6093aca46db9908b04237f662d72c4ecf33edc980
+
+===== control_duplicate_id / party 0 =====
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_duplicate_id / party 1 =====
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_restart_retry / party 0 =====
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_restart_retry / party 1 =====
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_tail_slot_reuse / party 0 =====
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_tail_slot_reuse / party 1 =====
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_invocation_collision / party 0 =====
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_invocation_collision / party 1 =====
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_ledger_truncation / party 0 =====
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_ledger_truncation / party 1 =====
+[two-party-fc] public/local preflight rejected before OT/output
 
 ===== control_preflight_mismatch / party 0 =====
 [two-party-fc] public/local preflight rejected before OT/output
@@ -363,10 +388,10 @@ reserved memory: 26843545600 18446744073709551615
 
 ===== control_rename_failure / party 0 =====
 reserved memory: 26843545600 18446744073709551615
-0,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,32768,16,4,1248,2496,2219232,429,582007,FAIL
+0,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,16384,16,4,1248,2496,2088256,429,539442,FAIL,214,110.623,26833.7,2543.53,27378.3,165964,21.806,554.041,14008.8,55.889,4262.55,102.546,92.556,124755968,27241086976,6585450496,1917025,NA,193221,NA,256,21829,NA,yes,NA,7ce62ec70e1133dbcdeb1e67fcb16690,447e40b817f93bc24b9ef92437cb5800ab14cb731eab186735f03c47fbaad0cd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 ===== control_rename_failure / party 1 =====
 reserved memory: 26843545600 18446744073709551615
-1,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,32768,16,4,1248,2496,2266848,429,581959,FAIL
+1,64,16,2,2,2,8192,2,8,regular,1,2,16,512,11264,5120,1536,774144,1548288,116544,16384,16,4,1248,2496,2135872,429,539450,FAIL,214,542.281,26799.2,2538.16,27387.6,165863,22.16,614.74,14432.5,60.241,4276.05,115.948,90.013,124882944,27241086976,6585450496,1967402,NA,190460,NA,256,21829,NA,yes,NA,7ce62ec70e1133dbcdeb1e67fcb16690,447e40b817f93bc24b9ef92437cb5800ab14cb731eab186735f03c47fbaad0cd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default
 
 ===== control_checker / corrupt digest =====
 [two-party-fc-check] record validation failed

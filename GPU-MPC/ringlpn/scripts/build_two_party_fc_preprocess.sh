@@ -8,6 +8,13 @@ SCI_SRC="$(cd "$ROOT/../../SCI/src" && pwd)"
 OUT_DIR="$ROOT/bin"
 CUDA_ARCH="${CUDA_ARCH:-${GPU_ARCH:-89}}"
 NVCC="${NVCC:-nvcc}"
+LINEAR_KIND="${RINGLPN_LINEAR_KIND:-fc}"
+if [[ "$LINEAR_KIND" != "fc" && "$LINEAR_KIND" != "conv" ]]; then
+  echo "RINGLPN_LINEAR_KIND must be fc or conv" >&2
+  exit 2
+fi
+SOURCE="$ROOT/src/test_two_party_${LINEAR_KIND}_preprocess.cu"
+OUTPUT="$OUT_DIR/test_two_party_${LINEAR_KIND}_preprocess"
 
 mkdir -p "$OUT_DIR"
 if ! command -v "$NVCC" >/dev/null 2>&1; then
@@ -33,11 +40,11 @@ COMMON_FLAGS=(
 )
 
 "$NVCC" "${COMMON_FLAGS[@]}" \
-  "$ROOT/src/test_two_party_fc_preprocess.cu" \
+  "$SOURCE" \
   "$ROOT/src/secure_convert.cpp" \
   "$PROJECT_ROOT/utils/gpu_mem.cu" \
   "$ROOT/src/orca_globals_stub.cpp" \
-  -lcurand -lcrypto -lssl -lpthread \
-  -o "$OUT_DIR/test_two_party_fc_preprocess"
+  -lcurand -lcrypto -lssl -ldl -lpthread \
+  -o "$OUTPUT"
 
-echo "Built $OUT_DIR/test_two_party_fc_preprocess"
+echo "Built $OUTPUT"

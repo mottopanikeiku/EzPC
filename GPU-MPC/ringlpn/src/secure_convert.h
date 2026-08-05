@@ -1,6 +1,7 @@
 #pragma once
 
 #include "two_party_ot.h"
+#include <array>
 
 #include <cstddef>
 #include <cstdint>
@@ -14,6 +15,11 @@ struct SecureConvertParams {
     int qbits = 0;
     int bw = 0;
     size_t count = 0;
+    // Full canonical correlation-scope ID. `sid` is retained only as a
+    // compatibility/accounting handle; live callers must derive both from the
+    // globally claimed invocation namespace. Standalone correctness baselines
+    // may use an explicitly labelled deterministic ID.
+    std::array<uint8_t, 32> correlation_id{};
 };
 
 struct SecureConvertCounters {

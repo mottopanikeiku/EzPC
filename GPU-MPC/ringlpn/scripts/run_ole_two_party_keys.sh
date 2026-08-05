@@ -227,10 +227,11 @@ for sid, pair in by_sid.items():
 print("[ole-two-party] provenance binds each independent-noise/key pair")
 PY
 
-# Transactional publication control: make party 0's final key path a non-empty
+# Bilateral rename-failure control: make party 0's final key path a non-empty
 # directory so its rename fails after both parties stage successfully. Both
 # processes must report failure, and party 1 must remove its already-renamed
-# key/noise files after receiving party 0's rename result.
+# key/noise files after receiving party 0's result. This does not cover crashes
+# after rename and is not a transaction control.
 rename_port=$((BASE_PORT + 4 * limbs))
 rename_dir="$WORKDIR/rename_failure_p0.spfss"
 rename_p1="$WORKDIR/rename_failure_p1.spfss"

@@ -7,6 +7,7 @@
 #include <openssl/evp.h>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -28,6 +29,10 @@ struct SpfssPublicParams {
     uint64_t modulus = 0;
     bool regular = false;
     uint64_t sid = 0;
+    // Full live correlation-scope ID. `sid` is only a compact compatibility
+    // handle. A zero value is accepted solely for standalone component
+    // baselines; the live FC/Conv caller requires and binds a nonzero ID.
+    std::array<uint8_t, 32> correlation_id{};
 };
 
 struct SpfssWork {
@@ -52,9 +57,21 @@ struct DpfCounters {
     uint64_t scalar_oles = 0;
     uint64_t logical_opened_bits = 0;
     uint64_t meaningful_share_bits = 0;
+    double phase_a_microseconds = 0.0;
+    double phase_b_microseconds = 0.0;
+    double phase_c_microseconds = 0.0;
+    double spfss_grouping_microseconds = 0.0;
+    uint64_t phase_a_dependency_rounds = 0;
+    uint64_t phase_b_dependency_rounds = 0;
+    uint64_t phase_c_dependency_rounds = 0;
+    uint64_t gpu_kernel_launches = 0;
+    uint64_t gpu_h2d_bytes = 0;
+    uint64_t gpu_d2h_bytes = 0;
+    uint64_t gpu_peak_bytes = 0;
+    uint64_t gpu_level_synchronizations = 0;
 };
 
-using SpfssPublicManifest = std::array<uint8_t, 72>;
+using SpfssPublicManifest = std::array<uint8_t, 104>;
 using SpfssDigest = std::array<uint8_t, 32>;
 using GroupedHostKeys = std::vector<std::vector<spfss_host::DPFKey>>;
 
@@ -308,8 +325,9 @@ inline bool encode_spfss_public_manifest(const SpfssPublicParams &params,
     auto put64 = [&](uint64_t x) {
         for (int i = 0; i < 8; ++i) manifest[cursor++] = uint8_t(x >> (8 * i));
     };
-    put32(2);  // manifest version
+    put32(3);  // manifest version: full correlation scope binding
     put64(params.sid);
+    for (uint8_t byte : params.correlation_id) manifest[cursor++] = byte;
     put32(static_cast<uint32_t>(params.c));
     put32(static_cast<uint32_t>(params.t));
     put32(static_cast<uint32_t>(params.log_domain));
@@ -554,32 +572,79 @@ inline bool validate_party_batch(const SpfssPublicParams &params,
     return true;
 }
 
-inline bool generate_party_spfss_keys(
-    int party, const SpfssPublicParams &params,
-    const SpfssPartyBatch &batch, ringlpn_2pc::PartyChannel &channel,
-    ringlpn_2pc::PartyRandom &rng, GroupedHostKeys &grouped_keys,
-    DpfCounters &counters) {
-    counters = DpfCounters{};
-    if ((party != 0 && party != 1) || !validate_party_batch(params, batch)) {
+inline bool record_dpf_generation_counters(
+    const ringlpn_2pc::Counters &before,
+    const ringlpn_2pc::Counters &after,
+    const ringlpn_2pdpf::DpfStageCounters &stages, DpfCounters &counters) {
+    const auto monotonic = [](uint64_t first, uint64_t last) {
+        return last >= first;
+    };
+    if (!monotonic(before.string_ots_128, after.string_ots_128) ||
+        !monotonic(before.triple_ots, after.triple_ots) ||
+        !monotonic(before.ole_ots, after.ole_ots) ||
+        !monotonic(before.bit_triples, after.bit_triples) ||
+        !monotonic(before.scalar_oles, after.scalar_oles) ||
+        !monotonic(before.base_ots, after.base_ots)) {
         return false;
     }
-
-    const ringlpn_2pc::Counters before = channel.costs;
-    std::vector<spfss_host::DPFKey> flat_keys;
-    const bool generated = ringlpn_2pdpf::two_party_dpf_gen_batch(
-        party, params.log_domain, static_cast<Word>(params.modulus),
-        ringlpn_2pdpf::PrgMode::kGpuAes, batch.offsets,
-        batch.beta_factors, channel, rng, flat_keys);
-    const ringlpn_2pc::Counters &after = channel.costs;
+    uint64_t logical_opened_bits = 0;
+    uint64_t meaningful_share_bits = 0;
+    const ringlpn_2pc::PhaseCosts *before_phases[] = {
+        &before.phase_a, &before.phase_b, &before.phase_c};
+    const ringlpn_2pc::PhaseCosts *after_phases[] = {
+        &after.phase_a, &after.phase_b, &after.phase_c};
+    for (size_t phase = 0; phase < 3; ++phase) {
+        const ringlpn_2pc::PhaseCosts &first = *before_phases[phase];
+        const ringlpn_2pc::PhaseCosts &last = *after_phases[phase];
+        if (!monotonic(first.logical_bits, last.logical_bits) ||
+            !monotonic(first.revealed_bits_sent, last.revealed_bits_sent) ||
+            !monotonic(first.revealed_bits_recv, last.revealed_bits_recv)) {
+            return false;
+        }
+        const uint64_t logical_delta = last.logical_bits - first.logical_bits;
+        const uint64_t sent_delta =
+            last.revealed_bits_sent - first.revealed_bits_sent;
+        const uint64_t recv_delta =
+            last.revealed_bits_recv - first.revealed_bits_recv;
+        if (logical_opened_bits >
+                std::numeric_limits<uint64_t>::max() - logical_delta ||
+            meaningful_share_bits >
+                std::numeric_limits<uint64_t>::max() - sent_delta) {
+            return false;
+        }
+        logical_opened_bits += logical_delta;
+        meaningful_share_bits += sent_delta;
+        if (meaningful_share_bits >
+            std::numeric_limits<uint64_t>::max() - recv_delta) {
+            return false;
+        }
+        meaningful_share_bits += recv_delta;
+    }
     counters.string_ots_128 = after.string_ots_128 - before.string_ots_128;
     counters.bit_triples = after.bit_triples - before.bit_triples;
     counters.scalar_oles = after.scalar_oles - before.scalar_oles;
-    counters.logical_opened_bits =
-        after.logical_opened_bits() - before.logical_opened_bits();
-    counters.meaningful_share_bits =
-        after.meaningful_share_bits() - before.meaningful_share_bits();
-    if (!generated || flat_keys.size() != batch.offsets.size()) return false;
+    counters.logical_opened_bits = logical_opened_bits;
+    counters.meaningful_share_bits = meaningful_share_bits;
+    counters.phase_a_microseconds = stages.phase_a_microseconds;
+    counters.phase_b_microseconds = stages.phase_b_microseconds;
+    counters.phase_c_microseconds = stages.phase_c_microseconds;
+    counters.phase_a_dependency_rounds = stages.phase_a_dependency_rounds;
+    counters.phase_b_dependency_rounds = stages.phase_b_dependency_rounds;
+    counters.phase_c_dependency_rounds = stages.phase_c_dependency_rounds;
+    counters.gpu_kernel_launches = stages.gpu_kernel_launches;
+    counters.gpu_h2d_bytes = stages.gpu_h2d_bytes;
+    counters.gpu_d2h_bytes = stages.gpu_d2h_bytes;
+    counters.gpu_peak_bytes = stages.gpu_peak_bytes;
+    counters.gpu_level_synchronizations = stages.level_synchronizations;
+    return true;
+}
 
+inline bool group_party_dpf_keys(const SpfssPartyBatch &batch,
+                                 std::vector<spfss_host::DPFKey> &flat_keys,
+                                 GroupedHostKeys &grouped_keys,
+                                 DpfCounters &counters) {
+    const auto grouping_start = std::chrono::steady_clock::now();
+    if (flat_keys.size() != batch.offsets.size()) return false;
     GroupedHostKeys grouped;
     grouped.reserve(batch.group_sizes.size());
     size_t cursor = 0;
@@ -593,7 +658,38 @@ inline bool generate_party_spfss_keys(
     }
     if (cursor != flat_keys.size()) return false;
     grouped_keys = std::move(grouped);
+    counters.spfss_grouping_microseconds =
+        std::chrono::duration<double, std::micro>(
+            std::chrono::steady_clock::now() - grouping_start)
+            .count();
     return true;
+}
+
+// Explicit host-only comparison mode. The live publication path calls the
+// GPU-batched entry point in two_party_spfss_gpu.cuh instead.
+inline bool generate_party_spfss_keys_cpu_baseline(
+    int party, const SpfssPublicParams &params,
+    const SpfssPartyBatch &batch, ringlpn_2pc::PartyChannel &channel,
+    ringlpn_2pc::PartyRandom &rng, GroupedHostKeys &grouped_keys,
+    DpfCounters &counters) {
+    counters = DpfCounters{};
+    grouped_keys.clear();
+    if ((party != 0 && party != 1) || !validate_party_batch(params, batch)) {
+        return false;
+    }
+    const ringlpn_2pc::Counters before = channel.costs;
+    std::vector<spfss_host::DPFKey> flat_keys;
+    ringlpn_2pdpf::DpfStageCounters stages;
+    const bool generated =
+        ringlpn_2pdpf::two_party_dpf_gen_batch_cpu_baseline(
+            party, params.log_domain, static_cast<Word>(params.modulus),
+            ringlpn_2pdpf::PrgMode::kGpuAes, batch.offsets,
+            batch.beta_factors, channel, rng, flat_keys, &stages);
+    const ringlpn_2pc::Counters after = channel.costs;
+    const bool counters_ok =
+        record_dpf_generation_counters(before, after, stages, counters);
+    return generated && counters_ok &&
+           group_party_dpf_keys(batch, flat_keys, grouped_keys, counters);
 }
 
 inline bool party_noise_binding(const NoiseRecord &noise, int party,

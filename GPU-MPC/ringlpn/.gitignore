@@ -52,6 +52,23 @@ results/ole/two_party_keys_*/
 results/secure_convert/two_party_outputs/
 scripts/__pycache__/
 
+# -- Downloaded/build-only third-party dependencies --
+.deps/
+extern/NFLlib/
+
+# -- Regenerable live-run working directories and private party records --
+results/fc/two_party_fc_work_*/
+results/fc/two_party_fc_model_scale_work_*/
+results/conv/two_party_conv_work_*/
+
+# -- Regenerable TeX intermediates --
+results/reports/*.aux
+results/reports/*.log
+results/reports/*.out
+# -- Persistent private consume-once state (public evidence stores digests only) --
+results/deployment/session-locks/
+results/deployment/correlation-ledger/
+
 # -- Editor / OS cruft --
 *.swp
 *.swo

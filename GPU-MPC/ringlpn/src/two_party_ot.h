@@ -5,10 +5,10 @@
 // WHAT IS REAL HERE
 //   * Two OS processes, two TCP sockets. No shared memory, no shared RNG seed,
 //     no party reading the other party's state.
-//   * Real 1-of-2 oblivious transfer: the IKNP OT extension over Naor-Pinkas
-//     base OTs, used UNMODIFIED from this repository's SCI stack
-//     (SCI/src/OT/split-iknp.h, SCI/src/OT/np.h, SCI/src/utils/*). Only
-//     OpenSSL is linked; SEAL/GMP/libOTe are not needed.
+//   * Default real 1-of-2 OT: the IKNP extension over Naor-Pinkas base OTs,
+//     used from this repository's SCI stack. Explicit `emp-silent` selection
+//     instead loads the separately compiled C++20 opaque bridge pinned by
+//     RINGLPN_EMP_SILENT_REVISION; EMP templates never enter this C++17 header.
 //   * Boolean AND triples: two 1-bit OTs per triple (Gilboa cross terms).
 //   * Z_p scalar OLE: Gilboa multiplication, ceil(log2(p-1)) OTs of field
 //     elements per OLE.
@@ -18,23 +18,25 @@
 //     (`counter`, `num_rounds`), per party and per socket.
 //
 // WHAT IS NOT CLAIMED
-//   * IKNP is OT *extension*, not silent OT. Ferret/Silver-class silent OT is
-//     future work; the measured byte counts here are therefore an upper bound
-//     for setup material, not a silent-OT figure.
+//   * The opt-in EMP SilentFerret source path and exact 1/62/128-bit packed
+//     chosen-message adapter are unreviewed and unmeasured. They are never the
+//     default and support no security or bandwidth claim until focused evidence
+//     and independent review pass. SCI/IKNP remains the default evidence path.
 //   * DPF expansion is outside this transport wrapper. The host-reference mode
 //     uses non-cryptographic splitmix64; the GPU-consumable mode uses four
 //     domain-separated AES calls with full 128-bit seeds. Device parity is
 //     gated, but P-RNG/P-DIST/P-KEY and the DPF reduction remain open; see
 //     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md.
-//   * The protocol model assumes one semi-honest corruption and authenticated
-//     point-to-point channels. SCI NetIO here is plain TCP: it does not
-//     authenticate or encrypt peers, so loopback experiments do not realize
-//     that channel assumption. Active attacks, external observers, denial of
-//     service, and side channels are out of scope.
+//   * SCI NetIO remains plain TCP. Live FC deployment therefore admits only
+//     loopback endpoints and relies on the authenticated SSH launcher to carry
+//     both sockets between hosts. Loopback without that launcher is explicitly
+//     local-only evidence. Active attacks by either endpoint, denial of service,
+//     and side channels are out of scope.
 
 #pragma once
 
 #include "OT/split-iknp.h"
+#include "emp_silent_adapter.h"
 #include <openssl/rand.h>
 
 #include "utils/net_io_channel.h"
@@ -43,6 +45,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <limits>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -133,43 +136,128 @@ struct Counters {
 class PartyChannel {
   public:
     PartyChannel(int party, const std::string &peer_host, int base_port,
-                 bool defer_ot_setup = false)
-        : party_(party) {
-        const char *addr = (party == 0) ? nullptr : peer_host.c_str();
-        io_ = new sci::NetIO(addr, base_port, /*full_buffer=*/false, /*quiet=*/true);
-        io_rev_ = new sci::NetIO(addr, base_port + 1, false, true);
-        const int sci_party = (party == 0) ? sci::ALICE : sci::BOB;
-        ot_straight_ = new sci::SplitIKNP<sci::NetIO>(sci_party, io_);
-        ot_reversed_ = new sci::SplitIKNP<sci::NetIO>(3 - sci_party, io_rev_);
-        if (!defer_ot_setup) {
-            setup_ots();
+                 bool defer_ot_setup = false,
+                 bool require_loopback_endpoints = false,
+                 OtBackend ot_backend = OtBackend::SciIknp,
+                 const EmpSilentPlan *emp_plan = nullptr)
+        : party_(party), ot_backend_(ot_backend) {
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            if (emp_plan == nullptr) {
+                throw std::invalid_argument(
+                    "emp-silent requires an explicit public inventory plan");
+            }
+            emp_plan_ = *emp_plan;
         }
+        if (require_loopback_endpoints && party != 0 &&
+            peer_host != "127.0.0.1") {
+            throw std::runtime_error(
+                "authenticated/local-only channels must target 127.0.0.1");
+        }
+        const char *addr = (party == 0) ? nullptr : peer_host.c_str();
+        std::unique_ptr<sci::NetIO> straight(
+            new sci::NetIO(addr, base_port, /*full_buffer=*/false,
+                           /*quiet=*/true));
+        std::unique_ptr<sci::NetIO> reversed(
+            new sci::NetIO(addr, base_port + 1, false, true));
+        if (require_loopback_endpoints &&
+            (!socket_is_loopback(straight->consocket) ||
+             !socket_is_loopback(reversed->consocket))) {
+            throw std::runtime_error(
+                "SCI channel rejected a non-loopback socket endpoint");
+        }
+        io_ = straight.release();
+        io_rev_ = reversed.release();
+        if (ot_backend_ == OtBackend::SciIknp) {
+            const int sci_party = (party == 0) ? sci::ALICE : sci::BOB;
+            ot_straight_ = new sci::SplitIKNP<sci::NetIO>(sci_party, io_);
+            ot_reversed_ = new sci::SplitIKNP<sci::NetIO>(3 - sci_party, io_rev_);
+        }
+        if (!defer_ot_setup) setup_ots();
     }
 
     // Idempotent so callers may agree on public work parameters over the raw
     // channels before paying for or deriving any OT correlation setup.
     void setup_ots() {
-        if (ots_ready_) {
-            return;
-        }
-        const uint64_t bytes_before = bytes_sent();
+        if (ots_ready_) return;
+        const uint64_t straight_before = straight_bytes_sent();
+        const uint64_t reversed_before = reversed_bytes_sent();
         const uint64_t switches_before = direction_switches();
-        if (party_ == 0) {
-            ot_straight_->setup_send();
-            ot_reversed_->setup_recv();
+        if (ot_backend_ == OtBackend::SciIknp) {
+            if (party_ == 0) {
+                ot_straight_->setup_send();
+                ot_reversed_->setup_recv();
+            } else {
+                ot_straight_->setup_recv();
+                ot_reversed_->setup_send();
+            }
+            io_->flush();
+            io_rev_->flush();
+            costs.base_ots += 2 * 128;
         } else {
-            ot_straight_->setup_recv();
-            ot_reversed_->setup_send();
+            emp_api_ =
+                std::make_shared<EmpSilentApi>(emp_plan_.bridge_library);
+            emp_straight_.reset(new EmpSilentDirectionalOt(
+                emp_api_, io_, party_, RINGLPN_EMP_STRAIGHT,
+                emp_plan_.straight_count, emp_plan_.threads,
+                emp_plan_.public_manifest_digest));
+            emp_reversed_.reset(new EmpSilentDirectionalOt(
+                emp_api_, io_rev_, party_, RINGLPN_EMP_REVERSED,
+                emp_plan_.reversed_count, emp_plan_.threads,
+                emp_plan_.public_manifest_digest));
+            // Both parties enter directions in this public order.
+            emp_straight_->begin();
+            emp_reversed_->begin();
         }
-        io_->flush();
-        io_rev_->flush();
-        costs.base_ots += 2 * 128;  // one base-OT batch per direction
-        setup_bytes_sent_ = bytes_sent() - bytes_before;
-        setup_direction_switches_ = direction_switches() - switches_before;
+        const uint64_t straight_after = straight_bytes_sent();
+        const uint64_t reversed_after = reversed_bytes_sent();
+        const uint64_t switches_after = direction_switches();
+        if (straight_after < straight_before ||
+            reversed_after < reversed_before ||
+            switches_after < switches_before) {
+            throw std::overflow_error("OT transport counter wrapped during setup");
+        }
+        setup_straight_bytes_sent_ = straight_after - straight_before;
+        setup_reversed_bytes_sent_ = reversed_after - reversed_before;
+        if (setup_straight_bytes_sent_ >
+            std::numeric_limits<uint64_t>::max() -
+                setup_reversed_bytes_sent_) {
+            throw std::overflow_error("OT setup byte total overflow");
+        }
+        setup_bytes_sent_ =
+            setup_straight_bytes_sent_ + setup_reversed_bytes_sent_;
+        setup_direction_switches_ = switches_after - switches_before;
         ots_ready_ = true;
     }
 
+    // Required for emp-silent: verifies both public inventories were consumed
+    // exactly and closes the two prepaid sessions. SCI has no session bookend.
+    void finish_ots() {
+        if (!ots_ready_ || ots_finished_) {
+            if (ot_backend_ == OtBackend::EmpSilent)
+                throw std::runtime_error("EMP OT finish called out of order");
+            return;
+        }
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            emp_straight_->end();
+            emp_reversed_->end();
+        }
+        ots_finished_ = true;
+    }
+
+    EmpSilentMetrics emp_silent_metrics() const {
+        if (ot_backend_ != OtBackend::EmpSilent || !emp_straight_ ||
+            !emp_reversed_)
+            throw std::runtime_error("EMP SilentFerret metrics unavailable");
+        return EmpSilentMetrics{emp_straight_->counters(),
+                                emp_reversed_->counters()};
+    }
+
+    OtBackend ot_backend() const { return ot_backend_; }
+
     ~PartyChannel() {
+        emp_reversed_.reset();
+        emp_straight_.reset();
+        emp_api_.reset();
         delete ot_straight_;
         delete ot_reversed_;
         delete io_;
@@ -178,6 +266,8 @@ class PartyChannel {
 
     PartyChannel(const PartyChannel &) = delete;
     PartyChannel &operator=(const PartyChannel &) = delete;
+    PartyChannel(PartyChannel &&) = delete;
+    PartyChannel &operator=(PartyChannel &&) = delete;
 
     int party() const { return party_; }
     bool is_p0() const { return party_ == 0; }
@@ -191,11 +281,29 @@ class PartyChannel {
     sci::NetIO *sender_io() { return party_ == 0 ? io_ : io_rev_; }
     sci::NetIO *receiver_io() { return party_ == 0 ? io_rev_ : io_; }
 
-    uint64_t bytes_sent() const { return io_->counter + io_rev_->counter; }
+    uint64_t bytes_sent() const {
+        if (io_->counter >
+            std::numeric_limits<uint64_t>::max() - io_rev_->counter) {
+            throw std::overflow_error("SCI byte total overflow");
+        }
+        return io_->counter + io_rev_->counter;
+    }
+    uint64_t straight_bytes_sent() const { return io_->counter; }
+    uint64_t reversed_bytes_sent() const { return io_rev_->counter; }
     uint64_t direction_switches() const {
+        if (io_->num_rounds >
+            std::numeric_limits<uint64_t>::max() - io_rev_->num_rounds) {
+            throw std::overflow_error("SCI direction-switch total overflow");
+        }
         return io_->num_rounds + io_rev_->num_rounds;
     }
     uint64_t setup_bytes_sent() const { return setup_bytes_sent_; }
+    uint64_t setup_straight_bytes_sent() const {
+        return setup_straight_bytes_sent_;
+    }
+    uint64_t setup_reversed_bytes_sent() const {
+        return setup_reversed_bytes_sent_;
+    }
     uint64_t setup_direction_switches() const {
         return setup_direction_switches_;
     }
@@ -261,28 +369,39 @@ class PartyChannel {
     // ---- 128-bit string OT (Phase B seed MUX) ------------------------------
 
     void ot_send_128(const std::vector<U128> &m0, const std::vector<U128> &m1) {
-        const int n = (int)m0.size();
-        std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
-        std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
-        for (int i = 0; i < n; ++i) {
-            b0[i] = to_block(m0[i]);
-            b1[i] = to_block(m1[i]);
+        if (m0.size() != m1.size())
+            throw std::invalid_argument("128-bit OT sender vector size mismatch");
+        const int n = checked_ot_count(m0.size());
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            sender_emp()->send(128, m0.data(), m1.data(), (uint64_t)n);
+        } else {
+            std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+            std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+            for (int i = 0; i < n; ++i) {
+                b0[i] = to_block(m0[i]);
+                b1[i] = to_block(m1[i]);
+            }
+            sender_ot()->send(b0.get(), b1.get(), n);
+            sender_io()->flush();
         }
-        sender_ot()->send(b0.get(), b1.get(), n);
-        sender_io()->flush();
         costs.string_ots_128 += (uint64_t)n;
     }
 
     std::vector<U128> ot_recv_128(const std::vector<uint8_t> &choices) {
-        const int n = (int)choices.size();
-        std::unique_ptr<bool[]> raw(new bool[(size_t)n]);
-        for (int i = 0; i < n; ++i) raw[(size_t)i] = choices[(size_t)i] != 0;
-        std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
-        receiver_ot()->recv(out.get(), raw.get(), n);
-        receiver_io()->flush();
+        const int n = checked_ot_count(choices.size());
+        std::vector<U128> res((size_t)n);
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            receiver_emp()->recv(128, choices.data(), res.data(), (uint64_t)n);
+        } else {
+            std::unique_ptr<bool[]> raw(new bool[(size_t)n]);
+            for (int i = 0; i < n; ++i)
+                raw[(size_t)i] = choices[(size_t)i] != 0;
+            std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+            receiver_ot()->recv(out.get(), raw.get(), n);
+            receiver_io()->flush();
+            for (int i = 0; i < n; ++i) res[(size_t)i] = from_block(out[i]);
+        }
         costs.string_ots_128 += (uint64_t)n;
-        std::vector<U128> res(n);
-        for (int i = 0; i < n; ++i) res[i] = from_block(out[i]);
         return res;
     }
 
@@ -293,26 +412,37 @@ class PartyChannel {
     // parallel arrays.
     void ot_send_bits(const std::vector<uint8_t> &m0,
                       const std::vector<uint8_t> &m1) {
-        const int n = (int)m0.size();
-        std::vector<uint8_t> flat((size_t)2 * n);
-        std::vector<uint8_t *> rows((size_t)n);
-        for (int i = 0; i < n; ++i) {
-            flat[(size_t)2 * i] = (uint8_t)(m0[(size_t)i] & 1);
-            flat[(size_t)2 * i + 1] = (uint8_t)(m1[(size_t)i] & 1);
-            rows[(size_t)i] = &flat[(size_t)2 * i];
+        if (m0.size() != m1.size())
+            throw std::invalid_argument("bit OT sender vector size mismatch");
+        const int n = checked_ot_count(m0.size());
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            sender_emp()->send(1, m0.data(), m1.data(), (uint64_t)n);
+        } else {
+            std::vector<uint8_t> flat((size_t)2 * n);
+            std::vector<uint8_t *> rows((size_t)n);
+            for (int i = 0; i < n; ++i) {
+                flat[(size_t)2 * i] = (uint8_t)(m0[(size_t)i] & 1);
+                flat[(size_t)2 * i + 1] = (uint8_t)(m1[(size_t)i] & 1);
+                rows[(size_t)i] = &flat[(size_t)2 * i];
+            }
+            sender_ot()->send(rows.data(), n, 1);
+            sender_io()->flush();
         }
-        sender_ot()->send(rows.data(), n, 1);
-        sender_io()->flush();
         costs.triple_ots += (uint64_t)n;
     }
 
     std::vector<uint8_t> ot_recv_bits(const std::vector<uint8_t> &choices) {
-        const int n = (int)choices.size();
-        std::vector<uint8_t> out(n), sel(choices);
-        receiver_ot()->recv(out.data(), sel.data(), n, 1);
-        receiver_io()->flush();
+        const int n = checked_ot_count(choices.size());
+        std::vector<uint8_t> out((size_t)n);
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            receiver_emp()->recv(1, choices.data(), out.data(), (uint64_t)n);
+        } else {
+            std::vector<uint8_t> sel(choices);
+            receiver_ot()->recv(out.data(), sel.data(), n, 1);
+            receiver_io()->flush();
+        }
         costs.triple_ots += (uint64_t)n;
-        for (int i = 0; i < n; ++i) out[i] &= 1;
+        for (int i = 0; i < n; ++i) out[(size_t)i] &= 1;
         return out;
     }
 
@@ -320,25 +450,41 @@ class PartyChannel {
 
     void ot_send_field(const std::vector<Word> &m0, const std::vector<Word> &m1,
                        int l) {
-        const int n = (int)m0.size();
-        std::vector<uint64_t> flat((size_t)2 * n);
-        std::vector<uint64_t *> rows((size_t)n);
-        for (int i = 0; i < n; ++i) {
-            flat[(size_t)2 * i] = (uint64_t)m0[(size_t)i];
-            flat[(size_t)2 * i + 1] = (uint64_t)m1[(size_t)i];
-            rows[(size_t)i] = &flat[(size_t)2 * i];
+        if (m0.size() != m1.size())
+            throw std::invalid_argument("field OT sender vector size mismatch");
+        const int n = checked_ot_count(m0.size());
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            if (l != 62)
+                throw std::invalid_argument(
+                    "emp-silent field OT requires the unchanged q62 width");
+            sender_emp()->send(62, m0.data(), m1.data(), (uint64_t)n);
+        } else {
+            std::vector<uint64_t> flat((size_t)2 * n);
+            std::vector<uint64_t *> rows((size_t)n);
+            for (int i = 0; i < n; ++i) {
+                flat[(size_t)2 * i] = (uint64_t)m0[(size_t)i];
+                flat[(size_t)2 * i + 1] = (uint64_t)m1[(size_t)i];
+                rows[(size_t)i] = &flat[(size_t)2 * i];
+            }
+            sender_ot()->send(rows.data(), n, l);
+            sender_io()->flush();
         }
-        sender_ot()->send(rows.data(), n, l);
-        sender_io()->flush();
         costs.ole_ots += (uint64_t)n;
     }
 
     std::vector<Word> ot_recv_field(const std::vector<uint8_t> &choices, int l) {
-        const int n = (int)choices.size();
-        std::vector<uint64_t> out(n);
-        std::vector<uint8_t> sel(choices);
-        receiver_ot()->recv(out.data(), sel.data(), n, l);
-        receiver_io()->flush();
+        const int n = checked_ot_count(choices.size());
+        std::vector<uint64_t> out((size_t)n);
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            if (l != 62)
+                throw std::invalid_argument(
+                    "emp-silent field OT requires the unchanged q62 width");
+            receiver_emp()->recv(62, choices.data(), out.data(), (uint64_t)n);
+        } else {
+            std::vector<uint8_t> sel(choices);
+            receiver_ot()->recv(out.data(), sel.data(), n, l);
+            receiver_io()->flush();
+        }
         costs.ole_ots += (uint64_t)n;
         return std::vector<Word>(out.begin(), out.end());
     }
@@ -346,14 +492,56 @@ class PartyChannel {
     Counters costs;
 
   private:
+    static int checked_ot_count(size_t count) {
+        if (count > (size_t)std::numeric_limits<int>::max())
+            throw std::overflow_error("OT batch exceeds SCI-compatible count ABI");
+        return (int)count;
+    }
+
+    EmpSilentDirectionalOt *sender_emp() {
+        if (!ots_ready_)
+            throw std::runtime_error("EMP OT consume before setup/begin");
+        return party_ == 0 ? emp_straight_.get() : emp_reversed_.get();
+    }
+    EmpSilentDirectionalOt *receiver_emp() {
+        if (!ots_ready_)
+            throw std::runtime_error("EMP OT consume before setup/begin");
+        return party_ == 0 ? emp_reversed_.get() : emp_straight_.get();
+    }
+
+    static bool ipv4_is_loopback(const sockaddr_in &address) {
+        return (ntohl(address.sin_addr.s_addr) >> 24) == 127;
+    }
+
+    static bool socket_is_loopback(int fd) {
+        sockaddr_in local{};
+        sockaddr_in peer{};
+        socklen_t local_size = sizeof(local);
+        socklen_t peer_size = sizeof(peer);
+        return ::getsockname(fd, reinterpret_cast<sockaddr *>(&local),
+                             &local_size) == 0 &&
+               ::getpeername(fd, reinterpret_cast<sockaddr *>(&peer),
+                             &peer_size) == 0 &&
+               local.sin_family == AF_INET && peer.sin_family == AF_INET &&
+               ipv4_is_loopback(local) && ipv4_is_loopback(peer);
+    }
+
     int party_;
     sci::NetIO *io_ = nullptr;
     sci::NetIO *io_rev_ = nullptr;
     sci::SplitIKNP<sci::NetIO> *ot_straight_ = nullptr;
     sci::SplitIKNP<sci::NetIO> *ot_reversed_ = nullptr;
+    OtBackend ot_backend_ = OtBackend::SciIknp;
+    EmpSilentPlan emp_plan_{};
+    std::shared_ptr<EmpSilentApi> emp_api_;
+    std::unique_ptr<EmpSilentDirectionalOt> emp_straight_;
+    std::unique_ptr<EmpSilentDirectionalOt> emp_reversed_;
     uint64_t setup_bytes_sent_ = 0;
+    uint64_t setup_straight_bytes_sent_ = 0;
+    uint64_t setup_reversed_bytes_sent_ = 0;
     uint64_t setup_direction_switches_ = 0;
     bool ots_ready_ = false;
+    bool ots_finished_ = false;
 };
 
 // ----- party-private randomness ---------------------------------------------
@@ -367,6 +555,10 @@ class PartyRandom {
     PartyRandom() = default;
     explicit PartyRandom(uint64_t fixed_seed)
         : deterministic_(true), deterministic_gen_(fixed_seed) {}
+    PartyRandom(const PartyRandom &) = delete;
+    PartyRandom &operator=(const PartyRandom &) = delete;
+    PartyRandom(PartyRandom &&) = delete;
+    PartyRandom &operator=(PartyRandom &&) = delete;
 
     uint64_t u64() {
         if (deterministic_) return deterministic_gen_();

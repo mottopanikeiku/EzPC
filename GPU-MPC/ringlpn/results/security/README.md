@@ -80,6 +80,75 @@ PCG hybrids also require an explicit distinguishing-advantage composition.
 
 Current diagnostic scripts are:
 
+- `scripts/audit_ringlpn_regular_projection.py`, which implements the exact
+  integer occupied-support law for every two-power `d|n`, the exact
+  prime-specific projected nonzero-support Markov law for both deployed CRT
+  limbs, rigorous integer lower tails, and guarded optional model diagnostics.
+  Its default rows cover the five `n=2^20` study candidates. Its estimator and
+  separately labelled structured-DOOM outputs are internal/advisor
+  sensitivities, not security pins.
+- `scripts/audit_regular_isd_crypto2024.py`, which checksum-verifies the
+  immutable Esser--Santini CRYPTO 2024 `crypto-2024-a1` archive and source
+  members, reproduces its permutation, enumeration, representation, depth-2,
+  CCJ, and linearization formulas on the five direct live RSD candidates, and
+  fails closed for its unpinned external generic-BJMM dependency. Raw costs are
+  preserved; `0.5*log2(n)` or `0.5*log2(d)` is only a separately labelled
+  heuristic orbit sensitivity. Prime-specific projected fixed-weight rows are
+  explicit incompatibility diagnostics because projection is not RSD.
+- `scripts/audit_hybrid_rsd_asiacrypt2025.py`, which pins ePrint 2025/1284
+  Theorem 1, exhaustively optimizes its integer parameters on the five direct
+  live RSD candidates, and self-tests against two published table rows.
+  Classical time remains a count of `F_p` operations, memory remains the
+  expression inside a big-O field-element bound, and success means expected
+  puncturing iterations. The calculator is executable; no author attack
+  artifact, quantum cost, or reviewed structured-code reduction is available.
+  Its full-orbit square-root subtraction is a separate heuristic sensitivity.
+- `../reports/structured_attack_audit_2026_08_04.md`, which records the exact
+  live iid-uniform-`F_p^*` direct RSD instance, projected-distribution boundary,
+  source-pinned 2024 regular-ISD and 2025 hybrid-RSD plus omitted 2025/2026
+  attacks, and a formal negacyclic/cyclic orbit and stabilizer bound. Outside
+  the explicitly bounded stabilizer event, the orbit has `d` elements at a
+  degree-`d` projection; a `sqrt(d)` decoder speedup remains heuristic outside
+  Sendrier's concrete Stern scope. The report
+  is an internal/advisor attack ledger, not reviewed concrete-security evidence.
+
+Executed 2026-08-04 evidence:
+
+- `s2_regular_projection_exact_2026_08_04.csv`: 1,160 exact-law records after
+  the companion self-test passed; SHA-256
+  `3531fa7637e717ba563e469f72e1f798c4740e49470450eaa64cd1157373b0cb`,
+  embedded `analysis_sha256`
+  `f05100a56e0b8c064fbffa1393a0b23a349e75aa2c7fcfb8d1714c561ef5eb00`.
+  The former `6ddd1bf5...` exact transcript is superseded history.
+- Corrected `s2_regular_projection_estimator_sensitivity_2026_08_04.csv`: 575
+  guarded model-sensitivity records after fixing structured-DOOM orbit size
+  from `(c-1)*d` to `d`; SHA-256
+  `ffd335a7d9f7670073b611f390380aa44974f9501b33b2e12504f669e757a5db`,
+  embedded `analysis_sha256`
+  `ed9a229f57df0b7301f43b6e17d80f108852af72078e50052e04b849c6421cd3`.
+  Accepted-estimator warnings are retained; all rows remain diagnostics only.
+  The former `c1b9cb53...` artifact is rejected history and must not be cited.
+- `regular_isd_crypto2024_2026_08_04.csv`: 50 source-pinned direct/formula and
+  projected-incompatibility records for both live prime limbs where the field
+  model matters; SHA-256
+  `68b8329dc77d992a90257b2b6b808fc1076534305e0ec0c434831ddafb17d255`,
+  embedded `analysis_sha256`
+  `39159736d43e954c565645c76e0cbe1ac433e92ba1f2dcc8f2ab847af8f89dfc`.
+  The accepted archive is pinned at
+  `04ae2586fccb10481efb861104176e4aaabb380c3cb9704b97ce3c4768a282cb`;
+  retained CCJ numeric failures and the unversioned binary-BJMM/Sage dependency
+  are incompatibility evidence, not missing values to replace with a current
+  estimator. No row pins security.
+- `hybrid_regular_sd_asiacrypt2025_2026_08_04.csv`: 20 source-pinned direct
+  regular-SD formula rows (five candidates, both live primes, baseline plus
+  separately labelled orbit sensitivity); SHA-256
+  `9a442eec7c41fc01afcd2df84494a5703330d2a041693320fc2c0b0248d978d0`.
+  The executable calculator has SHA-256
+  `001c7c68fe53ec5f266631500f72e835940f09586aea75f134f4e0e2b87dc8aa`
+  and reproduces the paper's `132.60` and `133.15` table rows in its self-test.
+  These are classical field-operation diagnostics, not an executable attack,
+  concrete Ring-LPN evidence, or a parameter pin.
+
 - `scripts/audit_ringlpn_projection_security.py`, which omits mechanically
   undefined aggregate calls;
 - `scripts/audit_ringlpn_finite_field_models.py`, which requires a defined
@@ -88,12 +157,17 @@ Current diagnostic scripts are:
 
 ## Required next step
 
-Do not choose or benchmark another tuple by convention. Obtain an author
-clarification/erratum or independently reviewed lemma that resolves the BCG
-formula/Table discrepancy; derives the projected distribution and coefficient
-cancellation for the actual samplers over both primes; proves and budgets a
-lower-tail bound; justifies the useful/estimator-valid factor criterion;
-handles structured-code/DOOM applicability; and composes both CRT limbs and all
+Do not choose or benchmark another tuple by convention. The executable exact
+regular-projection support laws and lower tails now address the sampler-law and
+coefficient-cancellation calculations, but do not supply a reduction to either
+accepted-estimator model. Obtain independent human cryptographic review; an
+author clarification/erratum or independently reviewed lemma resolving the
+BCG formula/Table discrepancy; a justification of the useful/estimator-valid
+factor criterion and structured-code applicability; executable direct checks
+of both the CRYPTO-2024 regular-ISD and ASIACRYPT-2025 hybrid-RSD algorithms;
+a decoder-specific, resource-accounted treatment of the cyclic orbit rather
+than a blanket square-root subtraction; explicit dispositions for the
+2025/2026 QA-SD attacks; and an explicit composition of both CRT limbs and all
 PCG uses. Only then rerun the fail-closed diagnostics and measure a resulting
 candidate.
 

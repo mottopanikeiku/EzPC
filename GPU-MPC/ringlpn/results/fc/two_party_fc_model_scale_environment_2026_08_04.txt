@@ -1,12 +1,22 @@
-measurement_timestamp=2026-08-04T20:04:53+00:00
+measurement_timestamp=2026-08-04T23:46:22+00:00
+publication_date=2026-08-04
+schema_version=ringlpn.two-party-fc-model-scale.v3
+claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level
 host=sn4622124096
 kernel=Linux 6.8.0-78-generic #78-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 11:34:18 UTC 2025 x86_64 GNU/Linux
 cpu_count=32
 process_gpu_map=party0:1,party1:3,checker:1
 network=single-host IPv4 loopback
-counter=PartyChannel application payload bytes; excludes TCP/IP and base-OT setup
+counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message
+ot_backend=sci-iknp
+emp_silent_bridge=NA
 warmups=1
 measured_trials=10
+models=ResNet18
+workload=classifier
+fail_layer_control=none
+swap_layer_control=none
+aggregate_rule=all totals are arithmetic sums over retained per-layer rows
 0, NVIDIA RTX 5000 Ada Generation, GPU-8b057a3c-18ab-a356-b4ab-724a127b753e, 560.35.03, 32760 MiB
 1, NVIDIA RTX 5000 Ada Generation, GPU-5a41b4d3-74a9-f6d5-c3fe-bec67098dbf0, 560.35.03, 32760 MiB
 2, NVIDIA RTX 5000 Ada Generation, GPU-e3def948-ecca-2fe7-5d33-0bdeff2cfc5a, 560.35.03, 32760 MiB
@@ -16,10 +26,23 @@ Copyright (c) 2005-2024 NVIDIA Corporation
 Built on Tue_Oct_29_23:50:19_PDT_2024
 Cuda compilation tools, release 12.6, V12.6.85
 Build cuda_12.6.r12.6/compiler.35059454_0
-6bf156a963fd899f418583c55cc83378ba57635a71180c3842485bbcb2f102b1  /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
-90861bdd83b5f153cdf09636d99a69f158bf1bc983776c22139e04a289e521ab  /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
-817dc0c0d98de0550f1902495f97499405df56930faa57c29f0a9058c4cb481b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss.h
-ed8940b11f61eb32f6ac164b31afa84cf305c7541b8ba33dc8ed4405aa9e43e7  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
-8d380417501a43a8750b37ec61a6b9d8437b44c7cdd6c41c8ef24fd051e23527  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h
-872e25272d2f53caa3995280c550b2e661f26d80d91ef143db087193a903a61b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/ringlpn_ole_party.cuh
-603dd62d8b1525636b083a29438f333dca9b7f20bacf42a4dc792077a45eb342  /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h
+ed7c5ae3aad860c6e866984c98620f97dae8de010bb9b762c024b16467ccacf5  /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+8bb46a4e3f802d180a9207e813e80082055202b74da315db25556ee3727dc43f  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json
+6e9b39c7ca90a21a0e57ff330344fe4a691091852fa4b7ec9198f874706e743c  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/orca_model_scale_workload_manifest_2026_08_04.json
+c7c7e2281fd63eeae7447c06102868c95a7a83dd5154a833af06ea27e7b07889  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_result_schemas_2026_08_04.json
+459598b72f5a7c9930b197fff1d972c705246efba4856620f09dbdf23e85a307  /home/fatih/EzPC/GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv
+1167c52256ac560bffd3c214f794c22945981620b402c562e73396034396c8f1  /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
+05d2fb62530f445e42f20ad1db8c484979846339c2cfdc2f276327e50b6f1017  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss.h
+10709786da182fc35e5d02c6f29b4b0a9592e044dd277088639339b841802c3a  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss_gpu.cuh
+6dcd59d36628cb3757212be34c8198a9c0049f075a5bcb054e050740ed04ff01  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
+0b57ff689c25e689f1dda3bb97aafa186697aca69e1d3a8fc0034cded13a045b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_gpu.cuh
+b0d229858f518f0e303397e72c20520bcefc4b8478ee6761e3adc131cccae7ef  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h
+473ac66c045dac872cf273edf9f878fee587c35d33c3e7a282f031f55a37f88b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/emp_silent_adapter.h
+6c58c107da10638957dc5be1163e991f37ba107768c1c5af889009fe2ac840de  /home/fatih/EzPC/GPU-MPC/ringlpn/src/emp_silent_bridge.h
+0c5f518ed52f14fad6e58e0ca61f13bb301fb626f803645e2210808fcad8882b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/emp_silent_bridge.cpp
+75dc08ea1842bdec049553d5a8f64dcdfb6d2a720b3055eb4ae09cfb08c43b15  /home/fatih/EzPC/GPU-MPC/ringlpn/src/ringlpn_ole_party.cuh
+311428e4fb64bb2e9149554faee2ed0c833b4a3688179d6bcb016080bba52247  /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h
+2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd  /home/fatih/EzPC/GPU-MPC/experiments/orca/cnn.h
+9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986  /home/fatih/EzPC/GPU-MPC/experiments/orca/orca_inference.cu
+8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d  /home/fatih/EzPC/GPU-MPC/experiments/orca/piranha.cu
+3b06ebf08ef8e7efec685454cb046f8b4a78650859556874f00a22653f737fc8  /home/fatih/EzPC/GPU-MPC/nn/orca/fc_layer.cu

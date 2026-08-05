@@ -152,6 +152,24 @@ inline std::vector<std::vector<Word>> make_public_polynomials(
     }
     return a;
 }
+inline bool validate_public_polynomials(
+    const RingOlePublicParams &p, const std::vector<Word> &flat_a) {
+    if (!validate_public_params(p) ||
+        flat_a.size() != static_cast<size_t>(p.c) *
+                             static_cast<size_t>(p.n) ||
+        flat_a.empty() || flat_a[0] != 1) {
+        return false;
+    }
+    for (int coefficient = 1; coefficient < p.n; ++coefficient) {
+        if (flat_a[static_cast<size_t>(coefficient)] != 0) return false;
+    }
+    for (size_t coefficient = static_cast<size_t>(p.n);
+         coefficient < flat_a.size(); ++coefficient) {
+        if (flat_a[coefficient] >= p.modulus) return false;
+    }
+    return true;
+}
+
 
 inline bool validate_party_noise(const RingOlePublicParams &p,
                                  int party,
@@ -354,6 +372,17 @@ static __global__ void party_scatter_regular_group_kernel(const Word *group,
     }
 }
 
+static __global__ void party_accumulate_kernel(Word *out,
+                                               const Word *term,
+                                               int n,
+                                               Word modulus) {
+    const size_t idx =
+        static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (idx < static_cast<size_t>(n)) {
+        out[idx] = party_mod_add(out[idx], term[idx], modulus);
+    }
+}
+
 inline void reduce_batches(const Word *d_batches, Word *d_out, int batch_count,
                            int n, Word modulus) {
     dim3 block(256);
@@ -426,6 +455,91 @@ inline void run_z(const RingOlePublicParams &p,
     reduce_batches(d_terms, d_z, cc, p.n, p.modulus);
 }
 
+// Memory-bounded variants used by large regular Ring-LPN instances. They
+// preserve the same reductions as run_x/run_spfss/run_z but keep only one
+// coefficient polynomial and one a_i*a_j NTT product live at a time.
+inline void run_x_streamed(const RingOlePublicParams &p,
+                           const DeviceTables<Word> &tables,
+                           const Word *d_a_ntt,
+                           Word *d_e,
+                           Word *d_bw,
+                           Word *d_cw,
+                           Word *d_term,
+                           Word *d_x) {
+    check(cudaMemset(d_x, 0, static_cast<size_t>(p.n) * sizeof(Word)),
+          "zero streamed party x");
+    for (int i = 0; i < p.c; ++i) {
+        run_polymul_prepared_lhs(
+            d_a_ntt + static_cast<size_t>(i) * p.n,
+            d_e + static_cast<size_t>(i) * p.n, d_bw, d_cw, d_term, tables,
+            p.n, 1, log2_exact(p.n));
+        dim3 block(256);
+        dim3 grid(grid_size(static_cast<size_t>(p.n), block.x));
+        party_accumulate_kernel<<<grid, block>>>(d_x, d_term, p.n, p.modulus);
+        check(cudaGetLastError(), "launch streamed party x accumulate");
+    }
+}
+
+inline void run_spfss_z_streamed(const RingOlePublicParams &p,
+                                 const DeviceTables<Word> &tables,
+                                 const Word *d_a_ntt,
+                                 const std::vector<GPUDPFZpKey> &keys,
+                                 Word *d_group,
+                                 Word *d_u2n,
+                                 Word *d_u,
+                                 Word *d_aa_ntt,
+                                 Word *d_bw,
+                                 Word *d_cw,
+                                 Word *d_term,
+                                 Word *d_z,
+                                 AESGlobalContext *gaes) {
+    check(cudaMemset(d_z, 0, static_cast<size_t>(p.n) * sizeof(Word)),
+          "zero streamed party z");
+    const int groups = group_count(p);
+    dim3 block(256);
+    dim3 n_grid(grid_size(static_cast<size_t>(p.n), block.x));
+    for (int j = 0; j < p.c; ++j) {
+        for (int i = 0; i < p.c; ++i) {
+            const int matrix_idx = i + j * p.c;
+            pointwise_mul_kernel<Word><<<n_grid, block>>>(
+                d_a_ntt + static_cast<size_t>(i) * p.n,
+                d_a_ntt + static_cast<size_t>(j) * p.n, d_aa_ntt,
+                static_cast<size_t>(p.n), p.n, 1, tables.d_primes,
+                tables.d_inv_primes);
+            check(cudaGetLastError(), "launch streamed party public product");
+            if (p.regular) {
+                const int bucket = bucket_size(p);
+                const int group_domain = domain_size(p);
+                check(cudaMemset(d_u2n, 0,
+                                 static_cast<size_t>(2) * p.n * sizeof(Word)),
+                      "zero streamed party regular u2n");
+                for (int group = 0; group < groups; ++group) {
+                    const size_t key_idx =
+                        static_cast<size_t>(matrix_idx) * groups + group;
+                    ringlpn_spfss_zp::gpuDpfZpFullEvalSum(
+                        keys[key_idx], d_group, gaes);
+                    dim3 group_grid(
+                        grid_size(static_cast<size_t>(group_domain), block.x));
+                    party_scatter_regular_group_kernel<<<group_grid, block>>>(
+                        d_group, d_u2n, group_domain, group * bucket,
+                        p.modulus);
+                    check(cudaGetLastError(),
+                          "launch streamed party regular scatter");
+                }
+            } else {
+                ringlpn_spfss_zp::gpuDpfZpFullEvalSum(
+                    keys[static_cast<size_t>(matrix_idx)], d_u2n, gaes);
+            }
+            fold_2n_to_n(d_u2n, d_u, p.n, p.modulus);
+            run_polymul_prepared_lhs(d_aa_ntt, d_u, d_bw, d_cw, d_term,
+                                     tables, p.n, 1, log2_exact(p.n));
+            party_accumulate_kernel<<<n_grid, block>>>(
+                d_z, d_term, p.n, p.modulus);
+            check(cudaGetLastError(), "launch streamed party z accumulate");
+        }
+    }
+}
+
 class RingOlePartyContext {
   public:
     RingOlePartyContext() = default;
@@ -455,13 +569,8 @@ class RingOlePartyContext {
 
         std::vector<Word> flat_a;
         if (public_a != nullptr) {
-            if (public_a->size() != static_cast<size_t>(params.c) * params.n) {
-                return false;
-            }
+            if (!validate_public_polynomials(params, *public_a)) return false;
             flat_a = *public_a;
-            for (Word coefficient : flat_a) {
-                if (coefficient >= params.modulus) return false;
-            }
         } else {
             std::mt19937_64 public_rng(params.public_a_seed);
             std::vector<std::vector<Word>> a =
@@ -477,67 +586,45 @@ class RingOlePartyContext {
         for (int i = 0; i < params.c; ++i) {
             for (int k = 0; k < params.t; ++k) {
                 const size_t term = static_cast<size_t>(i) * params.t + k;
-                dense_e[static_cast<size_t>(i) * params.n + own_noise.positions[term]] =
-                    own_noise.values[term];
-            }
-        }
-
-        const int cc = params.c * params.c;
-        std::vector<Word> aa_lhs(static_cast<size_t>(cc) * params.n);
-        std::vector<Word> aa_rhs(static_cast<size_t>(cc) * params.n);
-        for (int j = 0; j < params.c; ++j) {
-            for (int i = 0; i < params.c; ++i) {
-                const size_t matrix =
-                    static_cast<size_t>(i) + static_cast<size_t>(j) * params.c;
-                std::copy(flat_a.begin() + static_cast<size_t>(i) * params.n,
-                          flat_a.begin() + static_cast<size_t>(i + 1) * params.n,
-                          aa_lhs.begin() + matrix * params.n);
-                std::copy(flat_a.begin() + static_cast<size_t>(j) * params.n,
-                          flat_a.begin() + static_cast<size_t>(j + 1) * params.n,
-                          aa_rhs.begin() + matrix * params.n);
+                dense_e[static_cast<size_t>(i) * params.n +
+                        own_noise.positions[term]] = own_noise.values[term];
             }
         }
 
         copy_device(&d_a_, flat_a, "party copy public a");
         copy_device(&d_e_, dense_e, "party copy own e");
-        copy_device(&d_aa_lhs_, aa_lhs, "party copy aa lhs");
-        copy_device(&d_aa_rhs_, aa_rhs, "party copy aa rhs");
 
         const size_t c_coeffs = static_cast<size_t>(params.c) * params.n;
-        const size_t cc_coeffs = static_cast<size_t>(cc) * params.n;
-        allocate(&d_aw_, std::max(c_coeffs, cc_coeffs), "party alloc work a");
-        allocate(&d_bw_, std::max(c_coeffs, cc_coeffs), "party alloc work b");
-        allocate(&d_cw_, std::max(c_coeffs, cc_coeffs), "party alloc work c");
-        allocate(&d_terms_, cc_coeffs, "party alloc terms");
-        allocate(&d_aa_, cc_coeffs, "party alloc aa");
         allocate(&d_a_ntt_, c_coeffs, "party alloc a ntt");
-        allocate(&d_aa_ntt_, cc_coeffs, "party alloc aa ntt");
+        allocate(&d_aw_, params.n, "party alloc streamed public product");
+        allocate(&d_bw_, params.n, "party alloc streamed work b");
+        allocate(&d_cw_, params.n, "party alloc streamed work c");
+        allocate(&d_terms_, params.n, "party alloc streamed term");
         allocate(&d_x_, params.n, "party alloc x");
-        allocate(&d_u_, cc_coeffs, "party alloc u");
-        allocate(&d_u2n_, static_cast<size_t>(2) * params.n, "party alloc u2n");
-        if (params.regular) allocate(&d_group_, domain_size(params), "party alloc group");
+        allocate(&d_u_, params.n, "party alloc streamed u");
+        allocate(&d_u2n_, static_cast<size_t>(2) * params.n,
+                 "party alloc u2n");
+        if (params.regular) {
+            allocate(&d_group_, domain_size(params), "party alloc group");
+        }
         allocate(&d_z_, params.n, "party alloc z");
 
-        run_full_polymul(d_aa_lhs_, d_aa_rhs_, d_aw_, d_bw_, d_cw_, d_aa_,
-                         tables_, params.n, cc, log_degree_);
-        run_forward_only(d_a_, d_a_ntt_, tables_, params.n, params.c, log_degree_);
-        run_forward_only(d_aa_, d_aa_ntt_, tables_, params.n, cc, log_degree_);
+        run_forward_only(d_a_, d_a_ntt_, tables_, params.n, params.c,
+                         log_degree_);
         check(cudaDeviceSynchronize(), "sync party public setup");
         initialized_ = true;
         cudaFree(d_a_);
-        cudaFree(d_aa_lhs_);
-        cudaFree(d_aa_rhs_);
-        cudaFree(d_aa_);
-        cudaFree(d_aw_);
-        d_a_ = d_aa_lhs_ = d_aa_rhs_ = d_aa_ = d_aw_ = nullptr;
+        d_a_ = nullptr;
         return true;
     }
 
     bool expand_device(AESGlobalContext *gaes) {
         if (!initialized_ || gaes == nullptr) return false;
-        run_x(params_, tables_, d_a_ntt_, d_e_, d_bw_, d_cw_, d_terms_, d_x_);
-        run_spfss(params_, keys_, d_group_, d_u2n_, d_u_, gaes);
-        run_z(params_, tables_, d_aa_ntt_, d_u_, d_bw_, d_cw_, d_terms_, d_z_);
+        run_x_streamed(params_, tables_, d_a_ntt_, d_e_, d_bw_, d_cw_,
+                       d_terms_, d_x_);
+        run_spfss_z_streamed(params_, tables_, d_a_ntt_, keys_, d_group_,
+                             d_u2n_, d_u_, d_aw_, d_bw_, d_cw_, d_terms_,
+                             d_z_, gaes);
         return true;
     }
 
@@ -567,11 +654,9 @@ class RingOlePartyContext {
         free_tables(tables_);
         tables_ = DeviceTables<Word>{};
         cudaFree(d_a_); cudaFree(d_a_ntt_); cudaFree(d_e_);
-        cudaFree(d_aa_lhs_); cudaFree(d_aa_rhs_); cudaFree(d_aa_); cudaFree(d_aa_ntt_);
         cudaFree(d_aw_); cudaFree(d_bw_); cudaFree(d_cw_); cudaFree(d_terms_);
         cudaFree(d_x_); cudaFree(d_u_); cudaFree(d_u2n_); cudaFree(d_group_); cudaFree(d_z_);
         d_a_ = d_a_ntt_ = d_e_ = nullptr;
-        d_aa_lhs_ = d_aa_rhs_ = d_aa_ = d_aa_ntt_ = nullptr;
         d_aw_ = d_bw_ = d_cw_ = d_terms_ = nullptr;
         d_x_ = d_u_ = d_u2n_ = d_group_ = d_z_ = nullptr;
         keys_.clear();
@@ -602,10 +687,6 @@ class RingOlePartyContext {
     Word *d_a_ = nullptr;
     Word *d_a_ntt_ = nullptr;
     Word *d_e_ = nullptr;
-    Word *d_aa_lhs_ = nullptr;
-    Word *d_aa_rhs_ = nullptr;
-    Word *d_aa_ = nullptr;
-    Word *d_aa_ntt_ = nullptr;
     Word *d_aw_ = nullptr;
     Word *d_bw_ = nullptr;
     Word *d_cw_ = nullptr;

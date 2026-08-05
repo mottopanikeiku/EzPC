@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reverse_cuckoo_p0_baseline_schema_2026_08_04.json",
+  "title": "Pinned Reverse Cuckoo p0 baseline report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "date", "status"],
+  "properties": {
+    "schema_version": {"const": "reverse-cuckoo-p0-baseline-1"},
+    "date": {"const": "2026-08-04"},
+    "status": {"enum": ["complete", "unsupported"]},
+    "blocker": {"type": "string", "minLength": 1},
+    "metrics_emitted": {"const": false},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["libote_commit", "libote_license", "paper_repo_commit", "paper_repo_code_license"],
+      "properties": {
+        "libote_commit": {"const": "edb5d32822eabf2dda9f6844d85d0ce2e402cdd5"},
+        "libote_license": {"const": "MIT"},
+        "paper_repo_commit": {"const": "b55bcc4696d10e57bdea8c282a851fdd4fad0c2b"},
+        "paper_repo_code_license": {"type": "null"}
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n", "c", "t", "p0", "coefficient_bits"],
+      "properties": {
+        "n": {"const": 1048576},
+        "c": {"const": 4},
+        "t": {"const": 16},
+        "p0": {"const": "4611686018326724609"},
+        "coefficient_bits": {"const": 62}
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sets", "points_per_set", "point_terms", "comparable_to_raw_31_diagonal_timing"],
+      "properties": {
+        "name": {"const": "libote_native_16_folded_raw"},
+        "sets": {"const": 256},
+        "points_per_set": {"const": 16},
+        "point_terms": {"const": 4096},
+        "comparable_to_raw_31_diagonal_timing": {"const": false}
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full_domain_positions_checked", "collision_accumulating_reference", "duplicate_terms_accumulated", "corruption_rejected"],
+      "properties": {
+        "full_domain_positions_checked": {"const": 16777216},
+        "collision_accumulating_reference": {"const": true},
+        "duplicate_terms_accumulated": {"type": "integer", "minimum": 1},
+        "corruption_rejected": {"const": true}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["setup_us", "online_full_domain_us", "end_to_end_protocol_us", "end_to_end_including_validation_us", "setup_wire_bytes", "online_wire_bytes", "end_to_end_protocol_wire_bytes"],
+      "properties": {
+        "setup_us": {"type": "integer", "minimum": 0},
+        "online_full_domain_us": {"type": "integer", "minimum": 0},
+        "end_to_end_protocol_us": {"type": "integer", "minimum": 0},
+        "end_to_end_including_validation_us": {"type": "integer", "minimum": 0},
+        "setup_wire_bytes": {"type": "integer", "minimum": 0},
+        "online_wire_bytes": {"type": "integer", "minimum": 0},
+        "end_to_end_protocol_wire_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performance_speedup", "security_level"],
+      "properties": {
+        "performance_speedup": {"type": "null"},
+        "security_level": {"type": "null"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "unsupported"}}, "required": ["status"]},
+      "then": {
+        "required": ["blocker", "metrics_emitted"],
+        "not": {"required": ["metrics"]}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+      "then": {
+        "required": ["artifact", "parameters", "layout", "controls", "metrics", "claims"],
+        "not": {"anyOf": [{"required": ["blocker"]}, {"required": ["metrics_emitted"]}]}
+      }
+    }
+  ]
+}

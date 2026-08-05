@@ -17,6 +17,32 @@ artifacts are invalid for parameter selection. The measured
 `n=2^17,c=4,t=34` implementation NO-GO remains valid independently: regular
 noise cannot satisfy `t | n`, and the uniform layout exceeds host memory.
 
+**Primary-source rederivation (2026-08-04):** the corrected BCG+20 full
+version confirms the blocker rather than resolving it. Section 8.2 gives the
+occupied-coordinate expectation
+`c*d*(1-(1-1/d)^t)`. Section 9.1 instead prints
+`w-c*d+(c*(d-1)+w)*(1-1/d)^(t-1)`, says the attacker chooses the smallest
+degree whose projected weight is at most `(c-1)*d`, and nevertheless reports
+degree 128 for `(c,w)=(4,64)`; the printed criterion already admits degree 16.
+The projected code has redundancy `d`, but the accepted finite-field estimator
+is undefined there because its implementation requires weight at most `d-1`;
+its first defined local model is degree 64. These are three different selection
+rules. No one of them may be silently substituted for the others.
+
+There is one useful narrowing for a future proof. In regular mode the
+implementation samples one position in each contiguous bucket of width
+`B=n/t`. For every two-power factor degree `d<=B`, reduction modulo a
+one-sparse degree-`d` factor maps those positions to independent uniform
+residues within each polynomial. This exactly justifies BCG Section 8.2's
+balls-into-bins occupancy calculation for the implemented supports at those
+degrees. It still does **not** produce the estimator's global exact-weight or
+regular-noise distribution: counts are coupled within each polynomial,
+projected weight has a lower tail, nonzero coefficients can cancel, and the
+public code remains structured. A defensible Ring-LPN parameter paper can
+start from this exact projection law, but must derive the tail, charge
+coefficient cancellation and both CRT limbs, analyze every useful factor and
+structured-code attack, and obtain independent cryptographic review.
+
 This report records the S2 work completed before implementation stage S3. It
 also records two hard stops that were not visible in the v2.3 proposal:
 
@@ -186,19 +212,26 @@ art would change the number and shape of setup correlations and invalidate the
 | Cheddar; GPU-NTT | Published GPU NTT implementations/algorithms | Polynomial kernels are dependencies or derived code, not novelty |
 | private `yanxue820/PCG-acceleration` project | Real two-process Ring-LPN PCG, Ferret/Gilboa setup, half-tree DPF, GPU DPF, GPU-NTT, and PIM work by multiple contributors | GPU-PCG protocol and performance claims overlap internal prior work; reuse and disclosure require explicit permission |
 
-**Current defensible contribution candidate:** the end-to-end systems
-integration that maps protocol-backed Ring-LPN preprocessing into Orca's exact
-FC training state machine and validates byte-compatible keys through the
-unchanged GPU online consumer, together with a model-scale evaluation against
-appropriate CPU/GPU/dealer baselines. That contribution does not exist yet at
-the publication gate: the current transcript still has centralized keygen,
-conversion oracles, common seeds, and one-process components.
+**Current defensible contribution candidate (updated 2026-08-04):** the live
+two-process/two-GPU forward-FC artifact maps party-private Ring-LPN noise
+through distributed DPF key generation, real SCI/IKNP/Gilboa transport, exact
+two-party conversion, bilateral best-effort stock-format record publication,
+and the unchanged Orca online consumer. A crash can leave a unilateral raw
+validation record; only the source-supported, unvalidated authenticated
+coordinator's sealed two-record, fsynced digest-bound `COMMITTED.manifest` is
+designed as a crash-atomic consumer gate. Raw records are never public evidence.
+The exact ResNet18 classifier-layer preprocessing contract passes with a matched
+dealer timing. This closes the earlier executable-composition gap and makes the
+systems integration a real artifact contribution.
 
-The corrected three-OLE Phase C is currently classified as a local protocol
-bug fix and compatibility artifact. No reviewed delta from Doerner--shelat,
-BCG+20 distributed setup, Programmable DPF, or the 2026 DMPF work has been
-identified. The removed sign opening was a flaw in this project's prior
-prototype, not evidence of a flaw in those papers.
+It does not make the work submission-ready. The exact regular-noise projection
+law above, concrete Ring-LPN parameter pin, authenticated/two-host deployment,
+broader model coverage, closest compatible dealerless baseline, and
+independent review remain open. The corrected three-OLE Phase C is classified
+as a local protocol bug fix and compatibility artifact. No reviewed delta from
+Doerner--shelat, BCG+20 distributed setup, Programmable DPF, or the 2026 DMPF
+work has been identified. The removed sign opening was a flaw in this
+project's prior prototype, not evidence of a flaw in those papers.
 
 ## 5. Source, license, and contributor inventory
 

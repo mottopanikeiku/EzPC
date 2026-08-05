@@ -1,4 +1,9 @@
 control,expected,p0_rc,p1_rc,checker_rc,status
+duplicate_id,duplicate_consume_once_reject,2,2,NA,pass
+restart_retry,restart_cannot_rollback_ledger,2,2,NA,pass
+tail_slot_reuse,unused_tail_is_discarded,2,2,NA,pass
+invocation_collision,same_invocation_different_compatibility_sid_reject,2,2,NA,pass
+ledger_truncation,malformed_append_only_entry_reject,2,2,NA,pass
 preflight_mismatch,bilateral_reject_before_output,2,2,NA,pass
 stale_output,bilateral_reject_without_overwrite,2,2,NA,pass
 rename_failure,bilateral_cleanup_after_staging,1,1,NA,pass

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <limits>
 
 namespace {
 
@@ -25,6 +26,113 @@ struct LinearArgs {
     bool csv_header = false;
     bool skip_validation = false;
 };
+
+struct LinearDeviceBytes {
+    size_t aes = 0;
+    size_t tables = 0;
+    size_t public_ntt = 0;
+    size_t streamed_input = 0;
+    size_t ntt_work = 0;
+    size_t x_outputs = 0;
+    size_t spfss_stream = 0;
+    size_t z_outputs = 0;
+    size_t saved_product = 0;
+    size_t matrix_outputs = 0;
+    size_t transient = 0;
+    size_t setup_peak = 0;
+    size_t expand_peak = 0;
+    size_t total_peak = 0;
+    size_t required_after_aes = 0;
+};
+
+static size_t linear_checked_size(unsigned __int128 value, const char *label) {
+    if (value > static_cast<unsigned __int128>(
+                    std::numeric_limits<size_t>::max())) {
+        std::cerr << "Ring-LPN GPU memory accounting overflow at " << label
+                  << "\n";
+        std::exit(1);
+    }
+    return static_cast<size_t>(value);
+}
+
+static LinearDeviceBytes linear_device_bytes(const LinearArgs &args) {
+    using U128 = unsigned __int128;
+    const U128 n = static_cast<unsigned>(args.n);
+    const U128 word = sizeof(Word);
+    const U128 out_polys =
+        static_cast<unsigned>(args.rows) * static_cast<unsigned>(args.cols);
+    const U128 domain = static_cast<unsigned>(
+        args.noise == "regular" ? 2 * (args.n / args.t) : 2 * args.n);
+    const int log_domain = log2i(static_cast<int>(domain));
+    const U128 max_points =
+        args.noise == "regular"
+            ? static_cast<U128>(static_cast<unsigned>(args.t))
+            : static_cast<U128>(static_cast<unsigned>(args.t)) *
+                  static_cast<U128>(static_cast<unsigned>(args.t));
+
+    LinearDeviceBytes bytes;
+    bytes.aes = 5 * AES_128_TABLE_SIZE * sizeof(u32) + 256 * sizeof(u8);
+    bytes.tables = linear_checked_size(
+        (2 * n + 2 * (n / kLsbSize) + 5) * word, "NTT tables");
+    bytes.public_ntt =
+        linear_checked_size(static_cast<U128>(args.c) * n * word,
+                            "public NTT cache");
+    bytes.streamed_input = linear_checked_size(n * word, "streamed input");
+    bytes.ntt_work = linear_checked_size(4 * n * word, "NTT work");
+    bytes.x_outputs = linear_checked_size(2 * n * word, "x outputs");
+    bytes.spfss_stream = linear_checked_size(
+        (3 * n + (args.noise == "regular" ? domain : 0)) * word,
+        "SPFSS stream");
+    bytes.z_outputs = linear_checked_size(2 * n * word, "z outputs");
+    bytes.saved_product =
+        linear_checked_size(5 * n * word, "saved product");
+    bytes.matrix_outputs =
+        linear_checked_size(3 * out_polys * n * word, "matrix outputs");
+
+    // gpuKeyGenDPFZpPair has two Word inputs, two seed arrays, one seed-CW
+    // array, two bit-CW arrays, and one final-CW array live simultaneously.
+    // Loaded keys skip keygen, whose transient is larger than evaluation.
+    const U128 keygen_transient =
+        max_points * static_cast<U128>(56 + 18 * log_domain);
+    const U128 eval_transient =
+        max_points * static_cast<U128>(24 + 18 * log_domain);
+    bytes.transient = linear_checked_size(
+        std::getenv("RINGLPN_OLE_SPFSS_KEYS") ? eval_transient
+                                               : keygen_transient,
+        "SPFSS transient");
+
+    const U128 linear =
+        static_cast<U128>(bytes.saved_product) + bytes.matrix_outputs;
+    const U128 setup = static_cast<U128>(bytes.aes) + linear + bytes.tables +
+                       2 * static_cast<U128>(bytes.public_ntt);
+    const U128 expand =
+        static_cast<U128>(bytes.aes) + linear + bytes.tables +
+        bytes.public_ntt + bytes.streamed_input + bytes.ntt_work +
+        bytes.x_outputs + bytes.spfss_stream + bytes.z_outputs +
+        bytes.transient;
+    bytes.setup_peak = linear_checked_size(setup, "setup peak");
+    bytes.expand_peak = linear_checked_size(expand, "expand peak");
+    bytes.total_peak = std::max(bytes.setup_peak, bytes.expand_peak);
+    bytes.required_after_aes = bytes.total_peak - bytes.aes;
+    return bytes;
+}
+
+static void linear_memory_preflight(const LinearDeviceBytes &bytes) {
+    size_t free_bytes = 0;
+    size_t total_bytes = 0;
+    check(cudaMemGetInfo(&free_bytes, &total_bytes),
+          "query Ring-LPN GPU memory");
+    (void)total_bytes;
+    if (bytes.required_after_aes > free_bytes) {
+        std::cerr << "Ring-LPN GPU memory preflight failed: required_bytes="
+                  << bytes.required_after_aes
+                  << " available_bytes=" << free_bytes
+                  << " total_peak_bytes=" << bytes.total_peak
+                  << " setup_peak_bytes=" << bytes.setup_peak
+                  << " expand_peak_bytes=" << bytes.expand_peak << "\n";
+        std::exit(1);
+    }
+}
 
 struct LinearProduct {
     int row = 0;
@@ -50,13 +158,14 @@ struct LinearRunState {
     LinearArgs args;
     ModulusConfig<Word> config = kConfig62;
     std::vector<LinearProduct> products;
+    std::unique_ptr<OleState> workspace;
+    std::vector<Word> h_streamed_input;
     size_t spfss_pair_key_bytes = 0;
     double keygen_us = 0.0;
     bool shared_operand_check = false;
 
     Word *d_c0 = nullptr;
     Word *d_c1 = nullptr;
-    Word *d_csum = nullptr;
     Word *d_expected = nullptr;
     Word *d_tmp_a = nullptr;
     Word *d_tmp_b = nullptr;
@@ -73,9 +182,11 @@ struct LinearRunState {
                 p.a1_b0->cleanup();
             }
         }
+        if (workspace) {
+            workspace->cleanup();
+        }
         cudaFree(d_c0);
         cudaFree(d_c1);
-        cudaFree(d_csum);
         cudaFree(d_expected);
         cudaFree(d_tmp_a);
         cudaFree(d_tmp_b);
@@ -189,8 +300,11 @@ static LinearArgs parse_linear_args(int argc, char **argv) {
         }
     }
 
-    const int max_products = 64;
-    int ring_products = args.rows * args.inner * args.cols;
+    const uint64_t max_products = 64;
+    const uint64_t ring_products =
+        static_cast<uint64_t>(static_cast<unsigned>(args.rows)) *
+        static_cast<uint64_t>(static_cast<unsigned>(args.inner)) *
+        static_cast<uint64_t>(static_cast<unsigned>(args.cols));
     if (!is_power_of_two(args.n) || args.n < kMinDegree || args.n > kMaxDegree ||
         (args.qbits != 64 && args.qbits != 128) ||
         args.rows <= 0 || args.inner <= 0 || args.cols <= 0 ||
@@ -295,87 +409,67 @@ static bool same_sparse_vec(const std::vector<SparsePoly> &a,
     return true;
 }
 
-static void build_inputs_from_shared(OleState &state,
-                                     const std::vector<std::vector<Word>> &a,
-                                     const std::vector<SparsePoly> &e0,
-                                     const std::vector<SparsePoly> &e1) {
-    const int n = state.args.n;
-    const int c = state.args.c;
-    const Word modulus = state.modulus;
-    if (static_cast<int>(a.size()) != c || static_cast<int>(e0.size()) != c ||
-        static_cast<int>(e1.size()) != c) {
-        std::cerr << "shared linear input shape mismatch\n";
+static std::unique_ptr<OleState> make_linear_workspace(
+    const LinearArgs &args,
+    const ModulusConfig<Word> &config,
+    const std::vector<std::vector<Word>> &a) {
+    if (static_cast<int>(a.size()) != args.c) {
+        std::cerr << "shared linear public input shape mismatch\n";
         std::exit(1);
     }
+    auto state = std::make_unique<OleState>();
+    state->args.n = args.n;
+    state->args.c = args.c;
+    state->args.t = args.t;
+    state->args.qbits = args.qbits;
+    state->args.iters = 1;
+    state->args.warmup = 0;
+    state->args.chunk_size = args.chunk_size;
+    state->args.seed = args.seed;
+    state->args.noise = args.noise;
+    state->args.skip_validation = true;
+    state->log_degree = log2i(args.n);
+    state->log_domain = log2i(spfss_domain_size(state->args));
+    state->config = config;
+    state->modulus = config.modulus;
+    compute_cheddar_tables(state->host_tables, args.n, config);
+    alloc_and_copy(state->tables, state->host_tables);
 
-    state.a = a;
-    state.e.assign(2, std::vector<SparsePoly>(c));
-    state.e[0] = e0;
-    state.e[1] = e1;
+    const size_t n = static_cast<size_t>(args.n);
+    const size_t c_coeffs = static_cast<size_t>(args.c) * n;
+    copy_to_device(&state->d_a, flatten_dense(a, args.n),
+                   "copy shared public a");
+    alloc_device(&state->d_a_ntt, c_coeffs, "alloc shared public a NTT");
+    run_forward_only(state->d_a, state->d_a_ntt, state->tables, args.n,
+                     args.c, state->log_degree);
+    check(cudaDeviceSynchronize(), "sync shared public a NTT");
+    cudaFree(state->d_a);
+    state->d_a = nullptr;
 
-    std::vector<std::vector<Word>> e0_dense(c, std::vector<Word>(n, 0));
-    std::vector<std::vector<Word>> e1_dense(c, std::vector<Word>(n, 0));
-    for (int i = 0; i < c; ++i) {
-        add_sparse_to_dense(state.e[0][i], e0_dense[i], n, modulus);
-        add_sparse_to_dense(state.e[1][i], e1_dense[i], n, modulus);
+    // All coefficient and c^2 product work is streamed through one polynomial.
+    // d_aw holds NTT(a_i)*NTT(a_j), while d_bw/d_cw/d_terms are the prepared
+    // polymul work/output buffers.
+    alloc_device(&state->d_e0, n, "alloc streamed shared input");
+    alloc_device(&state->d_aw, n, "alloc streamed shared work a");
+    alloc_device(&state->d_bw, n, "alloc streamed shared work b");
+    alloc_device(&state->d_cw, n, "alloc streamed shared work c");
+    alloc_device(&state->d_terms, n, "alloc streamed shared term");
+    alloc_device(&state->d_x0, n, "alloc shared x0");
+    alloc_device(&state->d_x1, n, "alloc shared x1");
+    alloc_device(&state->d_u0, n, "alloc streamed shared u");
+    alloc_device(&state->d_u2n0, 2 * n, "alloc streamed shared u2n");
+    if (use_regular_noise(state->args)) {
+        alloc_device(&state->d_group0, spfss_domain_size(state->args),
+                     "alloc streamed regular group");
     }
-
-    copy_to_device(&state.d_a, flatten_dense(state.a, n), "copy shared a");
-    copy_to_device(&state.d_e0, flatten_dense(e0_dense, n), "copy shared e0");
-    copy_to_device(&state.d_e1, flatten_dense(e1_dense, n), "copy shared e1");
-
-    const int cc = c * c;
-    std::vector<std::vector<Word>> aa_lhs(cc);
-    std::vector<std::vector<Word>> aa_rhs(cc);
-    for (int j = 0; j < c; ++j) {
-        for (int i = 0; i < c; ++i) {
-            size_t idx = static_cast<size_t>(i) + static_cast<size_t>(j) * c;
-            aa_lhs[idx] = state.a[i];
-            aa_rhs[idx] = state.a[j];
-        }
-    }
-    copy_to_device(&state.d_aa_lhs, flatten_dense(aa_lhs, n), "copy shared aa lhs");
-    copy_to_device(&state.d_aa_rhs, flatten_dense(aa_rhs, n), "copy shared aa rhs");
-
-    size_t c_coeffs = static_cast<size_t>(c) * n;
-    size_t cc_coeffs = static_cast<size_t>(cc) * n;
-    alloc_device(&state.d_aw, std::max(c_coeffs, cc_coeffs), "alloc shared work a");
-    alloc_device(&state.d_bw, std::max(c_coeffs, cc_coeffs), "alloc shared work b");
-    alloc_device(&state.d_cw, std::max(c_coeffs, cc_coeffs), "alloc shared work c");
-    alloc_device(&state.d_terms, cc_coeffs, "alloc shared terms");
-    alloc_device(&state.d_aa, cc_coeffs, "alloc shared aa");
-    alloc_device(&state.d_x0, n, "alloc shared x0");
-    alloc_device(&state.d_x1, n, "alloc shared x1");
-    alloc_device(&state.d_u0, cc_coeffs, "alloc shared u0");
-    alloc_device(&state.d_u1, cc_coeffs, "alloc shared u1");
-    alloc_device(&state.d_u2n0, static_cast<size_t>(2) * n, "alloc shared u2n0");
-    alloc_device(&state.d_u2n1, static_cast<size_t>(2) * n, "alloc shared u2n1");
-    if (use_regular_noise(state.args)) {
-        alloc_device(&state.d_group0, spfss_domain_size(state.args), "alloc shared regular group0");
-        alloc_device(&state.d_group1, spfss_domain_size(state.args), "alloc shared regular group1");
-    }
-    alloc_device(&state.d_z0, n, "alloc shared z0");
-    alloc_device(&state.d_z1, n, "alloc shared z1");
-    alloc_device(&state.d_zsum, n, "alloc shared zsum");
-    alloc_device(&state.d_expected, n, "alloc shared expected");
-
-    run_full_polymul(state.d_aa_lhs,
-                     state.d_aa_rhs,
-                     state.d_aw,
-                     state.d_bw,
-                     state.d_cw,
-                     state.d_aa,
-                     state.tables,
-                     n,
-                     cc,
-                     state.log_degree);
-    check(cudaDeviceSynchronize(), "sync shared aa precompute");
+    alloc_device(&state->d_z0, n, "alloc shared z0");
+    alloc_device(&state->d_z1, n, "alloc shared z1");
+    return state;
 }
 
 static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
                                                 const ModulusConfig<Word> &config,
                                                 uint64_t seed,
-                                                const std::vector<std::vector<Word>> &a,
                                                 const std::vector<SparsePoly> &e0,
                                                 const std::vector<SparsePoly> &e1,
                                                 AESGlobalContext *gaes,
@@ -396,15 +490,19 @@ static std::unique_ptr<OleState> make_ole_state(const LinearArgs &args,
     state->log_domain = log2i(spfss_domain_size(state->args));
     state->config = config;
     state->modulus = config.modulus;
-    compute_cheddar_tables(state->host_tables, args.n, config);
-    alloc_and_copy(state->tables, state->host_tables);
-    compute_reference_vectors(state->phi_norm, state->post_norm, args.n, config);
-    build_inputs_from_shared(*state, a, e0, e1);
+    state->e.assign(2, std::vector<SparsePoly>(args.c));
+    state->e[0] = e0;
+    state->e[1] = e1;
+    state->noise_binding[0] = ringlpn_keyio::spfss_groups::noise_binding(
+        party_noise_record(*state, 0));
+    state->noise_binding[1] = ringlpn_keyio::spfss_groups::noise_binding(
+        party_noise_record(*state, 1));
     double us = build_spfss_keys(*state, gaes);
     keygen_us += us;
     key_bytes += state->spfss_pair_key_bytes;
     return state;
 }
+
 
 static bool check_shared_operand_reuse(const LinearRunState &linear) {
     const LinearArgs &args = linear.args;
@@ -454,13 +552,14 @@ static void alloc_linear_buffers(LinearRunState &state) {
         static_cast<size_t>(state.args.rows) * state.args.cols * state.args.n;
     alloc_device(&state.d_c0, out_coeffs, "alloc linear c0");
     alloc_device(&state.d_c1, out_coeffs, "alloc linear c1");
-    alloc_device(&state.d_csum, out_coeffs, "alloc linear csum");
     alloc_device(&state.d_expected, out_coeffs, "alloc linear expected");
-    alloc_device(&state.d_tmp_a, state.args.n, "alloc linear tmp a");
-    alloc_device(&state.d_tmp_b, state.args.n, "alloc linear tmp b");
-    alloc_device(&state.d_local0, state.args.n, "alloc linear local0");
-    alloc_device(&state.d_local1, state.args.n, "alloc linear local1");
-    alloc_device(&state.d_expected_term, state.args.n, "alloc linear expected term");
+    alloc_device(&state.d_tmp_a, state.args.n, "alloc linear saved x0");
+    alloc_device(&state.d_tmp_b, state.args.n, "alloc linear saved x1");
+    alloc_device(&state.d_local0, state.args.n, "alloc linear saved z0");
+    alloc_device(&state.d_local1, state.args.n, "alloc linear saved z1");
+    alloc_device(&state.d_expected_term, state.args.n,
+                 "alloc linear streamed product");
+    state.h_streamed_input.assign(static_cast<size_t>(state.args.n), 0);
 }
 
 static void reset_linear_outputs(LinearRunState &state, bool reset_expected) {
@@ -468,7 +567,6 @@ static void reset_linear_outputs(LinearRunState &state, bool reset_expected) {
         static_cast<size_t>(state.args.rows) * state.args.cols * state.args.n * sizeof(Word);
     check(cudaMemset(state.d_c0, 0, out_bytes), "clear linear c0");
     check(cudaMemset(state.d_c1, 0, out_bytes), "clear linear c1");
-    check(cudaMemset(state.d_csum, 0, out_bytes), "clear linear csum");
     if (reset_expected) {
         check(cudaMemset(state.d_expected, 0, out_bytes), "clear linear expected");
     }
@@ -500,63 +598,145 @@ static void accumulate_three(Word *slot,
     check(cudaGetLastError(), "launch linear_accumulate_three_kernel");
 }
 
+static void run_streamed_x(LinearRunState &linear,
+                           const OleState &source,
+                           int party,
+                           Word *d_out) {
+    OleState &work = *linear.workspace;
+    const int n = linear.args.n;
+    const size_t n_bytes = static_cast<size_t>(n) * sizeof(Word);
+    check(cudaMemset(d_out, 0, n_bytes), "clear streamed x");
+    for (int i = 0; i < linear.args.c; ++i) {
+        std::fill(linear.h_streamed_input.begin(),
+                  linear.h_streamed_input.end(), 0);
+        add_sparse_to_dense(source.e[party][i], linear.h_streamed_input, n,
+                            linear.config.modulus);
+        check(cudaMemcpy(work.d_e0, linear.h_streamed_input.data(), n_bytes,
+                         cudaMemcpyHostToDevice),
+              "copy streamed sparse polynomial");
+        run_polymul_prepared_lhs(
+            work.d_a_ntt + static_cast<size_t>(i) * n, work.d_e0, work.d_bw,
+            work.d_cw, work.d_terms, work.tables, n, 1, work.log_degree);
+        accumulate_one(d_out, work.d_terms, n, linear.config.modulus);
+    }
+}
+
+static void eval_streamed_spfss_index(
+    const ringlpn_ole_party::RingOlePublicParams &params,
+    const std::vector<ringlpn_spfss_zp::GPUDPFZpKey> &keys,
+    int matrix_idx,
+    OleState &work,
+    Word *d_z,
+    AESGlobalContext *gaes) {
+    if (params.regular) {
+        const int groups = ringlpn_ole_party::group_count(params);
+        const int bucket = ringlpn_ole_party::bucket_size(params);
+        const int group_domain = ringlpn_ole_party::domain_size(params);
+        check(cudaMemset(work.d_u2n0, 0,
+                         static_cast<size_t>(2) * params.n * sizeof(Word)),
+              "zero streamed regular u2n");
+        for (int group = 0; group < groups; ++group) {
+            const size_t key_idx =
+                static_cast<size_t>(matrix_idx) * groups + group;
+            ringlpn_spfss_zp::gpuDpfZpFullEvalSum(keys[key_idx],
+                                                  work.d_group0, gaes);
+            dim3 block(256);
+            dim3 grid(grid_size(static_cast<size_t>(group_domain), block.x));
+            ringlpn_ole_party::party_scatter_regular_group_kernel<<<grid, block>>>(
+                work.d_group0, work.d_u2n0, group_domain, group * bucket,
+                params.modulus);
+            check(cudaGetLastError(), "launch streamed regular scatter");
+        }
+    } else {
+        ringlpn_spfss_zp::gpuDpfZpFullEvalSum(
+            keys[static_cast<size_t>(matrix_idx)], work.d_u2n0, gaes);
+    }
+    ringlpn_ole_party::fold_2n_to_n(work.d_u2n0, work.d_u0, params.n,
+                                    params.modulus);
+    run_polymul_prepared_lhs(work.d_aw, work.d_u0, work.d_bw, work.d_cw,
+                             work.d_terms, work.tables, params.n, 1,
+                             work.log_degree);
+    accumulate_one(d_z, work.d_terms, params.n, params.modulus);
+}
+
+static void run_streamed_spfss_z(LinearRunState &linear,
+                                 const OleState &source,
+                                 AESGlobalContext *gaes) {
+    OleState &work = *linear.workspace;
+    const int n = linear.args.n;
+    const size_t n_bytes = static_cast<size_t>(n) * sizeof(Word);
+    check(cudaMemset(work.d_z0, 0, n_bytes), "clear streamed z0");
+    check(cudaMemset(work.d_z1, 0, n_bytes), "clear streamed z1");
+    const auto params = party_public_params(source);
+    dim3 block(256);
+    dim3 grid(grid_size(static_cast<size_t>(n), block.x));
+    for (int j = 0; j < linear.args.c; ++j) {
+        for (int i = 0; i < linear.args.c; ++i) {
+            const int matrix_idx = i + j * linear.args.c;
+            pointwise_mul_kernel<Word><<<grid, block>>>(
+                work.d_a_ntt + static_cast<size_t>(i) * n,
+                work.d_a_ntt + static_cast<size_t>(j) * n, work.d_aw,
+                static_cast<size_t>(n), n, 1, work.tables.d_primes,
+                work.tables.d_inv_primes);
+            check(cudaGetLastError(), "launch streamed public product");
+            eval_streamed_spfss_index(params, source.keys0, matrix_idx, work,
+                                      work.d_z0, gaes);
+            eval_streamed_spfss_index(params, source.keys1, matrix_idx, work,
+                                      work.d_z1, gaes);
+        }
+    }
+}
+
+static void run_streamed_ole(LinearRunState &linear,
+                             const OleState &source,
+                             AESGlobalContext *gaes) {
+    OleState &work = *linear.workspace;
+    run_streamed_x(linear, source, 0, work.d_x0);
+    run_streamed_x(linear, source, 1, work.d_x1);
+    run_streamed_spfss_z(linear, source, gaes);
+}
+
 static void run_one_linear_product(LinearRunState &linear,
                                    LinearProduct &product,
                                    AESGlobalContext *gaes,
                                    bool build_expected) {
-    OleState &a0_b1 = *product.a0_b1;
-    OleState &a1_b0 = *product.a1_b0;
+    OleState &work = *linear.workspace;
     const int n = linear.args.n;
+    const size_t n_bytes = static_cast<size_t>(n) * sizeof(Word);
     const Word modulus = linear.config.modulus;
     Word *c0_slot = linear.d_c0 + static_cast<size_t>(product.out_slot) * n;
     Word *c1_slot = linear.d_c1 + static_cast<size_t>(product.out_slot) * n;
-    Word *expected_slot = linear.d_expected + static_cast<size_t>(product.out_slot) * n;
+    Word *expected_slot =
+        linear.d_expected + static_cast<size_t>(product.out_slot) * n;
 
-    run_x_phase(a0_b1);
-    run_spfss_eval_phase(a0_b1, gaes);
-    run_z_phase(a0_b1);
+    run_streamed_ole(linear, *product.a0_b1, gaes);
+    check(cudaMemcpy(linear.d_tmp_a, work.d_x0, n_bytes,
+                     cudaMemcpyDeviceToDevice), "save streamed x0");
+    check(cudaMemcpy(linear.d_tmp_b, work.d_x1, n_bytes,
+                     cudaMemcpyDeviceToDevice), "save streamed x1");
+    check(cudaMemcpy(linear.d_local0, work.d_z0, n_bytes,
+                     cudaMemcpyDeviceToDevice), "save streamed z0");
+    check(cudaMemcpy(linear.d_local1, work.d_z1, n_bytes,
+                     cudaMemcpyDeviceToDevice), "save streamed z1");
 
-    run_x_phase(a1_b0);
-    run_spfss_eval_phase(a1_b0, gaes);
-    run_z_phase(a1_b0);
-
-    run_full_polymul(a0_b1.d_x0,
-                     a1_b0.d_x1,
-                     a0_b1.d_aw,
-                     a0_b1.d_bw,
-                     a0_b1.d_cw,
-                     linear.d_local0,
-                     a0_b1.tables,
-                     n,
-                     1,
-                     a0_b1.log_degree);
-    run_full_polymul(a1_b0.d_x0,
-                     a0_b1.d_x1,
-                     a0_b1.d_aw,
-                     a0_b1.d_bw,
-                     a0_b1.d_cw,
-                     linear.d_local1,
-                     a0_b1.tables,
-                     n,
-                     1,
-                     a0_b1.log_degree);
-
-    accumulate_three(c0_slot, linear.d_local0, a0_b1.d_z0, a1_b0.d_z0, n, modulus);
-    accumulate_three(c1_slot, linear.d_local1, a0_b1.d_z1, a1_b0.d_z1, n, modulus);
+    run_streamed_ole(linear, *product.a1_b0, gaes);
+    run_full_polymul(linear.d_tmp_a, work.d_x1, work.d_aw, work.d_bw,
+                     work.d_cw, linear.d_expected_term, work.tables, n, 1,
+                     work.log_degree);
+    accumulate_three(c0_slot, linear.d_expected_term, linear.d_local0,
+                     work.d_z0, n, modulus);
+    run_full_polymul(work.d_x0, linear.d_tmp_b, work.d_aw, work.d_bw,
+                     work.d_cw, linear.d_expected_term, work.tables, n, 1,
+                     work.log_degree);
+    accumulate_three(c1_slot, linear.d_expected_term, linear.d_local1,
+                     work.d_z1, n, modulus);
 
     if (build_expected) {
-        add_pair(a0_b1.d_x0, a1_b0.d_x0, linear.d_tmp_a, n, modulus);
-        add_pair(a1_b0.d_x1, a0_b1.d_x1, linear.d_tmp_b, n, modulus);
-        run_full_polymul(linear.d_tmp_a,
-                         linear.d_tmp_b,
-                         a0_b1.d_aw,
-                         a0_b1.d_bw,
-                         a0_b1.d_cw,
-                         linear.d_expected_term,
-                         a0_b1.tables,
-                         n,
-                         1,
-                         a0_b1.log_degree);
+        add_pair(linear.d_tmp_a, work.d_x0, linear.d_local0, n, modulus);
+        add_pair(linear.d_tmp_b, work.d_x1, linear.d_local1, n, modulus);
+        run_full_polymul(linear.d_local0, linear.d_local1, work.d_aw,
+                         work.d_bw, work.d_cw, linear.d_expected_term,
+                         work.tables, n, 1, work.log_degree);
         accumulate_one(expected_slot, linear.d_expected_term, n, modulus);
     }
 }
@@ -580,14 +760,15 @@ static bool validate_linear_outputs(LinearRunState &linear) {
     dim3 block(256);
     dim3 grid(grid_size(out_coeffs, block.x));
     linear_add_matrix_kernel<<<grid, block>>>(
-        linear.d_c0, linear.d_c1, linear.d_csum, out_coeffs, linear.config.modulus);
+        linear.d_c0, linear.d_c1, linear.d_c0, out_coeffs,
+        linear.config.modulus);
     check(cudaGetLastError(), "launch linear_add_matrix_kernel");
     check(cudaDeviceSynchronize(), "sync linear validation");
 
     std::vector<Word> csum(out_coeffs);
     std::vector<Word> expected(out_coeffs);
-    check(cudaMemcpy(csum.data(), linear.d_csum, out_coeffs * sizeof(Word), cudaMemcpyDeviceToHost),
-          "copy linear csum");
+    check(cudaMemcpy(csum.data(), linear.d_c0, out_coeffs * sizeof(Word),
+                     cudaMemcpyDeviceToHost), "copy linear csum");
     check(cudaMemcpy(expected.data(), linear.d_expected, out_coeffs * sizeof(Word), cudaMemcpyDeviceToHost),
           "copy linear expected");
     return compare_vectors(expected, csum, linear.args.n, "linear OLE Beaver matrix");
@@ -597,6 +778,8 @@ static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes
     const LinearArgs &args = linear.args;
     linear.products.reserve(static_cast<size_t>(args.rows) * args.inner * args.cols);
     LinearSharedInputs shared = build_shared_inputs(args, linear.config);
+    linear.workspace =
+        make_linear_workspace(args, linear.config, shared.a);
     uint64_t tag = 0;
     for (int r = 0; r < args.rows; ++r) {
         for (int k = 0; k < args.inner; ++k) {
@@ -610,12 +793,12 @@ static void build_linear_products(LinearRunState &linear, AESGlobalContext *gaes
                 product.out_slot = r * args.cols + col;
                 product.a0_b1 = make_ole_state(
                     args, linear.config, linear_mix_seed(args.seed, tag++),
-                    shared.a, a_entry.p0, b_entry.p1, gaes,
-                    linear.keygen_us, linear.spfss_pair_key_bytes);
+                    a_entry.p0, b_entry.p1, gaes, linear.keygen_us,
+                    linear.spfss_pair_key_bytes);
                 product.a1_b0 = make_ole_state(
                     args, linear.config, linear_mix_seed(args.seed, tag++),
-                    shared.a, a_entry.p1, b_entry.p0, gaes,
-                    linear.keygen_us, linear.spfss_pair_key_bytes);
+                    a_entry.p1, b_entry.p0, gaes, linear.keygen_us,
+                    linear.spfss_pair_key_bytes);
                 linear.products.push_back(std::move(product));
             }
         }
@@ -661,10 +844,13 @@ static LinearLimbResult run_linear_limb(const LinearArgs &args,
 }
 
 static int run_linear_benchmark(const LinearArgs &args) {
-    initGPUMemPool();
+    // This executable uses legacy cudaMalloc for its large explicit buffers.
+    // Do not pre-reserve 25 GiB in the cudaMallocAsync default pool: that
+    // reservation is unavailable to these allocations on the target driver.
+    const LinearDeviceBytes memory = linear_device_bytes(args);
     AESGlobalContext gaes;
     initAESContext(&gaes);
-
+    linear_memory_preflight(memory);
     std::vector<ModulusConfig<Word>> configs = ole_modulus_configs(args.qbits);
     bool correct = true;
     bool shared_operand_check = true;
@@ -696,7 +882,8 @@ static int run_linear_benchmark(const LinearArgs &args) {
               << validation << "," << key_bytes << ","
               << keygen_us << "," << stats.mean_us << "," << stats.stddev_us << ","
               << (shared_operand_check ? 1 : 0) << ","
-              << (args.skip_validation ? -1 : (correct ? 1 : 0)) << "\n";
+              << (args.skip_validation ? -1 : (correct ? 1 : 0)) << ","
+              << memory.required_after_aes << "," << memory.total_peak << "\n";
 
     freeAESGlobalContext(&gaes);
     check(cudaDeviceSynchronize(), "sync linear cleanup");
@@ -708,7 +895,7 @@ static int run_linear_benchmark(const LinearArgs &args) {
 int main(int argc, char **argv) {
     LinearArgs args = parse_linear_args(argc, argv);
     if (args.csv_header) {
-        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,shared_operands,correct\n";
+        std::cout << "device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,spfss_domain,rows,inner,cols,c,t,chunk_size,ring_products,ole_instances,iters,validation,spfss_pair_key_bytes,spfss_keygen_us,linear_expand_mean_us,linear_expand_std_us,shared_operands,correct,gpu_required_after_aes_bytes,gpu_static_peak_bytes\n";
     }
     return run_linear_benchmark(args);
 }

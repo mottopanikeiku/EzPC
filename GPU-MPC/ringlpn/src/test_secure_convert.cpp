@@ -18,6 +18,7 @@
 // security. --check is TEST-ONLY and reads both post-protocol party files.
 
 #include "secure_convert.h"
+#include "correlation_freshness.h"
 
 #include <chrono>
 #include <cstdint>
@@ -569,6 +570,31 @@ int party(const Args &a) {
     }
     ringlpn_2pc::SecureConvertParams params{
         a.input_seed, a.qbits, a.bw, n};
+    // Explicit deterministic mode is confined to this standalone correctness
+    // baseline. Live publication uses a claimed high-entropy invocation ID.
+    ringlpn_freshness::InvocationId test_invocation{};
+    for (size_t byte = 0; byte < sizeof(a.input_seed); ++byte) {
+        test_invocation[byte] =
+            static_cast<uint8_t>(a.input_seed >> (8 * byte));
+    }
+    ringlpn_freshness::Digest test_layer{};
+    static constexpr uint8_t test_domain[] =
+        "RINGLPN-CONVERT-CORRECTNESS-BASELINE";
+    if (!ringlpn_freshness::digest(test_domain, sizeof(test_domain) - 1,
+                                   test_layer)) {
+        return 1;
+    }
+    ringlpn_freshness::Coordinates test_coordinates;
+    test_coordinates.kind = ringlpn_freshness::Kind::kConversionEdabit;
+    test_coordinates.phase =
+        ringlpn_freshness::Phase::kConvertCorrelation;
+    test_coordinates.conversion_chunk = 0;
+    test_coordinates.primitive_ordinal = 0;
+    if (!ringlpn_freshness::derive_correlation_id(
+            test_invocation, test_layer, test_coordinates,
+            params.correlation_id)) {
+        return 1;
+    }
     const bool locally_valid =
         ringlpn_2pc::validate_secure_convert_inputs(params, own_z);
     const uint8_t mine_valid = locally_valid ? 1 : 0;

@@ -39,32 +39,38 @@
 
 ## Execution update — 2026-08-04
 
-- The executable boundary moved materially: the live runner now composes
-  party-local noise, real SCI/IKNP/Gilboa distributed DPF key generation,
-  full-width GPU-AES Ring-LPN expansion, exact conversion, transactional
-  party-local key records, and the unchanged Orca forward-FC consumer across
-  two OS processes and distinct GPUs. Six q64/q128 regular/uniform/multi-batch
-  cases and their negative controls pass.
-- The proof boundary also moved: the current paper contains an exact
-  correction-word coupling, complete role-specific correlated-batch
-  simulators, an exact conversion simulator, and a conditional forward-FC
-  theorem. Independent reviews found no critical proof or live-composition
-  defect after the recorded fixes. This is conditional security reasoning,
-  not a concrete-security claim.
-- One warmup plus ten measured exact ResNet18 classifier-layer trials pass.
-  Median preprocessing is 35.735 s and sends 608,860,824 application bytes,
-  versus 10.813 ms for matched stock trusted-dealer key generation. This is
-  negative performance evidence, not a speedup or a full ResNet18
-  inference/truncation measurement.
-- S2 remains the hard blocker: no reviewed Ring-LPN parameter pin exists.
-  Authentication, two-host/WAN measurement, peak-memory/round instrumentation,
-  a compatible closest dealerless baseline, and all-forward-linear-layer model
-  coverage also remain open. The work is advisor-ready but not
-  conference-submission-ready.
-- The selected public-coin design changed from a short commit--open seed to
-  exchanging full uniform field-coefficient shares. This preserves the exact
-  required public-polynomial distribution; revealing a short PRG seed would
-  require a separate computational reduction.
+- The executable boundary moved materially: the live runner composes
+  party-local Ring-LPN expansion, exact conversion, bilateral best-effort
+  party-local record renames, and the unchanged Orca forward-FC consumer across
+  two OS processes and distinct GPUs. A crash after one rename can leave a
+  unilateral raw validation input; only the authenticated coordinator's sealed
+  two-record, fsynced digest-bound `COMMITTED.manifest` is designed as a
+  crash-atomic consumer gate. The six current q64/q128
+  regular/uniform/multi-batch rows and ten focused freshness/record controls
+  pass under the corrected identity and consume-once transcript.
+- The proof boundary retains the corrupt party's realized local noise/key
+  state and deterministically recomputes both
+  `X_b=e_(b,0)+sum_(i>=1) a_i e_(b,i)` and local `Z_b`. It contains
+  exact DPF correction-word coupling, role-specific correlated-batch
+  simulators, exact conversion and ideal-OT wrapper lemmas, and a conditional
+  forward-FC theorem. The exact regular-projection/cancellation law is now
+  machine-checkable. This is conditional security reasoning, not a
+  concrete-security claim.
+- One warmup plus ten current exact ResNet18 classifier-layer trials pass.
+  Median preprocessing is 25.715 s, application traffic is 575,846,872 bytes,
+  matched stock dealer keygen is 10.642 ms, and unchanged online execution is
+  1.106 ms. The run records 10,338 dependency stages and peak host/GPU memory.
+- S2 remains the hard blocker: no reviewed module-Ring-LPN parameter pin exists.
+  Phase-C/DMPF performance, measured/reviewed silent transport,
+  authenticated two-host/WAN execution, a functionality-compatible dealerless
+  baseline, all-forward-linear-layer plus truncation/state coverage, clean
+  reproduction, and independent human review remain open. The work is a strong
+  internal advisor checkpoint, not conference-submission-ready.
+- The selected public coin is exactly `a=(1,a1,...,a_{c-1})`. The identity
+  polynomial is sampled and sent by neither party; each party exchanges one
+  full uniform field-element share for every coefficient of `a1..a_{c-1}`.
+  This makes the `(c-1)n`-coefficient tail exactly uniform. Revealing a short
+  PRG seed would require a separate computational reduction.
 
 ## 1. Definition of publication-ready
 
@@ -149,11 +155,18 @@ first point at which their protocol-backed paths compose.
    microarchitectural and active-adversary leakage models.
 5. Draft simulators for corrupted party 0 and party 1. In particular, prove that Phase C can simulate each party's OLE shares and the public `finalCW` without revealing the hidden sign, the other payload factor, or the secret point.
 6. State all composition assumptions and theorem scope. Separate computational privacy from Ring-LPN pseudorandomness and correctness.
-7. Add proof-driven tests for boundary inputs permitted by the functionality:
+7. Bind `P-FRESH` to the source: one CSPRNG-generated 128-bit public invocation
+   ID; the fixed-width version/layer/kind/direction/limb/ring-batch/DPF-tree/
+   phase/primitive-ordinal/conversion-chunk/output-slot tuple; a
+   consume-before-release append-only ledger; and claim digest fields in both
+   party records and public manifests. State SHA-256 collision resistance and
+   durable no-rollback filesystem semantics as external assumptions.
+8. Add proof-driven tests for boundary inputs permitted by the functionality:
    point edges; boundary factors `1,p-1`; deterministic product edges;
    randomized legal nonzero factors; zero/noncanonical rejection; wrap/no-wrap
    conversion boundaries; invalid inputs and corrupted-key negative controls;
-   transcript length invariants; and no ideal-correlation reuse. The protocol
+   transcript length invariants; duplicate/restart/collision/truncated-ledger/
+   tail-slot-reuse controls; and no ideal-correlation reuse. The protocol
    proof, not exhaustive testing over `Z_p^*`, covers all legal factors.
 
 **Gate:**
@@ -183,7 +196,10 @@ parameter or 128-bit classical/quantum claim is pinned. Direct 2026 fully
 distributed DMPF prior art, alternative PCGs, and private-project
 ownership/overlap also remain claim gates. See
 `s2_parameter_novelty_provenance_audit_2026_07_29.md`,
-`../security/README.md`, and `s2_professor_decision_request_2026_07_29.md`.
+`structured_attack_audit_2026_08_04.md`, `../security/README.md`, and
+`s2_professor_decision_request_2026_07_29.md`. The structured attack audit
+proves orbit/data multiplicity only: its generic estimator rows and
+square-root orbit adjustments are not reviewed concrete-security evidence.
 The owner permits implementation-only S3--S6 work; none of it lifts S2.
 
 **Purpose:** establish a reviewed security reduction and parameter set before
@@ -196,17 +212,36 @@ security, parameter-dependent headline performance, or publication claims.
 2. Derive the projected distribution for the actual block-exact and regular
    samplers over both primes, including coefficient cancellation, a lower-tail
    bound, rounding, and a justified useful-factor criterion.
-3. Establish applicability to the fully split quasi-cyclic code, account for
-   DOOM/structured-code attacks, and compose distinguishing advantage across
-   both CRT limbs, every factor, epoch, and PCG hybrid. State classical and
-   quantum scope separately.
-4. Only after those proofs, run fail-closed, reproducible estimators over
-   candidate `(n,c,t,p0,p1)` sets. Reject every out-of-domain formula input and
-   include sensitivity around the chosen point rather than one optimistic row.
-5. Recompute the complete epoch budget, not only `3c^2t^2<n`: reserve scalar OLEs for three OLEs per DPF tree, epoch-zero Gilboa bootstrap, conversion correlations, safety margin, and any rejected/unused slots. Prove no slot is reused.
-6. Recheck NTT feasibility, prime bit width, `v2(p_i-1)`, CRT correctness, GPU memory, and batch size at the pinned `n`. If primes move to at most 60 bits, reopen the documented cheddar-versus-GPU-NTT decision; if `n` grows, rerun every polynomial and slot-packing gate.
-7. Generate machine-readable parameter tables and estimator transcripts from a pinned script/container.
-8. In parallel, compare the exact shared-point/multiplicative-payload,
+3. Establish applicability to the fully split negacyclic code for the exact
+   iid-uniform-`F_p^*` direct RSD and projected occupancy/cancellation laws.
+   Account for algebraic/Schur, statistical, generic ISD, structured-code and
+   decoder-specific one-out-of-many effects. The formal orbit is `n` at full
+   degree and `d` after projection outside the explicit stabilizer event;
+   evaluate its parameter-dependent bound and do not turn orbit existence into
+   a blanket `sqrt(n)`/`sqrt(d)` decoder theorem.
+4. Independently review both pinned direct-RSD calculators. Resolve the
+   CRYPTO-2024 transcription's CCJ-overflow, delegated generic-BJMM,
+   memory-unit, q-ary and structured-code incompatibilities. Validate the
+   ASIACRYPT-2025 Theorem-1 transcription/optimizer and supply an attack
+   implementation or independently justified concrete execution model,
+   including bit/byte costs for its field-operation time and big-O
+   field-element memory. Explicitly disposition the 2025/2026 QA-SD attacks at
+   the deployed large-prime univariate inputs. Every attack row records source
+   revision/checksum, distribution/model, exact inputs, orbit handling,
+   assumptions, memory, data/preprocessing, success/repetitions, and executable
+   provenance.
+5. Compose distinguishing advantage across both CRT limbs, every direction,
+   factor, ring batch, layer, epoch and PCG hybrid. State classical and quantum
+   scope separately.
+6. Only after those proofs and attack dispositions, run fail-closed,
+   reproducible estimators over candidate `(n,c,t,p0,p1)` sets. Reject every
+   out-of-domain formula input and include sensitivity around the chosen point
+   rather than one optimistic row. Estimator and orbit-adjusted rows remain
+   `MODEL_DIAGNOSTIC_ONLY` until the reviewed bridge closes.
+7. Recompute the complete epoch budget, not only `3c^2t^2<n`: reserve scalar OLEs for three OLEs per DPF tree, epoch-zero Gilboa bootstrap, conversion correlations, safety margin, and any rejected/unused slots. Prove no slot is reused.
+8. Recheck NTT feasibility, prime bit width, `v2(p_i-1)`, CRT correctness, GPU memory, and batch size at the pinned `n`. If primes move to at most 60 bits, reopen the documented cheddar-versus-GPU-NTT decision; if `n` grows, rerun every polynomial and slot-packing gate.
+9. Generate machine-readable parameter tables and estimator transcripts from a pinned script/container.
+10. In parallel, compare the exact shared-point/multiplicative-payload,
    three-OLE per-point construction against Doerner--shelat, Programmable DPF,
    the 2025 improved DMPF, the 2026 fully distributed DMPF for PCGs, and
    SLAMP-FSS. Compare regular Ring-LPN against Stationary Syndrome Decoding,
@@ -214,7 +249,7 @@ security, parameter-dependent headline performance, or publication claims.
    2026 QA-SD/WHT prime-field PCG.
    Record formal deltas, assumptions, asymptotics, implementation availability,
    and what is systems integration rather than protocol novelty.
-9. Audit active and candidate source provenance/licenses: local
+11. Audit active and candidate source provenance/licenses: local
    cheddar-derived NTT, GPU-NTT baseline, and the separate GPU-PCG/PIM work.
    Obtain the professor's ownership, contributor-credit, chronology,
    reuse-permission, citation, and overlap/disclosure decisions before
@@ -229,6 +264,10 @@ security, parameter-dependent headline performance, or publication claims.
   advantage reduction supports the claimed level for the exact implemented
   distribution; every estimator call is mechanically in-domain and
   independently reproducible.
+- The direct modern-RSD and projected structured-attack inventory is complete
+  under the resource/data/success contract above. Orbit existence is not used
+  as a reviewed decoder speedup, and no generic-estimator row is relabelled as
+  concrete Ring-LPN security.
 - The full bootstrap/consumption budget is positive with a documented margin.
 - Both CRT limbs and the required NTT size pass host-reference and GPU tests.
 - The formal novelty/overlap table and source/license inventory are complete;
@@ -243,9 +282,10 @@ security, parameter-dependent headline performance, or publication claims.
 - If provenance or closest prior art invalidates the proposed contribution,
   revise the thesis/protocol before S3; do not defer the problem to submission.
 
-**Evidence:** estimator code, versioned raw transcripts, parameter CSV/MD/log,
-security memo, formal protocol-delta/prior-art table, source/license inventory,
-recorded professor decisions, and updated paper tables.
+**Evidence:** source-pinned attack inventory and executable attack-component
+transcripts; estimator code; versioned raw transcripts; parameter CSV/MD/log;
+security memo; formal protocol-delta/prior-art table; source/license inventory;
+recorded professor decisions; and updated paper tables.
 
 **Checkpoint commit:** `ringlpn(m5): pin parameters and contribution boundary`
 
@@ -332,9 +372,20 @@ under `src/` rather than code embedded in a benchmark.
 ### S4 — M1b: real OT/OLE/triple transport and self-bootstrapping
 
 **Status 2026-08-04:** real SCI/IKNP string OT, Boolean triples, and Gilboa
-scalar OLE are integrated and measured. IKNP is not silent OT, key generation
-is host-side, setup is not self-sustaining from PCG output, and true network
-rounds are unmeasured; the strict S4 gate remains open.
+scalar OLE are integrated and measured. The live FC/Conv source claims a
+CSPRNG-generated 128-bit invocation namespace in a persistent consume-once
+ledger before OT/CSPRNG state, binds full Ring-OLE/conversion scope IDs and the
+claim digest into preflight/records, rejects truncated/reused state, and deletes
+copy/move rollback paths for `PartyChannel`/`PartyRandom`. An explicit
+`emp-silent` source path pins EMP SilentFerret behind a C++20 opaque bridge,
+predeclares exact directional inventories, and preserves packed 1/62/128-bit
+chosen-message widths. Focused full-loopback and representative FC/Conv
+correctness gates pass. It remains **opt-in, unreviewed, and unmeasured**:
+`sci-iknp` is still the publication-evidence default, no SilentFerret
+security/bandwidth result is claimable, and authenticated two-host accounting
+and independent review remain gates. GPU-batched key generation and
+dependency-stage/memory counters are live, but setup is not self-sustaining
+from PCG output; the strict S4 gate remains open.
 
 
 **Purpose:** remove ideal OT, bit-triple, and scalar-OLE calls from distributed key generation.
@@ -344,10 +395,17 @@ rounds are unmeasured; the strict S4 gate remains open.
 1. Select a maintained, reviewed OT-extension implementation with compatible license/build support and documented 128-bit parameters. Do not hand-roll a silent-OT protocol. Record the exact upstream commit and configuration.
 2. Instantiate the level-walk string OTs from the selected OT/COT API and implement the ripple-adder triples from real binary correlations.
 3. Implement the three scalar OLEs per tree. Epoch zero uses a small explicit OT-based Gilboa source; later epochs reserve output OLE slots from the Ring-LPN factory according to S2's budget.
-4. Domain-separate every base OT, epoch, tree, level, direction, limb, layer, and purpose. Add monotonic correlation IDs and fail on reuse.
+4. Preserve the implemented canonical namespace across every base OT, tree,
+   level, direction, CRT limb, ring batch, layer, phase, primitive ordinal,
+   conversion chunk, output slot, and purpose. Backend selection is not a
+   namespace coordinate. Preserve monotonic consume-once claims and fail before
+   OT/CSPRNG consumption on duplicate/restart/collision/truncation.
 5. Batch network messages across all trees at the same dependency level. Measure actual payload bytes, framing bytes, setup bytes, rounds, CPU/GPU overlap, and wall-clock time; estimates do not satisfy M1.
 6. Retain an ideal-transport build only as a reference mode. It must never share a “protocol-backed” result column.
-7. Add transport fault controls: truncated frame, wrong epoch, duplicate correlation ID, inconsistent batch size, and corrupted opening must cause a deterministic nonzero failure.
+7. Keep the source-wired transport controls for truncated frame/ledger, wrong
+   epoch, duplicate/restarted/colliding correlation ID, tail-slot reuse,
+   inconsistent batch size, and corrupted opening; execute them at the next
+   corrected-path gate and require deterministic nonzero failure.
 
 **Gate:**
 
@@ -356,6 +414,9 @@ rounds are unmeasured; the strict S4 gate remains open.
 - No ideal OT/OLE/triple call is reachable in the publication configuration.
 - Measured byte counters agree with packet/transport counters; round counts come from actual dependency-separated sends.
 - Bootstrap accounting balances for multiple consecutive epochs without slot reuse or hidden external OLE after epoch zero.
+- Both party records and every public manifest name the 128-bit invocation ID
+  and ledger/claim digest; restart cannot remove a claim, and unused tails are
+  never admitted by a later invocation.
 - Repeated runs under ASan/UBSan for host transport code and Compute Sanitizer for GPU code are clean.
 
 **Evidence:** transport transcript schema, pcap or equivalent byte-accounting log without secrets, per-epoch budget CSV, benchmark CSV/MD/log, dependency manifest, memo.
@@ -447,10 +508,12 @@ gate is not complete.
 
 **Work:**
 
-1. Instantiate D3 by having each party sample and exchange a full canonical
-   uniform field-coefficient vector; their modular sum is the exact public
-   Ring-LPN polynomial. Do not replace it with a revealed short PRG seed
-   without a separate reduction.
+1. Instantiate D3 with the unsent identity polynomial `a0=1`. For every
+   coefficient of `a1..a_{c-1}`, each party samples and exchanges one full
+   canonical uniform field-element share; the modular sums make the exact
+   uniform `(c-1)n`-coefficient public tail. Reject every supplied public vector
+   whose first polynomial is not identity. Do not replace the tail with a
+   revealed short PRG seed without a separate reduction.
 2. Draw DPF roots, masks, and sparse noise only from party-local OpenSSL DRBGs.
    Domain-separate session, party, direction, batch, limb, tree/slot, and
    purpose; reject zero/replayed session identifiers.
@@ -461,9 +524,11 @@ gate is not complete.
    correction-word shares, derandomization openings, conversion messages, and
    publication handshakes. Validate public preflight parameters before
    correlation setup.
-5. Publish records transactionally through a same-directory temporary file and
-   atomic rename. Both parties must agree that both records exist before exit;
-   the post-exit checker is the only process that reads both.
+5. Treat same-directory temporary writes, rename, and peer acknowledgement as
+   bilateral best-effort publication, not a transaction. The authenticated
+   coordinator must clean unilateral raw records on failure and expose a
+   post-exit checker only after two sealed records and a durable digest-bound
+   `COMMITTED.manifest`.
 6. Exercise q64/q128, regular/uniform, multi-batch, malformed/corrupt/swapped
    records, mismatched preflight, stale output, forced rename failure, invalid
    session/port bounds, and unilateral-abort cleanup.
@@ -474,7 +539,8 @@ gate is not complete.
 **Gate for the bounded forward artifact:**
 
 - Two processes on distinct GPUs complete keygen -> expand -> derandomize ->
-  convert -> transactional key write in all six cases.
+  convert -> bilateral best-effort key write in all six legacy cases; a focused
+  authenticated run must separately gate the durable coordinator commit.
 - The post-exit checker validates key order and unchanged
   `gpuMatmulBeaver`; corrupt and swapped records fail.
 - Source review confirms no undeclared live cross-party file/read path and no
@@ -496,12 +562,14 @@ gate is not complete.
 
 ### S8 — Close the proof and audit implementation against it
 
-**Status 2026-08-04:** conditionally closed for the bounded forward artifact.
-The paper contains the exact DPF coupling, both batch simulators, conversion
-simulator, source-to-transcript map, and conditional theorem. Independent
-proof, source, and composition reviews reported no critical defect after
-fixes. S2's concrete parameter/reduction gate and authenticated deployment
-remain open, and source changes require renewed review.
+**Status 2026-08-04:** reopened after the identity-`a0` security-contract
+correction. The paper now contains the exact DPF coupling, both batch
+simulators, ideal-OT wrappers, the leakage-conditioned role-indexed Figure-2
+simulator, conversion simulator, source-to-transcript map, and corrected
+conditional theorem. Prior proof/source/composition reviews and FC result rows
+predate this change; renewed review and a corrected-path rerun are required.
+S2's concrete parameter/reduction gate and authenticated deployment remain
+open.
 
 
 **Purpose:** turn the design argument into a publication-grade security result after the real transcript is fixed.
@@ -533,14 +601,17 @@ remain open, and source changes require renewed review.
 
 ### S9 — M6: publication-quality evaluation
 
-**Status 2026-08-04:** partially exercised, not complete. The exact
+**Status 2026-08-04:** partially exercised, not complete. The current exact
 `1x512x1000` ResNet18 classifier-layer row has one warmup and ten passing
 measured trials, an environment/binary/source digest manifest, matched
-stock-dealer keygen timing, final key/record bytes, and unchanged online
-timing. It is not a full inference/truncation run and remains a feasibility
-row: no pinned parameters, closest compatible dealerless baseline, peak-memory
-or dependency-round metric, two-host network result, or all-forward-linear-layer
-model run exists.
+stock-dealer keygen timing, final key/record bytes, unchanged online timing,
+per-stage costs, 10,338 dependency stages, and peak host/GPU memory. A pinned
+stock Reverse-Cuckoo run and exact-`p0` native-folded adapter run are
+reproducible closest baselines, but neither is functionality/layout/GPU matched,
+so no ratio is reported. Representative generalized Conv2D smoke cases pass.
+No pinned parameters, two-host network result, complete real-model
+linear-layer execution, truncation/state handoff, or compatible dealerless
+baseline exists; the row remains feasibility evidence.
 
 
 **Purpose:** establish usefulness, costs, and bottlenecks without mixing evidence levels.
@@ -589,6 +660,12 @@ model run exists.
 
 ### S10 — Reproducible artifact and submission candidate
 
+**Status 2026-08-04:** the internal v2.6 technical report builds without
+LaTeX warnings and all 24 rendered pages were inspected. The pinned
+reproduction source/container manifests exist, but no clean-clone
+second-person run, venue conversion, or submission-candidate review has been
+executed. S10 remains open.
+
 **Purpose:** produce the exact paper/artifact revision that can be submitted after advisor approval.
 
 **Artifact work:**
@@ -610,7 +687,7 @@ model run exists.
 1. With the advisor, lock the target venue, title, disclosure requirements, and
    page/supplement limits. Alp remains the sole author; do not add commit
    co-author trailers or paper co-authors.
-2. Convert the v2.5 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+2. Convert the v2.6 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.

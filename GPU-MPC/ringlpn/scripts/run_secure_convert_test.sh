@@ -218,9 +218,10 @@ else
 fi
 port=$((port + 4))
 
-# Transactional publication control: a non-empty directory at party 0's final
-# path forces only that local rename to fail. The second bilateral result
-# exchange must make party 1 delete its already-renamed final as well.
+# Bilateral rename-failure control: a non-empty directory at party 0's final
+# path forces only that local rename to fail. The second result exchange must
+# make party 1 delete its already-renamed final. A crash after rename is not
+# covered, so this is not a transaction control.
 rename_prefix="$WORKDIR/rename_failure"
 rm -rf "${rename_prefix}_p0.convert"
 rm -f "${rename_prefix}_p1.convert" \

@@ -1,0 +1,12 @@
+control,expected,status
+swapped_records,reject,pass
+corrupt_record,reject,pass
+malformed_length,reject,pass
+duplicate_id,reject,pass
+restart_retry,reject,pass
+invocation_collision,reject,pass
+ledger_truncation,reject,pass
+tail_slot_reuse,reject,pass
+stale_output_bilateral_abort,reject,pass
+forced_rename_bilateral_rollback,reject,pass
+mismatched_shape_preflight,reject,pass

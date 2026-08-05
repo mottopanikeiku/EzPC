@@ -1,0 +1,36 @@
+{
+  "schema_version": "ringlpn.orca-model-scale-workloads.v1",
+  "publication_date": "2026-08-04",
+  "claim_scope": "internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level",
+  "layer_manifest": {
+    "path": "GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json",
+    "sha256": "8bb46a4e3f802d180a9207e813e80082055202b74da315db25556ee3727dc43f"
+  },
+  "execution": {
+    "order": ["model_order", "linear_order", "sample_role", "trial"],
+    "warmups": 1,
+    "measured_trials_env": "TRIALS",
+    "default_measured_trials": 10,
+    "model_selector_env": "MODELS",
+    "workload_selector_env": "WORKLOAD",
+    "failure_control_env": "FAIL_LAYER",
+    "swap_control_env": "SWAP_LAYER",
+    "retention_rule": "retain exactly supported measured or warmup rows whose two parties and unchanged post-exit checker pass",
+    "aggregate_rule": "integer and timing totals are arithmetic sums over retained per-layer rows in the same model/sample_role/trial group"
+  },
+  "profiles": {
+    "classifier": {
+      "selection": "operator=fc and is_classifier=true",
+      "default_models": ["ResNet18"],
+      "comparability": "preserves the exact ResNet18 1x512x1000 q128/bw32 classifier row and legacy timing column names"
+    },
+    "all-fc": {
+      "selection": "operator=fc",
+      "status": "pass only when every selected FC preprocessing row is retained; full_model_status remains fail closed on convolution or truncation gaps"
+    },
+    "full-model": {
+      "selection": "all ordered forward linear rows",
+      "status": "fail closed while any manifest row has ringlpn_status!=supported_untruncated or truncation_status!=supported"
+    }
+  }
+}

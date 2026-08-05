@@ -1,0 +1,33 @@
+{
+  "schema_version": "reverse-cuckoo-p0-baseline-1",
+  "date": "2026-08-04",
+  "status": "complete",
+  "artifact": {
+    "libote_commit": "edb5d32822eabf2dda9f6844d85d0ce2e402cdd5",
+    "libote_license": "MIT",
+    "paper_repo_commit": "b55bcc4696d10e57bdea8c282a851fdd4fad0c2b",
+    "paper_repo_code_license": null
+  },
+  "parameters": {"n": 1048576, "c": 4, "t": 16, "p0": "4611686018326724609", "coefficient_bits": 62},
+  "layout": {
+    "name": "libote_native_16_folded_raw",
+    "sets": 256, "points_per_set": 16, "point_terms": 4096,
+    "comparable_to_raw_31_diagonal_timing": false
+  },
+  "controls": {
+    "full_domain_positions_checked": 16777216,
+    "collision_accumulating_reference": true,
+    "duplicate_terms_accumulated": 3840,
+    "corruption_rejected": true
+  },
+  "metrics": {
+    "setup_us": 18523424,
+    "online_full_domain_us": 2116894,
+    "end_to_end_protocol_us": 20640318,
+    "end_to_end_including_validation_us": 20688314,
+    "setup_wire_bytes": 52791184,
+    "online_wire_bytes": 1425584,
+    "end_to_end_protocol_wire_bytes": 54216768
+  },
+  "claims": {"performance_speedup": null, "security_level": null}
+}

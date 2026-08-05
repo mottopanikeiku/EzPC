@@ -1,0 +1,3 @@
+reserved memory: 26843545600 18446744073709551615
+qbits,bw,n,h,w,ci,fh,fw,co,padding,stride,oh,ow,ring_batches,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online_contract,status,checker_us,peak_host_rss_bytes,peak_gpu_bytes,min_gpu_free_bytes,invocation_id,ledger_digest
+64,16,1,4,4,1,3,3,2,1,1,4,4,1,528,10397.1,288.108,pass,pass,pass,pass,396052,129695744,27243184128,6583353344,bd05e9fb1ef2167b5197d10209b014a7,4b694bd5e00ed3eed70d4c4412ac7c4cb345d8ac7182dc5b9bd569629a40d5d1

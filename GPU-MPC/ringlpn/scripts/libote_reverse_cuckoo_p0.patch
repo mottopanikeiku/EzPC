@@ -1,0 +1,132 @@
+diff --git a/frontend/CMakeLists.txt b/frontend/CMakeLists.txt
+index 56fa36c..4c33bfa 100644
+--- a/frontend/CMakeLists.txt
++++ b/frontend/CMakeLists.txt
+@@ -3,6 +3,7 @@
+ 
+ 
+ file(GLOB_RECURSE SRCS *.cpp)
++list(FILTER SRCS EXCLUDE REGEX "libote_reverse_cuckoo_p0_adapter\\.cpp$")
+ 
+ include_directories(${CMAKE_SOURCE_DIR})
+ 
+@@ -15,6 +16,20 @@ target_compile_definitions(frontend_libOTe PRIVATE
+ 
+ target_link_libraries(frontend_libOTe libOTe_Tests tests_cryptoTools)
+ 
++add_executable(reverse_cuckoo_p0_adapter "libote_reverse_cuckoo_p0_adapter.cpp")
++target_link_libraries(reverse_cuckoo_p0_adapter libOTe)
++target_compile_definitions(reverse_cuckoo_p0_adapter PRIVATE
++    $<$<CONFIG:Release,RelWithDebInfo,MinSizeRel>:NDEBUG>
++)
++if(MSVC)
++    target_compile_options(reverse_cuckoo_p0_adapter PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/std:c++${LIBOTE_STD_VER}>)
++else()
++    target_compile_options(reverse_cuckoo_p0_adapter PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++${LIBOTE_STD_VER}>)
++    if(NOT APPLE)
++        target_compile_options(reverse_cuckoo_p0_adapter PRIVATE -Wno-subobject-linkage)
++    endif()
++endif()
++
+ 
+ if(MSVC)
+     target_compile_options(frontend_libOTe PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/std:c++${LIBOTE_STD_VER}>)
+diff --git a/libOTe/Triple/RingLpn/RingLpnTriple.h b/libOTe/Triple/RingLpn/RingLpnTriple.h
+index 9954fc4..0a01658 100644
+--- a/libOTe/Triple/RingLpn/RingLpnTriple.h
++++ b/libOTe/Triple/RingLpn/RingLpnTriple.h
+@@ -88,6 +88,11 @@ namespace osuCrypto
+ 		std::vector<F> mSparseCoefficients;
+ 		std::vector<F> mTensoredCoefficients;
+ 
++		// Adapter hook: caller-owned regular sparse factors and raw folded output.
++		bool mCallerFactors = false;
++		bool mCaptureNativeFoldedOnly = false;
++		Matrix<F> mNativeFoldedOutput;
++
+ 
+ 		std::vector<u64> mProdPolyTreePosArth;
+ 		std::vector<u64> mProdPolyTreePosXor;
+@@ -162,6 +167,30 @@ namespace osuCrypto
+ 
+ 		bool isInitialized() const { return mN > 0; }
+ 
++		void setCallerFactors(
++			MatrixView<const u64> positions,
++			span<const F> coefficients)
++		{
++			if (!isInitialized() || hasDpf() || hasTensor())
++				throw RTE_LOC;
++			if (positions.rows() != mNumPolys ||
++				positions.cols() != mPolyWeight ||
++				coefficients.size() != mNumPolys * mPolyWeight)
++				throw RTE_LOC;
++			for (u64 i = 0; i < positions.size(); ++i)
++				if (positions(i) >= mBlockSize)
++					throw RTE_LOC;
++			mSparsePositions.resize(mNumPolys, mPolyWeight);
++			std::copy(positions.begin(), positions.end(), mSparsePositions.begin());
++			mSparseCoefficients.assign(coefficients.begin(), coefficients.end());
++			mCallerFactors = true;
++		}
++
++		void setNativeFoldedCaptureOnly(bool enabled)
++		{
++			mCaptureNativeFoldedOnly = enabled;
++		}
++
+ 		struct BaseCorCount
+ 		{
+ 			// the number of base OTs as sender.
+@@ -946,10 +975,12 @@ namespace osuCrypto
+ 		// overall polynomial.
+ 		mSparsePositions.resize(mNumPolys, mPolyWeight);
+ 
+-		// select random positions for the sparse polynomial.
+-		// The polyIdx'th is the noise position in the polyIdx'th block.
+-		for (u64 i = 0; i < mSparsePositions.size(); ++i)
+-			mSparsePositions(i) = prng.get<u64>() % mBlockSize;
++		// Select random positions unless the adapter supplied the party's factors.
++		if (!mCallerFactors)
++		{
++			for (u64 i = 0; i < mSparsePositions.size(); ++i)
++				mSparsePositions(i) = prng.get<u64>() % mBlockSize;
++		}
+ 
+ 
+ 		// we will expand them the main DPF to get the full shared polynomial. 
+@@ -1194,6 +1225,14 @@ namespace osuCrypto
+ 
+ 		setTimePoint("mainDpf");
+ 
++		if (mCaptureNativeFoldedOnly)
++		{
++			mNativeFoldedOutput = std::move(prodPolys);
++			mSparseCoefficients.clear();
++			mTensoredCoefficients.clear();
++			co_return;
++		}
++
+ 
+ 		if(mNegWrapRoots.size() != mN -1)
+ 		{
+@@ -1553,7 +1592,8 @@ namespace osuCrypto
+ 		{
+ 			sockets[i] = sock.fork();
+ 			prngs[i] = prng.fork();
+-			mCtx.fromBlock(coeffs[i], prng.get());
++			if (!mCallerFactors)
++				mCtx.fromBlock(coeffs[i], prng.get());
+ 			auto bv = mCtx.binaryDecomposition(coeffs[i]);
+ 			for (u64 j = 0; j < bv.size(); ++j)
+ 				diff[i * bv.size() + j] ^= bv[j];
+@@ -1613,7 +1653,8 @@ namespace osuCrypto
+ 		{
+ 			sockets[i] = sock.fork();
+ 			prngs[i] = prng.fork();
+-			mCtx.fromBlock(coeffs[i], prng.get());
++			if (!mCallerFactors)
++				mCtx.fromBlock(coeffs[i], prng.get());
+ 			auto ots = sendOts.subspan(i * mCtx.template bitSize<F>(), mCtx.template bitSize<F>());
+ 			tasks[i] = NoisyVoleReceiver<F, F, CoeffCtx>::receive(coeffs, voleResults[i], prngs[i], ots, sockets[i], mCtx);
+ 		}
