@@ -70,10 +70,10 @@ mkdir -p "$LEDGER_ROOT"
 chmod 700 "$LEDGER_ROOT"
 : > "$LOG"
 printf '%s' \
-  'case,qbits,bw,rows,inner,cols,noise,ring_batches,p0_ring_oles,p1_ring_oles,p0_dpf_trees,p1_dpf_trees,p0_public_a_words,p1_public_a_words,p0_protocol_bytes,p1_protocol_bytes,p0_total_us,p1_total_us,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online,status,p0_protocol_dependency_rounds,p1_protocol_dependency_rounds,p0_preflight_us,p1_preflight_us,p0_ot_setup_us,p1_ot_setup_us,p0_dpf_phase_a_us,p1_dpf_phase_a_us,p0_dpf_phase_b_us,p1_dpf_phase_b_us,p0_dpf_phase_c_us,p1_dpf_phase_c_us,p0_spfss_grouping_us,p1_spfss_grouping_us,p0_public_polynomial_exchange_us,p1_public_polynomial_exchange_us,p0_gpu_ringlpn_expansion_us,p1_gpu_ringlpn_expansion_us,p0_derandomization_openings_us,p1_derandomization_openings_us,p0_conversion_us,p1_conversion_us,p0_serialization_us,p1_serialization_us,p0_commit_us,p1_commit_us,p0_peak_host_rss_bytes,p1_peak_host_rss_bytes,p0_peak_gpu_bytes,p1_peak_gpu_bytes,p0_min_gpu_free_bytes,p1_min_gpu_free_bytes,p0_transport_straight_bytes_sent,p1_transport_straight_bytes_sent,p0_transport_straight_bytes_received,p1_transport_straight_bytes_received,p0_transport_reversed_bytes_sent,p1_transport_reversed_bytes_sent,p0_transport_reversed_bytes_received,p1_transport_reversed_bytes_received,p0_base_ots,p1_base_ots,p0_base_ot_setup_bytes_sent,p1_base_ot_setup_bytes_sent,p0_base_ot_setup_bytes_received,p1_base_ot_setup_bytes_received,p0_transport_bytes_include_base_ot,p1_transport_bytes_include_base_ot,p0_base_ot_setup_dependency_rounds,p1_base_ot_setup_dependency_rounds,checker_us,checker_peak_host_rss_bytes,checker_peak_gpu_bytes,checker_min_gpu_free_bytes,invocation_id,ledger_digest' \
+  'case,qbits,bw,rows,inner,cols,noise,ring_batches,ring_application_slots,ring_bootstrap_slots,p0_ring_oles,p1_ring_oles,p0_dpf_trees,p1_dpf_trees,p0_dpf_scalar_oles,p1_dpf_scalar_oles,p0_dpf_epoch_zero_scalar_oles,p1_dpf_epoch_zero_scalar_oles,p0_dpf_pcg_scalar_oles,p1_dpf_pcg_scalar_oles,p0_dpf_pcg_oles_reserved,p1_dpf_pcg_oles_reserved,p0_dpf_pcg_oles_discarded,p1_dpf_pcg_oles_discarded,p0_dpf_pcg_opening_words_sent,p1_dpf_pcg_opening_words_sent,p0_public_a_words,p1_public_a_words,p0_protocol_bytes,p1_protocol_bytes,p0_total_us,p1_total_us,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online,status,p0_protocol_dependency_rounds,p1_protocol_dependency_rounds,p0_preflight_us,p1_preflight_us,p0_ot_setup_us,p1_ot_setup_us,p0_dpf_phase_a_us,p1_dpf_phase_a_us,p0_dpf_phase_b_us,p1_dpf_phase_b_us,p0_dpf_phase_c_us,p1_dpf_phase_c_us,p0_spfss_grouping_us,p1_spfss_grouping_us,p0_public_polynomial_exchange_us,p1_public_polynomial_exchange_us,p0_gpu_ringlpn_expansion_us,p1_gpu_ringlpn_expansion_us,p0_derandomization_openings_us,p1_derandomization_openings_us,p0_conversion_us,p1_conversion_us,p0_serialization_us,p1_serialization_us,p0_commit_us,p1_commit_us,p0_peak_host_rss_bytes,p1_peak_host_rss_bytes,p0_peak_gpu_bytes,p1_peak_gpu_bytes,p0_min_gpu_free_bytes,p1_min_gpu_free_bytes,p0_transport_straight_bytes_sent,p1_transport_straight_bytes_sent,p0_transport_straight_bytes_received,p1_transport_straight_bytes_received,p0_transport_reversed_bytes_sent,p1_transport_reversed_bytes_sent,p0_transport_reversed_bytes_received,p1_transport_reversed_bytes_received,p0_base_ots,p1_base_ots,p0_base_ot_setup_bytes_sent,p1_base_ot_setup_bytes_sent,p0_base_ot_setup_bytes_received,p1_base_ot_setup_bytes_received,p0_transport_bytes_include_base_ot,p1_transport_bytes_include_base_ot,p0_base_ot_setup_dependency_rounds,p1_base_ot_setup_dependency_rounds,checker_us,checker_peak_host_rss_bytes,checker_peak_gpu_bytes,checker_min_gpu_free_bytes,invocation_id,ledger_digest' \
   > "$CSV"
 printf '%s\n' \
-  ',p0_ot_backend,p1_ot_backend,p0_ot_backend_revision,p1_ot_backend_revision,p0_ot_correlation_straight_bytes_sent,p1_ot_correlation_straight_bytes_sent,p0_ot_correlation_straight_bytes_received,p1_ot_correlation_straight_bytes_received,p0_ot_correlation_reversed_bytes_sent,p1_ot_correlation_reversed_bytes_sent,p0_ot_correlation_reversed_bytes_received,p1_ot_correlation_reversed_bytes_received,p0_ot_adjustment_bytes_sent,p1_ot_adjustment_bytes_sent,p0_ot_adjustment_bytes_received,p1_ot_adjustment_bytes_received,p0_ot_ciphertext_bytes_sent,p1_ot_ciphertext_bytes_sent,p0_ot_ciphertext_bytes_received,p1_ot_ciphertext_bytes_received,p0_ot_inventory_straight_declared,p1_ot_inventory_straight_declared,p0_ot_inventory_straight_consumed,p1_ot_inventory_straight_consumed,p0_ot_inventory_reversed_declared,p1_ot_inventory_reversed_declared,p0_ot_inventory_reversed_consumed,p1_ot_inventory_reversed_consumed,p0_ot_backend_review_status,p1_ot_backend_review_status' \
+  ',p0_ot_backend,p1_ot_backend,p0_ot_backend_revision,p1_ot_backend_revision,p0_ot_correlation_straight_bytes_sent,p1_ot_correlation_straight_bytes_sent,p0_ot_correlation_straight_bytes_received,p1_ot_correlation_straight_bytes_received,p0_ot_correlation_reversed_bytes_sent,p1_ot_correlation_reversed_bytes_sent,p0_ot_correlation_reversed_bytes_received,p1_ot_correlation_reversed_bytes_received,p0_ot_adjustment_bytes_sent,p1_ot_adjustment_bytes_sent,p0_ot_adjustment_bytes_received,p1_ot_adjustment_bytes_received,p0_ot_ciphertext_bytes_sent,p1_ot_ciphertext_bytes_sent,p0_ot_ciphertext_bytes_received,p1_ot_ciphertext_bytes_received,p0_ot_inventory_straight_declared,p1_ot_inventory_straight_declared,p0_ot_inventory_straight_consumed,p1_ot_inventory_straight_consumed,p0_ot_inventory_reversed_declared,p1_ot_inventory_reversed_declared,p0_ot_inventory_reversed_consumed,p1_ot_inventory_reversed_consumed,p0_ot_backend_review_status,p1_ot_backend_review_status,p0_ring_application_slots_discarded,p1_ring_application_slots_discarded' \
   >> "$CSV"
 printf '%s\n' 'control,expected,p0_rc,p1_rc,checker_rc,status' > "$CONTROLS"
 
@@ -180,61 +180,73 @@ run_case() {
   IFS=',' read -r -a f0 <<< "$p0_row"
   IFS=',' read -r -a f1 <<< "$p1_row"
   IFS=',' read -r -a fc <<< "$check_row"
-  if [[ "${#f0[@]}" -ne 71 || "${#f1[@]}" -ne 71 || "${#fc[@]}" -ne 19 ||
-        "${f0[28]}" != pass || "${f1[28]}" != pass || "${fc[9]}" != pass ||
+  local limbs=1
+  (( qbits == 128 )) && limbs=2
+  local expected_application_discarded=$((f0[10] * 2 * limbs * f0[11] -
+                                           2 * limbs * rows * inner * cols))
+  if [[ "${#f0[@]}" -ne 79 || "${#f1[@]}" -ne 79 || "${#fc[@]}" -ne 19 ||
+        "${f0[35]}" != pass || "${f1[35]}" != pass || "${fc[9]}" != pass ||
         "${fc[10]}" != pass || "${fc[11]}" != pass || "${fc[12]}" != pass ||
-        "${f0[53]}" != NA || "${f1[53]}" != NA ||
-        "${f0[54]}" != "$invocation_id" || "${f1[54]}" != "$invocation_id" ||
+        "${f0[60]}" != NA || "${f1[60]}" != NA ||
+        "${f0[61]}" != "$invocation_id" || "${f1[61]}" != "$invocation_id" ||
         "${fc[17]}" != "$invocation_id" ||
-        "${f0[55]}" != "${f1[55]}" || "${f0[55]}" != "${fc[18]}" ||
-        ("${f0[56]}" != sci-iknp && "${f0[56]}" != emp-silent) ||
-        "${f0[56]}" != "${f1[56]}" ||
-        -z "${f0[57]}" || "${f0[57]}" != "${f1[57]}" ||
-        ("${f0[56]}" == sci-iknp &&
-         ("${f0[52]}" != yes || "${f1[52]}" != yes)) ||
-        ("${f0[56]}" == emp-silent &&
-         ("${f0[49]}" != NA || "${f1[49]}" != NA ||
-          "${f0[50]}" != NA || "${f1[50]}" != NA ||
-          "${f0[51]}" != NA || "${f1[51]}" != NA ||
-          "${f0[52]}" != NA || "${f1[52]}" != NA)) ||
-        "${f0[59]}" != NA || "${f1[59]}" != NA ||
-        "${f0[61]}" != NA || "${f1[61]}" != NA ||
-        "${f0[63]}" != NA || "${f1[63]}" != NA ||
-        "${f0[65]}" != NA || "${f1[65]}" != NA ||
-        -z "${f0[70]}" || "${f0[70]}" != "${f1[70]}" ]]; then
+        "${f0[62]}" != "${f1[62]}" || "${f0[62]}" != "${fc[18]}" ||
+        ("${f0[63]}" != sci-iknp && "${f0[63]}" != emp-silent) ||
+        "${f0[63]}" != "${f1[63]}" ||
+        -z "${f0[64]}" || "${f0[64]}" != "${f1[64]}" ||
+        ("${f0[63]}" == sci-iknp &&
+         ("${f0[59]}" != yes || "${f1[59]}" != yes)) ||
+        ("${f0[63]}" == emp-silent &&
+         ("${f0[56]}" != NA || "${f1[56]}" != NA ||
+          "${f0[57]}" != NA || "${f1[57]}" != NA ||
+          "${f0[58]}" != NA || "${f1[58]}" != NA ||
+          "${f0[59]}" != NA || "${f1[59]}" != NA)) ||
+        "${f0[66]}" != NA || "${f1[66]}" != NA ||
+        "${f0[68]}" != NA || "${f1[68]}" != NA ||
+        "${f0[70]}" != NA || "${f1[70]}" != NA ||
+        "${f0[72]}" != NA || "${f1[72]}" != NA ||
+        -z "${f0[77]}" || "${f0[77]}" != "${f1[77]}" ||
+        "${f0[78]}" -ne "$expected_application_discarded" ||
+        "${f1[78]}" -ne "$expected_application_discarded" ]]; then
     rm -rf "${records[@]}"
     echo "[two-party-fc] $name malformed or failing result rows" >&2
     return 1
   fi
-  printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
-    "$name" "$qbits" "$bw" "$rows" "$inner" "$cols" "$noise" \
-    "${f0[10]}" "${f0[11]}" "${f1[11]}" "${f0[13]}" "${f1[13]}" \
-    "${f0[20]}" "${f1[20]}" "${f0[25]}" "${f1[25]}" \
-    "${f0[27]}" "${f1[27]}" "${fc[6]}" "${fc[7]}" "${fc[8]}" \
+  printf '%s,%s,%s,%s,%s,%s,%s' \
+    "$name" "$qbits" "$bw" "$rows" "$inner" "$cols" "$noise" >> "$CSV"
+  printf ',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+    "${f0[10]}" "${f0[11]}" "${f0[12]}" \
+    "${f0[13]}" "${f1[13]}" "${f0[15]}" "${f1[15]}" \
+    "${f0[18]}" "${f1[18]}" "${f0[19]}" "${f1[19]}" \
+    "${f0[20]}" "${f1[20]}" "${f0[21]}" "${f1[21]}" \
+    "${f0[22]}" "${f1[22]}" "${f0[23]}" "${f1[23]}" >> "$CSV"
+  printf ',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+    "${f0[27]}" "${f1[27]}" "${f0[32]}" "${f1[32]}" \
+    "${f0[34]}" "${f1[34]}" "${fc[6]}" "${fc[7]}" "${fc[8]}" \
     "${fc[9]}" "${fc[10]}" "${fc[11]}" pass >> "$CSV"
-  for ((metric_index = 29; metric_index <= 53; ++metric_index)); do
+  for ((metric_index = 36; metric_index <= 60; ++metric_index)); do
     case "$metric_index" in
-      46) printf ',%s,%s' "${f1[45]}" "${f0[45]}" >> "$CSV" ;;
-      48) printf ',%s,%s' "${f1[47]}" "${f0[47]}" >> "$CSV" ;;
-      51) printf ',%s,%s' "${f1[50]}" "${f0[50]}" >> "$CSV" ;;
+      53) printf ',%s,%s' "${f1[52]}" "${f0[52]}" >> "$CSV" ;;
+      55) printf ',%s,%s' "${f1[54]}" "${f0[54]}" >> "$CSV" ;;
+      58) printf ',%s,%s' "${f1[57]}" "${f0[57]}" >> "$CSV" ;;
       *) printf ',%s,%s' "${f0[$metric_index]}" "${f1[$metric_index]}" >> "$CSV" ;;
     esac
   done
   printf ',%s,%s,%s,%s,%s,%s' \
     "${fc[13]}" "${fc[14]}" "${fc[15]}" "${fc[16]}" \
-    "$invocation_id" "${f0[55]}" >> "$CSV"
-  for ((metric_index = 56; metric_index <= 70; ++metric_index)); do
+    "$invocation_id" "${f0[62]}" >> "$CSV"
+  for ((metric_index = 63; metric_index <= 77; ++metric_index)); do
     case "$metric_index" in
-      59) printf ',%s,%s' "${f1[58]}" "${f0[58]}" >> "$CSV" ;;
-      61) printf ',%s,%s' "${f1[60]}" "${f0[60]}" >> "$CSV" ;;
-      63) printf ',%s,%s' "${f1[62]}" "${f0[62]}" >> "$CSV" ;;
-      65) printf ',%s,%s' "${f1[64]}" "${f0[64]}" >> "$CSV" ;;
+      66) printf ',%s,%s' "${f1[65]}" "${f0[65]}" >> "$CSV" ;;
+      68) printf ',%s,%s' "${f1[67]}" "${f0[67]}" >> "$CSV" ;;
+      70) printf ',%s,%s' "${f1[69]}" "${f0[69]}" >> "$CSV" ;;
+      72) printf ',%s,%s' "${f1[71]}" "${f0[71]}" >> "$CSV" ;;
       *) printf ',%s,%s' "${f0[$metric_index]}" "${f1[$metric_index]}" >> "$CSV" ;;
     esac
   done
-  printf '\n' >> "$CSV"
+  printf ',%s,%s\n' "${f0[78]}" "${f1[78]}" >> "$CSV"
   printf 'validated_after_both_party_exits sid=%s invocation_id=%s ledger_digest=%s\n' \
-    "$sid" "$invocation_id" "${f0[55]}" > "$dir/COMMITTED"
+    "$sid" "$invocation_id" "${f0[62]}" > "$dir/COMMITTED"
 
   if (( case_index == 0 )); then
     first_p0_record="$p0_record"
@@ -276,6 +288,39 @@ run_preflight_mismatch_control() {
     status=pass
   fi
   printf 'preflight_mismatch,bilateral_reject_before_output,%s,%s,NA,%s\n' \
+    "$rc0" "$rc1" "$status" >> "$CONTROLS"
+  [[ "$status" == pass ]]
+  case_index=$((case_index + 1))
+}
+
+run_bootstrap_capacity_control() {
+  local dir="$WORKDIR/control_bootstrap_capacity"
+  local port=$((BASE_PORT + 4 * case_index))
+  fresh_identity
+  local sid="$FRESH_SID" invocation_id="$FRESH_INVOCATION"
+  mkdir -p "$dir/party0" "$dir/party1"
+  local common=(--host 127.0.0.1 --port "$port" --sid "$sid"
+    --invocation-id "$invocation_id" --ledger "$LEDGER_ROOT"
+    --qbits 64 --bw 16 --rows 2 --inner 2 --cols 2
+    --ole-n 8192 --ole-c 2 --ole-t 64 --noise regular "${OT_ARGS[@]}")
+  set +e
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 30 "$BIN" --party 0 "${common[@]}" \
+    --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
+  local pid0=$!
+  sleep 1
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 30 "$BIN" --party 1 "${common[@]}" \
+    --out-prefix "$dir/party1/key" > "$dir/p1.out" 2>&1 &
+  local pid1=$!
+  wait "$pid0"; local rc0=$?
+  wait "$pid1"; local rc1=$?
+  set -e
+  append_logs control_bootstrap_capacity "$dir"
+  local status=FAIL
+  if (( rc0 == 2 && rc1 == 2 )) &&
+     [[ ! -e "$dir/party0/key_p0.fc" && ! -e "$dir/party1/key_p1.fc" ]]; then
+    status=pass
+  fi
+  printf 'bootstrap_capacity,nonpositive_epoch_budget_reject,%s,%s,NA,%s\n' \
     "$rc0" "$rc1" "$status" >> "$CONTROLS"
   [[ "$status" == pass ]]
   case_index=$((case_index + 1))
@@ -439,6 +484,7 @@ run_freshness_reject_control ledger_truncation malformed_append_only_entry_rejec
   "$FRESH_SID" "$FRESH_INVOCATION" 2 "$truncated_ledger"
 run_preflight_mismatch_control
 run_stale_output_control
+run_bootstrap_capacity_control
 
 run_rename_failure_control
 run_checker_controls

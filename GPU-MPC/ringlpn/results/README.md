@@ -3,61 +3,67 @@
 Reorganized 2026-06-10. Every run script writes into its artifact directory
 below; nothing writes to this top level anymore.
 
-## Current checkpoint (2026-08-04)
+## Current checkpoint (2026-08-06)
 
 The live forward-FC/Conv artifact composes party-local SPFSS, distributed DPF,
-SCI/IKNP/Gilboa transport, GPU Ring-LPN expansion, and exact conversion. Before
-OT setup or private-DRBG construction, each party consumes the same public
-high-entropy 128-bit invocation and exact fixed-width correlation plan in its
-owner-only persistent ledger. Every Ring-OLE/DPF/OT/conversion use is separated
-by layer/kind/direction/limb/ring-batch/tree/phase/primitive/conversion/output
-coordinates; records and preflights bind the invocation and claim digest.
-Duplicate/retry/restart, compatibility-ID collision, truncated/corrupt ledger,
-and tail reuse reject before publication. Consumed state never rolls back.
-The corrected source also fixes unsent identity `a0=1`, exchanges/counts exact
-full-field shares only for the `(c-1)*n` tail coefficients, and rejects a
-supplied vector whose first polynomial is not identity. Each party remains a
-separate process reading only its own private state. The local loopback runner
-does not enforce OS-level peer-file isolation; the authenticated coordinator's
-sealed digest-bound `COMMITTED.manifest`, not either raw record, is the consumer
-gate.
+SCI/IKNP or opt-in EMP-Silent OT, epoch-zero Gilboa OLE, consume-once
+Ring-OLE-output Phase-C bootstrap, GPU Ring-LPN expansion, and exact conversion.
+Before OT setup or private-DRBG construction, each party consumes the same
+public high-entropy 128-bit invocation and exact fixed-width correlation plan in
+its owner-only persistent ledger. Every Ring-OLE/DPF/OT/conversion/use is
+separated by layer/kind/direction/limb/ring-batch/tree/phase/primitive/
+conversion/output coordinates; version-3 records and preflights bind the
+invocation and claim digest. Duplicate/retry/restart, compatibility-ID collision,
+truncated/corrupt ledger, tail reuse, and nonpositive bootstrap capacity reject
+before publication. Consumed state never rolls back.
+The corrected source fixes unsent identity `a0=1`, exchanges/counts exact full-
+field shares only for the `(c-1)*n` tail coefficients, reduces DPF correction
+words/leaves with one GPU block per tree, reserves `3*c^2*t^2` slots of each
+Ring-OLE output for the next DPF Phase C, and exposes only the remainder to the
+application. Each party remains a separate process reading only its own private
+state. The local loopback runner does not enforce OS-level peer-file isolation;
+the authenticated coordinator's sealed digest-bound `COMMITTED.manifest`, not
+either raw record, is the consumer gate.
 
 Recorded current live evidence:
 
 - `fc/two_party_fc_preprocess_2026_08_04.csv` — q64/q128,
   regular/uniform, small and q64 multi-batch rows; all six public/key-order/
-  current-transcript/unchanged-online contracts pass.
-- `fc/two_party_fc_preprocess_controls_2026_08_04.csv` — ten focused
+  current-transcript/bootstrap-pool/unchanged-online contracts pass.
+- `fc/two_party_fc_preprocess_controls_2026_08_04.csv` — eleven focused
   consume-once, restart, tail-reuse, invocation-collision, ledger-truncation,
-  preflight, stale-output, rename-failure, corrupt-record, and swapped-record
-  controls; every expected rejection passes.
-- `fc/two_party_fc_model_scale_2026_08_04.csv` plus aggregate, summary,
-  schemas, controls, and environment — exact ResNet18 classifier-layer shape
-  `1x512x1000`, q128/bw32, `n=8192,c=2,t=8`, one warmup plus ten current
-  measured trials, 10/10 pass. Median preprocessing is 25.715 s;
-  application traffic is 575,846,872 bytes; matched stock trusted-dealer keygen
-  is 10.642 ms median; the unchanged two-share online checker is 1.106 ms
-  median; final Orca payload is 4,108,096 bytes per party.
-- The aggregate records 10,338 protocol dependency stages, 142,493,696 peak
-  host bytes, 27,241,086,976 peak GPU bytes, and 575,890,852 total transport
-  bytes including 43,658 base-OT bytes. Median Phase C is 20.432 s (79.4% of
-  preprocessing), while GPU Ring-LPN expansion is 1.704 s. This is not a full
-  ResNet18 inference or scale-10 truncation run.
+  preflight, stale-output, rename-failure, corrupt-record, swapped-record, and
+  nonpositive-capacity controls; every expected rejection passes.
+- The `fc/two_party_fc_model_scale_2026_08_04.*` v4 artifact family
+  (regenerated 2026-08-06) covers the exact ResNet18 classifier-layer shape
+  `1x512x1000`, q128/bw32, `n=8192,c=2,t=8`, one warmup plus ten measured
+  trials, 10/10 pass. Median preprocessing is 8.942 s; application traffic is
+  159,469,294 bytes; matched stock trusted-dealer keygen is 10.706 ms median;
+  unchanged two-share online is 1.097 ms median; final Orca payload is
+  4,108,096 bytes per party.
+- The aggregate records 11,298 protocol dependency layers, 179,636,224 peak
+  host bytes, 27,241,086,976 peak GPU bytes, and 160,618,542 total transport
+  bytes. Median Phase B is the largest stage at 3.366 s (37.6%); Phase C is
+  0.182 s (2.0%). The exact 276-instance plan accounts per party for 1,536
+  epoch-zero and 210,432 PCG-supplied Phase-C products, 210,432 consumed plus
+  1,536 terminal-discarded reserved slots, and 1,024 unused application slots.
+  This is not a full ResNet18 inference or scale-10 truncation run.
 - The runners generate fresh invocation IDs, require a private ledger root,
   and emit invocation/claim-digest columns in current schemas/manifests. Raw
   party key records remain validation inputs, not public evidence.
 
 Proof/evidence boundary:
 
-- The v2.6 TeX/PDF and current security contract contain the canonical
+- The v2.7 TeX source and current security contract contain the canonical
   correlation functionality, persistent consume-once ledger, exact
-  correction-word coupling, role-specific correlated-batch simulators,
-  conversion simulator, source map, and conditional forward theorem. The
-  24-page PDF is warning-free and page-inspected.
+  correction-word coupling, role-specific correlated-batch simulators, the
+  masked-difference bootstrap lemma and noncircular epoch induction, conversion
+  simulator, source map, and conditional forward theorem. PDF build/inspection
+  status is recorded after the current rebuild.
 - `P-FRESH` is source/proof closed only under SHA-256 collision resistance and
   a trusted private persistent filesystem providing one deployment-wide ledger
   namespace, exclusive create, fsync, atomic rename, directory fsync, and no
-  adversarial storage cloning/rollback. Its ten focused controls pass.
+  adversarial storage cloning/rollback. Its eleven focused controls pass.
 - Renewed model-assisted source/proof reviews are current, but they are not
   independent human cryptographic review.
 - The exact regular-projection and cancellation law is machine-checkable.
@@ -65,17 +71,19 @@ Proof/evidence boundary:
   advantage bound, and no concrete Ring-LPN parameter is pinned. q64/q128 name
   one/two approximately 62-bit arithmetic limbs, not security levels.
 - Current measurements use unauthenticated local loopback. Application bytes
-  exclude TCP/IP framing and base OT; a separate transport counter includes
-  base OT. They establish executable correctness and cost at feasibility
-  parameters, not 128-bit, malicious, WAN, training-layer, full-model, or
-  full-dealerless-Orca claims.
-- The matched comparison is negative: median live preprocessing is about
-  2,414 times stock dealer keygen. GPU batching and memory/dependency-stage
-  instrumentation are complete. Phase-C/DMPF optimization, measured/reviewed
-  silent correlation transport, authenticated two-host evaluation, every real
-  model linear layer plus truncation/state handoff, a compatible dealerless
-  baseline, clean-clone reproduction, and human review remain publication
-  gates.
+  exclude backend setup and TCP/IP overhead; total transport includes the
+  selected backend's recorded setup, but its base-OT subcost is unavailable.
+  The selected EMP-Silent revision is pinned but independently unreviewed.
+  Results establish executable correctness and cost at feasibility parameters,
+  not 128-bit, malicious, WAN, training-layer, full-model, or full-dealerless-
+  Orca claims.
+- The matched comparison is negative: median live preprocessing is about 831
+  times stock dealer keygen. GPU batching, tree-block reduction, executable
+  self-bootstrap, and memory/dependency-layer instrumentation are complete.
+  Phase-A/B/DMPF optimization, independent silent-backend review, authenticated
+  two-host evaluation, every real-model linear layer plus truncation/state
+  handoff, a compatible dealerless baseline, clean-clone reproduction, and
+  human review remain publication gates.
 
 The source-pinned closest-baseline audit now ranks newly public Reverse Cuckoo /
 libOTe first. It supersedes the 2026-07-29 “no public code” statement without
@@ -148,7 +156,7 @@ are never copied into the image or either manifest.
 | `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** exact DPF correction-word coupling, role-specific correlated-batch simulators, conversion simulator, full live source-to-transcript map, conditional forward theorem, obligation table, and explicit concrete-parameter/authentication/training limits. |
 | `reports/session_handoff_2026_07_21.md` | **HISTORICAL/SUPERSEDED** corrected-M1/v2.3 checkpoint handoff; current status is in `CLAUDE.md` |
 | `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **Corrected M1 host protocol-logic prototype**: party-separated and functionally validated by unchanged evaluator using ideal OT/triple/OLE and non-cryptographic correctness PRG; 2,432 trees, three OLEs/tree, old-sign regression, 5/5 corruptions, 6/6 invalid inputs, ideal-mask-draw and correlation-reuse controls, executable split accounting (1,908 logical / 3,816 meaningful share bits at depth 14); `dpf/distributed_dpf_keygen_prototype.{csv,log}` |
-| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **LIVE internal v2.6 technical report:** current GPU-batched two-process forward-FC design, exact conditional proof boundary and projection law, matched dealer comparison, current ten-trial ResNet18-classifier-layer evidence, closest-baseline disposition, related work, limitations, and explicit “not conference-ready” assessment. Warning-free, page-inspected 24-page PDF; strong internal/advisor checkpoint, not submission-ready. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **LIVE internal v2.7 technical report:** current GPU-batched two-process forward-FC design, exact conditional proof boundary and projection law, consume-once Ring-OLE-output Phase-C bootstrap, matched dealer comparison, current ten-trial ResNet18-classifier-layer evidence, closest-baseline disposition, related work, limitations, and explicit “not conference-ready” assessment. Warning-free, page-inspected 24-page PDF; strong internal/advisor checkpoint, not submission-ready. |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |
 | `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |

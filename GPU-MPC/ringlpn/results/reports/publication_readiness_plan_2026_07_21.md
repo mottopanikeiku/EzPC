@@ -37,35 +37,38 @@
   boundary changes, or a stage would require broader upstream modification.
 
 
-## Execution update — 2026-08-04
+## Execution update — 2026-08-06
 
-- The executable boundary moved materially: the live runner composes
-  party-local Ring-LPN expansion, exact conversion, bilateral best-effort
-  party-local record renames, and the unchanged Orca forward-FC consumer across
-  two OS processes and distinct GPUs. A crash after one rename can leave a
+- The live runner now composes party-local Ring-LPN expansion, exact
+  conversion, noncircular Ring-OLE-output Phase-C bootstrap, bilateral best-
+  effort party-local record renames, and the unchanged Orca forward-FC consumer
+  across two OS processes and distinct GPUs. One GPU block reduces each DPF
+  tree's correction words/leaves. A crash after one rename can still leave a
   unilateral raw validation input; only the authenticated coordinator's sealed
-  two-record, fsynced digest-bound `COMMITTED.manifest` is designed as a
-  crash-atomic consumer gate. The six current q64/q128
-  regular/uniform/multi-batch rows and ten focused freshness/record controls
-  pass under the corrected identity and consume-once transcript.
-- The proof boundary retains the corrupt party's realized local noise/key
-  state and deterministically recomputes both
-  `X_b=e_(b,0)+sum_(i>=1) a_i e_(b,i)` and local `Z_b`. It contains
-  exact DPF correction-word coupling, role-specific correlated-batch
-  simulators, exact conversion and ideal-OT wrapper lemmas, and a conditional
-  forward-FC theorem. The exact regular-projection/cancellation law is now
-  machine-checkable. This is conditional security reasoning, not a
-  concrete-security claim.
+  two-record, fsynced digest-bound `COMMITTED.manifest` is designed as a crash-
+  atomic consumer gate. Six current q64/q128 rows and eleven freshness/record/
+  capacity controls pass.
+- The proof boundary retains the corrupt party's realized local noise/key state
+  and deterministically recomputes both
+  `X_b=e_(b,0)+sum_(i>=1) a_i e_(b,i)` and local `Z_b`. It contains exact DPF
+  coupling, role-specific correlated-batch simulators, exact conversion/ideal-
+  OT lemmas, the masked-difference bootstrap lemma, a public-epoch induction,
+  and a conditional forward-FC theorem. The exact regular-projection/
+  cancellation law is machine-checkable. This is conditional security
+  reasoning, not a concrete-security claim.
 - One warmup plus ten current exact ResNet18 classifier-layer trials pass.
-  Median preprocessing is 25.715 s, application traffic is 575,846,872 bytes,
-  matched stock dealer keygen is 10.642 ms, and unchanged online execution is
-  1.106 ms. The run records 10,338 dependency stages and peak host/GPU memory.
+  Median preprocessing is 8.942 s, application traffic is 159,469,294 bytes,
+  matched stock dealer keygen is 10.706 ms, and unchanged online execution is
+  1.097 ms. The run records 11,298 dependency layers and peak host/GPU memory.
+  Its 276 Ring-OLE instances account exactly for 1,536 epoch-zero and 210,432
+  PCG-supplied Phase-C products per party, with all reserved and unused slots
+  reported.
 - S2 remains the hard blocker: no reviewed module-Ring-LPN parameter pin exists.
-  Phase-C/DMPF performance, measured/reviewed silent transport,
-  authenticated two-host/WAN execution, a functionality-compatible dealerless
-  baseline, all-forward-linear-layer plus truncation/state coverage, clean
-  reproduction, and independent human review remain open. The work is a strong
-  internal advisor checkpoint, not conference-submission-ready.
+  Phase-A/B/DMPF performance, independent review of the measured EMP-Silent
+  revision, authenticated two-host/WAN execution, a functionality-compatible
+  dealerless baseline, all-forward-linear-layer plus truncation/state coverage,
+  clean reproduction, and independent human review remain open. The work is a
+  strong internal advisor checkpoint, not conference-submission-ready.
 - The selected public coin is exactly `a=(1,a1,...,a_{c-1})`. The identity
   polynomial is sampled and sent by neither party; each party exchanges one
   full uniform field-element share for every coefficient of `a1..a_{c-1}`.
@@ -296,10 +299,11 @@ the reviewed contribution/provenance boundary; no end-to-end security claim.
 
 ### S3 — M1a: cryptographic, GPU-consumable distributed DPF core
 
-**Status 2026-08-04:** functional component complete for the live feasibility
+**Status 2026-08-06:** functional component complete for the live feasibility
 path: full-width GPU-AES-compatible keys, private roots, versioned
-serialization, host/GPU evaluation, and corrupted-key controls pass. GPU-side
-batched key generation and concrete DPF/PRG security review remain open.
+serialization, batched GPU key generation with tree-block reduction, host/GPU
+evaluation, and corrupted-key controls pass. Concrete DPF/PRG security review
+remains open.
 
 
 **Route dependency:** the owner selected the per-point DPF as the current
@@ -371,21 +375,24 @@ under `src/` rather than code embedded in a benchmark.
 
 ### S4 — M1b: real OT/OLE/triple transport and self-bootstrapping
 
-**Status 2026-08-04:** real SCI/IKNP string OT, Boolean triples, and Gilboa
+**Status 2026-08-06:** real SCI/IKNP string OT, Boolean triples, and Gilboa
 scalar OLE are integrated and measured. The live FC/Conv source claims a
 CSPRNG-generated 128-bit invocation namespace in a persistent consume-once
 ledger before OT/CSPRNG state, binds full Ring-OLE/conversion scope IDs and the
-claim digest into preflight/records, rejects truncated/reused state, and deletes
-copy/move rollback paths for `PartyChannel`/`PartyRandom`. An explicit
-`emp-silent` source path pins EMP SilentFerret behind a C++20 opaque bridge,
-predeclares exact directional inventories, and preserves packed 1/62/128-bit
-chosen-message widths. Focused full-loopback and representative FC/Conv
-correctness gates pass. It remains **opt-in, unreviewed, and unmeasured**:
-`sci-iknp` is still the publication-evidence default, no SilentFerret
-security/bandwidth result is claimable, and authenticated two-host accounting
-and independent review remain gates. GPU-batched key generation and
-dependency-stage/memory counters are live, but setup is not self-sustaining
-from PCG output; the strict S4 gate remains open.
+claim digest into preflight/version-3 records, rejects truncated/reused state,
+and deletes copy/move rollback paths for `PartyChannel`/`PartyRandom`.
+The current runner uses external Phase-C OLE only for the first Ring-OLE
+instance of each CRT limb; every later instance consumes exactly
+`3*c^2*t^2` reserved slots from prior Ring-LPN output. Capacity,
+consume/discard, and masked-opening counters are executable gates.
+An explicit `emp-silent` path pins EMP SilentFerret behind a C++20 opaque
+bridge, predeclares exact directional inventories, preserves packed
+1/62/128-bit chosen-message widths, and now has one warmup plus ten measured
+classifier trials. It remains **opt-in and independently unreviewed**; its
+measurements are internal diagnostics, not publication evidence. SCI remains
+the canonical q64/q128 evidence backend. Authenticated two-host execution,
+packet/network-round measurement, sanitizer evidence, and independent backend
+review remain strict S4 gates.
 
 
 **Purpose:** remove ideal OT, bit-triple, and scalar-OLE calls from distributed key generation.
@@ -562,14 +569,14 @@ gate is not complete.
 
 ### S8 — Close the proof and audit implementation against it
 
-**Status 2026-08-04:** reopened after the identity-`a0` security-contract
-correction. The paper now contains the exact DPF coupling, both batch
-simulators, ideal-OT wrappers, the leakage-conditioned role-indexed Figure-2
-simulator, conversion simulator, source-to-transcript map, and corrected
-conditional theorem. Prior proof/source/composition reviews and FC result rows
-predate this change; renewed review and a corrected-path rerun are required.
-S2's concrete parameter/reduction gate and authenticated deployment remain
-open.
+**Status 2026-08-06:** the paper/contract now contain exact DPF coupling, both
+batch simulators, ideal-OT wrappers, leakage-conditioned role-indexed Figure-2
+simulation, the masked-difference bootstrap lemma and epoch induction,
+conversion simulation, source-to-transcript map, and corrected conditional
+theorem. Corrected-path q64/q128/control/model reruns pass, and renewed model-
+assisted source/composition/proof reviews found no critical defect after fixes.
+They do not substitute for independent human cryptographic review. S2's
+concrete parameter/reduction gate and authenticated deployment remain open.
 
 
 **Purpose:** turn the design argument into a publication-grade security result after the real transcript is fixed.
@@ -601,17 +608,18 @@ open.
 
 ### S9 — M6: publication-quality evaluation
 
-**Status 2026-08-04:** partially exercised, not complete. The current exact
+**Status 2026-08-06:** partially exercised, not complete. The current exact
 `1x512x1000` ResNet18 classifier-layer row has one warmup and ten passing
 measured trials, an environment/binary/source digest manifest, matched
 stock-dealer keygen timing, final key/record bytes, unchanged online timing,
-per-stage costs, 10,338 dependency stages, and peak host/GPU memory. A pinned
-stock Reverse-Cuckoo run and exact-`p0` native-folded adapter run are
-reproducible closest baselines, but neither is functionality/layout/GPU matched,
-so no ratio is reported. Representative generalized Conv2D smoke cases pass.
-No pinned parameters, two-host network result, complete real-model
-linear-layer execution, truncation/state handoff, or compatible dealerless
-baseline exists; the row remains feasibility evidence.
+per-stage costs, 11,298 dependency layers, and peak host/GPU memory. Median
+preprocessing is 8.942 s (831x matched dealer), with Phase B now largest at
+3.366 s and Phase C at 0.182 s. A pinned stock Reverse-Cuckoo run and exact-
+`p0` native-folded adapter run are reproducible closest baselines, but neither
+is functionality/layout/GPU matched, so no ratio is reported. Representative
+generalized Conv2D smoke cases pass. No pinned parameters, two-host network
+result, complete real-model linear-layer execution, truncation/state handoff,
+or compatible dealerless baseline exists; the row remains feasibility evidence.
 
 
 **Purpose:** establish usefulness, costs, and bottlenecks without mixing evidence levels.
@@ -660,7 +668,7 @@ baseline exists; the row remains feasibility evidence.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-08-04:** the internal v2.6 technical report builds without
+**Status 2026-08-06:** the internal v2.7 technical report builds without
 LaTeX warnings and all 24 rendered pages were inspected. The pinned
 reproduction source/container manifests exist, but no clean-clone
 second-person run, venue conversion, or submission-candidate review has been
@@ -687,7 +695,7 @@ executed. S10 remains open.
 1. With the advisor, lock the target venue, title, disclosure requirements, and
    page/supplement limits. Alp remains the sole author; do not add commit
    co-author trailers or paper co-authors.
-2. Convert the v2.6 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+2. Convert the v2.7 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.

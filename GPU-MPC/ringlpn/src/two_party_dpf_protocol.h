@@ -6,11 +6,12 @@
 // Both therefore retain the standalone artifact's exact correlation and
 // opening accounting while differing only in private frontier execution.
 //
-// Every cross-party value goes through OT or through an explicitly counted
-// opening. Trees are processed level-synchronously: one OT batch and one
-// opening dependency stage per level for the whole batch, plus three batched
-// Gilboa OLE stages. The measured direction-switch count depends on tree depth,
-// not batch size; it is not a network-round measurement.
+// Every cross-party value goes through OT, a consume-once OLE source, or an
+// explicitly counted opening. Trees are processed level-synchronously: one OT
+// batch and one opening dependency stage per level, plus two Phase-C
+// multiplication dependencies that produce three scalar products per tree.
+// The measured direction-switch count depends on tree depth and backend, not
+// batch size; it is not a network-round measurement.
 //
 // The expansion PRG is selectable: `kSplitmix` matches the unchanged host
 // evaluator `spfss_host::dpfEvalAll`; `kGpuAes` is the bit-identical twin of the
@@ -119,6 +120,31 @@ struct DpfStageCounters {
     uint64_t gpu_peak_bytes = 0;
     uint64_t level_synchronizations = 0;
 };
+
+// Supplies additive shares of pairwise products of the parties' local inputs.
+// A source must consume one independent Z_p OLE per input, exactly once, and
+// account for every masked opening it sends through `channel`.
+class PhaseCOleSource {
+  public:
+    virtual ~PhaseCOleSource() = default;
+    virtual bool multiply(PartyChannel &channel,
+                          const std::vector<Word> &local_inputs, Word modulus,
+                          std::vector<Word> &product_shares) = 0;
+};
+
+inline bool phase_c_multiply(
+    PhaseCOleSource *source, PartyChannel &channel,
+    const std::vector<Word> &local_inputs, Word modulus, PartyRandom &random,
+    std::vector<Word> &product_shares) {
+    if (source != nullptr) {
+        return source->multiply(channel, local_inputs, modulus,
+                                product_shares) &&
+               product_shares.size() == local_inputs.size();
+    }
+    product_shares =
+        ringlpn_2pc::ole_batch_p0_sender(channel, local_inputs, modulus, random);
+    return product_shares.size() == local_inputs.size();
+}
 
 class PartyTreeBatchState {
   public:
@@ -283,6 +309,7 @@ inline bool two_party_dpf_gen_batch_with_state(
     const std::vector<uint64_t> &offs,
     const std::vector<Word> &beta_factors, PartyChannel &ch, PartyRandom &rng,
     PartyTreeBatchState &state, std::vector<spfss_host::DPFKey> &keys,
+    PhaseCOleSource *phase_c_ole_source,
     DpfStageCounters *stage_counters = nullptr) {
     keys.clear();
     if (stage_counters != nullptr) *stage_counters = DpfStageCounters{};
@@ -493,8 +520,16 @@ inline bool two_party_dpf_gen_batch_with_state(
         }
         return false;
     }
-    const std::vector<Word> gamma =
-        ringlpn_2pc::ole_batch_p0_sender(ch, beta_factors, p, rng);
+    std::vector<Word> gamma;
+    if (!phase_c_multiply(phase_c_ole_source, ch, beta_factors, p, rng,
+                          gamma)) {
+        if (stage_counters != nullptr) {
+            stage_counters->phase_c_microseconds =
+                elapsed_microseconds(phase_c_start);
+            state.add_backend_counters(*stage_counters);
+        }
+        return false;
+    }
     if (stage_counters != nullptr) {
         ++stage_counters->phase_c_dependency_rounds;
     }
@@ -503,18 +538,29 @@ inline bool two_party_dpf_gen_batch_with_state(
         d[tree] = mod_sub(gamma[tree], seed_sum[tree], p);
         s[tree] = control_sum[tree];
     }
-    const std::vector<Word> cross01 = ringlpn_2pc::ole_batch_p0_sender(
-        ch, party == 0 ? d : s, p, rng);
-    const std::vector<Word> cross10 = ringlpn_2pc::ole_batch_p0_sender(
-        ch, party == 0 ? s : d, p, rng);
+    std::vector<Word> cross_inputs(2 * B);
+    for (size_t tree = 0; tree < B; ++tree) {
+        cross_inputs[tree] = party == 0 ? d[tree] : s[tree];
+        cross_inputs[B + tree] = party == 0 ? s[tree] : d[tree];
+    }
+    std::vector<Word> cross;
+    if (!phase_c_multiply(phase_c_ole_source, ch, cross_inputs, p, rng,
+                          cross)) {
+        if (stage_counters != nullptr) {
+            stage_counters->phase_c_microseconds =
+                elapsed_microseconds(phase_c_start);
+            state.add_backend_counters(*stage_counters);
+        }
+        return false;
+    }
     if (stage_counters != nullptr) {
         ++stage_counters->phase_c_dependency_rounds;
     }
     std::vector<uint64_t> final_mine(B), final_theirs(B);
     for (size_t tree = 0; tree < B; ++tree) {
         final_mine[tree] = static_cast<uint64_t>(mod_add(
-            mod_add(mod_mul(d[tree], s[tree], p), cross01[tree], p),
-            cross10[tree], p));
+            mod_add(mod_mul(d[tree], s[tree], p), cross[tree], p),
+            cross[B + tree], p));
     }
     // Three OLEs expose neither d nor s. Only the standard public finalCW is
     // opened, exactly as in the stock DPFKey material.
@@ -548,11 +594,12 @@ inline bool two_party_dpf_gen_batch_cpu_baseline(
     const std::vector<uint64_t> &offs,
     const std::vector<Word> &beta_factors, PartyChannel &ch, PartyRandom &rng,
     std::vector<spfss_host::DPFKey> &keys,
+    PhaseCOleSource *phase_c_ole_source,
     DpfStageCounters *stage_counters = nullptr) {
     CpuBaselinePartyTreeBatchState state;
     return two_party_dpf_gen_batch_with_state(
         party, log_domain, p, prg, offs, beta_factors, ch, rng, state, keys,
-        stage_counters);
+        phase_c_ole_source, stage_counters);
 }
 
 }  // namespace ringlpn_2pdpf

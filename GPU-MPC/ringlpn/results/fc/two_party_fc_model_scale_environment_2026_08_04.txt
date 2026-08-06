@@ -1,6 +1,6 @@
-measurement_timestamp=2026-08-04T23:46:22+00:00
+measurement_timestamp=2026-08-06T02:41:01+00:00
 publication_date=2026-08-04
-schema_version=ringlpn.two-party-fc-model-scale.v3
+schema_version=ringlpn.two-party-fc-model-scale.v4
 claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level
 host=sn4622124096
 kernel=Linux 6.8.0-78-generic #78-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 11:34:18 UTC 2025 x86_64 GNU/Linux
@@ -8,8 +8,8 @@ cpu_count=32
 process_gpu_map=party0:1,party1:3,checker:1
 network=single-host IPv4 loopback
 counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message
-ot_backend=sci-iknp
-emp_silent_bridge=NA
+ot_backend=emp-silent
+emp_silent_bridge=/home/fatih/EzPC/GPU-MPC/ringlpn/.deps/emp-silent/install/lib/libringlpn_emp_silent_bridge.so
 warmups=1
 measured_trials=10
 models=ResNet18
@@ -26,16 +26,16 @@ Copyright (c) 2005-2024 NVIDIA Corporation
 Built on Tue_Oct_29_23:50:19_PDT_2024
 Cuda compilation tools, release 12.6, V12.6.85
 Build cuda_12.6.r12.6/compiler.35059454_0
-ed7c5ae3aad860c6e866984c98620f97dae8de010bb9b762c024b16467ccacf5  /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+ad2ad954b7a49a5a0b4d5d37a738b59edde27875c25f9d8b5b3efbe178619cf2  /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
 8bb46a4e3f802d180a9207e813e80082055202b74da315db25556ee3727dc43f  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json
 6e9b39c7ca90a21a0e57ff330344fe4a691091852fa4b7ec9198f874706e743c  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/orca_model_scale_workload_manifest_2026_08_04.json
 c7c7e2281fd63eeae7447c06102868c95a7a83dd5154a833af06ea27e7b07889  /home/fatih/EzPC/GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_result_schemas_2026_08_04.json
-459598b72f5a7c9930b197fff1d972c705246efba4856620f09dbdf23e85a307  /home/fatih/EzPC/GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv
-1167c52256ac560bffd3c214f794c22945981620b402c562e73396034396c8f1  /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
-05d2fb62530f445e42f20ad1db8c484979846339c2cfdc2f276327e50b6f1017  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss.h
-10709786da182fc35e5d02c6f29b4b0a9592e044dd277088639339b841802c3a  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss_gpu.cuh
-6dcd59d36628cb3757212be34c8198a9c0049f075a5bcb054e050740ed04ff01  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
-0b57ff689c25e689f1dda3bb97aafa186697aca69e1d3a8fc0034cded13a045b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_gpu.cuh
+44090834b1b7911012b4b7cb1ff2f9e5b915de1013f3dab63d91a07377c5a5e9  /home/fatih/EzPC/GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv
+2c7987d0c94c96625bd05d0619fe36ee03d32f4cba2e29d7e5813b24d9d9a78e  /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
+fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss.h
+4d56a7a2beca4b27cd616ca7bea83d8c3939cbaf945ee0de1a20132d8634199f  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_spfss_gpu.cuh
+539dbdc852bdbe56e8b229ec8d28f97acbdcad5e8b9bf599ce03cb464a5aac29  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
+ae628a57adbe0d232db509919dc140b03ba2bec8069bb6ffb8bf76dfb2147a41  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_dpf_gpu.cuh
 b0d229858f518f0e303397e72c20520bcefc4b8478ee6761e3adc131cccae7ef  /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h
 473ac66c045dac872cf273edf9f878fee587c35d33c3e7a282f031f55a37f88b  /home/fatih/EzPC/GPU-MPC/ringlpn/src/emp_silent_adapter.h
 6c58c107da10638957dc5be1163e991f37ba107768c1c5af889009fe2ac840de  /home/fatih/EzPC/GPU-MPC/ringlpn/src/emp_silent_bridge.h
@@ -46,3 +46,4 @@ b0d229858f518f0e303397e72c20520bcefc4b8478ee6761e3adc131cccae7ef  /home/fatih/Ez
 9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986  /home/fatih/EzPC/GPU-MPC/experiments/orca/orca_inference.cu
 8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d  /home/fatih/EzPC/GPU-MPC/experiments/orca/piranha.cu
 3b06ebf08ef8e7efec685454cb046f8b4a78650859556874f00a22653f737fc8  /home/fatih/EzPC/GPU-MPC/nn/orca/fc_layer.cu
+435f3be6fba6bf4384434c08d044e10ec8f2170165723c1f1c1ba61ae2796319  /home/fatih/EzPC/GPU-MPC/ringlpn/.deps/emp-silent/install/lib/libringlpn_emp_silent_bridge.so

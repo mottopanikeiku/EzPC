@@ -1,8 +1,8 @@
 {
-  "schema_version": "ringlpn.two-party-fc-model-scale.schemas.v3",
+  "schema_version": "ringlpn.two-party-fc-model-scale.schemas.v4",
   "publication_date": "2026-08-04",
   "claim_scope": "internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level",
-  "transcript_status": "pre-identity-a0 evidence: public_a_words and protocol byte columns sampled all c public polynomials; they do not validate the corrected a=(1,a1,...,a[c-1]) source",
+  "transcript_status": "current v4 evidence: a0 is the unsent identity polynomial, public_a_words counts only the (c-1)*n tail, and Phase-C source/reserve/consume/discard fields gate noncircular Ring-OLE-output bootstrap",
   "per_layer": {
     "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.csv",
     "columns": [
@@ -65,6 +65,20 @@
       "p0_stdout_sha256",
       "p1_stdout_sha256",
       "checker_stdout_sha256",
+      "ring_application_slots",
+      "ring_bootstrap_slots",
+      "p0_dpf_epoch_zero_scalar_oles",
+      "p1_dpf_epoch_zero_scalar_oles",
+      "p0_dpf_pcg_scalar_oles",
+      "p1_dpf_pcg_scalar_oles",
+      "p0_dpf_pcg_oles_reserved",
+      "p1_dpf_pcg_oles_reserved",
+      "p0_dpf_pcg_oles_discarded",
+      "p1_dpf_pcg_oles_discarded",
+      "p0_dpf_pcg_opening_words_sent",
+      "p1_dpf_pcg_opening_words_sent",
+      "p0_ring_application_slots_discarded",
+      "p1_ring_application_slots_discarded",
       "p0_protocol_dependency_rounds",
       "p1_protocol_dependency_rounds",
       "p0_preflight_us",
@@ -158,7 +172,7 @@
     "timing_contract": {
       "matched_dealer_keygen_us": "exact alias of stock_gpuKeygenMatmul_two_party_sequential_us emitted by the checker",
       "checker_two_share_online_us": "exact alias of unchanged_gpuMatmulBeaver_two_share_sequential_us emitted by the checker",
-      "scope": "two stock party calls timed sequentially in the post-exit checker; excludes preflight and base-OT setup"
+      "scope": "two stock party calls timed sequentially in the post-exit checker; excludes live preflight and selected-backend OT/correlation setup"
     },
     "metrics_dictionary": "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv"
   },

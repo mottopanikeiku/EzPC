@@ -6,6 +6,7 @@ invocation_collision,same_invocation_different_compatibility_sid_reject,2,2,NA,p
 ledger_truncation,malformed_append_only_entry_reject,2,2,NA,pass
 preflight_mismatch,bilateral_reject_before_output,2,2,NA,pass
 stale_output,bilateral_reject_without_overwrite,2,2,NA,pass
+bootstrap_capacity,nonpositive_epoch_budget_reject,2,2,NA,pass
 rename_failure,bilateral_cleanup_after_staging,1,1,NA,pass
 corrupt_record,offline_digest_reject,NA,NA,1,pass
 swapped_records,offline_party_header_reject,NA,NA,1,pass

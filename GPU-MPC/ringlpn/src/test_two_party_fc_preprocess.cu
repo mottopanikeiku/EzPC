@@ -145,6 +145,8 @@ struct PublicWork {
     uint64_t size_c = 0;
     uint64_t cross_terms = 0;
     uint64_t ring_batches = 0;
+    uint64_t ring_application_slots = 0;
+    uint64_t ring_bootstrap_slots = 0;
     int limbs = 0;
     bool regular = false;
 };
@@ -184,10 +186,16 @@ struct Record {
 struct Counters {
     uint64_t ring_ole_instances = 0;
     uint64_t slots_used = 0;
+    uint64_t ring_application_slots_discarded = 0;
     uint64_t dpf_trees = 0;
     uint64_t dpf_string_ots = 0;
     uint64_t dpf_bit_triples = 0;
     uint64_t dpf_scalar_oles = 0;
+    uint64_t dpf_epoch_zero_scalar_oles = 0;
+    uint64_t dpf_pcg_scalar_oles = 0;
+    uint64_t dpf_pcg_oles_reserved = 0;
+    uint64_t dpf_pcg_oles_discarded = 0;
+    uint64_t dpf_pcg_opening_words_sent = 0;
     uint64_t dpf_logical_opened_bits = 0;
     uint64_t dpf_meaningful_share_bits = 0;
     uint64_t key_bytes = 0;
@@ -544,8 +552,19 @@ bool derive_work(const Args &args, PublicWork &work) {
     work.size_b = size_b;
     work.size_c = size_c;
     work.cross_terms = cross;
+    uint64_t ct = 0;
+    uint64_t trees = 0;
+    if (!checked_mul(static_cast<uint64_t>(args.ole_c),
+                     static_cast<uint64_t>(args.ole_t), ct) ||
+        !checked_mul(ct, ct, trees) ||
+        !checked_mul(trees, 3, work.ring_bootstrap_slots) ||
+        work.ring_bootstrap_slots >= static_cast<uint64_t>(args.ole_n)) {
+        return false;
+    }
+    work.ring_application_slots =
+        static_cast<uint64_t>(args.ole_n) - work.ring_bootstrap_slots;
     work.ring_batches =
-        1 + (cross - 1) / static_cast<uint64_t>(args.ole_n);
+        1 + (cross - 1) / work.ring_application_slots;
     if (work.ring_batches > static_cast<uint64_t>(INT_MAX) ||
         work.size_a + work.size_b + work.size_c >
             (kMaxRecordBytes - kRecordHeaderBytes - kDigestBytes) / sizeof(T)) {
@@ -996,13 +1015,15 @@ bool compute_correlation_plan(
         return false;
 
     std::vector<uint8_t> plan;
-    static constexpr uint8_t domain[] = "RINGLPN-FC-CONV-CORRELATION-PLAN-v2";
+    static constexpr uint8_t domain[] = "RINGLPN-FC-CONV-CORRELATION-PLAN-v3";
     plan.insert(plan.end(), domain, domain + sizeof(domain) - 1);
     ringlpn_freshness::put_u32_be(plan, ringlpn_freshness::kProtocolVersion);
     plan.insert(plan.end(), layer_identity.begin(), layer_identity.end());
     ringlpn_freshness::put_u64_be(plan, work.ring_batches);
     ringlpn_freshness::put_u64_be(plan, static_cast<uint64_t>(work.limbs));
     ringlpn_freshness::put_u64_be(plan, work.cross_terms);
+    ringlpn_freshness::put_u64_be(plan, work.ring_application_slots);
+    ringlpn_freshness::put_u64_be(plan, work.ring_bootstrap_slots);
     ringlpn_freshness::put_u64_be(plan, work.size_a);
     ringlpn_freshness::put_u64_be(plan, work.size_b);
     ringlpn_freshness::put_u64_be(plan, work.size_c);
@@ -1034,10 +1055,9 @@ bool compute_correlation_plan(
 
     std::set<uint64_t> handles;
     for (uint64_t batch = 0; batch < work.ring_batches; ++batch) {
-        const uint64_t start = batch * static_cast<uint64_t>(args.ole_n);
+        const uint64_t start = batch * work.ring_application_slots;
         const uint64_t used_slots =
-            std::min(static_cast<uint64_t>(args.ole_n),
-                     work.cross_terms - start);
+            std::min(work.ring_application_slots, work.cross_terms - start);
         for (int direction = 0; direction < 2; ++direction) {
             for (int limb = 0; limb < work.limbs; ++limb) {
                 ringlpn_freshness::Coordinates coordinates;
@@ -1074,9 +1094,12 @@ bool compute_correlation_plan(
                 ringlpn_freshness::put_u64_be(plan, phase_c_scalar);
                 ringlpn_freshness::put_u64_be(plan, public_shares);
                 ringlpn_freshness::put_u64_be(plan, used_slots);
+                const bool epoch_zero = batch == 0 && direction == 0;
+                ringlpn_freshness::put_u64_be(plan, epoch_zero ? 1 : 0);
                 if (!add(inventory.straight, phase_a) ||
                     !add(inventory.straight, phase_b_one_direction) ||
-                    !add(inventory.straight, phase_c_ots) ||
+                    (epoch_zero &&
+                     !add(inventory.straight, phase_c_ots)) ||
                     !add(inventory.reversed, phase_a) ||
                     !add(inventory.reversed, phase_b_one_direction)) {
                     return false;
@@ -1264,6 +1287,107 @@ bool add_us(double &target, double value) {
     return true;
 }
 
+class RingOleBootstrapPool final
+    : public ringlpn_2pdpf::PhaseCOleSource {
+  public:
+    RingOleBootstrapPool(int party, Word modulus)
+        : party_(party), modulus_(modulus) {}
+
+    size_t available() const {
+        return x_.size() >= cursor_ ? x_.size() - cursor_ : 0;
+    }
+
+    bool refill(const ringlpn_ole_party::RingOlePartyShares &shares,
+                uint64_t application_slots, uint64_t bootstrap_slots) {
+        if (available() != 0 || application_slots > shares.X_slots.size() ||
+            bootstrap_slots >
+                shares.X_slots.size() - static_cast<size_t>(application_slots) ||
+            shares.X_slots.size() != shares.Z_slots.size() ||
+            application_slots + bootstrap_slots != shares.X_slots.size()) {
+            return false;
+        }
+        const size_t begin = static_cast<size_t>(application_slots);
+        x_.assign(shares.X_slots.begin() + static_cast<ptrdiff_t>(begin),
+                  shares.X_slots.end());
+        z_.assign(shares.Z_slots.begin() + static_cast<ptrdiff_t>(begin),
+                  shares.Z_slots.end());
+        cursor_ = 0;
+        return x_.size() == static_cast<size_t>(bootstrap_slots);
+    }
+
+    uint64_t discard_remaining() {
+        const uint64_t discarded = static_cast<uint64_t>(available());
+        x_.clear();
+        z_.clear();
+        cursor_ = 0;
+        return discarded;
+    }
+
+    bool multiply(ringlpn_2pc::PartyChannel &channel,
+                  const std::vector<Word> &local_inputs, Word modulus,
+                  std::vector<Word> &product_shares) override {
+        product_shares.clear();
+        const size_t count = local_inputs.size();
+        const uint64_t bit_count =
+            static_cast<uint64_t>(ringlpn_2pc::field_bits(modulus));
+        if ((party_ != 0 && party_ != 1) || channel.party() != party_ ||
+            modulus != modulus_ || count == 0 || count > available() ||
+            count > static_cast<size_t>(INT_MAX) / sizeof(Word) ||
+            count > std::numeric_limits<uint64_t>::max() / (2 * bit_count)) {
+            return false;
+        }
+        const uint64_t count64 = static_cast<uint64_t>(count);
+        const uint64_t logical_bits = 2 * bit_count * count64;
+        const uint64_t share_bits = bit_count * count64;
+        const auto can_add = [](uint64_t target, uint64_t value) {
+            return target <= std::numeric_limits<uint64_t>::max() - value;
+        };
+        if (!can_add(channel.costs.scalar_oles, count64) ||
+            !can_add(channel.costs.phase_c.logical_bits, logical_bits) ||
+            !can_add(channel.costs.phase_c.revealed_bits_sent, share_bits) ||
+            !can_add(channel.costs.phase_c.revealed_bits_recv, share_bits)) {
+            return false;
+        }
+        std::vector<Word> mine(count);
+        std::vector<Word> peer(count);
+        for (size_t i = 0; i < count; ++i) {
+            if (local_inputs[i] >= modulus) return false;
+            mine[i] =
+                ringlpn_2pc::mod_sub(local_inputs[i], x_[cursor_ + i], modulus);
+        }
+        channel.exchange_bytes(reinterpret_cast<const uint8_t *>(mine.data()),
+                               reinterpret_cast<uint8_t *>(peer.data()),
+                               count * sizeof(Word));
+        product_shares.resize(count);
+        for (size_t i = 0; i < count; ++i) {
+            if (peer[i] >= modulus) return false;
+            Word share = ringlpn_2pc::mod_add(
+                z_[cursor_ + i],
+                mod_mul_host<Word>(peer[i], x_[cursor_ + i], modulus),
+                modulus);
+            if (party_ == 0) {
+                share = ringlpn_2pc::mod_add(
+                    share, mod_mul_host<Word>(mine[i], peer[i], modulus),
+                    modulus);
+            }
+            product_shares[i] = share;
+        }
+        cursor_ += count;
+        channel.costs.scalar_oles += count64;
+        channel.costs.phase_c.logical_bits += logical_bits;
+        channel.costs.phase_c.revealed_bits_sent += share_bits;
+        channel.costs.phase_c.revealed_bits_recv += share_bits;
+        return true;
+    }
+
+  private:
+    int party_;
+    Word modulus_;
+    std::vector<Word> x_;
+    std::vector<Word> z_;
+    size_t cursor_ = 0;
+};
+
 bool peak_host_rss_bytes(uint64_t &bytes) {
     rusage usage{};
     if (getrusage(RUSAGE_SELF, &usage) != 0 || usage.ru_maxrss < 0) {
@@ -1298,8 +1422,17 @@ bool generate_ring_ole(
     const ringlpn_freshness::Digest &layer_identity, uint64_t ring_batch,
     int direction, int limb, ringlpn_2pc::PartyChannel &channel,
     ringlpn_2pc::PartyRandom &random, AESGlobalContext *gaes,
+    RingOleBootstrapPool &bootstrap_pool,
     ringlpn_ole_party::RingOlePartyShares &shares, Counters &counters) {
     const Word modulus = modulus_for_limb(limb);
+    const bool epoch_zero = ring_batch == 0 && direction == 0;
+    if ((epoch_zero && bootstrap_pool.available() != 0) ||
+        (!epoch_zero &&
+         bootstrap_pool.available() != work.ring_bootstrap_slots)) {
+        return false;
+    }
+    ringlpn_2pdpf::PhaseCOleSource *phase_c_source =
+        epoch_zero ? nullptr : &bootstrap_pool;
     const int log_domain = work.regular
                                ? ringlpn_ole_party::log2_exact(2 * (args.ole_n / args.ole_t))
                                : ringlpn_ole_party::log2_exact(2 * args.ole_n);
@@ -1335,7 +1468,7 @@ bool generate_ring_ole(
     if (!local_valid ||
         !ringlpn_spfss::generate_party_spfss_keys_gpu_batched(
             args.party, spfss_params, batch, channel, random, gaes, grouped,
-            dpf) ||
+            dpf, phase_c_source) ||
         !add_us(counters.dpf_phase_a_us, dpf.phase_a_microseconds) ||
         !add_us(counters.dpf_phase_b_us, dpf.phase_b_microseconds) ||
         !add_us(counters.dpf_phase_c_us, dpf.phase_c_microseconds) ||
@@ -1460,18 +1593,30 @@ bool generate_ring_ole(
         !add_u64(counters.ring_ole_instances, 1)) {
         return false;
     }
-    if (!add_u64(counters.dpf_trees, ole_counters.trees) ||
+    if (dpf.scalar_oles != work.ring_bootstrap_slots ||
+        bootstrap_pool.available() != 0 ||
+        shares.X_slots.size() != static_cast<size_t>(args.ole_n) ||
+        shares.Z_slots.size() != static_cast<size_t>(args.ole_n) ||
+        !bootstrap_pool.refill(shares, work.ring_application_slots,
+                               work.ring_bootstrap_slots) ||
+        !add_u64(counters.dpf_trees, ole_counters.trees) ||
         !add_u64(counters.key_bytes, ole_counters.key_bytes) ||
         !add_u64(counters.dpf_string_ots, dpf.string_ots_128) ||
         !add_u64(counters.dpf_bit_triples, dpf.bit_triples) ||
         !add_u64(counters.dpf_scalar_oles, dpf.scalar_oles) ||
+        !add_u64(epoch_zero ? counters.dpf_epoch_zero_scalar_oles
+                            : counters.dpf_pcg_scalar_oles,
+                 dpf.scalar_oles) ||
+        (!epoch_zero &&
+         !add_u64(counters.dpf_pcg_opening_words_sent, dpf.scalar_oles)) ||
+        !add_u64(counters.dpf_pcg_oles_reserved,
+                 work.ring_bootstrap_slots) ||
         !add_u64(counters.dpf_logical_opened_bits, dpf.logical_opened_bits) ||
         !add_u64(counters.dpf_meaningful_share_bits,
                  dpf.meaningful_share_bits)) {
         return false;
     }
-    return shares.X_slots.size() == static_cast<size_t>(args.ole_n) &&
-           shares.Z_slots.size() == static_cast<size_t>(args.ole_n);
+    return true;
 }
 
 bool exchange_openings(const Args &args, const PublicWork &work,
@@ -1483,9 +1628,9 @@ bool exchange_openings(const Args &args, const PublicWork &work,
                        std::vector<std::vector<Word>> &limb_acc,
                        Counters &counters) {
     const auto openings_start = Clock::now();
-    const uint64_t start = ring_batch * static_cast<uint64_t>(args.ole_n);
-    const uint64_t count = std::min(static_cast<uint64_t>(args.ole_n),
-                                    work.cross_terms - start);
+    const uint64_t start = ring_batch * work.ring_application_slots;
+    const uint64_t count =
+        std::min(work.ring_application_slots, work.cross_terms - start);
 #ifdef RINGLPN_LIVE_CONV
     std::vector<ConvTerm> batch_terms(static_cast<size_t>(count));
     for (uint64_t local = 0; local < count; ++local) {
@@ -1565,6 +1710,8 @@ bool exchange_openings(const Args &args, const PublicWork &work,
             limb_acc[static_cast<size_t>(limb)][output], cross, modulus);
     }
     if (!add_u64(counters.slots_used, count) ||
+        !add_u64(counters.ring_application_slots_discarded,
+                 work.ring_application_slots - count) ||
         !add_u64(counters.protocol_dependency_rounds, 1) ||
         !add_us(counters.derandomization_openings_us,
                 elapsed_us(openings_start))) {
@@ -1837,13 +1984,18 @@ void print_party_header() {
     std::cout
 #ifdef RINGLPN_LIVE_CONV
         << "party,qbits,bw,n,h,w,ci,fh,fw,co,padding,stride,oh,ow,"
-           "ole_n,ole_c,ole_t,noise,ring_batches,"
+           "ole_n,ole_c,ole_t,noise,ring_batches,ring_application_slots,"
+           "ring_bootstrap_slots,"
 #else
         << "party,qbits,bw,rows,inner,cols,ole_n,ole_c,ole_t,noise,ring_batches,"
+           "ring_application_slots,ring_bootstrap_slots,"
 #endif
         << "ring_ole_instances,slots_used,dpf_trees,dpf_string_ots,dpf_bit_triples,"
-        << "dpf_scalar_oles,dpf_logical_opened_bits,dpf_meaningful_share_bits,"
-        << "spfss_key_bytes,public_a_words_sent,derandomization_words_sent,"
+        << "dpf_scalar_oles,dpf_epoch_zero_scalar_oles,dpf_pcg_scalar_oles,"
+        << "dpf_pcg_oles_reserved,dpf_pcg_oles_discarded,"
+        << "dpf_pcg_opening_words_sent,dpf_logical_opened_bits,"
+        << "dpf_meaningful_share_bits,spfss_key_bytes,public_a_words_sent,"
+        << "derandomization_words_sent,"
         << "conversions,conversion_logical_opened_bits,"
         << "conversion_meaningful_share_bits,protocol_bytes_sent,"
         << "protocol_direction_switches,total_us,status,"
@@ -1865,19 +2017,17 @@ void print_party_header() {
         << "ot_ciphertext_bytes_sent,ot_ciphertext_bytes_received,"
         << "ot_inventory_straight_declared,ot_inventory_straight_consumed,"
         << "ot_inventory_reversed_declared,ot_inventory_reversed_consumed,"
-        << "ot_backend_review_status\n";
+        << "ot_backend_review_status,ring_application_slots_discarded\n";
 }
 
 int run_party(const Args &args) {
     PublicWork work;
-    bool local_valid = derive_work(args, work);
+    const bool work_valid = derive_work(args, work);
     const std::string output = record_path(args.out_prefix, args.party);
     const std::string temporary = output + ".tmp";
     std::error_code ec;
-    if (std::filesystem::exists(output, ec) ||
-        std::filesystem::exists(temporary, ec)) {
-        local_valid = false;
-    }
+    const bool output_absent = !std::filesystem::exists(output, ec) &&
+                               !std::filesystem::exists(temporary, ec);
     ringlpn_freshness::Digest layer_identity{};
     ringlpn_freshness::Digest plan_digest{};
     OtInventory ot_inventory;
@@ -1892,15 +2042,25 @@ int run_party(const Args &args) {
     const auto output_is_prefix = std::mismatch(
         output_absolute.begin(), output_absolute.end(), ledger.begin(),
         ledger.end());
-    if (!local_valid || ec ||
-        ledger_is_prefix.first == ledger.end() ||
-        output_is_prefix.first == output_absolute.end() ||
-        !compute_correlation_plan(args, work, layer_identity, plan_digest,
-                                  ot_inventory) ||
-        !ringlpn_freshness::claim_namespace_once(
-            args.ledger_path, args.party, args.invocation_id, layer_identity,
-            plan_digest, claim)) {
-        local_valid = false;
+    const bool paths_disjoint =
+        !ec && ledger_is_prefix.first != ledger.end() &&
+        output_is_prefix.first != output_absolute.end();
+    const bool plan_ok =
+        work_valid && output_absent && paths_disjoint &&
+        compute_correlation_plan(args, work, layer_identity, plan_digest,
+                                 ot_inventory);
+    const bool claim_ok =
+        plan_ok && ringlpn_freshness::claim_namespace_once(
+                       args.ledger_path, args.party, args.invocation_id,
+                       layer_identity, plan_digest, claim);
+    const bool local_valid = plan_ok && claim_ok;
+    if (!local_valid) {
+        std::fprintf(stderr,
+                     "[two-party-fc] local preflight failed: work=%d "
+                     "output-absent=%d paths-disjoint=%d plan=%d claim=%d\n",
+                     work_valid ? 1 : 0, output_absent ? 1 : 0,
+                     paths_disjoint ? 1 : 0, plan_ok ? 1 : 0,
+                     claim_ok ? 1 : 0);
     }
 
     Counters counters;
@@ -1945,6 +2105,11 @@ int run_party(const Args &args) {
     std::vector<T> y_share = sample_ring_words(work.size_c, args.bw, random);
     std::vector<std::vector<Word>> limb_acc(
         static_cast<size_t>(work.limbs), std::vector<Word>(work.size_c, 0));
+    std::vector<RingOleBootstrapPool> bootstrap_pools;
+    bootstrap_pools.reserve(static_cast<size_t>(work.limbs));
+    for (int limb = 0; limb < work.limbs; ++limb) {
+        bootstrap_pools.emplace_back(args.party, modulus_for_limb(limb));
+    }
     bool ok =
         accumulate_local_products(args, work, a_share, b_share, limb_acc);
     for (uint64_t ring_batch = 0;
@@ -1954,7 +2119,9 @@ int run_party(const Args &args) {
                 ringlpn_ole_party::RingOlePartyShares shares;
                 const bool generated = generate_ring_ole(
                     args, work, layer_identity, ring_batch, direction, limb,
-                    channel, random, &gaes, shares, counters);
+                    channel, random, &gaes,
+                    bootstrap_pools[static_cast<size_t>(limb)], shares,
+                    counters);
                 gpu_memory.sample();
                 uint8_t mine = generated ? 1 : 0;
                 uint8_t peer = 0;
@@ -1969,8 +2136,24 @@ int run_party(const Args &args) {
             }
         }
     }
+    if (ok) {
+        for (RingOleBootstrapPool &pool : bootstrap_pools) {
+            const uint64_t discarded = pool.discard_remaining();
+            if (discarded != work.ring_bootstrap_slots ||
+                !add_u64(counters.dpf_pcg_oles_discarded, discarded)) {
+                ok = false;
+                break;
+            }
+        }
+    }
     uint64_t expected_ring_ole_instances = 0;
     uint64_t expected_public_a_words = 0;
+    uint64_t expected_scalar_oles = 0;
+    uint64_t expected_epoch_zero_oles = 0;
+    uint64_t expected_pcg_oles = 0;
+    uint64_t expected_slots_used = 0;
+    uint64_t expected_application_capacity = 0;
+    uint64_t expected_application_discarded = 0;
     if (!checked_mul(work.ring_batches, static_cast<uint64_t>(2 * work.limbs),
                      expected_ring_ole_instances) ||
         !checked_mul(expected_ring_ole_instances,
@@ -1979,8 +2162,35 @@ int run_party(const Args &args) {
         !checked_mul(expected_public_a_words,
                      static_cast<uint64_t>(args.ole_n),
                      expected_public_a_words) ||
-        counters.ring_ole_instances != expected_ring_ole_instances ||
-        counters.public_a_words_sent != expected_public_a_words) {
+        !checked_mul(expected_ring_ole_instances, work.ring_bootstrap_slots,
+                     expected_scalar_oles) ||
+        !checked_mul(static_cast<uint64_t>(work.limbs),
+                     work.ring_bootstrap_slots, expected_epoch_zero_oles) ||
+        expected_scalar_oles < expected_epoch_zero_oles ||
+        !checked_mul(work.cross_terms,
+                     static_cast<uint64_t>(2 * work.limbs),
+                     expected_slots_used) ||
+        !checked_mul(expected_ring_ole_instances,
+                     work.ring_application_slots,
+                     expected_application_capacity) ||
+        expected_application_capacity < expected_slots_used) {
+        ok = false;
+    } else {
+        expected_pcg_oles = expected_scalar_oles - expected_epoch_zero_oles;
+        expected_application_discarded =
+            expected_application_capacity - expected_slots_used;
+    }
+    if (counters.ring_ole_instances != expected_ring_ole_instances ||
+        counters.public_a_words_sent != expected_public_a_words ||
+        counters.slots_used != expected_slots_used ||
+        counters.dpf_scalar_oles != expected_scalar_oles ||
+        counters.dpf_epoch_zero_scalar_oles != expected_epoch_zero_oles ||
+        counters.dpf_pcg_scalar_oles != expected_pcg_oles ||
+        counters.dpf_pcg_oles_reserved != expected_scalar_oles ||
+        counters.dpf_pcg_oles_discarded != expected_epoch_zero_oles ||
+        counters.dpf_pcg_opening_words_sent != expected_pcg_oles ||
+        counters.ring_application_slots_discarded !=
+            expected_application_discarded) {
         ok = false;
     }
 
@@ -2064,9 +2274,16 @@ int run_party(const Args &args) {
 #endif
     std::cout << args.ole_n << ',' << args.ole_c << ',' << args.ole_t << ','
               << args.noise << ',' << work.ring_batches << ','
+              << work.ring_application_slots << ','
+              << work.ring_bootstrap_slots << ','
               << counters.ring_ole_instances << ',' << counters.slots_used << ','
               << counters.dpf_trees << ',' << counters.dpf_string_ots << ','
               << counters.dpf_bit_triples << ',' << counters.dpf_scalar_oles << ','
+              << counters.dpf_epoch_zero_scalar_oles << ','
+              << counters.dpf_pcg_scalar_oles << ','
+              << counters.dpf_pcg_oles_reserved << ','
+              << counters.dpf_pcg_oles_discarded << ','
+              << counters.dpf_pcg_opening_words_sent << ','
               << counters.dpf_logical_opened_bits << ','
               << counters.dpf_meaningful_share_bits << ',' << counters.key_bytes
               << ',' << counters.public_a_words_sent << ','
@@ -2153,13 +2370,14 @@ int run_party(const Args &args) {
         std::cout << ",NA," << straight.declared_count << ','
                   << straight.consumed_count << ',' << reversed.declared_count
                   << ',' << reversed.consumed_count
-                  << ",unreviewed-unmeasured\n";
+                  << ",unreviewed-unmeasured,"
+                  << counters.ring_application_slots_discarded << '\n';
     } else {
         std::cout << "NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"
                   << (ot_backend == ringlpn_2pc::OtBackend::SciIknp
                           ? "existing-default"
                           : "NA")
-                  << '\n';
+                  << ',' << counters.ring_application_slots_discarded << '\n';
     }
     return ok ? 0 : 1;
 }

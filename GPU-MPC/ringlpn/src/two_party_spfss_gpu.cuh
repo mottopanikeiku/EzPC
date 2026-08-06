@@ -11,7 +11,8 @@ inline bool generate_party_spfss_keys_gpu_batched(
     int party, const SpfssPublicParams &params,
     const SpfssPartyBatch &batch, ringlpn_2pc::PartyChannel &channel,
     ringlpn_2pc::PartyRandom &rng, AESGlobalContext *gaes,
-    GroupedHostKeys &grouped_keys, DpfCounters &counters) {
+    GroupedHostKeys &grouped_keys, DpfCounters &counters,
+    ringlpn_2pdpf::PhaseCOleSource *phase_c_ole_source = nullptr) {
     counters = DpfCounters{};
     grouped_keys.clear();
     if ((party != 0 && party != 1) || gaes == nullptr ||
@@ -24,7 +25,7 @@ inline bool generate_party_spfss_keys_gpu_batched(
     const bool generated = ringlpn_2pdpf::two_party_dpf_gen_batch_gpu_batched(
         party, params.log_domain, static_cast<Word>(params.modulus),
         batch.offsets, batch.beta_factors, channel, rng, gaes, flat_keys,
-        &stages);
+        phase_c_ole_source, &stages);
     const ringlpn_2pc::Counters after = channel.costs;
     const bool counters_ok =
         record_dpf_generation_counters(before, after, stages, counters);

@@ -55,9 +55,9 @@ MODELS="${MODELS:-ResNet18}"
 WORKLOAD="${WORKLOAD:-classifier}"
 FAIL_LAYER="${FAIL_LAYER:-}"
 SWAP_LAYER="${SWAP_LAYER:-}"
-SCHEMA_VERSION="ringlpn.two-party-fc-model-scale.v3"
+SCHEMA_VERSION="ringlpn.two-party-fc-model-scale.v4"
 PUBLICATION_DATE="2026-08-04"
-RESULT_COLUMNS=145
+RESULT_COLUMNS=159
 
 if [[ "$P0_GPU" == "$P1_GPU" ]]; then
   echo "P0_GPU and P1_GPU must be distinct" >&2
@@ -200,6 +200,14 @@ fields = [
     "gap", "stock_gpuKeygenMatmul_two_party_sequential_us",
     "unchanged_gpuMatmulBeaver_two_share_sequential_us", "p0_record_sha256",
     "p1_record_sha256", "p0_stdout_sha256", "p1_stdout_sha256", "checker_stdout_sha256",
+    "ring_application_slots", "ring_bootstrap_slots",
+    "p0_dpf_epoch_zero_scalar_oles", "p1_dpf_epoch_zero_scalar_oles",
+    "p0_dpf_pcg_scalar_oles", "p1_dpf_pcg_scalar_oles",
+    "p0_dpf_pcg_oles_reserved", "p1_dpf_pcg_oles_reserved",
+    "p0_dpf_pcg_oles_discarded", "p1_dpf_pcg_oles_discarded",
+    "p0_dpf_pcg_opening_words_sent", "p1_dpf_pcg_opening_words_sent",
+    "p0_ring_application_slots_discarded",
+    "p1_ring_application_slots_discarded",
 ]
 party_metric_names = [
     "protocol_dependency_rounds", "preflight_us", "ot_setup_us", "dpf_phase_a_us",
@@ -245,7 +253,7 @@ with open(csv_arg, "w", newline="", encoding="utf-8") as handle:
             "inner": row["inner"], "cols": row["cols"], "bw": row["bw"],
             "qbits": row["qbits"], "noise": row["noise"], "ole_n": row["ole_n"],
             "status": "unsupported" if row["operator"] == "conv2d" else "not_selected",
-            "schema_version": "ringlpn.two-party-fc-model-scale.v2",
+            "schema_version": "ringlpn.two-party-fc-model-scale.v4",
             "publication_date": "2026-08-04", "manifest_sha256": layer_sha,
             "workload_manifest_sha256": workload_sha, "model_order": row["model_order"],
             "source_layer": row["layer"], "linear_order": row["linear_order"],
@@ -271,7 +279,7 @@ with open(plan_arg, "w", encoding="utf-8", newline="") as handle:
             row["gap"], "yes" if row["is_classifier"] else "no",
         ])
 metadata = {
-    "schema_version": "ringlpn.two-party-fc-model-scale.v2", "publication_date": "2026-08-04",
+    "schema_version": "ringlpn.two-party-fc-model-scale.v4", "publication_date": "2026-08-04",
     "manifest_sha256": layer_sha, "workload_manifest_sha256": workload_sha,
     "workload": profile, "models": [],
 }
@@ -344,7 +352,13 @@ run_sample() {
   local gap="${21}" is_classifier="${22}" trial="${23}" role="${24}"
   local layer_label="$source_layer"
   [[ "$is_classifier" == yes ]] && layer_label=classifier
-  local ring_batches=$(( (rows * inner * cols + ole_n - 1) / ole_n ))
+  local bootstrap_slots=$((3 * (ole_c * ole_t) * (ole_c * ole_t)))
+  local application_slots=$((ole_n - bootstrap_slots))
+  if (( application_slots <= 0 )); then
+    echo "[two-party-fc-model] Ring-LPN instance cannot self-bootstrap" >&2
+    return 2
+  fi
+  local ring_batches=$(( (rows * inner * cols + application_slots - 1) / application_slots ))
   local safe_model="${model//[^A-Za-z0-9_-]/_}"
   local safe_layer="${source_layer//[^A-Za-z0-9_-]/_}"
   local dir="$WORKDIR/${safe_model}_${safe_layer}/${role}_${trial}"
@@ -368,7 +382,7 @@ run_sample() {
       "$source_text_sha256" "$batch_source_anchor" "$batch" "$layout" "$ole_c" "$ole_t" \
       "$WORKLOAD" no "$support_status" "$truncation_status" "$gap" "" "" \
       "$p0_record_sha" "$p1_record_sha" "$p0_stdout_sha" "$p1_stdout_sha" "$checker_stdout_sha" \
-      "${EMPTY_METRICS[@]}"
+      "" "" "" "" "" "" "" "" "" "" "" "" "" "" "${EMPTY_METRICS[@]}"
   }
 
   if matches_control "$FAIL_LAYER" "$model" "$source_layer"; then
@@ -468,7 +482,13 @@ run_sample() {
   IFS=',' read -r -a f0 <<< "$p0_row"
   IFS=',' read -r -a f1 <<< "$p1_row"
   IFS=',' read -r -a fc <<< "$check_row"
-  if [[ "${#f0[@]}" -ne 71 || "${#f1[@]}" -ne 71 || "${#fc[@]}" -ne 19 ||
+  local limbs=1
+  (( qbits == 128 )) && limbs=2
+  local expected_application_discarded=$((
+    ring_batches * 2 * limbs * application_slots -
+    2 * limbs * rows * inner * cols
+  ))
+  if [[ "${#f0[@]}" -ne 79 || "${#f1[@]}" -ne 79 || "${#fc[@]}" -ne 19 ||
         "${f0[0]}" -ne 0 || "${f1[0]}" -ne 1 ||
         "${f0[1]}" -ne "$qbits" || "${f1[1]}" -ne "$qbits" ||
         "${f0[2]}" -ne "$bw" || "${f1[2]}" -ne "$bw" ||
@@ -476,32 +496,38 @@ run_sample() {
         "${f0[4]}" -ne "$inner" || "${f1[4]}" -ne "$inner" ||
         "${f0[5]}" -ne "$cols" || "${f1[5]}" -ne "$cols" ||
         "${f0[10]}" -ne "$ring_batches" || "${f1[10]}" -ne "$ring_batches" ||
-        "${f0[11]}" -ne "${f1[11]}" || "${f0[13]}" -ne "${f1[13]}" ||
-        "${f0[20]}" -ne "${f1[20]}" || "${f0[28]}" != pass || "${f1[28]}" != pass ||
+        "${f0[11]}" -ne "$application_slots" ||
+        "${f1[11]}" -ne "$application_slots" ||
+        "${f0[12]}" -ne "$bootstrap_slots" ||
+        "${f1[12]}" -ne "$bootstrap_slots" ||
+        "${f0[13]}" -ne "${f1[13]}" || "${f0[15]}" -ne "${f1[15]}" ||
+        "${f0[27]}" -ne "${f1[27]}" || "${f0[35]}" != pass || "${f1[35]}" != pass ||
         "${fc[0]}" -ne "$qbits" || "${fc[1]}" -ne "$bw" ||
         "${fc[2]}" -ne "$rows" || "${fc[3]}" -ne "$inner" ||
         "${fc[4]}" -ne "$cols" || "${fc[5]}" -ne "$ring_batches" ||
         "${fc[9]}" != pass || "${fc[10]}" != pass ||
         "${fc[11]}" != pass || "${fc[12]}" != pass ||
-        "${f0[53]}" != NA || "${f1[53]}" != NA ||
-        "${f0[54]}" != "$invocation_id" || "${f1[54]}" != "$invocation_id" ||
+        "${f0[60]}" != NA || "${f1[60]}" != NA ||
+        "${f0[61]}" != "$invocation_id" || "${f1[61]}" != "$invocation_id" ||
         "${fc[17]}" != "$invocation_id" ||
-        "${f0[55]}" != "${f1[55]}" || "${f0[55]}" != "${fc[18]}" ||
-        ("${f0[56]}" != sci-iknp && "${f0[56]}" != emp-silent) ||
-        "${f0[56]}" != "${f1[56]}" ||
-        -z "${f0[57]}" || "${f0[57]}" != "${f1[57]}" ||
-        ("${f0[56]}" == sci-iknp &&
-         ("${f0[52]}" != yes || "${f1[52]}" != yes)) ||
-        ("${f0[56]}" == emp-silent &&
-         ("${f0[49]}" != NA || "${f1[49]}" != NA ||
-          "${f0[50]}" != NA || "${f1[50]}" != NA ||
-          "${f0[51]}" != NA || "${f1[51]}" != NA ||
-          "${f0[52]}" != NA || "${f1[52]}" != NA)) ||
-        "${f0[59]}" != NA || "${f1[59]}" != NA ||
-        "${f0[61]}" != NA || "${f1[61]}" != NA ||
-        "${f0[63]}" != NA || "${f1[63]}" != NA ||
-        "${f0[65]}" != NA || "${f1[65]}" != NA ||
-        -z "${f0[70]}" || "${f0[70]}" != "${f1[70]}" ]]; then
+        "${f0[62]}" != "${f1[62]}" || "${f0[62]}" != "${fc[18]}" ||
+        ("${f0[63]}" != sci-iknp && "${f0[63]}" != emp-silent) ||
+        "${f0[63]}" != "${f1[63]}" ||
+        -z "${f0[64]}" || "${f0[64]}" != "${f1[64]}" ||
+        ("${f0[63]}" == sci-iknp &&
+         ("${f0[59]}" != yes || "${f1[59]}" != yes)) ||
+        ("${f0[63]}" == emp-silent &&
+         ("${f0[56]}" != NA || "${f1[56]}" != NA ||
+          "${f0[57]}" != NA || "${f1[57]}" != NA ||
+          "${f0[58]}" != NA || "${f1[58]}" != NA ||
+          "${f0[59]}" != NA || "${f1[59]}" != NA)) ||
+        "${f0[66]}" != NA || "${f1[66]}" != NA ||
+        "${f0[68]}" != NA || "${f1[68]}" != NA ||
+        "${f0[70]}" != NA || "${f1[70]}" != NA ||
+        "${f0[72]}" != NA || "${f1[72]}" != NA ||
+        -z "${f0[77]}" || "${f0[77]}" != "${f1[77]}" ||
+        "${f0[78]}" -ne "$expected_application_discarded" ||
+        "${f1[78]}" -ne "$expected_application_discarded" ]]; then
     rm -f "$p0_record" "$p1_record"
     append_failed FAIL supported_untruncated
     had_failure=1
@@ -512,41 +538,43 @@ run_sample() {
   p1_stdout_sha="$(file_sha256 "$dir/p1.out")"
   checker_stdout_sha="$(file_sha256 "$dir/check.out")"
   local -a raw_metrics=()
-  for ((metric_index = 29; metric_index <= 53; ++metric_index)); do
+  for ((metric_index = 36; metric_index <= 60; ++metric_index)); do
     case "$metric_index" in
-      46) raw_metrics+=("${f1[45]}" "${f0[45]}") ;;
-      48) raw_metrics+=("${f1[47]}" "${f0[47]}") ;;
-      51) raw_metrics+=("${f1[50]}" "${f0[50]}") ;;
+      53) raw_metrics+=("${f1[52]}" "${f0[52]}") ;;
+      55) raw_metrics+=("${f1[54]}" "${f0[54]}") ;;
+      58) raw_metrics+=("${f1[57]}" "${f0[57]}") ;;
       *) raw_metrics+=("${f0[metric_index]}" "${f1[metric_index]}") ;;
     esac
   done
   for ((metric_index = 13; metric_index <= 16; ++metric_index)); do
     raw_metrics+=("${fc[metric_index]}")
   done
-  raw_metrics+=("$invocation_id" "${f0[55]}")
-  for ((metric_index = 56; metric_index <= 70; ++metric_index)); do
+  raw_metrics+=("$invocation_id" "${f0[62]}")
+  for ((metric_index = 63; metric_index <= 77; ++metric_index)); do
     case "$metric_index" in
-      59) raw_metrics+=("${f1[58]}" "${f0[58]}") ;;
-      61) raw_metrics+=("${f1[60]}" "${f0[60]}") ;;
-      63) raw_metrics+=("${f1[62]}" "${f0[62]}") ;;
-      65) raw_metrics+=("${f1[64]}" "${f0[64]}") ;;
+      66) raw_metrics+=("${f1[65]}" "${f0[65]}") ;;
+      68) raw_metrics+=("${f1[67]}" "${f0[67]}") ;;
+      70) raw_metrics+=("${f1[69]}" "${f0[69]}") ;;
+      72) raw_metrics+=("${f1[71]}" "${f0[71]}") ;;
       *) raw_metrics+=("${f0[metric_index]}" "${f1[metric_index]}") ;;
     esac
   done
   append_result_row \
     "$model" "$layer_label" "$trial" "$role" "$rows" "$inner" "$cols" "$bw" \
-    "$qbits" "$noise" "$ole_n" "$ring_batches" "${f0[11]}" "${f1[11]}" \
-    "${f0[13]}" "${f1[13]}" "${f0[20]}" "${f1[20]}" "${f0[25]}" "${f1[25]}" \
-    "${f0[27]}" "${f1[27]}" "$p0_record_bytes" "$p1_record_bytes" "${fc[6]}" \
+    "$qbits" "$noise" "$ole_n" "$ring_batches" "${f0[13]}" "${f1[13]}" \
+    "${f0[15]}" "${f1[15]}" "${f0[27]}" "${f1[27]}" "${f0[32]}" "${f1[32]}" \
+    "${f0[34]}" "${f1[34]}" "$p0_record_bytes" "$p1_record_bytes" "${fc[6]}" \
     "${fc[7]}" "${fc[8]}" "${fc[9]}" "${fc[10]}" "${fc[11]}" pass \
     "$SCHEMA_VERSION" "$PUBLICATION_DATE" "$manifest_sha256" "$workload_manifest_sha256" \
     "$model_order" "$source_layer" "$linear_order" "$forward_order" fc "$source_anchor" \
     "$source_text_sha256" "$batch_source_anchor" "$batch" "$layout" "$ole_c" "$ole_t" \
     "$WORKLOAD" yes supported_untruncated "$truncation_status" "$gap" "${fc[7]}" "${fc[8]}" \
     "$p0_record_sha" "$p1_record_sha" "$p0_stdout_sha" "$p1_stdout_sha" "$checker_stdout_sha" \
-    "${raw_metrics[@]}"
+    "$application_slots" "$bootstrap_slots" "${f0[19]}" "${f1[19]}" \
+    "${f0[20]}" "${f1[20]}" "${f0[21]}" "${f1[21]}" "${f0[22]}" "${f1[22]}" \
+    "${f0[23]}" "${f1[23]}" "${f0[78]}" "${f1[78]}" "${raw_metrics[@]}"
   printf 'validated_after_both_party_exits sid=%s invocation_id=%s ledger_digest=%s\n' \
-    "$sid" "$invocation_id" "${f0[55]}" > "$dir/COMMITTED"
+    "$sid" "$invocation_id" "${f0[62]}" > "$dir/COMMITTED"
   rm -f "$p0_record" "$p1_record"
   echo "[two-party-fc-model] $model:$source_layer $role $trial pass"
 }

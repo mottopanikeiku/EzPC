@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
     const PrgMode prg_mode =
         (args.prg == "gpu-aes") ? PrgMode::kGpuAes : PrgMode::kSplitmix;
     const bool batch_ok = two_party_dpf_gen_batch_cpu_baseline(
-        args.party, L, p, prg_mode, offs, beta_factors, ch, rng, keys);
+        args.party, L, p, prg_mode, offs, beta_factors, ch, rng, keys, nullptr);
     const double total_us = std::chrono::duration<double, std::micro>(
                                 std::chrono::steady_clock::now() - t_start)
                                 .count();

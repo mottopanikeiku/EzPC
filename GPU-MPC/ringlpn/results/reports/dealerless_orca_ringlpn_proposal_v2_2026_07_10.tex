@@ -1,4 +1,4 @@
-% Dealerless Orca Ring-LPN proposal, v2.6 (2026-08-04).
+% Dealerless Orca Ring-LPN proposal, v2.7 (2026-08-06).
 % Restructured per advisor feedback on the 2026-06-10 draft:
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
@@ -37,9 +37,9 @@
 \newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
 \title{Dealerless Forward-FC Preprocessing for Orca:\\
-GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.6)}
+GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.7)}
 \author{Alp}
-\date{2026-08-04 \quad (v2.6; canonical correlation IDs and consume-once ledger)}
+\date{2026-08-06 \quad (v2.7; executable self-bootstrap and GPU reduction)}
 
 \begin{document}
 \maketitle
@@ -50,10 +50,11 @@ for its linear layers. The corrected source removes that dealer from one
 complete forward fully-connected (FC) preprocessing path: two independent
 processes sample party-local masks and sparse Ring-LPN noise, fix the unsent
 public identity $a_0=1$, jointly sample exact full-field shares only for
-$a_1,\ldots,a_{c-1}$, generate standard distributed point-function keys over
-SCI/IKNP and Gilboa OLE, expand Figure-2 Ring-LPN OLEs on separate GPUs,
-convert exact CRT shares to $\mathbb Z_{2^{32}}$, and emit byte-compatible
-Orca keys.
+$a_1,\ldots,a_{c-1}$, generate standard distributed point-function keys with
+real OT, use external Gilboa OLE only for the first Phase-C epoch of each CRT
+limb, reserve earlier Ring-LPN output to bootstrap every later epoch, expand
+Figure-2 Ring-LPN OLEs on separate GPUs, convert exact CRT shares to
+$\mathbb Z_{2^{32}}$, and emit byte-compatible Orca keys.
 Neither live process reads peer-private state; an omniscient checker runs only
 after both exit and validates the keys through Orca's unchanged
 \texttt{gpuMatmulBeaver}.
@@ -61,24 +62,26 @@ after both exit and validates the keys through Orca's unchanged
 The proof contribution is explicit and scoped. A level-by-level coupling shows
 that distributed key generation emits exactly the standard DPF correction
 words conditioned on the two roots; role-specific simulators cover correlated
-batches and the three-OLE payload step without the previously leaked control
-sign. A separate simulator proves the exact share conversion private in the
+batches, the three-product payload step, and the noncircular reserved-slot
+bootstrap without revealing the control sign. A separate simulator proves the
 edaBit/daBit/Boolean-triple hybrid. Under standard DPF/PRG and OT/OLE security,
 authenticated channels, and decisional Ring-LPN for the exact sparse
 distribution, these pieces give a conditional static-semi-honest theorem for
 forward FC.
 
 At the exact ResNet18 classifier-layer shape $1{\times}512{\times}1000$, ten
-current local-loopback trials all pass. Median preprocessing is 25.715\,s and
-sends 575{,}846{,}872 application bytes, versus 10.642\,ms for matched stock
+current local-loopback trials all pass. Median preprocessing is 8.942\,s and
+sends 159{,}469{,}294 application bytes, versus 10.706\,ms for matched stock
 trusted-dealer key generation; final payload size remains 4{,}108{,}096 bytes
-per party and the unchanged two-share online checker takes 1.106\,ms. This is
+per party and the unchanged two-share online checker takes 1.097\,ms. The
+measured opt-in EMP SilentFerret revision is independently unreviewed, so these
+are internal engineering diagnostics rather than publication evidence. This is
 a forward-FC preprocessing/checker measurement, not full-model inference or
-truncation; the negative comparison establishes feasibility and the
-optimization target, not a speedup. The exercised $(n,c,t)=(8192,2,8)$ setting is a correctness point:
-the primary-source audit found no reviewed concrete-security parameter pin.
-The paper therefore makes no 128-bit-security, WAN, malicious-security,
-training-layer, or full-dealerless-Orca claim.
+truncation; the negative comparison establishes feasibility and the next
+optimization target, not a speedup. The exercised $(n,c,t)=(8192,2,8)$ setting
+is a correctness point: the primary-source audit found no reviewed
+concrete-security parameter pin. The paper therefore makes no 128-bit-security,
+WAN, malicious-security, training-layer, or full-dealerless-Orca claim.
 \end{abstract}
 
 \section{Problem overview: Orca's preprocessing and its trusted dealer}
@@ -170,11 +173,13 @@ still blocks a deployable security claim. Nonlinear keys remain out of scope.
   one-process transcript retains \texttt{build\_spfss\_keys()} solely as a
   diagnostic/validation artifact; none of its timings are presented as live
   protocol measurements.
-\item[G2 --- Exact share conversion: closed in the hybrid and live path.]
-  Batched SCI/IKNP-generated edaBits, daBits, and Boolean triples implement
-  exact $\Z_Q\to\Z_{2^\bw}$ conversion. The wrap bit is never opened; the
-  simulator in \S\ref{sec:design-convert} proves privacy at the correlation
-  boundary. The current TCP transport is unauthenticated.
+\item[G2 --- Exact share conversion: closed.]
+  Batched edaBits, daBits, and Boolean triples from the selected OT backend
+  implement
+  exact $\Z_Q\to\Z_{2^\bw}$ conversion. The canonical suite uses SCI/IKNP; the
+  classifier benchmark uses the opt-in EMP-Silent backend. The wrap bit is
+  never opened; the simulator in \S\ref{sec:design-convert} proves privacy at
+  the correlation boundary. The current TCP transport is unauthenticated.
 \item[G3 --- Randomness separation: closed in the live path.] Private roots,
   masks, and noise come from each process's OpenSSL private DRBG. For every
   Ring-OLE correlation, $a_0=1$ is the unsent public identity polynomial and
@@ -194,17 +199,21 @@ still blocks a deployable security claim. Nonlinear keys remain out of scope.
 (1)~A live, dealer/oracle-free two-process forward-FC preprocessing artifact
 whose party-local outputs are consumed by unchanged Orca code;
 (2)~an exact algebraic coupling of distributed DPF correction words to
-standard generation, plus complete role-specific batch simulators;
-(3)~a hybrid-model privacy proof and live realization of exact
+standard generation, complete role-specific batch simulators, and an
+executable noncircular Ring-OLE-output bootstrap for every post-base Phase-C
+product;
+(3)~a tree-block GPU reduction that removes the measured Phase-C atomic
+bottleneck;
+(4)~a hybrid-model privacy proof and live realization of exact
 $\Z_Q\to\Z_{2^\bw}$ conversion;
-(4)~a source-to-transcript map and conditional forward-FC theorem with explicit
+(5)~a source-to-transcript map and conditional forward-FC theorem with explicit
 leakage, assumptions, and nonclaims;
-(5)~a reproducible exact-ResNet18-classifier evaluation with ten trials and a
+(6)~a reproducible exact-ResNet18-classifier evaluation with ten trials and a
 matched stock trusted-dealer baseline.
 The point-DPF and Ring-LPN generator primitives are prior work, not claimed as
-novel. The systems result is currently a feasibility result: its $2414\times$
-median preprocessing/dealer ratio and unpinned Ring-LPN parameters are
-publication risks, not competitive-system evidence.
+novel. The systems result is currently a feasibility result: its $831\times$
+median preprocessing/dealer ratio, unreviewed measured OT backend, and unpinned
+Ring-LPN parameters are publication risks, not competitive-system evidence.
 
 \section{Motivation: why dealerless, and why on GPUs}
 \label{sec:motivation}
@@ -292,12 +301,13 @@ dominates the cost} ($\sim$99\% at realistic noise weights; the NTT is under
 1\%). That workload is embarrassingly parallel and exactly GPU-shaped, and it
 is why our expansion runs in milliseconds on one GPU
 (13.3\,ms at the smoke parameters; 61--881\,ms at $t{=}64$ depending on noise
-regime). The proposed distributed key generation (\S\ref{sec:design-keygen})
-preserves this shape: all trees advance \emph{level-synchronously}, so the
-depth-14 tree walk has 14 sequential batches independent of how many
-thousands of trees are in flight. This is not an end-to-end round count:
-the input adder, correction-word openings, and two-stage payload
-multiplication add dependency stages to be measured with M1's real transport.
+regime). The live distributed key generation
+(\S\ref{sec:design-keygen}) preserves this shape: all trees advance
+\emph{level-synchronously}, so the depth-14 tree walk has 14 sequential batches
+independent of how many thousands of trees are in flight. This is not an end-
+to-end network-round count. The implementation reports the input adder,
+correction-word openings, and two-stage payload multiplications as semantic
+dependency layers, separately from transport direction switches.
 Orca itself is GPU-resident; its randomness factory should live on the same
 hardware, and our keys are written
 byte-compatibly so Orca's GPU online path runs unmodified.
@@ -367,12 +377,12 @@ principles govern the artifact:
 ]
 \node[int] (coin) {\textbf{D3\ \ exact public-$a$ coin} --- fix unsent $a_0=1$; exchange/add $(c-1)n$ full field-element shares; private state from per-party DRBG};
 \node[loc, below=of coin] (noise) {local sparse-noise sampling: $c$ polynomials, $t$ nonzeros per party};
-\node[int, below=of noise] (kg) {\textbf{D1\ \ distributed SPFSS key generation} --- SCI/IKNP/Gilboa tree walk, level-synchronous batches\\ standard-format full-width GPU-AES keys; exact correction-word coupling};
+\node[int, below=of noise] (kg) {\textbf{D1\ \ distributed SPFSS key generation} --- selected real OT; Gilboa Phase C only at each limb base, prior ring slots thereafter\\ standard-format full-width GPU-AES keys; exact correction-word coupling};
 \node[loc, below=of kg] (exp) {party-local GPU expansion: SPFSS full-domain eval $+$ cached-NTT polynomial arithmetic\\ $\Rightarrow$ ring OLE\quad $z_0+z_1 = x_0x_1$ in $\Ring_p$, per limb};
-\node[loc, below=of exp] (slot) {slot decomposition: forward NTT (a ring isomorphism) $\Rightarrow$ up to $n$ scalar OLEs per ring OLE};
+\node[loc, below=of exp] (slot) {slot decomposition: forward NTT $\Rightarrow n$ scalar OLEs; reserve $C_{\rm key}=3c^2t^2$ for next DPF Phase C\\ expose $C_{\rm app}=n-C_{\rm key}$ application slots};
 \node[int, below=of slot] (der) {derandomization: exchange $d = a - X_0[s]$,\ $e = b - X_1[s]$ per cross term};
 \node[loc, below=of der] (crt) {CRT/Garner lift to $\Z_\Q$ --- linear, each party lifts locally ($L{=}2$ only)};
-\node[int, below=of crt] (conv) {\textbf{D2\ \ exact secure share conversion} $\Z_\Q \to \modtwo$\\ live edaBit/daBit/Boolean-triple protocol over SCI/IKNP; hybrid privacy lemma};
+\node[int, below=of crt] (conv) {\textbf{D2\ \ exact secure share conversion} $\Z_\Q \to \modtwo$\\ live edaBit/daBit/Boolean-triple protocol over selected OT; hybrid privacy lemma};
 \node[loc, below=of conv] (wr) {bilateral best-effort party-local byte-compatible Orca key record};
 \node[fin, below=of wr] (onl) {\textbf{unchanged Orca online path} (\texttt{gpuMatmulBeaver}) --- consumer \emph{and} independent validation oracle};
 \foreach \a/\b in {coin/noise, noise/kg, kg/exp, exp/slot, slot/der, der/crt, crt/conv, conv/wr, wr/onl}
@@ -401,10 +411,12 @@ artifact. The transport is loopback and unauthenticated.}
 Two computationally bounded parties; \textbf{static semi-honest}
 (honest-but-curious) corruption of one party. The conditional theorem assumes
 authenticated point-to-point channels, AES as a PRG/PRF
-($\lambda{=}128$), standard semi-honest security of IKNP OT/Gilboa OLE and
-BGI DPF, and decisional splittable Ring-LPN for the exact selected sparse-noise
-distribution (\S\ref{sec:design-params}). The live artifact instantiates
-AES/IKNP/Gilboa but communicates over unauthenticated loopback, so it is
+($\lambda{=}128$), standard semi-honest security of the selected OT backend,
+the Gilboa field-multiplication wrapper, and BGI DPF, plus decisional
+splittable Ring-LPN for the exact selected sparse-noise distribution
+(\S\ref{sec:design-params}). The canonical suite instantiates SCI/IKNP; the
+classifier benchmark selects the opt-in, independently unreviewed EMP-Silent
+revision. Both communicate over unauthenticated loopback, so the runs are
 implementation/correctness evidence for the theorem rather than a secure
 network deployment.
 
@@ -416,11 +428,13 @@ claimable.
 \paragraph{Current evidence boundary.} The host artifact of
 \S\ref{sec:m1proto} remains a counted ideal-functionality prototype using the
 noncryptographic splitmix64 correctness PRG.
-The live path separately uses full-width GPU AES and real SCI/IKNP/Gilboa
-transports, exact public-polynomial sampling, and separate process/GPU state.
-Its proof is conditional on the unpinned Ring-LPN assumption, and its TCP
-channel lacks authentication; therefore neither
-artifact establishes an end-to-end 128-bit-security claim.
+The live path separately uses full-width GPU AES, the selected real OT backend,
+epoch-zero Gilboa OLE, consume-once Ring-OLE-output bootstrap, exact public-
+polynomial sampling, and separate process/GPU state. The canonical suite uses
+SCI/IKNP; the classifier run uses an independently unreviewed EMP-Silent
+revision. The proof is conditional on the unpinned Ring-LPN assumption, and the
+TCP channel lacks authentication; therefore neither artifact establishes an
+end-to-end 128-bit-security claim.
 
 \subsection{D1: Distributed SPFSS key generation (removes G1)}
 \label{sec:design-keygen}
@@ -468,7 +482,8 @@ $\alpha$, so that opening was invalid.
 The input bits of $\alpha$ come from a secure ripple adder
 ($\log(2n)-1$ Beaver bit triples). This is the concrete integration choice
 for arithmetic position shares, not a claim of new ripple-adder research.
-The known 1-OT-per-level walk optimization remains M1 engineering.
+The known 1-OT-per-level walk remains an unimplemented performance
+optimization.
 
 \paragraph{Prototype status (implemented; \S\ref{sec:m1proto}).} The
 party-separated host implementation generates standard-format DPF keys from
@@ -594,8 +609,9 @@ $z_b\in[0,Q)$, this functionality computes
  v=S-\mathit{wrap}\,Q,
 \]
 then returns uniform additive shares of $v\bmod 2^\bw$ and never opens
-$\mathit{wrap}$. The live composition realizes these interfaces over
-SCI/IKNP and validates its finalized keys only after both party processes exit.
+$\mathit{wrap}$. The live composition realizes these interfaces over the
+selected real OT backend and validates its finalized keys only after both party
+processes exit.
 
 For canonical additive shares,
 $a_0+a_1<2^{\bw+1}$ and $b_0+b_1<2^{\bw+1}$, so a length-$K$
@@ -674,6 +690,23 @@ $s_0+s_1$ is opened. Thus
  2\lceil\log_2 p\rceil .
 \end{aligned}
 \]
+
+\emph{Concrete post-base realization}: a reserved prior Ring-OLE slot gives
+$(X_b,Z_b)$ with $Z_0+Z_1=X_0X_1$. For any Phase-C product
+$u_0u_1$, the parties exchange $\Delta_b=u_b-X_b$ and output
+\[
+g_0=Z_0+\Delta_0X_1+\Delta_0\Delta_1,\qquad
+g_1=Z_1+\Delta_1X_0.
+\]
+Their sum is $u_0u_1$. In the role-conditioned ideal Ring-OLE boundary the
+honest $X_{1-b}$ is uniform, hence the received $\Delta_{1-b}$ is a one-time
+pad independent of the honest input; the sent difference is determined by the
+corrupt party's permitted local input/share. This realizes the same ideal OLE
+and composes under distinct consume-once slot identifiers. The abstract counts
+above remain the standalone DPF contract. A bootstrapped tree concretely opens
+six masked field elements plus \textit{finalCW}, recorded as
+$7\lceil\log_2p\rceil$ logical and $8\lceil\log_2p\rceil$ transmitted-share-
+width bits in Phase C.
 
 \paragraph{Exact coupling to standard DPF generation.}
 After any fixed common-CW prefix, pair the parties' states at each tree prefix.
@@ -806,8 +839,9 @@ $e_0,\ldots,e_{c-1}\leftarrow\chi$,
 is indistinguishable from replacing the final component by uniform $R$.
 Sampling all $c$ public entries would be a different, unreviewed assumption.
 Also assume the four-call AES expansion is a PRG, the standard BGI single-key
-theorem, semi-honest IKNP/Gilboa security, authenticated channels, and the
-BCG+20 Figure-2 reduction.
+theorem, semi-honest security of the selected OT backend and Gilboa field-
+multiplication wrapper, authenticated channels, and the BCG+20 Figure-2
+reduction.
 
 Under those assumptions, the live forward protocol realizes the forward-matmul
 restriction of $\mathcal F_{\mathrm{FC}}$ with the leakage above. The simulator
@@ -816,17 +850,18 @@ ideal public tail minus the corrupt share. It retains the corrupt random tape,
 local $e_b$, and D1 key, reruns the source-local expansion, and thereby
 preserves both
 $X_b=e_{b,0}+\sum_{i=1}^{c-1}a_i e_{b,i}$ and recomputable $Z_b$. It then
-applies the complete D1 simulator and exact standard-key coupling; replaces
-only hidden $X_{1-b}$ and sets
-$Z_{1-b}=X_bX_{1-b}-Z_b$; samples each opposing derandomization opening under
-that fresh hidden OLE share; applies the exact conversion simulator; and adds
-the fresh
-uniform output-mask share before serializing
-$A_b\Vert B_b\Vert C_b$. Every replacement conditions on prior
-state. Across $m$ fresh direction/limb/batch instances, a public-order
-hybrid incurs at most the sum of the $m$ role-indexed Figure-2/module-Ring-LPN
-advantages; the theorem does not infer a joint claim from one unconditioned
-single-instance sample.
+replaces the first limb instance's external transports by ideal OLE and applies
+the complete D1 simulator and standard-key coupling; replaces only hidden
+$X_{1-b}$ and sets $Z_{1-b}=X_bX_{1-b}-Z_b$; then treats that ideal output's
+reserved slots as OLE correlations for the next DPF via the masked-difference
+lemma above. Induction in public epoch order covers every later DPF and
+expansion without assuming its own output. It samples each opposing application
+derandomization opening under the corresponding fresh hidden OLE share, applies
+the exact conversion simulator, and adds the fresh uniform output-mask share
+before serializing $A_b\Vert B_b\Vert C_b$. Every replacement conditions on
+prior state. Across $m$ fresh direction/limb/batch instances, the hybrid incurs
+at most the sum of the $m$ role-indexed Figure-2/module-Ring-LPN advantages; it
+does not infer a joint claim from one unconditioned single-instance sample.
 This theorem excludes the live
 unauthenticated TCP transport, malicious parties, and the unimplemented
 training-state transitions. The measured $(n,c,t)=(8192,2,8)$ point is a
@@ -839,41 +874,50 @@ ring OLE. The factory therefore feeds itself precisely when
 3c^2 t^2 \;<\; n,
 \label{eq:bootstrap}
 \end{equation}
-in which case the protocol runs in epochs --- a few output slots of each
-epoch are reserved as the seed OLEs of the next, as
-in~\cite{boyle2020ringlpn} --- and only epoch zero needs an external source
-(a small fixed batch of OT-based Gilboa multiplications). At the smoke
-parameters $(c,t,n)=(2,8,8192)$, key generation consumes 768 scalar-OLE
-slots and the output/input surplus is $8192/768=10.67\times$.
-Condition~\eqref{eq:bootstrap} \emph{couples the security audit to this
-design}: if M5 (\S\ref{sec:milestones}) raises $t$ to $64$ at $n=8192$, then
-$3c^2t^2=49{,}152>8{,}192$ and the ring dimension must grow with $t$ ---
-consistent with the $n\ge 2^{16}$ parameter points in the literature.
-Equation~\eqref{eq:bootstrap} is necessary, not a complete epoch budget. If
-$C_{\rm key}=3c^2t^2$, steady-state application capacity is at most
-$n-C_{\rm key}$ slots per expanded ring OLE. The current FC artifact counts
-$2L\lceil MKN/n\rceil$ ring OLEs for two cross directions and $L$ limbs; a
-self-sustaining implementation needs at least
-$2L\lceil MKN/(n-C_{\rm key})\rceil$ before conversion correlations, discarded
-tail slots, safety margin, abort/retry handling, and epoch-zero setup. At the
-preliminary $(2^{14},4,16)$ point only $4096$ of $16384$ slots (25\%) remain,
-so the $16{\times}32{\times}16$ q64/q128 cases need at least four/eight ring
-OLEs, twice the present artifact count. D5 must close that full allocation and
-prove consume-once identifiers; this draft does not.
+The live protocol realizes these epochs. It reserves the prefix
+$C_{\rm key}=3c^2t^2$ of every Ring-OLE output, exposes the suffix
+$C_{\rm app}=n-C_{\rm key}$ to FC, and rejects $C_{\rm key}\ge n$ before OT
+setup. The first instance of each CRT limb uses a fixed external batch of
+Gilboa multiplications. In public $(\textit{ring batch},\textit{direction},
+\textit{limb})$ order, every later instance consumes the preceding output's
+reserved slots using the masked-difference OLE realization above. The final
+per-limb continuation reserve is discarded with the consume-once invocation.
+At $(c,t,n)=(2,8,8192)$, $C_{\rm key}=768$,
+$C_{\rm app}=7424$, and the output/input surplus is
+$8192/768=10.67\times$.
+
+Noncircularity is an induction: epoch zero first replaces external OLE by
+$\mathcal F_{\rm OLE}$, then DPF by $\mathcal F_{\rm DDPF}$ and expansion by
+the role-indexed ideal Ring-OLE. Its reserved slots are therefore ideal OLE
+correlations for the next DPF; repeat in public order. Distinct slot IDs
+compose sequentially. The conclusion remains conditional on the multi-instance
+Ring-LPN obligation; bootstrapping does not solve that open assumption.
+
+For the classifier run, the exact count is
+$2L\lceil MKN/C_{\rm app}\rceil=276$ Ring-OLE instances
+($L=2$, 69 batches). Per party, 1{,}536 Phase-C products come from epoch zero,
+210{,}432 come from PCG output, and the 211{,}968 reserved slots split exactly
+into 210{,}432 consumed plus 1{,}536 terminal-discarded slots; 1{,}024
+application slots are also unused and reported. If $t=64$ at $n=8192$, then
+$3c^2t^2=49{,}152>8{,}192$ and the executable capacity control rejects before
+output; a reviewed parameter set must increase $n$.
 
 
 \paragraph{GPU batching.} All trees of a generation batch advance
 level-synchronously: the depth-14 tree walk has 14 sequential batched
-AES/PRG expansions and OT selections, independent of tree count. The secure
-ripple adder, correction-word openings, and two-stage payload multiplication
-add dependency stages. The current TCP implementation measures $6L+6$
-direction switches per batch, independent of tree count; this implementation
-counter is not an end-to-end network-round measurement.
+AES/PRG expansions and OT selections, independent of tree count. One CUDA
+block now owns each tree's XOR and final modular reductions; warp/block
+reductions replace the former same-address leaf atomics without changing the
+DPF transcript. The secure ripple adder, correction-word openings, and
+two-stage payload multiplication add dependency stages. The TCP implementation
+reports semantic dependency layers separately from direction switches; neither
+counter is a packet/network-round measurement.
 
 \paragraph{Cost model (per ring-OLE limb).} Each DPF tree of depth $d$ costs
-$\lambda d$ correlated-OT instances; Ferret-class silent OT amortizes each
-instance to roughly 1--8 bits of real traffic (implementation-maturity range;
-M1 replaces this estimate with measurements). With uniform noise there are
+$\lambda d$ correlated-OT instances; Ferret-class silent OT estimates place
+each instance at roughly 1--8 bits of real traffic across maturity regimes.
+The live implementation instead measures its selected backend; this range is
+analytic context only. With uniform noise there are
 $c^2t^2$ trees of depth $\log(2n) = 14$. With \emph{regular} noise (one
 nonzero per width-$n/t$ bucket), the $t^2$ product points of each polynomial
 pair fall on $2t-1$ predictable diagonals, so the same $c^2t^2$ trees shrink
@@ -901,11 +945,12 @@ regular, $t{=}64$ & 16{,}384 & 8  & 16{,}777{,}216 & 49{,}152 & 2.1--17\,MB\\
 \caption{Distributed key-generation cost per ring-OLE limb (derived).
 $n=8192$, $\lambda=128$; depth is $\log_2(2n)$ resp.\
 $\log_2(2n/t)$. Scalar OLEs equal three times the tree count. The silent-OT
-communication estimate excludes the still-unmeasured real OLE transport; M1
-replaces both with measurements. The host prototype of
-\S\ref{sec:m1proto} measures 2 string OTs per level (twice the table's
-optimized 1-OT-per-level estimate), depth$-1$ bit triples, and three scalar
-OLEs per tree.}
+communication column is an analytic range, not the live byte counter. The live
+implementation measures its selected backend and pays the scalar-OLE OT cost
+only for the first instance of each CRT limb; later rows consume Ring-LPN
+output slots and exchange the counted masked field words. The standalone host
+prototype of \S\ref{sec:m1proto} retains 2 string OTs per level,
+depth$-1$ bit triples, and three ideal scalar OLEs per tree.}
 \label{tab:keygen}
 \end{table}
 
@@ -979,7 +1024,7 @@ real marginals, chooses every masked opening uniformly, and completes only the
 honest transmitted shares. This closes P-CONV in the
 $(\mathcal F_{\mathrm{edaBit}},\mathcal F_{\mathrm{daBit}},
 \mathcal F_{\mathrm{BT}})$ hybrid. The concrete path remains conditional on
-SCI/IKNP's semi-honest OT security and an authenticated channel.
+the selected backend's semi-honest OT security and an authenticated channel.
 
 \paragraph{What remains for production D2.} Two things. \emph{Sourcing:} AND triples come
 from a binary PCG (the $\Z_2$ instantiation of our own pipeline, or
@@ -1110,6 +1155,7 @@ implementation NO-GO remains valid independently: regular noise requires
 $t\mid n$, and the uniform layout would materialize 7{,}272{,}923{,}136 host
 slots (at least 123.6\,GB in one process). No replacement parameter is pinned.
 
+\clearpage
 \subsection{Composition status}
 \label{sec:design-composition}
 \begin{table}[ht]
@@ -1122,8 +1168,8 @@ boundary & status & executable/proof evidence & consequence\\
 G1 centralized keygen & closed for forward FC & live distributed GPU-AES DPF
 keys in six cases and the model run; exact correction-word coupling &
 no dealer/oracle in DPF setup\\
-G2 share conversion & closed in hybrid & live SCI/IKNP conversion plus exact
-simulator; wrap remains hidden & conditional semi-honest privacy\\
+G2 share conversion & closed in hybrid & live selected-OT conversion plus
+exact simulator; wrap remains hidden & conditional semi-honest privacy\\
 G3 shared/private RNG & closed for live artifact & per-party OpenSSL DRBG,
 unsent identity $a_0=1$, and $(c-1)n$ exact full-field share exchange &
 exact required distribution\\
@@ -1146,23 +1192,27 @@ boundary, authenticated transport, and a reviewed Ring-LPN parameter pin.}
 \subsection{Per-layer cost model (worked example)}
 \label{sec:design-cost}
 
-For one FC layer $(M,K,N)$ at $L$ limbs, the current isolated-expansion
-artifact (which does not reserve next-epoch correlations) uses
-$2L\lceil MKN/n\rceil$ ring OLEs; derandomization traffic is
-$4MKNL$ field words; and conversions equal $MN$ (each per
-Table~\ref{tab:convert}). Key-generation material per isolated ring OLE is in
-Table~\ref{tab:keygen}; the online phase is unchanged because keys are
-byte-compatible. These are not complete self-sustaining epoch costs.
+For one FC layer $(M,K,N)$ at $L$ limbs, the current self-sustaining artifact
+uses
+\[
+2L\left\lceil\frac{MKN}{C_{\rm app}}\right\rceil
+\]
+Ring OLEs. Application derandomization sends $4MKNL$ field words. Every
+Ring-OLE instance after the first per limb also consumes $C_{\rm key}$ earlier
+slots and sends two masked-difference field words per consumed slot. Conversions
+equal $MN$ (each per Table~\ref{tab:convert}); key-generation material per Ring
+OLE is in Table~\ref{tab:keygen}. The online phase is unchanged because keys
+are byte-compatible.
 
-Worked artifact example, $16{\times}32{\times}16$ at q64 ($L{=}1$,
-$\bw{=}16$, smoke $n{=}8192,c{=}2,t{=}8$): $MKN=8192$ cross terms per
-direction give \textbf{2 isolated ring OLEs}; $32{,}768$ opened words are about
-256\,kB; and $MN=256$ conversions use $31{,}744$ AND triples plus 256 daBits
-in the ideal-correlation prototype. Reserving $C_{\rm key}=768$ leaves only
-7424 application slots per expansion, so even this example needs at least
-\textbf{4 q64 ring OLEs} in steady state, before conversion-PCG and safety
-reserves. Every measured artifact number is regenerated from suite CSVs; the
-production epoch total remains an S2 gate.
+Worked executable example, $16{\times}32{\times}16$ at q64 ($L{=}1$,
+$\bw{=}16$, $n{=}8192,c{=}2,t{=}8$): $MKN=8192$ cross terms per direction
+need four Ring OLEs at $C_{\rm app}=7424$. They provide 29{,}696 application
+slots, use 16{,}384, and report 13{,}312 unused. Of 3{,}072 reserved slots,
+2{,}304 bootstrap the three post-base instances and 768 are terminally
+discarded. Application derandomization sends 32{,}768 field words; bootstrap
+adds 4{,}608 masked-difference field words. The $MN=256$ conversions use
+31{,}744 AND triples plus 256 daBits. These capacities and consume/discard
+equalities are executable CSV gates, not a projected production epoch.
 
 \section{Experiment setup}
 \label{sec:experiments}
@@ -1174,10 +1224,12 @@ All measurements in this document were produced on one host: $4\times$ NVIDIA
 RTX 5000 Ada (32{,}760\,MiB each, compute capability 8.9; driver 560.35.03),
 CUDA 12.6, Linux 6.8, and a 32-core CPU allocation. Builds run on the host.
 Two-party tests run as separate processes pinned to distinct GPUs through
-\texttt{CUDA\_VISIBLE\_DEVICES}; current traffic uses a single-host IPv4
-loopback \texttt{PartyChannel}/SCI \texttt{NetIO} path. The live transport is
-not authenticated and the application-byte counter excludes TCP/IP and
-base-OT setup. The GPU NTT backend is a
+\texttt{CUDA\_VISIBLE\_DEVICES} over single-host IPv4 loopback. The canonical
+q64/q128 suite uses SCI/IKNP; the classifier benchmark selects the opt-in
+EMP-Silent backend at its pinned revision. Both use \texttt{PartyChannel}/SCI
+\texttt{NetIO}; neither transport is authenticated. Application-byte counters
+exclude backend setup and TCP/IP overhead.
+The GPU NTT backend is a
 cheddar-derived merged-stage kernel family (signed Montgomery arithmetic;
 q32/q64/q128-CRT; negacyclic) with the Hadamard product adaptively fused into
 the inverse-NTT load and forward NTTs of fixed public vectors cached across
@@ -1234,7 +1286,7 @@ per-scalar OLE calls the same layer consumed before slot packing.}
 \end{table}
 
 \paragraph{Distributed key-generation protocol-logic prototype
-(corrected 2026-07-29).}
+(corrected and rerun 2026-08-06).}
 \label{sec:m1proto}
 The artifact\footnote{\texttt{test\_distributed\_dpf\_keygen}; per-case
 results in \texttt{distributed\_dpf\_keygen\_prototype.csv}.} implements the
@@ -1301,27 +1353,29 @@ run observations, not transport measurements. Table~\ref{tab:m1proto} proves
 functional compatibility, edge correctness, and ideal-primitive accounting,
 not computational privacy or 128-bit security.
 
-\paragraph{Current live two-process ResNet18-classifier-layer preprocessing
-(2026-08-04 identity/freshness rerun).}
+\paragraph{Current live classifier-layer result (2026-08-06).}
 The recorded artifact evaluates the exact inference classifier-layer shape
 $1{\times}512{\times}1000$ at $\bw=32$ with
-$(n,c,t)=(8192,2,8)$, q128, regular noise, $C_{\rm key}=512$, and
-$C_{\rm app}=7680$. The source implements GPU-batched distributed DPF
-generation with GPU-AES expansion and correction-word reduction; each process
-reads only its own private noise record, runs on its own GPU, and emits only
-its own final key record. A 128-bit invocation identifier and persistent
-consume-once correlation ledger reject replay, duplicate, and stale-tail use.
-After both processes exit, the checker reconstructs the records, verifies the
-clear product, and invokes unchanged
-\texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver}.
+$(n,c,t)=(8192,2,8)$, q128, regular noise, $C_{\rm key}=768$, and
+$C_{\rm app}=7424$. It executes 69 batches and 276 Ring-OLE instances.
+The source implements GPU-batched distributed DPF generation with GPU-AES
+expansion, tree-block correction-word/leaf reductions, and Ring-OLE-output
+Phase-C bootstrap. Each process reads only its own private noise record, runs
+on its own GPU, and emits only its own final key record. A 128-bit invocation
+identifier and persistent consume-once correlation ledger reject replay,
+duplicate, stale-tail, and stale-bootstrap use. After both processes exit, the
+checker reconstructs the records, verifies the clear product, and invokes
+unchanged \texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver}.
 
-Ten current measured trials followed one warmup. The corrected public-vector
-construction exchanges $(c-1)n$ coefficients per ring batch and treats
-$a_0=1$ as public without sending it. The current aggregate CSV and digest-
-bound metadata pass all execution, record, transcript, freshness, and
-unchanged-online checks; full-model status is
-\texttt{FAIL\_UNSUPPORTED} because convolutions and truncation are not part of
-this run.
+Ten current measured trials followed one warmup using the pinned, opt-in
+EMP-Silent backend. The backend revision remains independently unreviewed, so
+the timing/traffic rows are internal engineering diagnostics. The corrected
+public-vector construction exchanges $(c-1)n$ coefficients per Ring-OLE
+instance and treats $a_0=1$ as public without sending it. The current v4
+aggregate CSV and digest-bound metadata pass all execution, record, transcript,
+freshness, bootstrap-accounting, and unchanged-online checks; full-model status
+is \texttt{FAIL\_UNSUPPORTED} because convolutions and truncation are not part
+of this run.
 
 \begin{table}[ht]
 \centering
@@ -1331,31 +1385,36 @@ this run.
 metric & current measured value\\
 \midrule
 warmup / measured trials & 1 / 10\\
-mean critical-path preprocessing & $25.699\pm0.058$ s\\
-median critical-path preprocessing & $25.715$ s\\
-median / matched stock dealer & $2414\times$\\
-median matched \texttt{gpuKeygenMatmul} & $10.642$ ms\\
-median unchanged two-share online & $1.106$ ms\\
-application bytes, both directions & $575{,}846{,}872$\\
-transport bytes incl.\ base OT & $575{,}890{,}852$\\
-public-$a$ coefficients, both parties & $4{,}128{,}768$\\
-protocol dependency rounds & $10{,}338$\\
-peak host / GPU bytes & $142{,}493{,}696$ / $27{,}241{,}086{,}976$\\
+mean critical-path preprocessing & $8.938\pm0.208$ s\\
+median critical-path preprocessing & $8.942$ s\\
+median / matched stock dealer & $831\times$\\
+median matched \texttt{gpuKeygenMatmul} & $10.706$ ms\\
+median unchanged two-share online & $1.097$ ms\\
+application bytes, both directions & $159{,}469{,}294$\\
+total recorded transport & $160{,}618{,}542$\\
+public-$a$ coefficients, both parties & $4{,}521{,}984$\\
+Phase-C products per party, epoch-zero / PCG & $1{,}536$ / $210{,}432$\\
+reserved slots per party, consumed / terminal discard & $210{,}432$ / $1{,}536$\\
+unused application slots per party & $1{,}024$\\
+semantic protocol dependency layers & $11{,}298$\\
+peak host / GPU bytes & $179{,}636{,}224$ / $27{,}241{,}086{,}976$\\
 final payload bytes per party & $4{,}108{,}096$\\
 serialized record bytes per party & $4{,}108{,}304$\\
 \bottomrule
 \end{tabular}
 \caption{Exact classifier-layer live result. Time statistics are over ten
-current measured trials. Application bytes exclude framing and base OT;
-the transport row includes measured base-OT setup.}
+current measured trials. Application bytes exclude OT setup; total transport
+includes the selected backend's setup, whose base-OT subcost is not exposed.}
 \label{tab:modelscale}
 \end{table}
 
-The median Phase-C payload-correction stage is 20.432\,s, about 79.4\% of
-critical-path preprocessing. Median GPU Ring-LPN expansion is 1.704\,s and
-the earlier DPF tree phases are 0.302\,s and 2.588\,s. Thus GPU batching has
-removed the old host-only DPF implementation from the live path, but the
-per-point payload-correction design remains the dominant systems bottleneck.
+The median Phase-C stage is now 0.182\,s (2.0\% of critical-path
+preprocessing), versus 20.432\,s in the preceding artifact. Phase B is now the
+largest measured stage at 3.366\,s (37.6\%); Phase A and GPU Ring-LPN expansion
+are 1.910\,s and 1.941\,s. The prior/current comparison changes the
+bootstrapping algorithm, GPU reduction, and selected OT backend together, so it
+is not an isolated microbenchmark attribution. It does establish that the
+former Phase-C leaf-atomic bottleneck is absent from the current trace.
 
 The only matched baseline is stock trusted-dealer
 \texttt{gpuKeygenMatmul}, measured at the same shape, masks, bit width,
@@ -1365,9 +1424,8 @@ $(2^{20},4,16)$ shape, but it uses Goldilocks arithmetic, internally sampled
 factors, a folded 16-group layout, synthetic preloaded base correlations, CPU
 local sockets, and no GPU output. It is therefore a reproducible closest
 distributed baseline, not a function-matched comparator; no timing ratio is
-reported. Current source also contains an opt-in EMP-Silent transport adapter
-whose focused full-loopback and representative FC/Conv correctness gates pass,
-but no publication timing has been measured for that backend.
+reported. The measured EMP-Silent revision passes focused full-loopback and
+representative FC/Conv gates but remains opt-in and independently unreviewed.
 
 \paragraph{Performance anchors.}
 Ring-OLE expansion ($n{=}8192$, $c{=}2$): 13.3\,ms (q64) and 26.8\,ms (q128)
@@ -1388,11 +1446,12 @@ FC test).
 \label{sec:milestones}
 
 \begin{description}
-\item[Closed --- current live forward path.] Current two-process q64/q128
-  smoke rows and the exact classifier run generate distributed GPU-AES DPF
-  keys, Ring-LPN OLE shares, converted q32 masks, and byte-compatible Orca FC
-  records. Corrupted, swapped, malformed, replayed, duplicated, stale-tail,
-  and invocation-collision controls reject; the unchanged online consumer
+\item[Closed --- current live forward path.] The current two-process q64/q128
+  SCI smoke rows and exact EMP classifier run generate distributed GPU-AES DPF
+  keys, self-bootstrapped Ring-LPN OLE shares, converted q32 masks, and byte-
+  compatible Orca FC records. Eleven negative controls cover corrupted or
+  swapped records, malformed messages, replay, stale state, nonpositive
+  capacity, and publication failure; the unchanged online consumer
   reconstructs the expected product.
 \item[Closed conditionally --- proof composition.] The theorem composes
   standard semi-honest DPF, OT/OLE, conversion, DRBG, and authenticated-channel
@@ -1404,12 +1463,12 @@ FC test).
   advantage analysis must pin $(n,c,t,p_0,p_1)$ before any security-level
   claim. All performance rows must then be rerun because the current point is
   feasibility-only.
-\item[Open --- performance engineering.] Phase-C payload correction dominates
-  current preprocessing. Replace the tree-per-point design with a
-  source-reviewed batched DMPF/P-DPF construction, measure the existing
-  EMP-Silent backend, reduce dependency rounds, and remeasure stage time,
-  traffic, and peak memory. The present $2414\times$ median gap is not a
-  competitive result.
+\item[Open --- performance engineering.] Phase B is now the largest measured
+  stage (37.6\%), followed by GPU Ring-LPN expansion and Phase A; Phase C is
+  2.0\%. Evaluate a source-reviewed batched DMPF/P-DPF construction that reduces
+  the per-point Phase-A/B work, independently review the measured EMP-Silent
+  revision, reduce dependency layers, and remeasure traffic/memory at pinned
+  parameters. The present $831\times$ median dealer gap is not competitive.
 \item[Open --- model coverage.] The FC wrapper now supports arbitrary valid
   forward matmul shapes, and a generalized stock-I/F/O Conv2D path passes
   representative q64/q128 smoke cases. Every forward convolution of a real
@@ -1503,30 +1562,32 @@ measured baseline. Neither backend is a contribution of this paper.
 
 The concrete result is narrower and stronger than the earlier proposal
 language: a dealer/oracle-free live preprocessing source path now spans
-GPU-batched distributed DPF generation, Ring-LPN OLE, slot extraction,
-secure q128-to-q32 conversion, byte-compatible key serialization, and
-unchanged Orca forward-FC consumption. The exact ResNet18 classifier-layer
-run passes one warmup plus ten current measured trials, as do the canonical
-q64/q128 controls. Source additionally contains a generalized Conv2D path,
-an opt-in EMP-Silent backend, and authenticated peer-isolation launchers; only
-their focused local correctness/source checks are complete, not a two-host
-deployment or full-model evaluation.
+GPU-batched distributed DPF generation, executable Ring-LPN-output bootstrap,
+tree-block GPU reduction, slot extraction, secure q128-to-q32 conversion,
+byte-compatible key serialization, and unchanged Orca forward-FC consumption.
+The exact ResNet18 classifier-layer run passes one warmup plus ten current
+measured trials, as do the canonical q64/q128 controls. Source additionally
+contains a generalized Conv2D path and authenticated peer-isolation launchers;
+only focused local checks cover Conv2D, and no two-host or full-model execution
+has occurred. The measured opt-in EMP-Silent revision remains independently
+unreviewed.
 
 This is a strong internal advisor checkpoint. It is not yet a submission-ready
 security/systems paper. Four blockers are decisive: no reviewed concrete-
-security parameter point; a roughly $2414\times$ median preprocessing gap to
-the matched dealer; no executed authenticated two-host/peer-isolation result;
-and novelty currently centered on integration of known
-DPF/Ring-LPN/conversion primitives. A cryptography-paper claim would require a
-new protocol, reduction, or parameter result; a systems-paper claim would
-require competitive performance and model-scale coverage.
+security parameter point; a roughly $831\times$ median preprocessing gap to
+the matched dealer with an unreviewed measured OT backend; no executed
+authenticated two-host/peer-isolation result; and novelty currently centered
+on integration/engineering of known DPF/Ring-LPN/conversion primitives. A
+cryptography-paper claim would require a new protocol, reduction, or parameter
+result; a systems-paper claim would require competitive performance and
+model-scale coverage.
 
 The highest-value next evidence is:
 (1)~an independently reviewed reduction and concrete parameter search for the
 exact regular-projection distribution and structured projected code;
-(2)~replacement of the Phase-C tree-per-point bottleneck by a
-source-reviewed DMPF/P-DPF design, followed by EMP-Silent stage, byte,
-dependency-round, and memory measurements;
+(2)~evaluation of a source-reviewed DMPF/P-DPF route for the remaining
+Phase-A/B point-key cost, independent EMP-Silent review, and renewed stage,
+byte, dependency-layer, and memory measurements;
 (3)~every forward linear layer and truncation/state handoff of at least one
 real inference model, repeated at the pinned parameters;
 (4)~authenticated two-host LAN and controlled-WAN execution under distinct
