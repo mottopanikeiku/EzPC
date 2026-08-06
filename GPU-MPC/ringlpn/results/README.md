@@ -54,12 +54,13 @@ Recorded current live evidence:
 
 Proof/evidence boundary:
 
-- The v2.7 TeX source and current security contract contain the canonical
+- The v2.8 TeX source and current security contract contain the canonical
   correlation functionality, persistent consume-once ledger, exact
   correction-word coupling, role-specific correlated-batch simulators, the
   masked-difference bootstrap lemma and noncircular epoch induction, conversion
-  simulator, source map, and conditional forward theorem. PDF build/inspection
-  status is recorded after the current rebuild.
+  simulator, source map, conditional forward theorem, regular-DMPF NO-GO, and
+  approved full-linear systems route. PDF build/inspection status is recorded
+  below.
 - `P-FRESH` is source/proof closed only under SHA-256 collision resistance and
   a trusted private persistent filesystem providing one deployment-wide ledger
   namespace, exclusive create, fsync, atomic rename, directory fsync, and no
@@ -80,10 +81,10 @@ Proof/evidence boundary:
 - The matched comparison is negative: median live preprocessing is about 831
   times stock dealer keygen. GPU batching, tree-block reduction, executable
   self-bootstrap, and memory/dependency-layer instrumentation are complete.
-  Phase-A/B/DMPF optimization, independent silent-backend review, authenticated
-  two-host evaluation, every real-model linear layer plus truncation/state
-  handoff, a compatible dealerless baseline, clean-clone reproduction, and
-  human review remain publication gates.
+  Phase-A/B performance, independent silent-backend review, authenticated
+  two-host evaluation, the approved every-forward-linear-layer implementation
+  plus truncation/state handoff, a compatible dealerless baseline, clean-clone
+  reproduction, and human review remain publication gates.
 
 The source-pinned closest-baseline audit now ranks newly public Reverse Cuckoo /
 libOTe first. It supersedes the 2026-07-29 “no public code” statement without
@@ -96,6 +97,17 @@ samples factors internally, and runs on CPU. A separate exact caller-factor
 for the explicitly labelled native 16-folded layout. Raw 31-diagonal timing and
 GPU evaluation remain unmeasured and non-comparable; no speedup crosses those
 boundaries.
+
+The specialized regular-DMPF design audit is also closed as a NO-GO, not an
+impossibility theorem. None of Reverse Cuckoo, dense NTT-slot multiplication,
+input-independent oblivious cuckoo, programmable DPF, secure active-path AES,
+or Ring-OLE-mask reuse simultaneously preserves the current fixed transcript,
+plain Ring-LPN/semi-honest boundary, 7,424 application slots, stock-key ABI,
+and exact deployed-shape cost. The owner selected full forward-linear-layer
+systems integration instead: all 20 ResNet18 convolutions, its classifier,
+exact truncation/state handoff, unchanged consumers, and matched baselines.
+See `reports/regular_dmpf_design_no_go_2026_08_06.md` and
+`reports/full_linear_layer_systems_plan_2026_08_06.md`.
 
 The complete canonical component gate is
 `RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<free-gpu>
@@ -140,6 +152,8 @@ are never copied into the image or either manifest.
 
 | File | What it is |
 |---|---|
+| `reports/full_linear_layer_systems_plan_2026_08_06.md` | **APPROVED NEXT IMPLEMENTATION ROUTE AND SESSION CHECKPOINT:** exact 21-layer ResNet18 inventory, one shared FC/Conv producer, all convolution shapes/shortcuts, exact stochastic truncation/state handoff, model-level freshness/ordering controls, matched experiment matrix, publication gate, resource sizing, and the resource-blocked 2026-08-06 convolution retry. |
+| `reports/regular_dmpf_design_no_go_2026_08_06.md` | **SPECIALIZED REGULAR-DMPF DESIGN NO-GO:** exact functionality/cost ceiling, six candidate dispositions, simulator obligations, source boundary, and explicit selection of the full-linear systems route. Not an impossibility theorem or implementation result. |
 | `reports/reverse_cuckoo_p0_baseline_2026_08_04.json` | **COMPLETE EXACT-`p0` NATIVE-FOLDED DISTRIBUTED ROW:** pinned libOTe adapter with caller factors, canonical 62-bit context, live `genBaseCors`, collision accumulation, 16,777,216-position differential check, duplicate and corruption controls. Setup 18,832,990 us / 52,791,184 bytes; online full-domain 2,070,844 us / 1,425,584 bytes; end-to-end including validation 20,948,042 us / 54,216,768 protocol bytes. Native 16-folded CPU layout only—not raw 31-diagonal or GPU timing; speedup/security claims are null. |
 | `reports/libote_reverse_cuckoo_stock_baseline_2026_08_04.md` | **MEASURED CLOSEST STOCK DISTRIBUTED BASELINE:** pinned clean libOTe build and corrected `-bench` dispatch at `(2^20,4,16)`; 12.43-s process wall, 22,939,444-KiB peak RSS, 11-s internal total, and 446.448-ms synthetic `setBase`. CPU/local-process/Goldilocks/internal-factor/native-16-folded evidence with live `genBaseCors` excluded—not exact `p0`, raw 31-diagonal, GPU, two-host, or live-setup-inclusive evidence, and not a speedup row. |
 | `reports/structured_attack_audit_2026_08_04.md` | **CURRENT STRUCTURED ATTACK AUDIT (internal/advisor; no pin):** exact live iid-uniform-`F_p^*` regular distribution, direct RSD versus projected occupancy/cancellation boundary, source-pinned 2024 regular-ISD and 2025 hybrid-RSD plus 2025/2026 QA/SSD and 2026 sparse-problem dispositions, formal negacyclic/cyclic orbit and stabilizer bound, corrected `d`-element orbit diagnostic, resource/data/success semantics, and explicit reduction/review blockers. Generic-estimator rows and orbit existence are not reviewed concrete Ring-LPN security. |
@@ -156,7 +170,7 @@ are never copied into the image or either manifest.
 | `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** exact DPF correction-word coupling, role-specific correlated-batch simulators, conversion simulator, full live source-to-transcript map, conditional forward theorem, obligation table, and explicit concrete-parameter/authentication/training limits. |
 | `reports/session_handoff_2026_07_21.md` | **HISTORICAL/SUPERSEDED** corrected-M1/v2.3 checkpoint handoff; current status is in `CLAUDE.md` |
 | `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **Corrected M1 host protocol-logic prototype**: party-separated and functionally validated by unchanged evaluator using ideal OT/triple/OLE and non-cryptographic correctness PRG; 2,432 trees, three OLEs/tree, old-sign regression, 5/5 corruptions, 6/6 invalid inputs, ideal-mask-draw and correlation-reuse controls, executable split accounting (1,908 logical / 3,816 meaningful share bits at depth 14); `dpf/distributed_dpf_keygen_prototype.{csv,log}` |
-| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **LIVE internal v2.7 technical report:** current GPU-batched two-process forward-FC design, exact conditional proof boundary and projection law, consume-once Ring-OLE-output Phase-C bootstrap, matched dealer comparison, current ten-trial ResNet18-classifier-layer evidence, closest-baseline disposition, related work, limitations, and explicit “not conference-ready” assessment. Warning-free, page-inspected 24-page PDF; strong internal/advisor checkpoint, not submission-ready. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+`.pdf`) | **LIVE internal v2.8 technical report:** current GPU-batched two-process forward-FC design, exact conditional proof boundary and projection law, consume-once Ring-OLE-output Phase-C bootstrap, matched dealer comparison, current ten-trial ResNet18-classifier-layer evidence, specialized regular-DMPF NO-GO, approved full-linear systems route, closest-baseline disposition, related work, limitations, and explicit “not conference-ready” assessment. Warning-free, page-inspected 24-page PDF; strong internal/advisor checkpoint, not submission-ready. |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |
 | `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |
@@ -182,6 +196,13 @@ Observed before the identity/freshness changes on 2026-08-04 with
 Re-run the focused controls and this gate on current source. The marker
 certifies only the exercised feasibility configurations, not concrete security
 or a live/model/two-host composition.
+
+The 2026-08-06 convolution smoke retry did not reach protocol execution:
+`initGPUMemPool()` failed with `cudaErrorMemoryAllocation` after only one of
+four GPUs had enough free memory for the two-distinct-GPU runner. This is
+resource-blocked and is not counted as a failed protocol gate; dated passing
+Conv2D evidence was not replaced. Retry with explicit `P0_GPU`/`P1_GPU` only
+when two distinct GPUs have sufficient free memory.
 
 ## Clean-clone/container reproduction
 

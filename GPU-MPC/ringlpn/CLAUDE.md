@@ -133,6 +133,19 @@ and independent human proof/source review. Training state transitions,
 nonlinear DCF keys, malicious security, and full dealerless Orca remain out of
 scope.
 
+**2026-08-06 systems-route decision.** A source- and cost-audited attempt to
+specialize DMPF generation for the deployed 60-group/256-point regular layout
+returned a design NO-GO: no candidate preserved the current fixed transcript,
+plain Ring-LPN/semi-honest boundary, application OLE capacity, and exact
+deployed-shape cost simultaneously. This is not an impossibility theorem.
+Reverse Cuckoo remains a non-comparable native-folded diagnostic, not the
+implementation route. The owner selected full forward-linear-layer systems
+integration next: all 20 ResNet18 convolutions plus its classifier, exact
+truncation/state handoffs, unchanged stock consumers, and matched baselines.
+The binding checkpoint is
+`results/reports/full_linear_layer_systems_plan_2026_08_06.md`; the candidate
+audit is `results/reports/regular_dmpf_design_no_go_2026_08_06.md`.
+
 The exact S2 audit is
 `results/reports/s2_parameter_novelty_provenance_audit_2026_07_29.md`.
 It invalidates the former “conservative pins”: BCG+20's projection
@@ -149,10 +162,10 @@ dispositions, structured-code reductions, resource/success accounting, and
 independent human review remain parameter-pin blockers.
 
 **Paper and publication verdict.** The current TeX source and rebuilt PDF are
-v2.7 at
+v2.8 at
 `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.{tex,pdf}`.
 The 24-page PDF is warning-free and every rendered page was inspected after
-the current evidence/proof/limitations update. It is a strong internal
+the current evidence/proof/limitations and systems-route update. It is a strong
 advisor checkpoint, not a submission-ready paper. A crypto paper needs a new
 protocol/reduction/parameter result; a systems paper needs a much faster
 end-to-end implementation and broader model/network evaluation.
@@ -400,7 +413,7 @@ this API, and the security contract contains its exact hybrid simulator.
 8. `results/reports/orca_fc_real_ole_transcript_memo.md` — real-OLE
    slot-packed transcript and NTT backend changes.
 9. `results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` —
-   current v2.7 source and rebuilt warning-free, page-inspected PDF.
+   current v2.8 source and rebuilt warning-free, page-inspected PDF.
 10. `results/reports/baseline_2026_06_10.md` — historical full-GPU
     environment, PASS counts, and performance anchors.
 
@@ -533,24 +546,27 @@ Do these in order; a component PASS never permits skipping a claim gate.
    Preserve the durable coordinator commit gate and bilateral crash cleanup;
    do not relabel the executable's best-effort rename/ack as transactional.
    Repeat the source/transcript/proof audit after protocol changes.
-3. **Optimize the measured bottleneck.** Evaluate a source-reviewed DMPF/P-DPF
-   construction that reduces current per-point Phase-A/B work, independently
-   review the pinned EMP-Silent backend, and preserve full-width seed/tag
-   semantics, noncircular bootstrap accounting, and stock-key compatibility.
-   Continue reporting stage time, setup/steady-state bytes, dependency layers,
-   GPU/CPU overlap, and peak host/GPU memory.
+3. **Do not implement an unproved DMPF shortcut.** The specialized regular-
+   DMPF audit found no candidate that preserves the current privacy/transcript,
+   7,424 application-slot budget, stock-key ABI, and deployed-shape cost. Keep
+   the measured Phase-A/B path while implementing the approved full-linear
+   systems plan. Reopen DMPF work only for a source-reviewed fixed-transcript
+   construction with a complete simulator and an exact cost below the current
+   256-tree ceiling.
 4. **Re-gate at the secure pinned set.** Once the parameter and optimized
    protocol paths land, rerun every host/GPU/live negative gate with fresh
    invocation IDs and unused ports. Regenerate all CSVs, manifests, digests,
    theorem assumptions, cost formulas, and paper tables; current feasibility
    rows remain separately labelled.
-5. **Broaden evaluation.** Execute every forward linear layer and its
-   truncation/state handoff for at least one real inference model at the pinned
-   set, with the exact matched stock dealer and closest compatible
-   dealerless-PCG baseline. Keep one warmup plus at least ten raw model trials,
-   add authenticated two-host LAN and controlled WAN environments, and report
-   confidence intervals, memory, dependency rounds, throughput, and unchanged
-   online time.
+5. **Execute the approved full-linear evaluation plan.** Cover all 20 ResNet18
+   convolutions, its classifier, and every configured stochastic truncation/
+   state handoff through unchanged stock consumers. Use exact model-order,
+   branch, shape, compatibility-ID, invocation, ledger, and stale-output
+   controls. Keep one warmup plus at least ten raw model trials, exact matched
+   stock dealer and closest compatible dealerless-PCG baselines, authenticated
+   two-host LAN/WAN environments, and report confidence intervals, memory,
+   dependency rounds, throughput, and unchanged online time. Start from
+   `results/reports/full_linear_layer_systems_plan_2026_08_06.md`.
 6. **Handoff discipline.** Keep Alp `<fcetin@hawk.iit.edu>` as the sole paper
    and final-history author; re-audit every intended commit for author identity
    and co-author/generated-by trailers. Do not send the Reverse Cuckoo outreach
@@ -568,15 +584,17 @@ parameter/security
 claim. Those branches are now executable and measured; they do not close S2.
 
 The next order is: reviewed structured-code/advantage result -> any required
-distribution/prime/backend changes -> Phase-A/B/DMPF optimization and
-independent silent-transport review -> renewed source/proof audit -> all-
-forward-linear-layer matched evaluation -> authenticated two-host evaluation
--> clean-clone submission candidate. GPU-batched DPF generation, executable
-Ring-OLE-output bootstrap, tree-block GPU reductions, dependency-layer/memory
-instrumentation, measured opt-in EMP-Silent execution, exact regular-projection
-analysis, and one source-pinned mismatched closest-baseline run are complete;
-none closes the remaining strict gates. The full gates and atomic checkpoint
-discipline remain in
+distribution/prime/backend changes -> approved all-forward-linear-layer
+integration with the measured DPF path -> independent silent-transport review
+-> renewed source/proof audit -> authenticated two-host matched evaluation ->
+clean-clone submission candidate. The specialized regular-DMPF audit is a
+design NO-GO; it may be reopened only for a fixed-transcript candidate that
+meets its exact simulator, application-capacity, stock-key, and cost gates.
+GPU-batched DPF generation, executable Ring-OLE-output bootstrap, tree-block
+GPU reductions, dependency-layer/memory instrumentation, measured opt-in EMP-
+Silent execution, exact regular-projection analysis, and one source-pinned
+mismatched closest-baseline run are complete; none closes the remaining strict
+gates. The full gates and atomic checkpoint discipline remain in
 `results/reports/publication_readiness_plan_2026_07_21.md`.
 
 Current D1 functionality uses real two-process SCI/IKNP or opt-in EMP-Silent
@@ -586,7 +604,7 @@ measured bytes/dependency layers/memory. Remaining performance work is
 Phase A/B plus backend review. The exact coupling and hybrid simulators close
 the conditional algebraic obligations; structured-code security, concrete
 parameters, and independent human review remain open. Components are D1--D5 in
-the v2.7 report.
+the v2.8 report.
 
 ## Perf anchors (RTX 5000 Ada, this repo's gate configs)
 

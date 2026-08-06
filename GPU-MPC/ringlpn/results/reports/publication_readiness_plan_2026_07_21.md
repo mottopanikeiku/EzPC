@@ -620,6 +620,17 @@ is functionality/layout/GPU matched, so no ratio is reported. Representative
 generalized Conv2D smoke cases pass. No pinned parameters, two-host network
 result, complete real-model linear-layer execution, truncation/state handoff,
 or compatible dealerless baseline exists; the row remains feasibility evidence.
+The owner selected the full forward-linear-layer systems route on 2026-08-06.
+The binding continuation plan is
+`full_linear_layer_systems_plan_2026_08_06.md`: all 20 ResNet18 convolutions,
+its classifier, exact configured truncation/state transitions, model-order and
+branch controls, unchanged stock consumers, and matched baselines. The
+specialized regular-DMPF audit returned NO-GO and is recorded in
+`regular_dmpf_design_no_go_2026_08_06.md`; no DMPF implementation is approved.
+An immediate canonical Conv2D retry was resource-blocked before protocol
+execution because only one GPU had enough free memory for a runner requiring
+two distinct GPUs. It is not counted as completed or failed protocol evidence,
+and the prior dated passing Conv2D rows remain the current evidence.
 
 
 **Purpose:** establish usefulness, costs, and bottlenecks without mixing evidence levels.
@@ -668,11 +679,11 @@ or compatible dealerless baseline exists; the row remains feasibility evidence.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-08-06:** the internal v2.7 technical report builds without
-LaTeX warnings and all 24 rendered pages were inspected. The pinned
-reproduction source/container manifests exist, but no clean-clone
-second-person run, venue conversion, or submission-candidate review has been
-executed. S10 remains open.
+**Status 2026-08-06:** the internal v2.8 technical report builds without
+LaTeX warnings and all 24 rendered pages were inspected after the systems-route
+checkpoint. The pinned reproduction source/container manifests exist, but no
+clean-clone second-person run, venue conversion, or submission-candidate review
+has been executed. S10 remains open.
 
 **Purpose:** produce the exact paper/artifact revision that can be submitted after advisor approval.
 
@@ -695,7 +706,7 @@ executed. S10 remains open.
 1. With the advisor, lock the target venue, title, disclosure requirements, and
    page/supplement limits. Alp remains the sole author; do not add commit
    co-author trailers or paper co-authors.
-2. Convert the v2.7 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+2. Convert the v2.8 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.

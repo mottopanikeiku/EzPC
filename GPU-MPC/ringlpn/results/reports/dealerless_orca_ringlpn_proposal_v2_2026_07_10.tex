@@ -1,4 +1,4 @@
-% Dealerless Orca Ring-LPN proposal, v2.7 (2026-08-06).
+% Dealerless Orca Ring-LPN proposal, v2.8 (2026-08-06).
 % Restructured per advisor feedback on the 2026-06-10 draft:
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
@@ -37,9 +37,9 @@
 \newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
 \title{Dealerless Forward-FC Preprocessing for Orca:\\
-GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.7)}
+GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.8)}
 \author{Alp}
-\date{2026-08-06 \quad (v2.7; executable self-bootstrap and GPU reduction)}
+\date{2026-08-06 \quad (v2.8; full-linear systems route checkpoint)}
 
 \begin{document}
 \maketitle
@@ -1465,10 +1465,13 @@ FC test).
   feasibility-only.
 \item[Open --- performance engineering.] Phase B is now the largest measured
   stage (37.6\%), followed by GPU Ring-LPN expansion and Phase A; Phase C is
-  2.0\%. Evaluate a source-reviewed batched DMPF/P-DPF construction that reduces
-  the per-point Phase-A/B work, independently review the measured EMP-Silent
-  revision, reduce dependency layers, and remeasure traffic/memory at pinned
-  parameters. The present $831\times$ median dealer gap is not competitive.
+  2.0\%. A source- and cost-audited specialized regular-DMPF design attempt
+  returned NO-GO: no reviewed candidate preserved the fixed transcript, plain
+  Ring-LPN boundary, application-slot budget, stock-key ABI, and deployed-shape
+  cost simultaneously. Keep the measured DPF path for the approved full-linear
+  systems integration, independently review EMP-Silent, reduce dependency
+  layers, and remeasure traffic/memory. The present $831\times$ median dealer
+  gap is not competitive.
 \item[Open --- model coverage.] The FC wrapper now supports arbitrary valid
   forward matmul shapes, and a generalized stock-I/F/O Conv2D path passes
   representative q64/q128 smoke cases. Every forward convolution of a real
@@ -1585,15 +1588,17 @@ model-scale coverage.
 The highest-value next evidence is:
 (1)~an independently reviewed reduction and concrete parameter search for the
 exact regular-projection distribution and structured projected code;
-(2)~evaluation of a source-reviewed DMPF/P-DPF route for the remaining
-Phase-A/B point-key cost, independent EMP-Silent review, and renewed stage,
-byte, dependency-layer, and memory measurements;
-(3)~every forward linear layer and truncation/state handoff of at least one
-real inference model, repeated at the pinned parameters;
+(2)~the approved full-forward-linear systems route: all 20 ResNet18
+convolutions, its classifier, and every configured truncation/state handoff
+through unchanged stock consumers, with exact order/branch/freshness controls;
+(3)~independent EMP-Silent review plus renewed stage, byte, dependency-layer,
+memory, source, and proof measurements;
 (4)~authenticated two-host LAN and controlled-WAN execution under distinct
 peer-isolation identities; and
 (5)~a matched dealer comparison plus separately labeled closest reproducible
-dealerless-PCG baselines, followed by renewed source/proof review.
+dealerless-PCG baselines. The specialized regular-DMPF route remains a design
+NO-GO unless a fixed-transcript construction later meets the documented
+simulator, application-capacity, stock-key, and cost gates.
 Training, nonlinear keys, and malicious security should remain explicit
 follow-on work unless separately implemented and evaluated.
 

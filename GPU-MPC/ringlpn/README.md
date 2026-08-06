@@ -2,9 +2,11 @@
 
 > **Start at [`CLAUDE.md`](CLAUDE.md)** — the canonical catch-up document
 > (current status, source map, validated claims vs. open boundaries, roadmap,
-> environment gotchas). Results and reports are indexed in
-> [`results/README.md`](results/README.md). The per-artifact handoff pointers
-> further down this file are historical and may lag.
+> environment gotchas). The approved full-linear continuation is
+> [`results/reports/full_linear_layer_systems_plan_2026_08_06.md`](results/reports/full_linear_layer_systems_plan_2026_08_06.md);
+> results and all reports are indexed in
+> [`results/README.md`](results/README.md). Older per-artifact pointers below
+> are historical and may lag.
 
 This folder is a standalone Ring-LPN benchmarking harness. It is separate from ORCA.
 

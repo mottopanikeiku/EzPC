@@ -95,14 +95,18 @@ q64/q128 denote one/two approximately 62-bit limbs, not security levels.
 1. Consume a reviewed concrete parameter manifest from Paper B; rerun every headline row at that exact tuple.
 2. Authenticate both SCI `NetIO` streams end to end and bind peer identity, both ports, SID, manifest, and executable digest. Raw WAN TCP is prohibited.
 3. Enforce separate OS/container/host identities and party-private roots; checker access begins only after both parties exit.
-4. Replace or restructure the measured tree-per-point Phase-C bottleneck with
-   a source-reviewed DMPF/P-DPF design while preserving exact stock-key output.
+4. The 2026-08-06 specialized regular-DMPF audit is a design NO-GO: no
+   source-reviewed candidate preserves the fixed transcript, current plain
+   Ring-LPN boundary, application-slot budget, stock-key output, and deployed-
+   shape cost. Keep the measured tree path for the approved full-linear
+   integration; reopen this optimization only for a candidate meeting the
+   exact gate in `regular_dmpf_design_no_go_2026_08_06.md`.
 5. Measure and independently review the existing EMP-Silent route; either
    establish its exact security/setup/bandwidth boundary or retain SCI/IKNP as
    the explicit negative result.
-6. Cover every forward FC and convolution layer of at least one real inference
-   model, including exact masks, layout, truncation/state handoff, and unchanged
-   online consumers.
+6. Execute `full_linear_layer_systems_plan_2026_08_06.md`: cover all 20
+   ResNet18 convolutions and its classifier, including exact masks, branches,
+   layouts, truncation/state handoff, and unchanged online consumers.
 7. Recheck dependency-stage counts as actual authenticated-network rounds;
    retain stages, base setup, bytes by stream, peak host RSS, peak GPU memory,
    aborts, and dispersion.
