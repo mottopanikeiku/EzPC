@@ -1,10 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <cuda_runtime.h>
@@ -15,6 +17,23 @@ namespace ringlpn_spfss_zp {
 
 using Word = uint64_t;
 using U128 = unsigned __int128;
+
+constexpr size_t kMaxBreadthStates = size_t(32) * 1024 * 1024;
+constexpr size_t kMaxPreparedBatchKeyCount = 65535;
+
+enum class DpfEvaluationPath {
+    kBreadth,
+    kRootToLeaf,
+};
+
+inline bool checked_size_product(size_t first, size_t second, size_t &out) {
+    if (first != 0 &&
+        second > std::numeric_limits<size_t>::max() / first) {
+        return false;
+    }
+    out = first * second;
+    return true;
+}
 
 struct GPUDPFZpKey {
     int party = 0;
@@ -245,6 +264,136 @@ __global__ void dpf_zp_full_eval_sum_kernel(DeviceGPUDPFZpKey key,
         atomic_add_mod(&out[x], share, key.modulus);
     }
 }
+__global__ void dpf_zp_full_eval_sum_batch_kernel(
+    const DeviceGPUDPFZpKey *keys, int key_count, Word domain, Word *out,
+    AESGlobalContext gaes) {
+    const int key_index = static_cast<int>(blockIdx.y);
+    if (key_index >= key_count) return;
+    const DeviceGPUDPFZpKey key = keys[key_index];
+    AESSharedContext saes;
+    loadSbox(&gaes, &saes);
+
+    const size_t total =
+        static_cast<size_t>(key.count) * static_cast<size_t>(domain);
+    const size_t tid =
+        static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (tid >= total) return;
+    const int dpf_index =
+        static_cast<int>(tid / static_cast<size_t>(domain));
+    const Word x = static_cast<Word>(
+        tid - static_cast<size_t>(dpf_index) * static_cast<size_t>(domain));
+    const Word share = eval_one_dpf_zp(key, dpf_index, x, &saes);
+    if (share != 0) {
+        atomic_add_mod(
+            out + static_cast<size_t>(key_index) * domain + x,
+            share, key.modulus);
+    }
+}
+__global__ void dpf_zp_batch_tree_init_kernel(
+    const DeviceGPUDPFZpKey *keys, int key_count, int max_count, Word domain,
+    AESBlock *seeds, uint8_t *tags) {
+    const size_t lane =
+        static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    const size_t lane_count =
+        static_cast<size_t>(key_count) * static_cast<size_t>(max_count);
+    if (lane >= lane_count) return;
+    const int key_index = static_cast<int>(lane / max_count);
+    const int dpf_index = static_cast<int>(lane % max_count);
+    const DeviceGPUDPFZpKey key = keys[key_index];
+    if (dpf_index >= key.count) return;
+    const size_t state_index = lane * static_cast<size_t>(domain);
+    seeds[state_index] = key.seeds[dpf_index];
+    tags[state_index] = static_cast<uint8_t>(key.party == 0 ? 0 : 1);
+}
+
+__global__ void dpf_zp_batch_tree_expand_kernel(
+    const DeviceGPUDPFZpKey *keys, int key_count, int max_count, Word domain,
+    int level, AESBlock *input_seeds, uint8_t *input_tags,
+    AESBlock *output_seeds, uint8_t *output_tags, AESGlobalContext gaes) {
+    AESSharedContext saes;
+    loadSbox(&gaes, &saes);
+    const size_t nodes = size_t(1) << level;
+    const size_t lane_count =
+        static_cast<size_t>(key_count) * static_cast<size_t>(max_count);
+    const size_t total = lane_count * nodes;
+    const size_t tid =
+        static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (tid >= total) return;
+    const size_t lane = tid / nodes;
+    const size_t node = tid % nodes;
+    const int key_index = static_cast<int>(lane / max_count);
+    const int dpf_index = static_cast<int>(lane % max_count);
+    const DeviceGPUDPFZpKey key = keys[key_index];
+    if (dpf_index >= key.count) return;
+
+    const size_t state_base = lane * static_cast<size_t>(domain);
+    const AESBlock seed = input_seeds[state_base + node];
+    const uint8_t tag = input_tags[state_base + node];
+    AESBlock left_seed, right_seed;
+    uint8_t left_tag, right_tag;
+    aes_prg_expand(
+        seed, &saes, left_seed, left_tag, right_seed, right_tag);
+    const size_t correction =
+        static_cast<size_t>(dpf_index) * key.log_domain + level;
+    if (tag != 0) {
+        left_seed ^= key.s_cw[correction];
+        right_seed ^= key.s_cw[correction];
+        left_tag ^= key.t_l_cw[correction];
+        right_tag ^= key.t_r_cw[correction];
+    }
+    const size_t child = state_base + 2 * node;
+    output_seeds[child] = left_seed;
+    output_seeds[child + 1] = right_seed;
+    output_tags[child] = static_cast<uint8_t>(left_tag & 1);
+    output_tags[child + 1] = static_cast<uint8_t>(right_tag & 1);
+}
+
+__global__ void dpf_zp_batch_tree_finish_kernel(
+    const DeviceGPUDPFZpKey *keys, int key_count, int max_count, Word domain,
+    const AESBlock *seeds, const uint8_t *tags, Word *out) {
+    const size_t total =
+        static_cast<size_t>(key_count) * static_cast<size_t>(domain);
+    const size_t tid =
+        static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (tid >= total) return;
+    const int key_index =
+        static_cast<int>(tid / static_cast<size_t>(domain));
+    const size_t point = tid % static_cast<size_t>(domain);
+    const DeviceGPUDPFZpKey key = keys[key_index];
+    Word sum = 0;
+    for (int dpf_index = 0; dpf_index < key.count; ++dpf_index) {
+        const size_t lane =
+            static_cast<size_t>(key_index) * max_count + dpf_index;
+        const size_t state_index =
+            lane * static_cast<size_t>(domain) + point;
+        Word value = convert_zp(seeds[state_index], key.modulus);
+        if (tags[state_index] != 0) {
+            value = mod_add(value, key.final_cw[dpf_index], key.modulus);
+        }
+        if (key.party != 0) value = mod_sub(0, value, key.modulus);
+        sum = mod_add(sum, value, key.modulus);
+    }
+    out[tid] = sum;
+}
+
+inline void gpuDpfZpFullEvalSumPrepared(const DeviceGPUDPFZpKey &key,
+                                        Word *d_out,
+                                        AESGlobalContext *gaes) {
+    assert(key.log_domain > 0 && key.log_domain < 63);
+    assert(key.count > 0);
+    const Word domain = Word(1) << key.log_domain;
+    cuda_check(cudaMemset(d_out, 0, static_cast<size_t>(domain) * sizeof(Word)),
+               "zero prepared DPF Zp full-eval output");
+    constexpr int block = 128;
+    const size_t total =
+        static_cast<size_t>(key.count) * static_cast<size_t>(domain);
+    const int grid = static_cast<int>(
+        (total + static_cast<size_t>(block) - 1) /
+        static_cast<size_t>(block));
+    dpf_zp_full_eval_sum_kernel<<<grid, block>>>(
+        key, domain, d_out, *gaes);
+    cuda_check(cudaGetLastError(), "launch prepared DPF Zp full eval");
+}
 
 inline size_t serializedSizeGPUDPFZpKey(const GPUDPFZpKey &key) {
     return 4 * sizeof(int) + sizeof(Word) +
@@ -360,6 +509,325 @@ inline void free_device_key(AESBlock *d_seeds,
     cudaFree(d_t_l_cw);
     cudaFree(d_t_r_cw);
     cudaFree(d_final_cw);
+}
+class DeviceGPUDPFZpKeyBatch {
+  public:
+    DeviceGPUDPFZpKeyBatch() = default;
+    DeviceGPUDPFZpKeyBatch(const DeviceGPUDPFZpKeyBatch &) = delete;
+    DeviceGPUDPFZpKeyBatch &operator=(const DeviceGPUDPFZpKeyBatch &) = delete;
+    ~DeviceGPUDPFZpKeyBatch() { cleanup(); }
+
+    bool initialize(const std::vector<GPUDPFZpKey> &keys,
+                    bool enable_breadth_workspace = true) {
+        cleanup();
+        if (keys.empty()) return false;
+        size_t seed_count = 0;
+        size_t level_count = 0;
+        const int log_domain = keys.front().log_domain;
+        const Word modulus = keys.front().modulus;
+        int max_count = 0;
+        for (const GPUDPFZpKey &key : keys) {
+            if (key.count <= 0 || key.log_domain != log_domain ||
+                key.log_domain <= 0 || key.log_domain >= 63 ||
+                key.modulus != modulus ||
+                key.seeds.size() != static_cast<size_t>(key.count) ||
+                key.s_cw.size() !=
+                    static_cast<size_t>(key.count) * key.log_domain ||
+                key.t_l_cw.size() != key.s_cw.size() ||
+                key.t_r_cw.size() != key.s_cw.size() ||
+                key.final_cw.size() != static_cast<size_t>(key.count)) {
+                return false;
+            }
+            if (key.seeds.size() >
+                    std::numeric_limits<size_t>::max() - seed_count ||
+                key.s_cw.size() >
+                    std::numeric_limits<size_t>::max() - level_count) {
+                return false;
+            }
+            seed_count += key.seeds.size();
+            level_count += key.s_cw.size();
+            max_count = std::max(max_count, key.count);
+        }
+
+        std::vector<AESBlock> seeds;
+        std::vector<AESBlock> s_cw;
+        std::vector<uint8_t> t_l_cw;
+        std::vector<uint8_t> t_r_cw;
+        std::vector<Word> final_cw;
+        seeds.reserve(seed_count);
+        s_cw.reserve(level_count);
+        t_l_cw.reserve(level_count);
+        t_r_cw.reserve(level_count);
+        final_cw.reserve(seed_count);
+        std::vector<size_t> seed_offsets;
+        std::vector<size_t> level_offsets;
+        seed_offsets.reserve(keys.size());
+        level_offsets.reserve(keys.size());
+        for (const GPUDPFZpKey &key : keys) {
+            seed_offsets.push_back(seeds.size());
+            level_offsets.push_back(s_cw.size());
+            seeds.insert(seeds.end(), key.seeds.begin(), key.seeds.end());
+            s_cw.insert(s_cw.end(), key.s_cw.begin(), key.s_cw.end());
+            t_l_cw.insert(t_l_cw.end(),
+                          key.t_l_cw.begin(), key.t_l_cw.end());
+            t_r_cw.insert(t_r_cw.end(),
+                          key.t_r_cw.begin(), key.t_r_cw.end());
+            final_cw.insert(final_cw.end(),
+                            key.final_cw.begin(), key.final_cw.end());
+        }
+
+        allocate_copy(&d_seeds_, seeds, "copy DPF batch seeds");
+        allocate_copy(&d_s_cw_, s_cw, "copy DPF batch seed CWs");
+        allocate_copy(&d_t_l_cw_, t_l_cw, "copy DPF batch left tag CWs");
+        allocate_copy(&d_t_r_cw_, t_r_cw, "copy DPF batch right tag CWs");
+        allocate_copy(&d_final_cw_, final_cw, "copy DPF batch final CWs");
+        keys_.reserve(keys.size());
+        for (size_t index = 0; index < keys.size(); ++index) {
+            const GPUDPFZpKey &key = keys[index];
+            keys_.push_back(DeviceGPUDPFZpKey{
+                key.party, key.log_domain, key.count, key.modulus,
+                d_seeds_ + seed_offsets[index],
+                d_s_cw_ + level_offsets[index],
+                d_t_l_cw_ + level_offsets[index],
+                d_t_r_cw_ + level_offsets[index],
+                d_final_cw_ + seed_offsets[index],
+            });
+        }
+        allocate_copy(&d_keys_, keys_, "copy DPF batch descriptors");
+        log_domain_ = log_domain;
+        max_count_ = max_count;
+        const size_t domain = size_t(1) << log_domain;
+        static std::atomic<bool> breadth_disabled_after_pressure{false};
+        if (enable_breadth_workspace &&
+            !breadth_disabled_after_pressure.load(std::memory_order_relaxed) &&
+            keys.size() <=
+                kMaxBreadthStates / static_cast<size_t>(max_count) / domain) {
+            const size_t candidate_state_count =
+                keys.size() * static_cast<size_t>(max_count) * domain;
+            const size_t seed_bytes = candidate_state_count * sizeof(AESBlock);
+            const size_t tag_bytes = candidate_state_count * sizeof(uint8_t);
+            cudaError_t status = cudaMalloc(
+                reinterpret_cast<void **>(&d_breadth_seeds0_), seed_bytes);
+            if (status == cudaSuccess) {
+                status = cudaMalloc(
+                    reinterpret_cast<void **>(&d_breadth_seeds1_), seed_bytes);
+            }
+            if (status == cudaSuccess) {
+                status = cudaMalloc(
+                    reinterpret_cast<void **>(&d_breadth_tags0_), tag_bytes);
+            }
+            if (status == cudaSuccess) {
+                status = cudaMalloc(
+                    reinterpret_cast<void **>(&d_breadth_tags1_), tag_bytes);
+            }
+            if (status == cudaSuccess) {
+                breadth_state_count_ = candidate_state_count;
+            } else {
+                cudaFree(d_breadth_seeds0_);
+                cudaFree(d_breadth_seeds1_);
+                cudaFree(d_breadth_tags0_);
+                cudaFree(d_breadth_tags1_);
+                d_breadth_seeds0_ = nullptr;
+                d_breadth_seeds1_ = nullptr;
+                d_breadth_tags0_ = nullptr;
+                d_breadth_tags1_ = nullptr;
+                breadth_state_count_ = 0;
+                cudaGetLastError();
+                if (!breadth_disabled_after_pressure.exchange(
+                        true, std::memory_order_relaxed)) {
+                    std::cerr
+                        << "[gpu-spfss] breadth workspace unavailable; using "
+                           "exact root-to-leaf fallback for this process\n";
+                }
+            }
+        }
+        return true;
+    }
+
+    const DeviceGPUDPFZpKey &at(size_t index) const {
+        return keys_.at(index);
+    }
+    const DeviceGPUDPFZpKey *device_keys() const { return d_keys_; }
+    size_t size() const { return keys_.size(); }
+    int log_domain() const { return log_domain_; }
+    int max_count() const { return max_count_; }
+    bool breadth_ready() const { return breadth_state_count_ != 0; }
+    size_t breadth_state_count() const { return breadth_state_count_; }
+    AESBlock *breadth_seeds0() const { return d_breadth_seeds0_; }
+    AESBlock *breadth_seeds1() const { return d_breadth_seeds1_; }
+    uint8_t *breadth_tags0() const { return d_breadth_tags0_; }
+    uint8_t *breadth_tags1() const { return d_breadth_tags1_; }
+
+    void cleanup() {
+        cudaFree(d_seeds_);
+        cudaFree(d_s_cw_);
+        cudaFree(d_t_l_cw_);
+        cudaFree(d_t_r_cw_);
+        cudaFree(d_final_cw_);
+        cudaFree(d_keys_);
+        cudaFree(d_breadth_seeds0_);
+        cudaFree(d_breadth_seeds1_);
+        cudaFree(d_breadth_tags0_);
+        cudaFree(d_breadth_tags1_);
+        d_seeds_ = nullptr;
+        d_s_cw_ = nullptr;
+        d_t_l_cw_ = nullptr;
+        d_t_r_cw_ = nullptr;
+        d_final_cw_ = nullptr;
+        d_keys_ = nullptr;
+        d_breadth_seeds0_ = nullptr;
+        d_breadth_seeds1_ = nullptr;
+        d_breadth_tags0_ = nullptr;
+        d_breadth_tags1_ = nullptr;
+        log_domain_ = 0;
+        max_count_ = 0;
+        breadth_state_count_ = 0;
+        keys_.clear();
+    }
+
+  private:
+    template <typename T>
+    static void allocate_copy(T **destination,
+                              const std::vector<T> &source,
+                              const char *label) {
+        cuda_check(cudaMalloc(reinterpret_cast<void **>(destination),
+                              source.size() * sizeof(T)), label);
+        cuda_check(cudaMemcpy(*destination, source.data(),
+                              source.size() * sizeof(T),
+                              cudaMemcpyHostToDevice), label);
+    }
+
+    std::vector<DeviceGPUDPFZpKey> keys_;
+    AESBlock *d_seeds_ = nullptr;
+    AESBlock *d_s_cw_ = nullptr;
+    uint8_t *d_t_l_cw_ = nullptr;
+    uint8_t *d_t_r_cw_ = nullptr;
+    Word *d_final_cw_ = nullptr;
+    DeviceGPUDPFZpKey *d_keys_ = nullptr;
+    AESBlock *d_breadth_seeds0_ = nullptr;
+    AESBlock *d_breadth_seeds1_ = nullptr;
+    uint8_t *d_breadth_tags0_ = nullptr;
+    uint8_t *d_breadth_tags1_ = nullptr;
+    int log_domain_ = 0;
+    int max_count_ = 0;
+    size_t breadth_state_count_ = 0;
+};
+
+inline bool gpuDpfZpFullEvalSumBatchPrepared(
+    const DeviceGPUDPFZpKeyBatch &keys, size_t key_offset, size_t key_count,
+    Word *d_out, size_t d_out_word_capacity, AESGlobalContext *gaes,
+    DpfEvaluationPath *executed_path = nullptr) {
+    if (gaes == nullptr || d_out == nullptr || key_count == 0 ||
+        key_count > keys.size() || key_offset > keys.size() - key_count ||
+        key_count > kMaxPreparedBatchKeyCount ||
+        key_count > static_cast<size_t>(std::numeric_limits<int>::max()) ||
+        keys.log_domain() <= 0 || keys.log_domain() >= 63 ||
+        keys.max_count() <= 0) {
+        return false;
+    }
+    const size_t domain = size_t(1) << keys.log_domain();
+    size_t output_words = 0;
+    size_t output_bytes = 0;
+    if (!checked_size_product(key_count, domain, output_words) ||
+        output_words > d_out_word_capacity ||
+        !checked_size_product(output_words, sizeof(Word), output_bytes)) {
+        return false;
+    }
+
+    constexpr size_t block = 128;
+    if (!keys.breadth_ready()) {
+        size_t threads = 0;
+        if (!checked_size_product(static_cast<size_t>(keys.max_count()),
+                                  domain, threads)) {
+            return false;
+        }
+        const size_t grid_x_size = (threads - 1) / block + 1;
+        if (grid_x_size == 0 ||
+            grid_x_size >
+                static_cast<size_t>(std::numeric_limits<unsigned>::max())) {
+            return false;
+        }
+        cuda_check(cudaMemset(d_out, 0, output_bytes),
+                   "zero prepared DPF Zp batch output");
+        const dim3 grid(static_cast<unsigned>(grid_x_size),
+                        static_cast<unsigned>(key_count));
+        dpf_zp_full_eval_sum_batch_kernel<<<grid, static_cast<int>(block)>>>(
+            keys.device_keys() + key_offset, static_cast<int>(key_count),
+            static_cast<Word>(domain), d_out, *gaes);
+        cuda_check(cudaGetLastError(),
+                   "launch prepared DPF Zp batch fallback eval");
+        if (executed_path != nullptr) {
+            *executed_path = DpfEvaluationPath::kRootToLeaf;
+        }
+        return true;
+    }
+
+    size_t states_per_key = 0;
+    size_t state_offset = 0;
+    size_t required_states = 0;
+    size_t lanes = 0;
+    if (!checked_size_product(static_cast<size_t>(keys.max_count()), domain,
+                              states_per_key) ||
+        !checked_size_product(key_offset, states_per_key, state_offset) ||
+        !checked_size_product(key_count, states_per_key, required_states) ||
+        state_offset > keys.breadth_state_count() ||
+        required_states > keys.breadth_state_count() - state_offset ||
+        !checked_size_product(key_count,
+                              static_cast<size_t>(keys.max_count()), lanes)) {
+        return false;
+    }
+    AESBlock *input_seeds = keys.breadth_seeds0() + state_offset;
+    AESBlock *output_seeds = keys.breadth_seeds1() + state_offset;
+    uint8_t *input_tags = keys.breadth_tags0() + state_offset;
+    uint8_t *output_tags = keys.breadth_tags1() + state_offset;
+    const size_t init_grid_size = (lanes - 1) / block + 1;
+    if (init_grid_size == 0 ||
+        init_grid_size >
+            static_cast<size_t>(std::numeric_limits<unsigned>::max())) {
+        return false;
+    }
+    dpf_zp_batch_tree_init_kernel<<<static_cast<unsigned>(init_grid_size),
+                                    static_cast<int>(block)>>>(
+        keys.device_keys() + key_offset, static_cast<int>(key_count),
+        keys.max_count(), static_cast<Word>(domain), input_seeds, input_tags);
+    cuda_check(cudaGetLastError(), "launch DPF batch breadth init");
+
+    for (int level = 0; level < keys.log_domain(); ++level) {
+        const size_t nodes = size_t(1) << level;
+        size_t threads = 0;
+        if (!checked_size_product(lanes, nodes, threads)) return false;
+        const size_t grid_size = (threads - 1) / block + 1;
+        if (grid_size == 0 ||
+            grid_size >
+                static_cast<size_t>(std::numeric_limits<unsigned>::max())) {
+            return false;
+        }
+        dpf_zp_batch_tree_expand_kernel<<<static_cast<unsigned>(grid_size),
+                                          static_cast<int>(block)>>>(
+            keys.device_keys() + key_offset, static_cast<int>(key_count),
+            keys.max_count(), static_cast<Word>(domain), level, input_seeds,
+            input_tags, output_seeds, output_tags, *gaes);
+        cuda_check(cudaGetLastError(), "launch DPF batch breadth level");
+        std::swap(input_seeds, output_seeds);
+        std::swap(input_tags, output_tags);
+    }
+
+    const size_t finish_grid_size = (output_words - 1) / block + 1;
+    if (finish_grid_size == 0 ||
+        finish_grid_size >
+            static_cast<size_t>(std::numeric_limits<unsigned>::max())) {
+        return false;
+    }
+    dpf_zp_batch_tree_finish_kernel<<<static_cast<unsigned>(finish_grid_size),
+                                      static_cast<int>(block)>>>(
+        keys.device_keys() + key_offset, static_cast<int>(key_count),
+        keys.max_count(), static_cast<Word>(domain), input_seeds, input_tags,
+        d_out);
+    cuda_check(cudaGetLastError(), "launch DPF batch breadth finish");
+    if (executed_path != nullptr) {
+        *executed_path = DpfEvaluationPath::kBreadth;
+    }
+    return true;
 }
 
 inline void gpuKeyGenDPFZpPair(const std::vector<Word> &alphas,
@@ -502,10 +970,7 @@ inline GPUDPFZpKey gpuKeyGenDPFZp(int party,
 inline void gpuDpfZpFullEvalSum(const GPUDPFZpKey &key,
                                 Word *d_out,
                                 AESGlobalContext *gaes) {
-    assert(key.log_domain > 0 && key.log_domain < 63);
-    Word domain = Word(1) << key.log_domain;
-    cuda_check(cudaMemset(d_out, 0, static_cast<size_t>(domain) * sizeof(Word)),
-               "zero DPF Zp full-eval output");
+    assert(key.log_domain > 0 && key.log_domain < 63 && key.count > 0);
 
     DeviceGPUDPFZpKey d_key;
     AESBlock *d_seeds = nullptr;
@@ -515,12 +980,7 @@ inline void gpuDpfZpFullEvalSum(const GPUDPFZpKey &key,
     Word *d_final_cw = nullptr;
     copy_to_device(key, d_key, &d_seeds, &d_s_cw, &d_t_l_cw, &d_t_r_cw, &d_final_cw);
 
-    size_t total = static_cast<size_t>(key.count) * static_cast<size_t>(domain);
-    int block = 128;
-    int grid = static_cast<int>((total + static_cast<size_t>(block) - 1) /
-                                static_cast<size_t>(block));
-    dpf_zp_full_eval_sum_kernel<<<grid, block>>>(d_key, domain, d_out, *gaes);
-    cuda_check(cudaGetLastError(), "launch DPF Zp full eval");
+    gpuDpfZpFullEvalSumPrepared(d_key, d_out, gaes);
     cuda_check(cudaDeviceSynchronize(), "sync DPF Zp full eval");
 
     free_device_key(d_seeds, d_s_cw, d_t_l_cw, d_t_r_cw, d_final_cw);

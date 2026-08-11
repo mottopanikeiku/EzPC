@@ -1,3 +1,9 @@
+> **HISTORICAL COMPONENT CHECKPOINT (2026-07-21; corrected 2026-07-29).**
+> Preserve the ideal-functionality prototype results below as dated evidence.
+> Its old downstream status and one-visible-GPU full-gate command are
+> superseded by `CLAUDE.md`, `results/README.md`, and the current security
+> contract; do not read them as the live FC/Conv disposition.
+
 # Distributed DPF keygen — corrected M1 host protocol-logic prototype (2026-07-21; S1 accounting correction 2026-07-29)
 
 **Claimable sentence:** “the distributed key-generation protocol logic is
@@ -131,18 +137,22 @@ The bootstrap condition is $3c^2t^2<n$; for $(c,t,n)=(2,8,8192)$, 768
 scalar-OLE slots are consumed and the output/input surplus is
 $8192/768=10.67\times$.
 
-The fresh host-only gate ended
-`[paper-smoke] HOST GATES PASS (GPU smoke skipped)`. After confirming GPU 3
-had no active compute process, the required-GPU command
+The dated host-only gate ended
+`[paper-smoke] HOST GATES PASS (GPU smoke skipped)`. The historical
+one-visible-GPU command also passed the then-smaller GPU gate, but is not a
+current canonical command: the full-graph stage now defaults on and needs three
+visible GPU roles. Current complete-gate reproduction from the repository's
+parent directory is:
 
 ```bash
-CUDA_VISIBLE_DEVICES=3 RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
-  PATH=/usr/local/cuda/bin:$PATH ./scripts/run_paper_checkpoint_smoke.sh
+cd GPU-MPC/ringlpn
+RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
+CUDA_VISIBLE_DEVICES=<gpu-a>,<gpu-b>,<gpu-c> \
+PATH=/usr/local/cuda/bin:$PATH ./scripts/run_paper_checkpoint_smoke.sh
 ```
 
-exited 0 and ended `[paper-smoke] ALL GATES PASS`. The full package is
-therefore freshly revalidated; this GPU result does not change the host D1
-artifact's security boundary.
+It must exit zero and end `[paper-smoke] ALL GATES PASS`. Use the focused DPF
+runner, not this full marker, when reproducing only the dated component.
 
 The S1 functionality, exact transcript, leakage contract, simulators, and open
 proof obligations are in
@@ -161,14 +171,15 @@ primitive accounting. This ideal host artifact alone does **not** establish:
 - real transport; or
 - two-process isolation.
 
-**Current-status note (2026-08-04):** the separate live forward-FC path now
+**Current downstream disposition (2026-08-10):** the live forward-FC/Conv path
 consumes full-width four-call GPU-AES-compatible distributed keys generated
-over real SCI/IKNP/Gilboa transport with OpenSSL-private roots, then performs
-party-local Ring-LPN expansion and exact conversion across two processes and
-GPUs. The security contract gives the exact correction-word coupling and
-role-specific hybrid simulators. Still open are silent OT, GPU-side batched
-key generation, concrete DPF/PRG and Ring-LPN parameter review, authenticated
-deployment, and actual dependency-round measurement.
+over real SCI/IKNP/Gilboa transport with private OpenSSL roots, then performs
+party-local GPU Ring-LPN expansion and exact conversion across two processes.
+GPU DPF key generation and dependency instrumentation are implemented. The
+separate breadth-first SPFSS batch helper has no live caller and remains
+unvalidated. EMP-Silent exists only as a historical opt-in, independently
+unreviewed backend with no headline measurement. Concrete DPF/PRG and Ring-LPN
+parameter review, authenticated deployment, and independent review remain open.
 
 ## Reproduce and paper status
 
@@ -181,10 +192,10 @@ From `GPU-MPC/ringlpn`:
 ```
 
 The build/run pair is wired exactly once into the host section of
-`run_paper_checkpoint_smoke.sh`. Proposal source
-`dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` keeps its stable filename
-and is now v2.5 (2026-08-04). The checked-in PDF is the matching warning-free,
-page-inspected 21-page rendering.
+`run_paper_checkpoint_smoke.sh`. The live proposal keeps the stable filename
+`dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex`; see `../README.md` and
+`../../CLAUDE.md` for the current v2.14 source/PDF identity and review status.
+The earlier v2.5 21-page PDF was only the 2026-08-04 checkpoint.
 
 The root `.gitignore` ignores CSV/PDF files; checkpoint commits must
 deliberately force-add regenerated evidence that is part of the documented

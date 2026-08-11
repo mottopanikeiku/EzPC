@@ -1,0 +1,86 @@
+{
+  "bitwidth": 32,
+  "controls": {
+    "consume_once_replay": "rejected",
+    "corrupt_peer_input": "rejected before GPU/output",
+    "corrupted_nonlinear_record": "rejected before GPU/output",
+    "corrupted_run_record": "rejected by post-exit checker",
+    "forced_nonlinear_second_rename": "bilateral rollback; both outputs absent",
+    "residual_branch": "not applicable; prefix has no branch",
+    "stale_nonlinear_output": "rejected without overwrite",
+    "swapped_layer_order": "rejected before GPU/output"
+  },
+  "dealerless_nonlinear_preprocessing": false,
+  "invocations": {
+    "conv0": "158d31eb3df591404ef8ed4246caf6d0",
+    "conv3": "a93f376e11fe01acf5a91873a8a9e2d3",
+    "graph_and_stock_nonlinear": "d62c4bd1d730e3be016367c385e71317"
+  },
+  "known_clear_input": "all-zero",
+  "known_clear_weights": "all-zero",
+  "linear_metrics": "results/graph/resnet18_graph_prefix_linear_metrics_2026_08_09.csv",
+  "nonlinear_key_bytes_per_party": {
+    "maxpool": 503968064,
+    "relu": 68289576,
+    "total": 572257640
+  },
+  "nonlinear_key_source": "test-only trusted stock adapter reading both parties' source-bound mask states",
+  "ot_backend": "sci-iknp",
+  "party_stage_metrics": "results/graph/resnet18_graph_prefix_party_metrics_2026_08_09.csv",
+  "publication_date": "2026-08-09",
+  "record_digests": {
+    "conv0_p0": "8e705ec24ee2c7a47bfa018a1f274d49bcbb3bf11568ec2cf0240a05070c384f",
+    "conv0_p1": "1795c1437c9195586c567609d8b198b5c55604803baa0f20a206a321de178068",
+    "conv3_p0": "854c8f7962d8828ae72c790a335d354057a387abd86e87f46bcd9bbc15709a58",
+    "conv3_p1": "1be3f47c2f10feaedc526fb8d8df43bda5eaa1bdf9cf2de680b4263e50241a98",
+    "nonlinear_p0": "a5edf67c5d595c9b8f9c554c26ba885b7a364757296966d05b5010d27c9fff64",
+    "nonlinear_p1": "57102e01f31be416fb96236d1269fbbb80f9896672b1ae981c708085d2621cbf"
+  },
+  "ring_lpn_parameters": {
+    "c": 2,
+    "n": 262144,
+    "noise": "regular",
+    "t": 8
+  },
+  "ring_modulus_bits": 128,
+  "schema": "ringlpn-resnet18-graph-prefix-v2",
+  "scope": "known-zero functionality/composition and unchanged-consumer control only; trusted nonlinear key source; not dealerless nonlinear preprocessing, private/trained model execution, full ResNet18 inference, accuracy, deployment, or an end-to-end security claim",
+  "source_bound_nodes": [
+    {
+      "execution": "unchanged gpuConv2DBeaver",
+      "node": "conv0",
+      "ordinal": 0,
+      "shape": "1x224x224x3,7x7x3x64,stride2,pad3"
+    },
+    {
+      "execution": "live secure_stochastic_truncate_batch",
+      "node": "StochasticTR(10)",
+      "ordinal": 1,
+      "shape": "1x112x112x64"
+    },
+    {
+      "execution": "unchanged stock dcf::gpuMaxPool",
+      "node": "maxpool1",
+      "ordinal": 2,
+      "shape": "3x3,stride2,pad1"
+    },
+    {
+      "execution": "unchanged stock dcf::gpuReluExtend",
+      "node": "relu1",
+      "ordinal": 3,
+      "shape": "1x56x56x64"
+    },
+    {
+      "execution": "unchanged gpuConv2DBeaver",
+      "node": "conv3",
+      "ordinal": 4,
+      "shape": "1x56x56x64,3x3x64x64,stride1,pad1"
+    }
+  ],
+  "source_manifest": "results/fc/resnet18_adaptive_degree_linear_execution_manifest_2026_08_07.json",
+  "source_manifest_sha256": "685501ddba417d597607403dbd9fe6c2954081d6edca161f6cef40c9e4be9427",
+  "stock_keygen_metrics": "results/graph/resnet18_graph_prefix_stock_keygen_2026_08_09.csv",
+  "stock_nonlinear_key_execution": true,
+  "transport": "single-host IPv4 loopback for Ring-LPN, truncation, and stock nonlinear online traffic",
+  "truncate_shift": 10
+}

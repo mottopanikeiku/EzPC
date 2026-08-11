@@ -1,15 +1,33 @@
-# syntax=docker/dockerfile:1
-# No source, credentials, datasets, weights, or generated evidence are copied in.
-# Bind-mount a clean recursive clone at /work/EzPC and mount SSH material read-only.
-FROM nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+# No source, credentials, Podman socket, datasets, weights, or evidence is copied in.
+# This image is only for clean-clone check, local-smoke, and build gates.
+FROM nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade AS build-environment
+# The mutable CUDA repository is disabled; Ubuntu packages resolve exclusively
+# through the dated snapshot below and are also exact-version pinned.
+ARG UBUNTU_SNAPSHOT=20260810T000000Z
+ARG SOURCE_DATE_EPOCH=1786320000
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH} \
+    FORCE_SOURCE_DATE=1
 
 LABEL org.opencontainers.image.title="Ring-LPN publication reproduction environment" \
-      org.opencontainers.image.created="2026-08-04" \
+      org.opencontainers.image.created="2026-08-10" \
       org.opencontainers.image.base.name="nvidia/cuda:12.6.3-devel-ubuntu24.04" \
-      org.opencontainers.image.base.digest="sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade"
+      org.opencontainers.image.base.digest="sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade" \
+      org.opencontainers.image.ubuntu.snapshot="${UBUNTU_SNAPSHOT}" \
+      org.opencontainers.image.apt.sources="ubuntu-snapshot-only" \
+      io.ezpc.ringlpn.role="clean-clone-gates-only-no-publication-coordinator"
 
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
+RUN touch /tmp/ringlpn-build-start \
+ && sleep 1 \
+ && rm -f /etc/apt/sources.list.d/cuda.list \
+ && sed -i \
+      -e "s|http://archive.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/|g" \
+      -e "s|http://security.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/|g" \
+      /etc/apt/sources.list.d/ubuntu.sources \
+ && ! grep -Eq 'archive\.ubuntu\.com|security\.ubuntu\.com|developer\.download\.nvidia\.com' \
+      /etc/apt/sources.list.d/* \
+ && apt-get update \
  && apt-get install -y --no-install-recommends \
       gcc-13=13.3.0-6ubuntu2~24.04.1 \
       g++-13=13.3.0-6ubuntu2~24.04.1 \
@@ -20,25 +38,72 @@ RUN apt-get update \
       python3=3.12.3-0ubuntu2.1 \
       git=1:2.43.0-1ubuntu7.3 \
       make=4.3-4.1build2 \
-      openssh-client=1:9.6p1-3ubuntu13.18 \
       libssl-dev=3.0.13-0ubuntu3.12 \
       ca-certificates=20260601~24.04.1 \
       texlive-latex-base=2023.20240207-1 \
       texlive-latex-recommended=2023.20240207-1 \
       texlive-pictures=2023.20240207-1 \
+      cm-super=0.3.4-17 \
+      poppler-utils=24.02.0-1ubuntu9.9 \
  && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
  && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 \
- && rm -rf /var/lib/apt/lists/*
-
-ARG REPRO_UID=1000
-ARG REPRO_GID=1000
-RUN groupadd --gid "${REPRO_GID}" repro \
- && useradd --uid "${REPRO_UID}" --gid "${REPRO_GID}" --create-home repro
-
+ && rm -rf /var/lib/apt/lists/* /var/log/apt/* \
+ && rm -f /var/log/alternatives.log /var/log/dpkg.log \
+          /var/log/faillog /var/log/lastlog \
+ && rm -f /var/cache/ldconfig/aux-cache \
+ && rm -rf /var/lib/texmf/web2c \
+ && mkdir -p /var/lib/texmf/web2c \
+ && fmtutil-sys --byfmt pdflatex \
+ && find /var/lib/texmf -type f -name '*.log' -delete \
+ && mktexlsr /var/lib/texmf \
+ && find /etc /usr /var -xdev -newer /tmp/ringlpn-build-start \
+      ! -path /etc/hosts ! -path /etc/hostname ! -path /etc/resolv.conf \
+      -exec touch -h --date="@${SOURCE_DATE_EPOCH}" {} + \
+ && rm -f /tmp/ringlpn-build-start \
+ && printf '%s\n' 'repro:x:65532:' >> /etc/group \
+ && printf '%s\n' 'repro:x:65532:65532::/nonexistent:/usr/sbin/nologin' >> /etc/passwd \
+ && printf '%s\n' 'repro:!:0:0:99999:7:::' >> /etc/shadow \
+ && printf '%s\n' 'repro:*::' >> /etc/gshadow \
+ && mkdir -p /work/EzPC/GPU-MPC/ringlpn \
+ && touch --date="@${SOURCE_DATE_EPOCH}" \
+      /etc/group /etc/passwd /etc/shadow /etc/gshadow \
+      /work /work/EzPC /work/EzPC/GPU-MPC /work/EzPC/GPU-MPC/ringlpn
+FROM nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+ARG UBUNTU_SNAPSHOT=20260810T000000Z
+ARG SOURCE_DATE_EPOCH=1786320000
+LABEL org.opencontainers.image.title="Ring-LPN publication reproduction environment" \
+      org.opencontainers.image.created="2026-08-10" \
+      org.opencontainers.image.base.name="nvidia/cuda:12.6.3-devel-ubuntu24.04" \
+      org.opencontainers.image.base.digest="sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade" \
+      org.opencontainers.image.ubuntu.snapshot="${UBUNTU_SNAPSHOT}" \
+      org.opencontainers.image.apt.sources="ubuntu-snapshot-only" \
+      io.ezpc.ringlpn.role="clean-clone-gates-only-no-publication-coordinator"
+COPY --from=build-environment /etc /etc
+COPY --from=build-environment /usr/bin /usr/bin
+COPY --from=build-environment /usr/include /usr/include
+COPY --from=build-environment /usr/lib /usr/lib
+COPY --from=build-environment /usr/libexec /usr/libexec
+COPY --from=build-environment /usr/sbin /usr/sbin
+COPY --from=build-environment /usr/share /usr/share
+COPY --from=build-environment /var /var
+COPY --from=build-environment /work /work
+RUN : > /etc/apt/sources.list.d/cuda.list \
+ && touch --date="@${SOURCE_DATE_EPOCH}" \
+      /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d
 ENV CUDA_ARCH=89 \
     GPU_ARCH=89 \
     PATH=/usr/local/cuda/bin:/usr/bin:/bin \
-    RINGLPN_REPRO_CONTAINER_DIGEST=sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+    HOME=/tmp \
+    CMAKE_GENERATOR="Unix Makefiles" \
+    CMAKE_BUILD_PARALLEL_LEVEL=1 \
+    CMAKE_FIND_USE_PACKAGE_REGISTRY=OFF \
+    CMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF \
+    CMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON \
+    RINGLPN_BUILD_JOBS=1 \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH} \
+    FORCE_SOURCE_DATE=1 \
+    RINGLPN_REPRO_CONTAINER_DIGEST=sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade \
+    RINGLPN_UBUNTU_SNAPSHOT=${UBUNTU_SNAPSHOT}
 USER repro
 WORKDIR /work/EzPC/GPU-MPC/ringlpn
 ENTRYPOINT ["./scripts/reproduce_publication.sh"]

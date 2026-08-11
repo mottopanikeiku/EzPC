@@ -9,7 +9,23 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(realpath "$ROOT/../..")"
 BIN="$ROOT/bin/test_two_party_fc_preprocess"
 OUTDIR="$ROOT/results/fc"
-WORKDIR="${WORKDIR:-$OUTDIR/two_party_fc_model_scale_work_2026_08_04}"
+WORKDIR="${WORKDIR:-}"
+PRIVATE_WORKDIR=0
+if [[ -z "$WORKDIR" ]]; then
+  WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ringlpn-fc-model-scale.XXXXXX")"
+  PRIVATE_WORKDIR=1
+fi
+CHANNEL_AUTH_FILES=()
+cleanup_private_workdir() {
+  local rc=$?
+  local auth_file
+  for auth_file in "${CHANNEL_AUTH_FILES[@]}"; do
+    rm -f -- "$auth_file"
+  done
+  if (( PRIVATE_WORKDIR )); then rm -rf -- "$WORKDIR"; fi
+  exit "$rc"
+}
+trap cleanup_private_workdir EXIT
 LAYER_MANIFEST="${LAYER_MANIFEST:-$OUTDIR/orca_forward_linear_layer_manifest_2026_08_04.json}"
 WORKLOAD_MANIFEST="${WORKLOAD_MANIFEST:-$OUTDIR/orca_model_scale_workload_manifest_2026_08_04.json}"
 RESULT_SCHEMAS="$OUTDIR/two_party_fc_model_scale_result_schemas_2026_08_04.json"
@@ -24,9 +40,8 @@ PLAN_META="$WORKDIR/execution_plan.json"
 P0_GPU="${P0_GPU:-1}"
 P1_GPU="${P1_GPU:-3}"
 CHECK_GPU="${CHECK_GPU:-$P0_GPU}"
-BASE_PORT="${BASE_PORT:-48280}"
+BASE_PORT="${BASE_PORT:-24280}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-1800}"
-LEDGER_ROOT="${LEDGER_ROOT:-$ROOT/results/deployment/correlation-ledger/party-claims}"
 OT_BACKEND="${OT_BACKEND:-sci-iknp}"
 RINGLPN_EMP_SILENT_BRIDGE="${RINGLPN_EMP_SILENT_BRIDGE:-}"
 OT_ARGS=(--ot-backend "$OT_BACKEND")
@@ -55,9 +70,9 @@ MODELS="${MODELS:-ResNet18}"
 WORKLOAD="${WORKLOAD:-classifier}"
 FAIL_LAYER="${FAIL_LAYER:-}"
 SWAP_LAYER="${SWAP_LAYER:-}"
-SCHEMA_VERSION="ringlpn.two-party-fc-model-scale.v4"
-PUBLICATION_DATE="2026-08-04"
-RESULT_COLUMNS=159
+SCHEMA_VERSION="ringlpn.two-party-fc-model-scale.v6"
+PUBLICATION_DATE="2026-08-10"
+RESULT_COLUMNS=176
 
 if [[ "$P0_GPU" == "$P1_GPU" ]]; then
   echo "P0_GPU and P1_GPU must be distinct" >&2
@@ -72,14 +87,19 @@ if ! [[ "$BASE_PORT" =~ ^[0-9]+$ && "$TIMEOUT_SECONDS" =~ ^[0-9]+$ &&
 fi
 mkdir -p "$OUTDIR"
 outdir_real="$(realpath "$OUTDIR")"
-workdir_real="$(realpath -m "$WORKDIR")"
-if [[ "$workdir_real" != "$outdir_real/"* ]]; then
-  echo "WORKDIR must be a child of $OUTDIR" >&2
-  exit 2
+if (( PRIVATE_WORKDIR )); then
+  workdir_real="$(realpath -e "$WORKDIR")"
+else
+  workdir_real="$(realpath -m "$WORKDIR")"
+  if [[ "$workdir_real" != "$outdir_real/"* ]]; then
+    echo "caller-supplied WORKDIR must be a child of $OUTDIR" >&2
+    exit 2
+  fi
+  rm -rf -- "$workdir_real"
+  mkdir -p "$workdir_real"
 fi
 WORKDIR="$workdir_real"
-rm -rf "$WORKDIR"
-mkdir -p "$WORKDIR"
+LEDGER_ROOT="${LEDGER_ROOT:-$WORKDIR/ledger}"
 LEDGER_ROOT="$(realpath -m "$LEDGER_ROOT")"
 mkdir -p "$LEDGER_ROOT"
 chmod 700 "$LEDGER_ROOT"
@@ -88,8 +108,9 @@ chmod 700 "$LEDGER_ROOT"
 # Validate every executable dimension, bit width, layout, constructor anchor,
 # batch anchor, and pinned source digest before building or invoking a layer.
 # Coverage rows expose every selected but unexecuted Conv2D/FC declaration.
-python3 - "$REPO_ROOT" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$MODELS" \
-  "$WORKLOAD" "$PLAN" "$PLAN_META" "$CSV" "$CONTROLS" <<'PY'
+python3 - "$REPO_ROOT" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
+  "$SCHEMA_VERSION" "$PUBLICATION_DATE" "$MODELS" "$WORKLOAD" "$PLAN" \
+  "$PLAN_META" "$CSV" "$CONTROLS" <<'PY'
 import csv
 import hashlib
 import json
@@ -97,8 +118,8 @@ import pathlib
 import re
 import sys
 
-(repo_arg, layer_arg, workload_arg, models_arg, profile,
- plan_arg, meta_arg, csv_arg, controls_arg) = sys.argv[1:]
+(repo_arg, layer_arg, workload_arg, schema_arg, schema_version, publication_date,
+ models_arg, profile, plan_arg, meta_arg, csv_arg, controls_arg) = sys.argv[1:]
 repo = pathlib.Path(repo_arg).resolve()
 layer_path = pathlib.Path(layer_arg).resolve()
 workload_path = pathlib.Path(workload_arg).resolve()
@@ -188,7 +209,7 @@ def executable(row):
 fields = [
     "model", "layer", "trial", "sample_role", "rows", "inner", "cols", "bw",
     "qbits", "noise", "ole_n", "ring_batches", "p0_ring_oles", "p1_ring_oles",
-    "p0_dpf_trees", "p1_dpf_trees", "p0_public_a_words", "p1_public_a_words",
+    "p0_dpf_trees", "p1_dpf_trees", "p0_public_a_seed_words", "p1_public_a_seed_words",
     "p0_protocol_bytes", "p1_protocol_bytes", "p0_total_us", "p1_total_us",
     "p0_record_bytes", "p1_record_bytes", "final_payload_bytes_per_party",
     "matched_dealer_keygen_us", "checker_two_share_online_us",
@@ -240,6 +261,29 @@ silent_ot_metric_names = [
 ]
 for name in silent_ot_metric_names:
     fields.extend((f"p0_{name}", f"p1_{name}"))
+extra_party_metric_names = [
+    "channel_auth_straight_bytes_sent",
+    "channel_auth_straight_bytes_received",
+    "channel_auth_reversed_bytes_sent",
+    "channel_auth_reversed_bytes_received",
+    "ot_backend_bridge_sha256",
+    "dpf_breadth_evaluator_calls",
+    "dpf_root_to_leaf_evaluator_calls",
+]
+for name in extra_party_metric_names:
+    fields.extend((f"p0_{name}", f"p1_{name}"))
+fields.extend(("binary_sha256", "environment_sha256", "result_schema_sha256"))
+schema_doc = json.loads(pathlib.Path(schema_arg).read_text(encoding="utf-8"))
+schema_columns = schema_doc.get("per_layer", {}).get("columns")
+if not isinstance(schema_columns, list) or any(
+        not isinstance(column, str) or not column for column in schema_columns):
+    raise SystemExit("result schema has no valid per_layer.columns list")
+if len(schema_columns) != len(set(schema_columns)):
+    raise SystemExit("result schema has duplicate per-layer columns")
+if fields != schema_columns:
+    raise SystemExit("runner raw header does not exactly match result schema")
+if len(fields) != 176:
+    raise SystemExit(f"runner raw header has {len(fields)} columns; expected 176")
 with open(csv_arg, "w", newline="", encoding="utf-8") as handle:
     writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
     writer.writeheader()
@@ -253,8 +297,8 @@ with open(csv_arg, "w", newline="", encoding="utf-8") as handle:
             "inner": row["inner"], "cols": row["cols"], "bw": row["bw"],
             "qbits": row["qbits"], "noise": row["noise"], "ole_n": row["ole_n"],
             "status": "unsupported" if row["operator"] == "conv2d" else "not_selected",
-            "schema_version": "ringlpn.two-party-fc-model-scale.v4",
-            "publication_date": "2026-08-04", "manifest_sha256": layer_sha,
+            "schema_version": schema_version,
+            "publication_date": publication_date, "manifest_sha256": layer_sha,
             "workload_manifest_sha256": workload_sha, "model_order": row["model_order"],
             "source_layer": row["layer"], "linear_order": row["linear_order"],
             "forward_order": row["forward_order"], "operator": row["operator"],
@@ -279,7 +323,7 @@ with open(plan_arg, "w", encoding="utf-8", newline="") as handle:
             row["gap"], "yes" if row["is_classifier"] else "no",
         ])
 metadata = {
-    "schema_version": "ringlpn.two-party-fc-model-scale.v4", "publication_date": "2026-08-04",
+    "schema_version": schema_version, "publication_date": publication_date,
     "manifest_sha256": layer_sha, "workload_manifest_sha256": workload_sha,
     "workload": profile, "models": [],
 }
@@ -337,8 +381,101 @@ matches_control() {
 file_sha256() {
   sha256sum "$1" | cut -d' ' -f1
 }
+BINARY_SHA256="$(file_sha256 "$BIN")"
+{
+  echo "measurement_timestamp=$(date --iso-8601=seconds)"
+  echo "publication_date=$PUBLICATION_DATE"
+  echo "schema_version=$SCHEMA_VERSION"
+  echo "claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level"
+  echo "host=$(hostname)"
+  echo "kernel=$(uname -srvmo)"
+  echo "cpu_count=$(nproc)"
+  echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:$CHECK_GPU"
+  echo "network=single-host IPv4 loopback"
+  echo "counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message"
+  echo "ot_backend=$OT_BACKEND"
+  echo "emp_silent_bridge=${RINGLPN_EMP_SILENT_BRIDGE:-NA}"
+  echo "warmups=1"
+  echo "measured_trials=$TRIALS"
+  echo "models=$MODELS"
+  echo "workload=$WORKLOAD"
+  echo "fail_layer_control=${FAIL_LAYER:-none}"
+  echo "swap_layer_control=${SWAP_LAYER:-none}"
+  echo "aggregate_rule=complete retained layer groups only; statistics are per model over measured aggregate rows"
+  nvidia-smi --query-gpu=index,name,uuid,driver_version,memory.total --format=csv,noheader
+  /usr/local/cuda/bin/nvcc --version
+  sha256sum "$BIN" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
+    "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
+    "$ROOT/scripts/two_party_fc_metrics_schema_2026_08_04.csv" \
+    "$ROOT/src/test_two_party_fc_preprocess.cu" "$ROOT/src/two_party_spfss.h" \
+    "$ROOT/src/linear_preprocess.h" \
+    "$ROOT/src/linear_preprocess_backend.cuh" \
+    "$ROOT/src/linear_preprocess_fc.cu" \
+    "$ROOT/src/two_party_linear_preprocess.cuh" \
+    "$ROOT/src/two_party_spfss_gpu.cuh" "$ROOT/src/two_party_dpf_protocol.h" \
+    "$ROOT/src/two_party_dpf_gpu.cuh" "$ROOT/src/two_party_ot.h" \
+    "$ROOT/src/emp_silent_adapter.h" "$ROOT/src/emp_silent_bridge.h" \
+    "$ROOT/src/emp_silent_bridge_authorization.h" \
+    "$ROOT/src/emp_silent_bridge.cpp" "$ROOT/src/ringlpn_ole_party.cuh" \
+    "$ROOT/src/secure_convert.h" \
+    "$REPO_ROOT/GPU-MPC/experiments/orca/cnn.h" \
+    "$REPO_ROOT/GPU-MPC/experiments/orca/orca_inference.cu" \
+    "$REPO_ROOT/GPU-MPC/experiments/orca/piranha.cu" \
+    "$REPO_ROOT/GPU-MPC/nn/orca/fc_layer.cu"
+  if [[ "$OT_BACKEND" == emp-silent ]]; then
+    sha256sum "$RINGLPN_EMP_SILENT_BRIDGE"
+  fi
+} > "$ENVIRONMENT"
+RESULT_SCHEMA_SHA256="$(file_sha256 "$RESULT_SCHEMAS")"
+ENVIRONMENT_SHA256="$(file_sha256 "$ENVIRONMENT")"
+python3 - "$CSV" "$BINARY_SHA256" "$ENVIRONMENT_SHA256" "$RESULT_SCHEMA_SHA256" <<'PY'
+import csv
+import os
+import pathlib
+import sys
+import tempfile
+
+csv_path = pathlib.Path(sys.argv[1])
+identity = dict(zip(
+    ("binary_sha256", "environment_sha256", "result_schema_sha256"),
+    sys.argv[2:],
+))
+with csv_path.open(newline="", encoding="utf-8") as handle:
+    reader = csv.DictReader(handle)
+    fields = reader.fieldnames
+    rows = list(reader)
+if fields is None or any(field not in fields for field in identity):
+    raise SystemExit("raw header lacks capture identity columns")
+for row in rows:
+    if row["sample_role"] != "coverage" or any(row[field] for field in identity):
+        raise SystemExit("unexpected pre-measurement raw row")
+    row.update(identity)
+temporary = tempfile.NamedTemporaryFile(
+    mode="w", newline="", encoding="utf-8", dir=csv_path.parent,
+    prefix=f".{csv_path.name}.", delete=False)
+try:
+    with temporary:
+        writer = csv.DictWriter(temporary, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+        temporary.flush()
+        os.fsync(temporary.fileno())
+    os.chmod(temporary.name, 0o600)
+    os.replace(temporary.name, csv_path)
+    directory_fd = os.open(csv_path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+except BaseException:
+    try:
+        os.unlink(temporary.name)
+    except FileNotFoundError:
+        pass
+    raise
+PY
 EMPTY_METRICS=()
-for ((metric_index = 0; metric_index < 86; ++metric_index)); do
+for ((metric_index = 0; metric_index < 100; ++metric_index)); do
   EMPTY_METRICS+=("")
 done
 
@@ -350,6 +487,10 @@ run_sample() {
   local cols="${12}" bw="${13}" layout="${14}" qbits="${15}" noise="${16}"
   local ole_n="${17}" ole_c="${18}" ole_t="${19}" truncation_status="${20}"
   local gap="${21}" is_classifier="${22}" trial="${23}" role="${24}"
+  if [[ "$(file_sha256 "$BIN")" != "$BINARY_SHA256" ]]; then
+    echo "[two-party-fc-model] binary changed after the measured build" >&2
+    return 2
+  fi
   local layer_label="$source_layer"
   [[ "$is_classifier" == yes ]] && layer_label=classifier
   local bootstrap_slots=$((3 * (ole_c * ole_t) * (ole_c * ole_t)))
@@ -382,7 +523,8 @@ run_sample() {
       "$source_text_sha256" "$batch_source_anchor" "$batch" "$layout" "$ole_c" "$ole_t" \
       "$WORKLOAD" no "$support_status" "$truncation_status" "$gap" "" "" \
       "$p0_record_sha" "$p1_record_sha" "$p0_stdout_sha" "$p1_stdout_sha" "$checker_stdout_sha" \
-      "" "" "" "" "" "" "" "" "" "" "" "" "" "" "${EMPTY_METRICS[@]}"
+      "" "" "" "" "" "" "" "" "" "" "" "" "" "" "${EMPTY_METRICS[@]}" \
+      "$BINARY_SHA256" "$ENVIRONMENT_SHA256" "$RESULT_SCHEMA_SHA256"
   }
 
   if matches_control "$FAIL_LAYER" "$model" "$source_layer"; then
@@ -395,6 +537,12 @@ run_sample() {
 
   local p0_prefix="$dir/party0/key" p1_prefix="$dir/party1/key"
   local p0_record="${p0_prefix}_p0.fc" p1_record="${p1_prefix}_p1.fc"
+  local p0_auth="$dir/party0/channel-auth.key"
+  local p1_auth="$dir/party1/channel-auth.key"
+  CHANNEL_AUTH_FILES+=("$p0_auth" "$p1_auth")
+  openssl rand 32 > "$p0_auth"
+  cp -- "$p0_auth" "$p1_auth"
+  chmod 600 "$p0_auth" "$p1_auth"
   local -a common=(--host 127.0.0.1 --port "$BASE_PORT" --sid "$sid"
     --invocation-id "$invocation_id" --ledger "$LEDGER_ROOT"
     --qbits "$qbits" --bw "$bw" --rows "$rows" --inner "$inner" --cols "$cols"
@@ -403,10 +551,12 @@ run_sample() {
   local rc0 rc1 check_rc swap_rc pid0 pid1
   set +e
   CUDA_VISIBLE_DEVICES="$P0_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 0 \
+    --channel-auth-file "$p0_auth" \
     "${common[@]}" --out-prefix "$p0_prefix" > "$dir/p0.out" 2>&1 &
   pid0=$!
   sleep 1
   CUDA_VISIBLE_DEVICES="$P1_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 1 \
+    --channel-auth-file "$p1_auth" \
     "${common[@]}" --out-prefix "$p1_prefix" > "$dir/p1.out" 2>&1 &
   pid1=$!
   wait "$pid0"; rc0=$?
@@ -488,7 +638,7 @@ run_sample() {
     ring_batches * 2 * limbs * application_slots -
     2 * limbs * rows * inner * cols
   ))
-  if [[ "${#f0[@]}" -ne 79 || "${#f1[@]}" -ne 79 || "${#fc[@]}" -ne 19 ||
+  if [[ "${#f0[@]}" -ne 86 || "${#f1[@]}" -ne 86 || "${#fc[@]}" -ne 19 ||
         "${f0[0]}" -ne 0 || "${f1[0]}" -ne 1 ||
         "${f0[1]}" -ne "$qbits" || "${f1[1]}" -ne "$qbits" ||
         "${f0[2]}" -ne "$bw" || "${f1[2]}" -ne "$bw" ||
@@ -507,27 +657,31 @@ run_sample() {
         "${fc[4]}" -ne "$cols" || "${fc[5]}" -ne "$ring_batches" ||
         "${fc[9]}" != pass || "${fc[10]}" != pass ||
         "${fc[11]}" != pass || "${fc[12]}" != pass ||
-        "${f0[60]}" != NA || "${f1[60]}" != NA ||
-        "${f0[61]}" != "$invocation_id" || "${f1[61]}" != "$invocation_id" ||
+        "${f0[64]}" != NA || "${f1[64]}" != NA ||
+        "${f0[65]}" != "$invocation_id" || "${f1[65]}" != "$invocation_id" ||
         "${fc[17]}" != "$invocation_id" ||
-        "${f0[62]}" != "${f1[62]}" || "${f0[62]}" != "${fc[18]}" ||
-        ("${f0[63]}" != sci-iknp && "${f0[63]}" != emp-silent) ||
-        "${f0[63]}" != "${f1[63]}" ||
-        -z "${f0[64]}" || "${f0[64]}" != "${f1[64]}" ||
-        ("${f0[63]}" == sci-iknp &&
-         ("${f0[59]}" != yes || "${f1[59]}" != yes)) ||
-        ("${f0[63]}" == emp-silent &&
+        "${f0[66]}" != "${f1[66]}" || "${f0[66]}" != "${fc[18]}" ||
+        ("${f0[67]}" != sci-iknp && "${f0[67]}" != emp-silent) ||
+        "${f0[67]}" != "${f1[67]}" ||
+        -z "${f0[68]}" || "${f0[68]}" != "${f1[68]}" ||
+        ("${f0[67]}" == sci-iknp &&
+         ("${f0[63]}" != yes || "${f1[63]}" != yes ||
+          "${f0[83]}" != NA || "${f1[83]}" != NA)) ||
+        ("${f0[67]}" == emp-silent &&
          ("${f0[56]}" != NA || "${f1[56]}" != NA ||
           "${f0[57]}" != NA || "${f1[57]}" != NA ||
           "${f0[58]}" != NA || "${f1[58]}" != NA ||
-          "${f0[59]}" != NA || "${f1[59]}" != NA)) ||
-        "${f0[66]}" != NA || "${f1[66]}" != NA ||
-        "${f0[68]}" != NA || "${f1[68]}" != NA ||
+          "${f0[63]}" != NA || "${f1[63]}" != NA ||
+          -z "${f0[83]}" || "${f0[83]}" != "${f1[83]}")) ||
         "${f0[70]}" != NA || "${f1[70]}" != NA ||
         "${f0[72]}" != NA || "${f1[72]}" != NA ||
-        -z "${f0[77]}" || "${f0[77]}" != "${f1[77]}" ||
-        "${f0[78]}" -ne "$expected_application_discarded" ||
-        "${f1[78]}" -ne "$expected_application_discarded" ]]; then
+        "${f0[74]}" != NA || "${f1[74]}" != NA ||
+        "${f0[76]}" != NA || "${f1[76]}" != NA ||
+        -z "${f0[81]}" || "${f0[81]}" != "${f1[81]}" ||
+        "${f0[82]}" -ne "$expected_application_discarded" ||
+        "${f1[82]}" -ne "$expected_application_discarded" ||
+        ("${f0[84]}" -eq 0 && "${f0[85]}" -eq 0) ||
+        ("${f1[84]}" -eq 0 && "${f1[85]}" -eq 0) ]]; then
     rm -f "$p0_record" "$p1_record"
     append_failed FAIL supported_untruncated
     had_failure=1
@@ -538,7 +692,7 @@ run_sample() {
   p1_stdout_sha="$(file_sha256 "$dir/p1.out")"
   checker_stdout_sha="$(file_sha256 "$dir/check.out")"
   local -a raw_metrics=()
-  for ((metric_index = 36; metric_index <= 60; ++metric_index)); do
+  for ((metric_index = 36; metric_index <= 58; ++metric_index)); do
     case "$metric_index" in
       53) raw_metrics+=("${f1[52]}" "${f0[52]}") ;;
       55) raw_metrics+=("${f1[54]}" "${f0[54]}") ;;
@@ -546,18 +700,22 @@ run_sample() {
       *) raw_metrics+=("${f0[metric_index]}" "${f1[metric_index]}") ;;
     esac
   done
+  raw_metrics+=("${f0[63]}" "${f1[63]}" "${f0[64]}" "${f1[64]}")
   for ((metric_index = 13; metric_index <= 16; ++metric_index)); do
     raw_metrics+=("${fc[metric_index]}")
   done
-  raw_metrics+=("$invocation_id" "${f0[62]}")
-  for ((metric_index = 63; metric_index <= 77; ++metric_index)); do
+  raw_metrics+=("$invocation_id" "${f0[66]}")
+  for ((metric_index = 67; metric_index <= 81; ++metric_index)); do
     case "$metric_index" in
-      66) raw_metrics+=("${f1[65]}" "${f0[65]}") ;;
-      68) raw_metrics+=("${f1[67]}" "${f0[67]}") ;;
       70) raw_metrics+=("${f1[69]}" "${f0[69]}") ;;
       72) raw_metrics+=("${f1[71]}" "${f0[71]}") ;;
+      74) raw_metrics+=("${f1[73]}" "${f0[73]}") ;;
+      76) raw_metrics+=("${f1[75]}" "${f0[75]}") ;;
       *) raw_metrics+=("${f0[metric_index]}" "${f1[metric_index]}") ;;
     esac
+  done
+  for metric_index in 59 60 61 62 83 84 85; do
+    raw_metrics+=("${f0[metric_index]}" "${f1[metric_index]}")
   done
   append_result_row \
     "$model" "$layer_label" "$trial" "$role" "$rows" "$inner" "$cols" "$bw" \
@@ -572,9 +730,10 @@ run_sample() {
     "$p0_record_sha" "$p1_record_sha" "$p0_stdout_sha" "$p1_stdout_sha" "$checker_stdout_sha" \
     "$application_slots" "$bootstrap_slots" "${f0[19]}" "${f1[19]}" \
     "${f0[20]}" "${f1[20]}" "${f0[21]}" "${f1[21]}" "${f0[22]}" "${f1[22]}" \
-    "${f0[23]}" "${f1[23]}" "${f0[78]}" "${f1[78]}" "${raw_metrics[@]}"
+    "${f0[23]}" "${f1[23]}" "${f0[82]}" "${f1[82]}" "${raw_metrics[@]}" \
+    "$BINARY_SHA256" "$ENVIRONMENT_SHA256" "$RESULT_SCHEMA_SHA256"
   printf 'validated_after_both_party_exits sid=%s invocation_id=%s ledger_digest=%s\n' \
-    "$sid" "$invocation_id" "${f0[62]}" > "$dir/COMMITTED"
+    "$sid" "$invocation_id" "${f0[66]}" > "$dir/COMMITTED"
   rm -f "$p0_record" "$p1_record"
   echo "[two-party-fc-model] $model:$source_layer $role $trial pass"
 }
@@ -593,266 +752,24 @@ while IFS=$'\t' read -r model model_order source_layer linear_order forward_orde
       "$ole_t" "$truncation_status" "$gap" "$is_classifier" "$trial" measured
   done
 done < "$PLAN"
+if [[ "$(file_sha256 "$BIN")" != "$BINARY_SHA256" ]]; then
+  echo "[two-party-fc-model] binary changed during the repeated-run workflow" >&2
+  exit 2
+fi
 
-python3 - "$CSV" "$PLAN_META" "$AGGREGATE" "$SUMMARY" "$TRIALS" <<'PY'
-import csv
-import json
-import statistics
-import sys
-from decimal import Decimal
 
-source, meta_path, aggregate_path, summary_path, trials_arg = sys.argv[1:]
-trials = int(trials_arg)
-metadata = json.load(open(meta_path, encoding="utf-8"))
-with open(source, newline="", encoding="utf-8") as handle:
-    rows = list(csv.DictReader(handle))
-integers = [
-    "p0_ring_oles", "p1_ring_oles", "p0_dpf_trees", "p1_dpf_trees",
-    "p0_public_a_words", "p1_public_a_words", "p0_protocol_bytes", "p1_protocol_bytes",
-    "p0_record_bytes", "p1_record_bytes", "final_payload_bytes_per_party",
-]
-decimals = [
-    "p0_total_us", "p1_total_us", "matched_dealer_keygen_us",
-    "checker_two_share_online_us", "stock_gpuKeygenMatmul_two_party_sequential_us",
-    "unchanged_gpuMatmulBeaver_two_share_sequential_us",
-]
-party_sum_metrics = [
-    "protocol_dependency_rounds", "preflight_us", "ot_setup_us", "dpf_phase_a_us",
-    "dpf_phase_b_us", "dpf_phase_c_us", "spfss_grouping_us",
-    "public_polynomial_exchange_us", "gpu_ringlpn_expansion_us",
-    "derandomization_openings_us", "conversion_us", "serialization_us", "commit_us",
-    "transport_straight_bytes_sent", "transport_straight_bytes_received",
-    "transport_reversed_bytes_sent", "transport_reversed_bytes_received", "base_ots",
-    "base_ot_setup_bytes_sent", "base_ot_setup_bytes_received",
-]
-party_max_metrics = ["peak_host_rss_bytes", "peak_gpu_bytes"]
-party_min_metrics = ["min_gpu_free_bytes"]
-party_sum_fields = [
-    f"p{party}_{name}_total" for name in party_sum_metrics for party in (0, 1)
-]
-party_max_fields = [
-    f"p{party}_{name}_max" for name in party_max_metrics for party in (0, 1)
-]
-party_min_fields = [
-    f"p{party}_{name}_min" for name in party_min_metrics for party in (0, 1)
-]
-availability_fields = [
-    "p0_transport_bytes_include_base_ot", "p1_transport_bytes_include_base_ot",
-    "p0_base_ot_setup_dependency_rounds", "p1_base_ot_setup_dependency_rounds",
-]
-checker_fields = [
-    "checker_us_total", "checker_peak_host_rss_bytes_max",
-    "checker_peak_gpu_bytes_max", "checker_min_gpu_free_bytes_min",
-]
-critical_metrics = [
-    "protocol_dependency_rounds", "preflight_us", "ot_setup_us", "dpf_phase_a_us",
-    "dpf_phase_b_us", "dpf_phase_c_us", "spfss_grouping_us",
-    "public_polynomial_exchange_us", "gpu_ringlpn_expansion_us",
-    "derandomization_openings_us", "conversion_us", "serialization_us", "commit_us",
-]
-critical_fields = [f"critical_path_{name}_total" for name in critical_metrics]
-fields = [
-    "schema_version", "publication_date", "manifest_sha256", "workload_manifest_sha256",
-    "model", "model_order", "trial", "sample_role", "workload",
-    "expected_executable_layers", "retained_layer_rows", "failed_layer_rows",
-    "unsupported_convolution_layers", "unsupported_truncation_layers",
-] + [name + "_total" for name in integers + decimals] + party_sum_fields + \
-    party_max_fields + party_min_fields + availability_fields + checker_fields + critical_fields + [
-    "critical_path_preprocess_us_total", "execution_status", "full_model_status",
-    "workload_status", "status",
-]
-aggregates = []
-for model_meta in metadata["models"]:
-    model, expected = model_meta["model"], int(model_meta["expected_executable_layers"])
-    for trial in range(trials + 1):
-        role = "warmup" if trial == 0 else "measured"
-        candidates = [row for row in rows if row["model"] == model and row["trial"] == str(trial)
-                      and row["sample_role"] == role and row["operator"] == "fc"]
-        retained = [row for row in candidates if row["retained"] == "yes" and row["status"] == "pass"]
-        if len({row["source_layer"] for row in retained}) != len(retained):
-            raise SystemExit(f"duplicate retained layer for {model} trial {trial}")
-        result = {
-            "schema_version": metadata["schema_version"], "publication_date": metadata["publication_date"],
-            "manifest_sha256": metadata["manifest_sha256"],
-            "workload_manifest_sha256": metadata["workload_manifest_sha256"],
-            "model": model, "model_order": model_meta["model_order"], "trial": trial,
-            "sample_role": role, "workload": metadata["workload"],
-            "expected_executable_layers": expected, "retained_layer_rows": len(retained),
-            "failed_layer_rows": len(candidates) - len(retained),
-            "unsupported_convolution_layers": model_meta["unsupported_convolution_layers"],
-            "unsupported_truncation_layers": model_meta["unsupported_truncation_layers"],
-        }
-        for name in integers:
-            result[name + "_total"] = sum(int(row[name]) for row in retained)
-        for name in decimals:
-            result[name + "_total"] = sum((Decimal(row[name]) for row in retained), Decimal(0))
-        def complete_numeric(column, operation):
-            values = [row[column] for row in retained]
-            if not values:
-                return Decimal(0)
-            if any(value in ("", "NA") for value in values):
-                return "NA"
-            parsed = [Decimal(value) for value in values]
-            return operation(parsed)
-        for name in party_sum_metrics:
-            for party in (0, 1):
-                column = f"p{party}_{name}"
-                result[column + "_total"] = complete_numeric(column, sum)
-        for name in party_max_metrics:
-            for party in (0, 1):
-                column = f"p{party}_{name}"
-                result[column + "_max"] = complete_numeric(column, max)
-        for name in party_min_metrics:
-            for party in (0, 1):
-                column = f"p{party}_{name}"
-                result[column + "_min"] = complete_numeric(column, min)
-        for party in (0, 1):
-            include_column = f"p{party}_transport_bytes_include_base_ot"
-            include_values = [row[include_column] for row in retained]
-            result[include_column] = "yes" if include_values and all(value == "yes" for value in include_values) else "NA"
-            result[f"p{party}_base_ot_setup_dependency_rounds"] = "NA"
-        result["checker_us_total"] = complete_numeric("checker_us", sum)
-        result["checker_peak_host_rss_bytes_max"] = complete_numeric("checker_peak_host_rss_bytes", max)
-        result["checker_peak_gpu_bytes_max"] = complete_numeric("checker_peak_gpu_bytes", max)
-        result["checker_min_gpu_free_bytes_min"] = complete_numeric("checker_min_gpu_free_bytes", min)
-        for name in critical_metrics:
-            pairs = [(row[f"p0_{name}"], row[f"p1_{name}"]) for row in retained]
-            if any(left in ("", "NA") or right in ("", "NA") for left, right in pairs):
-                result[f"critical_path_{name}_total"] = "NA"
-            else:
-                result[f"critical_path_{name}_total"] = sum(
-                    (max(Decimal(left), Decimal(right)) for left, right in pairs), Decimal(0))
-        result["critical_path_preprocess_us_total"] = sum(
-            (max(Decimal(row["p0_total_us"]), Decimal(row["p1_total_us"])) for row in retained), Decimal(0))
-        execution_ok = len(retained) == expected and len(candidates) == expected
-        full_ok = (execution_ok and int(model_meta["unsupported_convolution_layers"]) == 0
-                   and int(model_meta["unsupported_truncation_layers"]) == 0)
-        workload_ok = execution_ok and (metadata["workload"] != "full-model" or full_ok)
-        result["execution_status"] = "pass" if execution_ok else "FAIL"
-        result["full_model_status"] = "pass" if full_ok else "FAIL_UNSUPPORTED"
-        result["workload_status"] = "pass" if workload_ok else "FAIL"
-        result["status"] = result["workload_status"]
-        aggregates.append(result)
-with open(aggregate_path, "w", newline="", encoding="utf-8") as handle:
-    writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
-    writer.writeheader()
-    writer.writerows(aggregates)
-
-measured = [row for row in aggregates if row["sample_role"] == "measured" and row["status"] == "pass"]
-metrics = {
-    "party0_preprocess_us": [float(row["p0_total_us_total"]) for row in measured],
-    "party1_preprocess_us": [float(row["p1_total_us_total"]) for row in measured],
-    "critical_path_preprocess_us": [float(row["critical_path_preprocess_us_total"]) for row in measured],
-    "public_a_words_total": [float(row["p0_public_a_words_total"]) + float(row["p1_public_a_words_total"]) for row in measured],
-    "application_bytes_total": [float(row["p0_protocol_bytes_total"]) + float(row["p1_protocol_bytes_total"]) for row in measured],
-    "matched_dealer_keygen_us": [float(row["matched_dealer_keygen_us_total"]) for row in measured],
-    "checker_two_share_online_us": [float(row["checker_two_share_online_us_total"]) for row in measured],
-    "preprocess_over_matched_dealer_ratio": [float(row["critical_path_preprocess_us_total"]) / float(row["matched_dealer_keygen_us_total"])
-                                                for row in measured if Decimal(row["matched_dealer_keygen_us_total"]) != 0],
-}
-def available_values(field):
-    return [float(row[field]) for row in measured if row[field] not in ("", "NA")]
-metrics["protocol_dependency_rounds"] = available_values(
-    "critical_path_protocol_dependency_rounds_total")
-for stage in (
-    "preflight_us", "ot_setup_us", "dpf_phase_a_us", "dpf_phase_b_us",
-    "dpf_phase_c_us", "spfss_grouping_us", "public_polynomial_exchange_us",
-    "gpu_ringlpn_expansion_us", "derandomization_openings_us", "conversion_us",
-    "serialization_us", "commit_us",
-):
-    metrics[f"critical_path_{stage}"] = available_values(f"critical_path_{stage}_total")
-for output_name, left, right, operation in (
-    ("peak_host_rss_bytes", "p0_peak_host_rss_bytes_max", "p1_peak_host_rss_bytes_max", max),
-    ("peak_gpu_bytes", "p0_peak_gpu_bytes_max", "p1_peak_gpu_bytes_max", max),
-    ("minimum_observed_gpu_free_bytes", "p0_min_gpu_free_bytes_min", "p1_min_gpu_free_bytes_min", min),
-):
-    metrics[output_name] = [
-        operation(float(row[left]), float(row[right])) for row in measured
-        if row[left] not in ("", "NA") and row[right] not in ("", "NA")
-    ]
-metrics["transport_bytes_total_including_base_ot"] = [
-    sum(float(row[field]) for field in (
-        "p0_transport_straight_bytes_sent_total", "p0_transport_reversed_bytes_sent_total",
-        "p1_transport_straight_bytes_sent_total", "p1_transport_reversed_bytes_sent_total",
-    ))
-    for row in measured
-    if all(row[field] not in ("", "NA") for field in (
-        "p0_transport_straight_bytes_sent_total", "p0_transport_reversed_bytes_sent_total",
-        "p1_transport_straight_bytes_sent_total", "p1_transport_reversed_bytes_sent_total",
-    ))
-]
-metrics["base_ot_setup_bytes_total"] = [
-    float(row["p0_base_ot_setup_bytes_sent_total"]) +
-    float(row["p1_base_ot_setup_bytes_sent_total"])
-    for row in measured
-    if row["p0_base_ot_setup_bytes_sent_total"] not in ("", "NA")
-    and row["p1_base_ot_setup_bytes_sent_total"] not in ("", "NA")
-]
-metrics["checker_us"] = available_values("checker_us_total")
-metrics["checker_peak_host_rss_bytes"] = available_values("checker_peak_host_rss_bytes_max")
-metrics["checker_peak_gpu_bytes"] = available_values("checker_peak_gpu_bytes_max")
-metrics["checker_min_gpu_free_bytes"] = available_values("checker_min_gpu_free_bytes_min")
-units = {
-    "application_bytes_total": "bytes", "public_a_words_total": "field_words",
-    "preprocess_over_matched_dealer_ratio": "ratio",
-    "protocol_dependency_rounds": "rounds",
-    "peak_host_rss_bytes": "bytes", "peak_gpu_bytes": "bytes",
-    "minimum_observed_gpu_free_bytes": "bytes",
-    "transport_bytes_total_including_base_ot": "bytes",
-    "base_ot_setup_bytes_total": "bytes",
-    "checker_peak_host_rss_bytes": "bytes",
-    "checker_peak_gpu_bytes": "bytes", "checker_min_gpu_free_bytes": "bytes",
-}
-with open(summary_path, "w", newline="", encoding="utf-8") as handle:
-    writer = csv.writer(handle, lineterminator="\n")
-    writer.writerow(["metric", "n", "mean", "sample_stdev", "median", "min", "max", "unit"])
-    for name, values in metrics.items():
-        if not values:
-            writer.writerow([name, 0, "", "", "", "", "", units.get(name, "us")])
-        else:
-            writer.writerow([name, len(values), statistics.fmean(values),
-                             statistics.stdev(values) if len(values) > 1 else 0.0,
-                             statistics.median(values), min(values), max(values), units.get(name, "us")])
-PY
-
-{
-  echo "measurement_timestamp=$(date --iso-8601=seconds)"
-  echo "publication_date=$PUBLICATION_DATE"
-  echo "schema_version=$SCHEMA_VERSION"
-  echo "claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level"
-  echo "host=$(hostname)"
-  echo "kernel=$(uname -srvmo)"
-  echo "cpu_count=$(nproc)"
-  echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:$CHECK_GPU"
-  echo "network=single-host IPv4 loopback"
-  echo "counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message"
-  echo "ot_backend=$OT_BACKEND"
-  echo "emp_silent_bridge=${RINGLPN_EMP_SILENT_BRIDGE:-NA}"
-  echo "warmups=1"
-  echo "measured_trials=$TRIALS"
-  echo "models=$MODELS"
-  echo "workload=$WORKLOAD"
-  echo "fail_layer_control=${FAIL_LAYER:-none}"
-  echo "swap_layer_control=${SWAP_LAYER:-none}"
-  echo "aggregate_rule=all totals are arithmetic sums over retained per-layer rows"
-  nvidia-smi --query-gpu=index,name,uuid,driver_version,memory.total --format=csv,noheader
-  /usr/local/cuda/bin/nvcc --version
-  sha256sum "$BIN" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
-    "$ROOT/scripts/two_party_fc_metrics_schema_2026_08_04.csv" \
-    "$ROOT/src/test_two_party_fc_preprocess.cu" "$ROOT/src/two_party_spfss.h" \
-    "$ROOT/src/two_party_spfss_gpu.cuh" "$ROOT/src/two_party_dpf_protocol.h" \
-    "$ROOT/src/two_party_dpf_gpu.cuh" "$ROOT/src/two_party_ot.h" \
-    "$ROOT/src/emp_silent_adapter.h" "$ROOT/src/emp_silent_bridge.h" \
-    "$ROOT/src/emp_silent_bridge.cpp" "$ROOT/src/ringlpn_ole_party.cuh" \
-    "$ROOT/src/secure_convert.h" \
-    "$REPO_ROOT/GPU-MPC/experiments/orca/cnn.h" \
-    "$REPO_ROOT/GPU-MPC/experiments/orca/orca_inference.cu" \
-    "$REPO_ROOT/GPU-MPC/experiments/orca/piranha.cu" \
-    "$REPO_ROOT/GPU-MPC/nn/orca/fc_layer.cu"
-  if [[ "$OT_BACKEND" == emp-silent ]]; then
-    sha256sum "$RINGLPN_EMP_SILENT_BRIDGE"
-  fi
-} > "$ENVIRONMENT"
+python3 "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
+  --source-csv "$CSV" \
+  --plan-metadata "$PLAN_META" \
+  --layer-manifest "$LAYER_MANIFEST" \
+  --workload-manifest "$WORKLOAD_MANIFEST" \
+  --aggregate-csv "$AGGREGATE" \
+  --statistics-csv "$SUMMARY" \
+  --trials "$TRIALS" \
+  --binary "$BIN" \
+  --require-current-binary \
+  --environment "$ENVIRONMENT" \
+  --result-schema "$RESULT_SCHEMAS"
 
 aggregate_failed="$(python3 -c 'import csv, sys; rows = csv.DictReader(open(sys.argv[1], newline="", encoding="utf-8")); print(int(any(row.get("status") != "pass" for row in rows)))' "$AGGREGATE")"
 if (( had_failure != 0 || aggregate_failed != 0 )); then

@@ -1,0 +1,29 @@
+[secure-truncate] party 1 negative preflight: rejected before OT
+[secure-truncate] party 0 negative preflight: rejected before OT
+[secure-truncate] party 1 negative preflight: rejected before OT
+[secure-truncate] party 0 negative preflight: rejected before OT
+[secure-truncate] party 1 negative preflight: rejected before OT
+[secure-truncate] party 0 negative preflight: rejected before OT
+[secure-truncate] party 1 bw=3 shift=1 n=144: 144 triples, 144 edaBit bits, 288 daBits, 1008 logical opened bits, 4 online round[secure-truncate] party 0 bw=3 shift=1 n=144: 144 triples, 144 edaBit bits, 288 daBits, 1008 logical opened bits, 4 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw3_shift1_p1.truncate
+s; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw3_shift1_p0.truncate
+bw,shift,records,boundary_records,exact_integer,rounded_down,rounded_up,mismatch,headers,boundaries,corruption_control,former_predicate_control,status
+3,1,144,16,74,44,26,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=8 shift=1 n=144: 144 triples, 144 edaBit bits, 288 daBits, 1728 logical opened bits, 4 online round[secure-truncate] party 0 bw=8 shift=1 n=144: 144 triples, 144 edaBit bits, 288 daBits, 1728 logical opened bits, 4 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw8_shift1_p1.truncate
+s; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw8_shift1_p0.truncate
+8,1,144,16,93,24,27,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=8 shift=7 n=144: 1872 triples, 1008 edaBit bits, 288 daBits, 5184 logical opened bits, 16 online ro[secure-truncate] party 0 bw=8 shift=7 n=144: 1872 triples, 1008 edaBit bits, 288 daBits, 5184 logical opened bits, 16 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw8_shift7_p1.truncate
+unds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw8_shift7_p0.truncate
+8,7,144,16,6,64,74,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=16 shift=8 n=144: 2160 triples, 1152 edaBit bits, 288 daBits, 6912 logical opened bits, 18 online r[secure-truncate] party 0 bw=16 shift=8 n=144: 2160 triples, 1152 edaBit bits, 288 daBits, 6912 logical opened bits, 18 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw16_shift8_p1.truncate
+ounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw16_shift8_p0.truncate
+16,8,144,16,6,62,76,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=32 shift=10 n=144: 2736 triples, 1440 edaBit bits, 288 daBits, 10368 logical opened bits, 22 online[secure-truncate] party 0 bw=32 shift=10 n=144: 2736 triples, 1440 edaBit bits, 288 daBits, 10368 logical opened bits, 22 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift10_p1.truncate
+ rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift10_p0.truncate
+32,10,144,16,6,61,77,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=32 shift=24 n=144: 6768 triples, 3456 edaBit bits, 288 daBits, 18432 logical opened bits, 50 online[secure-truncate] party 0 bw=32 shift=24 n=144: 6768 triples, 3456 edaBit bits, 288 daBits, 18432 logical opened bits, 50 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift24_p1.truncate
+ rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift24_p0.truncate
+32,24,144,16,6,56,82,0,pass,pass,pass,pass,pass
+[secure-truncate] party 1 bw=32 shift=31 n=144: 8784 triples, 4464 edaBit bits, 288 daBits, 22464 logical opened bits, 64 online[secure-truncate] party 0 bw=32 shift=31 n=144: 8784 triples, 4464 edaBit bits, 288 daBits, 22464 logical opened bits, 64 online rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift31_p1.truncate
+ rounds; accounting pass; output /tmp/ringlpn-secure-truncate.LMD4hL/bw32_shift31_p0.truncate
+32,31,144,16,6,66,72,0,pass,pass,pass,pass,pass
+[secure-truncate] malformed-count control rejected as expected

@@ -2,6 +2,9 @@
   "schema": "ringlpn-publication-environment/v1",
   "date": "2026-08-04",
   "classification": "internal/advisor",
+  "status": "historical",
+  "selectable": false,
+  "superseded_by": "publication_environment_manifest_2026_08_10.json",
   "claim_boundary": "Feasibility and systems reproduction only; no concrete Ring-LPN security claim.",
   "platform": {
     "os": "Ubuntu 24.04 amd64",

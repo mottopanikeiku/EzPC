@@ -21,6 +21,8 @@ GPU-MPC/experiments/sigma/sigma_offline_online
 !GPU-MPC/ringlpn/scripts/*.sh
 !GPU-MPC/ringlpn/results/*.csv
 !GPU-MPC/ringlpn/results/*.md
+# Canonical sanitized full-graph evidence; private run roots stay outside git.
+!GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/*.csv
 
 # Orca test binaries built by make orca_* targets
 GPU-MPC/tests/nn/orca/fc

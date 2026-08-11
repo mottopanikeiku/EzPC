@@ -157,17 +157,14 @@ std::string digest_hex(const ringlpn_spfss::SpfssDigest &digest) {
 
 int main(int argc, char **argv) {
     const Args args = parse_args(argc, argv);
-    const std::string temporary_out = args.out + ".tmp";
-    std::remove(args.out.c_str());
-    std::remove(temporary_out.c_str());
-    const std::string temporary_noise =
-        args.sample_independent && !args.noise.empty()
-            ? args.noise + ".tmp"
-            : std::string();
-    if (!temporary_noise.empty()) {
-        std::remove(args.noise.c_str());
-        std::remove(temporary_noise.c_str());
-    }
+    const bool noise_requested =
+        args.sample_independent && !args.noise.empty();
+    ringlpn_private_file::AtomicWriter key_writer;
+    ringlpn_private_file::AtomicWriter noise_writer;
+    const bool outputs_absent =
+        ringlpn_private_file::AtomicWriter::destination_absent(args.out) &&
+        (!noise_requested ||
+         ringlpn_private_file::AtomicWriter::destination_absent(args.noise));
 
     PartyRandom rng;  // OpenSSL private DRBG for both local noise and protocol
     ringlpn_keyio::spfss_groups::NoiseRecord noise;
@@ -201,8 +198,8 @@ int main(int argc, char **argv) {
     const uint64_t channel_open_bytes = ch.bytes_sent();
     const uint64_t channel_open_switches = ch.direction_switches();
     SpfssWork work;
-    bool local_valid =
-        external_read_ok && ringlpn_spfss::derive_spfss_work(params, work);
+    bool local_valid = outputs_absent && external_read_ok &&
+                       ringlpn_spfss::derive_spfss_work(params, work);
     if (!local_valid) {
         std::fprintf(stderr,
                      "[two-party-spfss] unsupported or unavailable local "
@@ -214,9 +211,9 @@ int main(int argc, char **argv) {
         if (!local_valid) {
             std::fprintf(stderr,
                          "[two-party-spfss] cannot sample party noise\n");
-        } else if (!temporary_noise.empty() &&
-                   !ringlpn_keyio::spfss_groups::write_noise(temporary_noise,
-                                                              noise)) {
+        } else if (noise_requested &&
+                   !ringlpn_keyio::spfss_groups::stage_noise(
+                       noise_writer, args.noise, noise)) {
             std::fprintf(stderr, "[two-party-spfss] cannot stage %s\n",
                          args.noise.c_str());
             local_valid = false;
@@ -274,10 +271,6 @@ int main(int argc, char **argv) {
         std::fprintf(stderr,
                      "[two-party-spfss] public-parameter/local-validation "
                      "mismatch; aborting before OT setup/output\n");
-        std::remove(temporary_out.c_str());
-        if (!temporary_noise.empty()) {
-            std::remove(temporary_noise.c_str());
-        }
         return 2;
     }
     const uint64_t agreement_bytes = ch.bytes_sent() - agreement_begin_bytes;
@@ -324,38 +317,34 @@ int main(int argc, char **argv) {
             2ULL * dpf_counters.logical_opened_bits;
     const bool staged =
         ok && accounting_ok && common_digest_ok &&
-        ringlpn_keyio::spfss_groups::write(
-            temporary_out, args.party, L, static_cast<uint64_t>(p), binding,
-            grouped);
+        ringlpn_keyio::spfss_groups::stage(
+            key_writer, args.out, args.party, L, static_cast<uint64_t>(p),
+            binding, grouped);
     const uint64_t final_sync_begin_bytes = ch.bytes_sent();
     const uint64_t final_sync_begin_switches = ch.direction_switches();
     ch.sync();
     const uint8_t mine_publishable = staged ? 1 : 0;
     uint8_t peer_publishable = 0;
     ch.exchange_bytes(&mine_publishable, &peer_publishable, 1);
-    const bool may_rename = staged && peer_publishable == 1;
-    const bool key_renamed =
-        may_rename &&
-        std::rename(temporary_out.c_str(), args.out.c_str()) == 0;
-    const bool noise_renamed =
-        key_renamed &&
-        (temporary_noise.empty() ||
-         std::rename(temporary_noise.c_str(), args.noise.c_str()) == 0);
-    const uint8_t mine_renamed = key_renamed && noise_renamed ? 1 : 0;
-    uint8_t peer_renamed = 0;
-    ch.exchange_bytes(&mine_renamed, &peer_renamed, 1);
+    const bool may_publish = staged && peer_publishable == 1;
+    const bool key_published = may_publish && key_writer.publish();
+    const bool noise_published =
+        key_published && (!noise_requested || noise_writer.publish());
+    const uint8_t mine_published =
+        key_published && noise_published ? 1 : 0;
+    uint8_t peer_published = 0;
+    ch.exchange_bytes(&mine_published, &peer_published, 1);
     const uint64_t final_sync_bytes =
         ch.bytes_sent() - final_sync_begin_bytes;
     const uint64_t final_sync_switches =
         ch.direction_switches() - final_sync_begin_switches;
-    const bool wrote = mine_renamed == 1 && peer_renamed == 1;
-    if (!wrote) {
-        std::remove(temporary_out.c_str());
-        std::remove(args.out.c_str());
-        if (!temporary_noise.empty()) {
-            std::remove(temporary_noise.c_str());
-            std::remove(args.noise.c_str());
-        }
+    const bool wrote = mine_published == 1 && peer_published == 1;
+    if (wrote) {
+        key_writer.commit();
+        if (noise_requested) noise_writer.commit();
+    } else {
+        key_writer.cleanup();
+        noise_writer.cleanup();
     }
     const bool all_ok = ok && accounting_ok && common_digest_ok && wrote;
     const uint64_t transport_bytes = ch.bytes_sent();

@@ -1,3 +1,11 @@
+> **HISTORICAL ARCHITECTURE COMPARISON (2026-07-29).** Preserve the measured
+> 275x/329x uniform, 0.79x regular-OKVS, and 2.29x big-state rows as dated,
+> non-comparable architecture evidence. The statements that no Reverse-Cuckoo
+> source, no frozen route, or no live two-process FC existed are withdrawn:
+> pinned libOTe source and a live full-linear route now exist. Use
+> `closest_dmpf_baseline_audit_2026_08_04.md` and `../../CLAUDE.md` for current
+> source, route, and claim status.
+
 # S2 architecture comparison: sparse encoder and PCG route (2026-07-29)
 
 **One sentence:** the sparse-encoder advantage reported in the DMPF literature

@@ -61,6 +61,26 @@ results/fc/two_party_fc_work_*/
 results/fc/two_party_fc_model_scale_work_*/
 results/conv/two_party_conv_work_*/
 
+results/secure_truncate/two_party_outputs/
+results/fc/forward_linear_record_set_*/
+results/fc/forward_linear_record_set_ledger_*/
+results/**/private_inputs/
+results/**/ledger/
+
+# Defense in depth: serialized party state and consume-once claims are never
+# publication evidence, even when a new runner uses an unlisted directory.
+results/**/*.key
+results/**/*.spfss
+results/**/*.noise
+results/**/*.fc
+results/**/*.conv
+results/**/*.convert
+results/**/*.truncate
+results/**/*.state
+results/**/*.record
+results/**/*.claim
+results/**/*.bin
+results/**/*.stdout
 # -- Regenerable TeX intermediates --
 results/reports/*.aux
 results/reports/*.log

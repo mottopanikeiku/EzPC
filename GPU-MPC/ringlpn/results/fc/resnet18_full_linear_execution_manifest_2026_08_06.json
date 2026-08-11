@@ -1,0 +1,2676 @@
+{
+  "claim_scope": "internal/advisor source-bound forward-linear record plan; graph state nodes are unexecuted; qbits is not a security level",
+  "generator": {
+    "path": "GPU-MPC/ringlpn/scripts/build_full_linear_model_manifest.py",
+    "sha256": "389f719f603045e08f0842bc6ec89203fe5af952768ebf8346954a3a2e8e7bab"
+  },
+  "layers": [
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "1",
+        "--n",
+        "1",
+        "--h",
+        "224",
+        "--w",
+        "224",
+        "--ci",
+        "3",
+        "--fh",
+        "7",
+        "--fw",
+        "7",
+        "--co",
+        "64",
+        "--padding",
+        "3",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 12544,
+      "compatibility_id": "0a2a4c1df927c09c62f81636e86ddbf6f316aadd08ed993c3a0820db0f943bbc",
+      "conv": {
+        "ci": 3,
+        "co": 64,
+        "fh": 7,
+        "fw": 7,
+        "h": 224,
+        "n": 1,
+        "oh": 112,
+        "ow": 112,
+        "padding": 3,
+        "stride": 2,
+        "w": 224
+      },
+      "cross_terms": 116214528,
+      "forward_order": 0,
+      "input_shape": "1x224x224x3",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv0",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 7702016,
+      "linear_order": 1,
+      "linear_record_bytes_per_party": 7702272,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x112x112x64",
+      "ring_application_slots": 7424,
+      "ring_batches": 15654,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 150528,
+      "size_output_words": 802816,
+      "size_weight_words": 9408,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:442",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 442,
+      "source_text_sha256": "822d76e91df387becc40ded8c3b0ac104ad43e1f9f40c1207aef5b1133da6144",
+      "state_input_kind": "S",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);S->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "2",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "64",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 3136,
+      "compatibility_id": "eb01a94d617766402e0a68063b8956a094bcd7dd993e93270eb17a051410a133",
+      "conv": {
+        "ci": 64,
+        "co": 64,
+        "fh": 3,
+        "fw": 3,
+        "h": 56,
+        "n": 1,
+        "oh": 56,
+        "ow": 56,
+        "padding": 1,
+        "stride": 1,
+        "w": 56
+      },
+      "cross_terms": 112869376,
+      "forward_order": 3,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv3",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 3506176,
+      "linear_order": 2,
+      "linear_record_bytes_per_party": 3506432,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x56x56x64",
+      "ring_application_slots": 7424,
+      "ring_batches": 15204,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 200704,
+      "size_weight_words": 36864,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:445",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 445,
+      "source_text_sha256": "b9e0646f0d9397e44c1c50994ce3d33d785951e2948926294129e721d536eaae",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "3",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "64",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 3136,
+      "compatibility_id": "da316517125d1b21aa25677ca83dcf3e9446adc3196277d979d611a52a4fc1e5",
+      "conv": {
+        "ci": 64,
+        "co": 64,
+        "fh": 3,
+        "fw": 3,
+        "h": 56,
+        "n": 1,
+        "oh": 56,
+        "ow": 56,
+        "padding": 1,
+        "stride": 1,
+        "w": 56
+      },
+      "cross_terms": 112869376,
+      "forward_order": 5,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv5",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 3506176,
+      "linear_order": 3,
+      "linear_record_bytes_per_party": 3506432,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x56x56x64",
+      "ring_application_slots": 7424,
+      "ring_batches": 15204,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 200704,
+      "size_weight_words": 36864,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:447",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 447,
+      "source_text_sha256": "558022dd21824d39148670074bdda18629630f3c84c766f0c1661fea5ca0d22a",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "4",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "64",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 3136,
+      "compatibility_id": "33f86959ff88fc1b510a4ef6222b9a6f1efc9fac68f785413673dc34c3d4cf43",
+      "conv": {
+        "ci": 64,
+        "co": 64,
+        "fh": 3,
+        "fw": 3,
+        "h": 56,
+        "n": 1,
+        "oh": 56,
+        "ow": 56,
+        "padding": 1,
+        "stride": 1,
+        "w": 56
+      },
+      "cross_terms": 112869376,
+      "forward_order": 8,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv8",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 3506176,
+      "linear_order": 4,
+      "linear_record_bytes_per_party": 3506432,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x56x56x64",
+      "ring_application_slots": 7424,
+      "ring_batches": 15204,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 200704,
+      "size_weight_words": 36864,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:449",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 449,
+      "source_text_sha256": "e411231651ac6cc37fc7f65a04a32bbcbbe1a5623fa977959a898887616824e2",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "5",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "64",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 3136,
+      "compatibility_id": "97335f472b6ef7bbe41231a794ae98d5617691d892923b543659122d99a14084",
+      "conv": {
+        "ci": 64,
+        "co": 64,
+        "fh": 3,
+        "fw": 3,
+        "h": 56,
+        "n": 1,
+        "oh": 56,
+        "ow": 56,
+        "padding": 1,
+        "stride": 1,
+        "w": 56
+      },
+      "cross_terms": 112869376,
+      "forward_order": 10,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv10",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 3506176,
+      "linear_order": 5,
+      "linear_record_bytes_per_party": 3506432,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x56x56x64",
+      "ring_application_slots": 7424,
+      "ring_batches": 15204,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 200704,
+      "size_weight_words": 36864,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:451",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 451,
+      "source_text_sha256": "67035c0562c9cf5fd1390d15808497e7c870ea0a9c05560705d3b4c06373ef91",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "6",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "128",
+        "--padding",
+        "1",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 784,
+      "compatibility_id": "ae855dba59b9fa0042b2bf28b4919735ac4abea9b74a41ed9cc443ab6767cda6",
+      "conv": {
+        "ci": 64,
+        "co": 128,
+        "fh": 3,
+        "fw": 3,
+        "h": 56,
+        "n": 1,
+        "oh": 28,
+        "ow": 28,
+        "padding": 1,
+        "stride": 2,
+        "w": 56
+      },
+      "cross_terms": 56434688,
+      "forward_order": 13,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv13",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 2998272,
+      "linear_order": 6,
+      "linear_record_bytes_per_party": 2998528,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x28x28x128",
+      "ring_application_slots": 7424,
+      "ring_batches": 7602,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 100352,
+      "size_weight_words": 73728,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:453",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 453,
+      "source_text_sha256": "d1ccfa43f02df266208d4ec5614421218c1a9828eeb0ca357271a000d56e46aa",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "7",
+        "--n",
+        "1",
+        "--h",
+        "28",
+        "--w",
+        "28",
+        "--ci",
+        "128",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "128",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 784,
+      "compatibility_id": "d0365ba1f9935fc3004fc24cf97a3b33e221dd97a58f3aaebd03d9aa117f5bf3",
+      "conv": {
+        "ci": 128,
+        "co": 128,
+        "fh": 3,
+        "fw": 3,
+        "h": 28,
+        "n": 1,
+        "oh": 28,
+        "ow": 28,
+        "padding": 1,
+        "stride": 1,
+        "w": 28
+      },
+      "cross_terms": 110166016,
+      "forward_order": 15,
+      "input_shape": "1x28x28x128",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv15",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 2785280,
+      "linear_order": 7,
+      "linear_record_bytes_per_party": 2785536,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x28x28x128",
+      "ring_application_slots": 7424,
+      "ring_batches": 14840,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 100352,
+      "size_output_words": 100352,
+      "size_weight_words": 147456,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:455",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 455,
+      "source_text_sha256": "291bd49e809b067021740a0a96b4ec88c2ca8fa082af3982098542e58de161ac",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "8",
+        "--n",
+        "1",
+        "--h",
+        "56",
+        "--w",
+        "56",
+        "--ci",
+        "64",
+        "--fh",
+        "1",
+        "--fw",
+        "1",
+        "--co",
+        "128",
+        "--padding",
+        "0",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 784,
+      "compatibility_id": "e4125b8db34a7f26f14177ed9ffe1fe3c63f720fe629bd40bb194eb800e199a5",
+      "conv": {
+        "ci": 64,
+        "co": 128,
+        "fh": 1,
+        "fw": 1,
+        "h": 56,
+        "n": 1,
+        "oh": 28,
+        "ow": 28,
+        "padding": 0,
+        "stride": 2,
+        "w": 56
+      },
+      "cross_terms": 6422528,
+      "forward_order": 16,
+      "input_shape": "1x56x56x64",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv16",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 2473984,
+      "linear_order": 8,
+      "linear_record_bytes_per_party": 2474240,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x28x28x128",
+      "residual_branch": {
+        "branch_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:503",
+          "source_text_sha256": "3cae797af9fdbd285adb4d0edb490224801247162cca589d49007931a16863b2"
+        },
+        "branch_id": "projection_stage2",
+        "branch_source_forward_order": 12,
+        "execution": "not_executed_by_linear_record_artifact",
+        "merge_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:504",
+          "source_text_sha256": "27aa707b9a99e97a5a27273f01f00819d451dcf95a5cfa59a40344fa15e2dc49"
+        },
+        "merge_forward_order": 17,
+        "merge_operand_index": 1,
+        "parallel_main_terminal_layer": "conv15"
+      },
+      "ring_application_slots": 7424,
+      "ring_batches": 866,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 200704,
+      "size_output_words": 100352,
+      "size_weight_words": 8192,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:456",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 456,
+      "source_text_sha256": "a6b339383054bb001c5978bef4922cc0662effdbc5b612fb2bc1faea58d6c472",
+      "state_input_kind": "G(branch)",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G(branch)->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "9",
+        "--n",
+        "1",
+        "--h",
+        "28",
+        "--w",
+        "28",
+        "--ci",
+        "128",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "128",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 784,
+      "compatibility_id": "6e8453d82c51d5373656f46da32f3431d1a9bc7c67fcacb120d2439c610e90f1",
+      "conv": {
+        "ci": 128,
+        "co": 128,
+        "fh": 3,
+        "fw": 3,
+        "h": 28,
+        "n": 1,
+        "oh": 28,
+        "ow": 28,
+        "padding": 1,
+        "stride": 1,
+        "w": 28
+      },
+      "cross_terms": 110166016,
+      "forward_order": 19,
+      "input_shape": "1x28x28x128",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv19",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 2785280,
+      "linear_order": 9,
+      "linear_record_bytes_per_party": 2785536,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x28x28x128",
+      "ring_application_slots": 7424,
+      "ring_batches": 14840,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 100352,
+      "size_output_words": 100352,
+      "size_weight_words": 147456,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:458",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 458,
+      "source_text_sha256": "bd0ceadf8bdfc4a2758e3917e96ae3d7885135b344ee1584b404eebbdf6edfbe",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "10",
+        "--n",
+        "1",
+        "--h",
+        "28",
+        "--w",
+        "28",
+        "--ci",
+        "128",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "128",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 784,
+      "compatibility_id": "6c98b7e5eeaef9406e9c6eac2166c130fbb957ca170bedff62e5a8f03d0df7ce",
+      "conv": {
+        "ci": 128,
+        "co": 128,
+        "fh": 3,
+        "fw": 3,
+        "h": 28,
+        "n": 1,
+        "oh": 28,
+        "ow": 28,
+        "padding": 1,
+        "stride": 1,
+        "w": 28
+      },
+      "cross_terms": 110166016,
+      "forward_order": 21,
+      "input_shape": "1x28x28x128",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv21",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 2785280,
+      "linear_order": 10,
+      "linear_record_bytes_per_party": 2785536,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x28x28x128",
+      "ring_application_slots": 7424,
+      "ring_batches": 14840,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 100352,
+      "size_output_words": 100352,
+      "size_weight_words": 147456,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:460",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 460,
+      "source_text_sha256": "d4bc2edeb8ed07aba1fdbb13c42982ce090fc0b03b07bb7b15aef0df28b0f395",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "11",
+        "--n",
+        "1",
+        "--h",
+        "28",
+        "--w",
+        "28",
+        "--ci",
+        "128",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "256",
+        "--padding",
+        "1",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 196,
+      "compatibility_id": "4d41c696dc4065a9850ff6e0254bc28814ba04d4fcf06caf94d87a051688f70d",
+      "conv": {
+        "ci": 128,
+        "co": 256,
+        "fh": 3,
+        "fw": 3,
+        "h": 28,
+        "n": 1,
+        "oh": 14,
+        "ow": 14,
+        "padding": 1,
+        "stride": 2,
+        "w": 28
+      },
+      "cross_terms": 55083008,
+      "forward_order": 24,
+      "input_shape": "1x28x28x128",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv24",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 3563520,
+      "linear_order": 11,
+      "linear_record_bytes_per_party": 3563776,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x14x14x256",
+      "ring_application_slots": 7424,
+      "ring_batches": 7420,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 100352,
+      "size_output_words": 50176,
+      "size_weight_words": 294912,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:462",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 462,
+      "source_text_sha256": "64223860129cd4436b5baba569c4298d4a4e57b9477ebee9f79a688ab5f6eaac",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "12",
+        "--n",
+        "1",
+        "--h",
+        "14",
+        "--w",
+        "14",
+        "--ci",
+        "256",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "256",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 196,
+      "compatibility_id": "1b7c80c4623339edfc8b5544bed15dd3343cf62aac11b9041d0dc4b9275fd622",
+      "conv": {
+        "ci": 256,
+        "co": 256,
+        "fh": 3,
+        "fw": 3,
+        "h": 14,
+        "n": 1,
+        "oh": 14,
+        "ow": 14,
+        "padding": 1,
+        "stride": 1,
+        "w": 14
+      },
+      "cross_terms": 104857600,
+      "forward_order": 26,
+      "input_shape": "1x14x14x256",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv26",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 5521408,
+      "linear_order": 12,
+      "linear_record_bytes_per_party": 5521664,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x14x14x256",
+      "ring_application_slots": 7424,
+      "ring_batches": 14125,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 50176,
+      "size_output_words": 50176,
+      "size_weight_words": 589824,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:464",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 464,
+      "source_text_sha256": "84b9ea2efd1b54f6f18fc0917bf70a21e99187be90314198741e72674ae7c53d",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "13",
+        "--n",
+        "1",
+        "--h",
+        "28",
+        "--w",
+        "28",
+        "--ci",
+        "128",
+        "--fh",
+        "1",
+        "--fw",
+        "1",
+        "--co",
+        "256",
+        "--padding",
+        "0",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 196,
+      "compatibility_id": "47fa9fd6c4bf9c9501c8aded9718c2e2b2b33231d472932f779968f8d1434af7",
+      "conv": {
+        "ci": 128,
+        "co": 256,
+        "fh": 1,
+        "fw": 1,
+        "h": 28,
+        "n": 1,
+        "oh": 14,
+        "ow": 14,
+        "padding": 0,
+        "stride": 2,
+        "w": 28
+      },
+      "cross_terms": 6422528,
+      "forward_order": 27,
+      "input_shape": "1x28x28x128",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv27",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 1466368,
+      "linear_order": 13,
+      "linear_record_bytes_per_party": 1466624,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x14x14x256",
+      "residual_branch": {
+        "branch_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:514",
+          "source_text_sha256": "9b72e141730366fc4eff85e80b8359b0de7dfa633cef50d7eafa915e2e4ef65f"
+        },
+        "branch_id": "projection_stage3",
+        "branch_source_forward_order": 23,
+        "execution": "not_executed_by_linear_record_artifact",
+        "merge_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:515",
+          "source_text_sha256": "2a90ccada30abb321b3a274020aaf3624f0dc77b8b83f97f91abadd870b5fa12"
+        },
+        "merge_forward_order": 28,
+        "merge_operand_index": 1,
+        "parallel_main_terminal_layer": "conv26"
+      },
+      "ring_application_slots": 7424,
+      "ring_batches": 866,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 100352,
+      "size_output_words": 50176,
+      "size_weight_words": 32768,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:465",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 465,
+      "source_text_sha256": "c564339020af4772840544108fc5f834e8944de2be500b92d12940ae4113095b",
+      "state_input_kind": "G(branch)",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G(branch)->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "14",
+        "--n",
+        "1",
+        "--h",
+        "14",
+        "--w",
+        "14",
+        "--ci",
+        "256",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "256",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 196,
+      "compatibility_id": "c69b949a2023b34884dafd6a2a2ce75b369f470940c486410a2a913d26e26a58",
+      "conv": {
+        "ci": 256,
+        "co": 256,
+        "fh": 3,
+        "fw": 3,
+        "h": 14,
+        "n": 1,
+        "oh": 14,
+        "ow": 14,
+        "padding": 1,
+        "stride": 1,
+        "w": 14
+      },
+      "cross_terms": 104857600,
+      "forward_order": 30,
+      "input_shape": "1x14x14x256",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv30",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 5521408,
+      "linear_order": 14,
+      "linear_record_bytes_per_party": 5521664,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x14x14x256",
+      "ring_application_slots": 7424,
+      "ring_batches": 14125,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 50176,
+      "size_output_words": 50176,
+      "size_weight_words": 589824,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:467",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 467,
+      "source_text_sha256": "70cc889ca61b8370a175b5c330d8ed12ec3a956c39e14f6866e2ac0c807d61b2",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "15",
+        "--n",
+        "1",
+        "--h",
+        "14",
+        "--w",
+        "14",
+        "--ci",
+        "256",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "256",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 196,
+      "compatibility_id": "030986448cff4eb5ed4f228ccd13a4133677ec0980237e437bc753f103bad3b9",
+      "conv": {
+        "ci": 256,
+        "co": 256,
+        "fh": 3,
+        "fw": 3,
+        "h": 14,
+        "n": 1,
+        "oh": 14,
+        "ow": 14,
+        "padding": 1,
+        "stride": 1,
+        "w": 14
+      },
+      "cross_terms": 104857600,
+      "forward_order": 32,
+      "input_shape": "1x14x14x256",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv32",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 5521408,
+      "linear_order": 15,
+      "linear_record_bytes_per_party": 5521664,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x14x14x256",
+      "ring_application_slots": 7424,
+      "ring_batches": 14125,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 50176,
+      "size_output_words": 50176,
+      "size_weight_words": 589824,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:469",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 469,
+      "source_text_sha256": "8897d7ad00c09d32383136619ae397f7ae2d8396667caa1bce9063395ba7c853",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "16",
+        "--n",
+        "1",
+        "--h",
+        "14",
+        "--w",
+        "14",
+        "--ci",
+        "256",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "512",
+        "--padding",
+        "1",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 49,
+      "compatibility_id": "2e9032fdf30ac7666eff9642b127aecedaef3b8a3a25ba22c07f885c080a2b7e",
+      "conv": {
+        "ci": 256,
+        "co": 512,
+        "fh": 3,
+        "fw": 3,
+        "h": 14,
+        "n": 1,
+        "oh": 7,
+        "ow": 7,
+        "padding": 1,
+        "stride": 2,
+        "w": 14
+      },
+      "cross_terms": 52428800,
+      "forward_order": 35,
+      "input_shape": "1x14x14x256",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv35",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 10039296,
+      "linear_order": 16,
+      "linear_record_bytes_per_party": 10039552,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x7x7x512",
+      "ring_application_slots": 7424,
+      "ring_batches": 7063,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 50176,
+      "size_output_words": 25088,
+      "size_weight_words": 1179648,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:471",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 471,
+      "source_text_sha256": "3425a3052e63eeb2104c49c6e4c26a9f98cb43ced1289fa8cf3b1cdc9a69a9f0",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "17",
+        "--n",
+        "1",
+        "--h",
+        "7",
+        "--w",
+        "7",
+        "--ci",
+        "512",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "512",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 49,
+      "compatibility_id": "36b9dd2c49852ca98458843a7378941fe1627a6ed1892ca3e1c8681307c52f2b",
+      "conv": {
+        "ci": 512,
+        "co": 512,
+        "fh": 3,
+        "fw": 3,
+        "h": 7,
+        "n": 1,
+        "oh": 7,
+        "ow": 7,
+        "padding": 1,
+        "stride": 1,
+        "w": 7
+      },
+      "cross_terms": 94633984,
+      "forward_order": 37,
+      "input_shape": "1x7x7x512",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv37",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 19275776,
+      "linear_order": 17,
+      "linear_record_bytes_per_party": 19276032,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x7x7x512",
+      "ring_application_slots": 7424,
+      "ring_batches": 12748,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 25088,
+      "size_output_words": 25088,
+      "size_weight_words": 2359296,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:473",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 473,
+      "source_text_sha256": "807ca27a30803e3e5b551b7af972962722f57c79a00bef8ba48eb65913decb42",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "18",
+        "--n",
+        "1",
+        "--h",
+        "14",
+        "--w",
+        "14",
+        "--ci",
+        "256",
+        "--fh",
+        "1",
+        "--fw",
+        "1",
+        "--co",
+        "512",
+        "--padding",
+        "0",
+        "--stride",
+        "2"
+      ],
+      "collapsed_rows": 49,
+      "compatibility_id": "afaffc689fcc0fdfbd6e3fc2d8b34cd6583afdf78e97d90a057f6d38bb239674",
+      "conv": {
+        "ci": 256,
+        "co": 512,
+        "fh": 1,
+        "fw": 1,
+        "h": 14,
+        "n": 1,
+        "oh": 7,
+        "ow": 7,
+        "padding": 0,
+        "stride": 2,
+        "w": 14
+      },
+      "cross_terms": 6422528,
+      "forward_order": 38,
+      "input_shape": "1x14x14x256",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv38",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 1650688,
+      "linear_order": 18,
+      "linear_record_bytes_per_party": 1650944,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x7x7x512",
+      "residual_branch": {
+        "branch_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:525",
+          "source_text_sha256": "71413c02dc3880af7f2ae74528fbaeafa8cc040ebdfea197f6ad82c561133d6b"
+        },
+        "branch_id": "projection_stage4",
+        "branch_source_forward_order": 34,
+        "execution": "not_executed_by_linear_record_artifact",
+        "merge_call": {
+          "source_anchor": "GPU-MPC/experiments/orca/cnn.h:526",
+          "source_text_sha256": "708d88c818f1a0a1a411ab58650dfebe493fb6c51dda2c8c0854e59cf5baa92e"
+        },
+        "merge_forward_order": 39,
+        "merge_operand_index": 1,
+        "parallel_main_terminal_layer": "conv37"
+      },
+      "ring_application_slots": 7424,
+      "ring_batches": 866,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 50176,
+      "size_output_words": 25088,
+      "size_weight_words": 131072,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:474",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 474,
+      "source_text_sha256": "e023ddd012cd6c83731d12b06c6d8e9d6d6ec20e79ae742a2f7210f1c3329fea",
+      "state_input_kind": "G(branch)",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G(branch)->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "19",
+        "--n",
+        "1",
+        "--h",
+        "7",
+        "--w",
+        "7",
+        "--ci",
+        "512",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "512",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 49,
+      "compatibility_id": "11d19e90ad53d136128528fc73f8db0a34c23c76811a6ad72fee5b4179986101",
+      "conv": {
+        "ci": 512,
+        "co": 512,
+        "fh": 3,
+        "fw": 3,
+        "h": 7,
+        "n": 1,
+        "oh": 7,
+        "ow": 7,
+        "padding": 1,
+        "stride": 1,
+        "w": 7
+      },
+      "cross_terms": 94633984,
+      "forward_order": 41,
+      "input_shape": "1x7x7x512",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv41",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 19275776,
+      "linear_order": 19,
+      "linear_record_bytes_per_party": 19276032,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x7x7x512",
+      "ring_application_slots": 7424,
+      "ring_batches": 12748,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 25088,
+      "size_output_words": 25088,
+      "size_weight_words": 2359296,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:476",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 476,
+      "source_text_sha256": "96cfd242d95a38fb11b67bfe9db19c8ac8ac512791ce4700f90e718172f30389",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_conv_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "20",
+        "--n",
+        "1",
+        "--h",
+        "7",
+        "--w",
+        "7",
+        "--ci",
+        "512",
+        "--fh",
+        "3",
+        "--fw",
+        "3",
+        "--co",
+        "512",
+        "--padding",
+        "1",
+        "--stride",
+        "1"
+      ],
+      "collapsed_rows": 49,
+      "compatibility_id": "734133da5dc24d4ed5e9cac59d47da46b8b5c0e5340c6f8359be490d67902fe5",
+      "conv": {
+        "ci": 512,
+        "co": 512,
+        "fh": 3,
+        "fw": 3,
+        "h": 7,
+        "n": 1,
+        "oh": 7,
+        "ow": 7,
+        "padding": 1,
+        "stride": 1,
+        "w": 7
+      },
+      "cross_terms": 94633984,
+      "forward_order": 43,
+      "input_shape": "1x7x7x512",
+      "is_classifier": false,
+      "keygen_api": "gpuKeygenConv2D",
+      "layer": "conv43",
+      "layout": "NHWC/KRSC/NHWC",
+      "linear_key_payload_bytes_per_party": 19275776,
+      "linear_order": 20,
+      "linear_record_bytes_per_party": 19276032,
+      "matmul_batch": 1,
+      "online_consumer": "gpuConv2DBeaver",
+      "operator": "conv2d",
+      "output_shape": "1x7x7x512",
+      "ring_application_slots": 7424,
+      "ring_batches": 12748,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 25088,
+      "size_output_words": 25088,
+      "size_weight_words": 2359296,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:478",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 478,
+      "source_text_sha256": "491564b4eefe548d941c393150950fb639d0ece64b883fd46471782db6568b4f",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "state_transition": "StochasticTR(scale);G->T",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUConv2DKey:I/F/O",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    },
+    {
+      "batch": 1,
+      "batch_source_anchor": "GPU-MPC/experiments/orca/orca_inference.cu:47-50",
+      "bias": true,
+      "binary": "test_two_party_fc_preprocess",
+      "cli": [
+        "--layer-ordinal",
+        "21",
+        "--rows",
+        "1",
+        "--inner",
+        "512",
+        "--cols",
+        "1000"
+      ],
+      "collapsed_rows": 1,
+      "compatibility_id": "98b418d30172d4584da6f7f4f88851db31de7d645c5a61d7e0ea984bf74d2339",
+      "cross_terms": 512000,
+      "forward_order": 48,
+      "input_shape": "1x512",
+      "is_classifier": true,
+      "keygen_api": "gpuKeygenMatmul",
+      "layer": "gemm48",
+      "layout": "row-major A[MxK]/B[KxN]/C[MxN]",
+      "linear_key_payload_bytes_per_party": 4108096,
+      "linear_order": 21,
+      "linear_record_bytes_per_party": 4108304,
+      "matmul": {
+        "cols": 1000,
+        "inner": 512,
+        "rows": 1
+      },
+      "matmul_batch": 1,
+      "online_consumer": "gpuMatmulBeaver",
+      "operator": "fc",
+      "output_shape": "1x1000",
+      "ring_application_slots": 7424,
+      "ring_batches": 69,
+      "ring_bootstrap_slots": 768,
+      "size_input_words": 512,
+      "size_output_words": 1000,
+      "size_weight_words": 512000,
+      "source_anchor": "GPU-MPC/experiments/orca/cnn.h:482",
+      "source_file": "GPU-MPC/experiments/orca/cnn.h",
+      "source_line": 482,
+      "source_text_sha256": "1e77d156ceb7d5208df04ea1d801f02c640fe0afbc3ed5d889aa33a6015ebabc",
+      "state_input_kind": "G",
+      "state_output_kind": "ClearOutput",
+      "state_transition": "FinalOutputLocalARS(scale);G->ClearOutput",
+      "state_transition_execution": "not_executed_by_linear_record_artifact",
+      "stock_key_abi": "GPUMatmulKey:A/B/C",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "LocalARSAfterFinalUnmask",
+        "ringlpn_transition": false,
+        "shift": 10
+      }
+    }
+  ],
+  "model": "ResNet18",
+  "plan_digest": "ffcbecdc08b25917b6a9a20990f0a229bb294faf3e584ef794ed387d1842ab41",
+  "profile": {
+    "bw": 32,
+    "noise": "regular",
+    "ole_c": 2,
+    "ole_n": 8192,
+    "ole_t": 8,
+    "public_ring_vector_scope": "one_jointly_seeded_shake256_random_oracle_per_linear_layer_independent_domain_separated_vector_per_ring_ole",
+    "qbits": 128,
+    "ring_application_slots": 7424,
+    "ring_bootstrap_slots": 768,
+    "ring_lpn_assumption_scope": "independent_public_vector_ring_lpn_in_shake256_random_oracle_model_no_concrete_security_claim"
+  },
+  "residual_merges": [
+    {
+      "branch_id": "residual_stage1_block1",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv5",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:493",
+        "source_text_sha256": "afafdb15689e66fb20ff5c76c221b1583d06497d4d431a92cc2c59c516b87be4"
+      },
+      "merge_forward_order": 6,
+      "shortcut_kind": "identity",
+      "shortcut_operand": "relu2",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage1_block2",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv10",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:498",
+        "source_text_sha256": "76d071c043ea0a98b3a30aa0b7e9718157b81e048733eebcf16d0616c350a9cc"
+      },
+      "merge_forward_order": 11,
+      "shortcut_kind": "identity",
+      "shortcut_operand": "relu7",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage2_block1",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv15",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:504",
+        "source_text_sha256": "27aa707b9a99e97a5a27273f01f00819d451dcf95a5cfa59a40344fa15e2dc49"
+      },
+      "merge_forward_order": 17,
+      "shortcut_kind": "projection",
+      "shortcut_operand": "conv16",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage2_block2",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv21",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:509",
+        "source_text_sha256": "5bf71dcd62aa7c3b3b69890a7984b90015005ee0f2f216a09b74b8b62cef393f"
+      },
+      "merge_forward_order": 22,
+      "shortcut_kind": "identity",
+      "shortcut_operand": "relu18",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage3_block1",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv26",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:515",
+        "source_text_sha256": "2a90ccada30abb321b3a274020aaf3624f0dc77b8b83f97f91abadd870b5fa12"
+      },
+      "merge_forward_order": 28,
+      "shortcut_kind": "projection",
+      "shortcut_operand": "conv27",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage3_block2",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv32",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:520",
+        "source_text_sha256": "718277996ebb20d36467e61c90d6d732c591082c31aca6a4fcf3a7a32844ff3f"
+      },
+      "merge_forward_order": 33,
+      "shortcut_kind": "identity",
+      "shortcut_operand": "relu29",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage4_block1",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv37",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:526",
+        "source_text_sha256": "708d88c818f1a0a1a411ab58650dfebe493fb6c51dda2c8c0854e59cf5baa92e"
+      },
+      "merge_forward_order": 39,
+      "shortcut_kind": "projection",
+      "shortcut_operand": "conv38",
+      "shortcut_operand_index": 1
+    },
+    {
+      "branch_id": "residual_stage4_block2",
+      "execution": "not_executed_by_linear_record_artifact",
+      "main_operand": "conv43",
+      "main_operand_index": 0,
+      "merge_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:531",
+        "source_text_sha256": "4f2346d79c8054aade02ab12932b135cdf65c5b99179ee87886f7b182e23970b"
+      },
+      "merge_forward_order": 44,
+      "shortcut_kind": "identity",
+      "shortcut_operand": "relu40",
+      "shortcut_operand_index": 1
+    }
+  ],
+  "schema": "ringlpn-full-linear-execution-v1",
+  "source_layer_manifest": {
+    "path": "GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json",
+    "schema": "ringlpn.orca-forward-linear-layers.v1",
+    "sha256": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984"
+  },
+  "source_registry": [
+    {
+      "path": "GPU-MPC/experiments/orca/cnn.h",
+      "sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd"
+    },
+    {
+      "path": "GPU-MPC/experiments/orca/orca_inference.cu",
+      "sha256": "9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986"
+    },
+    {
+      "path": "GPU-MPC/experiments/orca/piranha.cu",
+      "sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d"
+    },
+    {
+      "path": "GPU-MPC/experiments/orca/run_experiment.py",
+      "sha256": "30a166473486c0ba7755e8b587b2e78567bc901ea80ffa58229d03263ce4e77b"
+    },
+    {
+      "path": "GPU-MPC/backend/orca_base.h",
+      "sha256": "6672c368a4008bbf88f2fe754c7a87d3b7803367bc761620e378af68a64f6413"
+    },
+    {
+      "path": "GPU-MPC/backend/orca.h",
+      "sha256": "210e7d98b657193eafcd56e5e7d940b6ee7e5256276e8885839963720132e727"
+    },
+    {
+      "path": "GPU-MPC/backend/piranha.h",
+      "sha256": "f4c950ee845f97eb144670162b94a556aeea53250f5235123561160192646788"
+    },
+    {
+      "path": "GPU-MPC/nn/orca_opt.h",
+      "sha256": "6cf0ddeea38da262679fc05cc2ea61a2bb9915f8b675cdf6d15cadb3a9977ab3"
+    },
+    {
+      "path": "GPU-MPC/ext/sytorch/include/sytorch/layers/layers.h",
+      "sha256": "7cbf3379ed4cfecea94bb1f7deafa4c31071e942f86c06c4b173d6fb6a2ed126"
+    },
+    {
+      "path": "GPU-MPC/fss/gpu_matmul.h",
+      "sha256": "9811d0a1cca0f461753a5c21629f05165e477bb6c2feba59af10a183ba1a8077"
+    },
+    {
+      "path": "GPU-MPC/fss/gpu_matmul.cu",
+      "sha256": "4e4dbb9204cc95c702281beafeb0738a850b59e710682e5e0eac23ec160e2b85"
+    },
+    {
+      "path": "GPU-MPC/fss/gpu_conv2d.h",
+      "sha256": "711a2a6d2e759a50513afff64e208a32beaf71c07117f77c2e2ba5eb56f7f7cc"
+    },
+    {
+      "path": "GPU-MPC/fss/gpu_conv2d.cu",
+      "sha256": "31f561482a70b0da80e19956dc02b90d140f0a7bf91b252da788c116b6ea90bd"
+    }
+  ],
+  "stock_key_stream": [
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:487",
+        "source_text_sha256": "5e1ed017976140ffc25240555caf8433c577808d7d2416d4465558eff3da9df9"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv0",
+      "ringlpn": true,
+      "stream_position": 1
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:487",
+        "source_text_sha256": "5e1ed017976140ffc25240555caf8433c577808d7d2416d4465558eff3da9df9"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv0",
+      "ringlpn": false,
+      "stream_position": 2
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:488",
+        "source_text_sha256": "e8834ca30df14d31d46601e29884f95358c5ca1a0830b0712cbac6c06aa8fc8b"
+      },
+      "key_kind": "GPUMaxpoolKey",
+      "node": "maxpool1",
+      "ringlpn": false,
+      "stream_position": 3
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:489",
+        "source_text_sha256": "ebb7cee67e0aec7952784f7cf7e40a47d94c4efb7411d6e95823c454ea96e056"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu2",
+      "ringlpn": false,
+      "stream_position": 4
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:490",
+        "source_text_sha256": "2ab1b056c79f2999ab23b13cbf0f00f04dd87c10eb3ae04bac766f228f597292"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv3",
+      "ringlpn": true,
+      "stream_position": 5
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:490",
+        "source_text_sha256": "2ab1b056c79f2999ab23b13cbf0f00f04dd87c10eb3ae04bac766f228f597292"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv3",
+      "ringlpn": false,
+      "stream_position": 6
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:491",
+        "source_text_sha256": "5afbe01a1d7b3e3a84375d5914d900e0051cd99a45a8ea3b1a2a35f3cb3c37b2"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu4",
+      "ringlpn": false,
+      "stream_position": 7
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:492",
+        "source_text_sha256": "8a03b29ac018e4995935e0333226f89795ec22ceff5a346a9d88734b4aecc77a"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv5",
+      "ringlpn": true,
+      "stream_position": 8
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:492",
+        "source_text_sha256": "8a03b29ac018e4995935e0333226f89795ec22ceff5a346a9d88734b4aecc77a"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv5",
+      "ringlpn": false,
+      "stream_position": 9
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:494",
+        "source_text_sha256": "4525236fe8439013be13f25a348c66063dbee5e63b5ed81b8c46e99a6f868a4f"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu7",
+      "ringlpn": false,
+      "stream_position": 10
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:495",
+        "source_text_sha256": "994bce3abc20d8e7bec6edd4dfa15cb0401cc8d4f33681cb2de97e87d7c02981"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv8",
+      "ringlpn": true,
+      "stream_position": 11
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:495",
+        "source_text_sha256": "994bce3abc20d8e7bec6edd4dfa15cb0401cc8d4f33681cb2de97e87d7c02981"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv8",
+      "ringlpn": false,
+      "stream_position": 12
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:496",
+        "source_text_sha256": "235f3e187441c32d3adb8f721d578b8345515a01d9598cd7c4bb1e1769666a8b"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu9",
+      "ringlpn": false,
+      "stream_position": 13
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:497",
+        "source_text_sha256": "c3e8448e3545cf03b46b317b3f15a0ced8795995f16f3fc4f8a1b850f99916eb"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv10",
+      "ringlpn": true,
+      "stream_position": 14
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:497",
+        "source_text_sha256": "c3e8448e3545cf03b46b317b3f15a0ced8795995f16f3fc4f8a1b850f99916eb"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv10",
+      "ringlpn": false,
+      "stream_position": 15
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:499",
+        "source_text_sha256": "c9ebf4b3c762a53f90a1282e950b9700557f5efa6afdf7c75e787fbda665a15b"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu12",
+      "ringlpn": false,
+      "stream_position": 16
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:500",
+        "source_text_sha256": "7d4a3028843094adb411caa38516ff9e7e01e533b2eeeb38c9fdfa0acd29005e"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv13",
+      "ringlpn": true,
+      "stream_position": 17
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:500",
+        "source_text_sha256": "7d4a3028843094adb411caa38516ff9e7e01e533b2eeeb38c9fdfa0acd29005e"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv13",
+      "ringlpn": false,
+      "stream_position": 18
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:501",
+        "source_text_sha256": "d9b6c51193a22d6dd12d0c5d316333b504e4c547b8f791c5d63a539ddc47d6a0"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu14",
+      "ringlpn": false,
+      "stream_position": 19
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:502",
+        "source_text_sha256": "0549bcb8684b4c9368ba0f1e0378fb41d6cc7b1bafab0dd1f551f6527b4ba913"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv15",
+      "ringlpn": true,
+      "stream_position": 20
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:502",
+        "source_text_sha256": "0549bcb8684b4c9368ba0f1e0378fb41d6cc7b1bafab0dd1f551f6527b4ba913"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv15",
+      "ringlpn": false,
+      "stream_position": 21
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:503",
+        "source_text_sha256": "3cae797af9fdbd285adb4d0edb490224801247162cca589d49007931a16863b2"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv16",
+      "ringlpn": true,
+      "stream_position": 22
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:503",
+        "source_text_sha256": "3cae797af9fdbd285adb4d0edb490224801247162cca589d49007931a16863b2"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv16",
+      "ringlpn": false,
+      "stream_position": 23
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:505",
+        "source_text_sha256": "742ff802c339005e4a57f9c3f692d2bfb3d699a778b0c2e468de2e7d701f5cf2"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu18",
+      "ringlpn": false,
+      "stream_position": 24
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:506",
+        "source_text_sha256": "0537db722f52fb6359cc56a3926f96a15c59347ea054d8322bd68ed2b474b5bf"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv19",
+      "ringlpn": true,
+      "stream_position": 25
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:506",
+        "source_text_sha256": "0537db722f52fb6359cc56a3926f96a15c59347ea054d8322bd68ed2b474b5bf"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv19",
+      "ringlpn": false,
+      "stream_position": 26
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:507",
+        "source_text_sha256": "3465e7bf05fad9263b4b6f0b8622b3c1713b22016c729f539d73b5a8c9db184d"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu20",
+      "ringlpn": false,
+      "stream_position": 27
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:508",
+        "source_text_sha256": "09f325c00c68a0feb4fc13e6bb1a49c4d7c384d40002f786536c30712f26a07c"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv21",
+      "ringlpn": true,
+      "stream_position": 28
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:508",
+        "source_text_sha256": "09f325c00c68a0feb4fc13e6bb1a49c4d7c384d40002f786536c30712f26a07c"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv21",
+      "ringlpn": false,
+      "stream_position": 29
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:510",
+        "source_text_sha256": "62b63df86d2aa8658547dc7331aad36833d617dfd9e1d151a2ce141f71f7068e"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu23",
+      "ringlpn": false,
+      "stream_position": 30
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:511",
+        "source_text_sha256": "938f76bec05230a8a6564919b87df0ccfe9e789b30fddfca805578ea237beb3d"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv24",
+      "ringlpn": true,
+      "stream_position": 31
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:511",
+        "source_text_sha256": "938f76bec05230a8a6564919b87df0ccfe9e789b30fddfca805578ea237beb3d"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv24",
+      "ringlpn": false,
+      "stream_position": 32
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:512",
+        "source_text_sha256": "22038400dc24623e9d307b29e549b61577fbfabe9fa27a9d4d5487ff265193fc"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu25",
+      "ringlpn": false,
+      "stream_position": 33
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:513",
+        "source_text_sha256": "9c17daefbb7d49bc767c7ae99fc38e183ba74672b4bd32eed29a80df16f77ed9"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv26",
+      "ringlpn": true,
+      "stream_position": 34
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:513",
+        "source_text_sha256": "9c17daefbb7d49bc767c7ae99fc38e183ba74672b4bd32eed29a80df16f77ed9"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv26",
+      "ringlpn": false,
+      "stream_position": 35
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:514",
+        "source_text_sha256": "9b72e141730366fc4eff85e80b8359b0de7dfa633cef50d7eafa915e2e4ef65f"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv27",
+      "ringlpn": true,
+      "stream_position": 36
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:514",
+        "source_text_sha256": "9b72e141730366fc4eff85e80b8359b0de7dfa633cef50d7eafa915e2e4ef65f"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv27",
+      "ringlpn": false,
+      "stream_position": 37
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:516",
+        "source_text_sha256": "406801246f09c01c4a71e0cc0b189069d91b918328c12a080b6ce7e88096526b"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu29",
+      "ringlpn": false,
+      "stream_position": 38
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:517",
+        "source_text_sha256": "285be83383d730270fba318a9ee69812f2693d7e6845d254080c83ae1a4bb459"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv30",
+      "ringlpn": true,
+      "stream_position": 39
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:517",
+        "source_text_sha256": "285be83383d730270fba318a9ee69812f2693d7e6845d254080c83ae1a4bb459"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv30",
+      "ringlpn": false,
+      "stream_position": 40
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:518",
+        "source_text_sha256": "6891376dd97e59fd8a501c5e480d5c455de6df69a262d81db7bb38ebbfe8c9fa"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu31",
+      "ringlpn": false,
+      "stream_position": 41
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:519",
+        "source_text_sha256": "fd15eaa88e820bb20b9fe74f97f16ee4a72e838ee1ccb40e3922da6afcecf165"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv32",
+      "ringlpn": true,
+      "stream_position": 42
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:519",
+        "source_text_sha256": "fd15eaa88e820bb20b9fe74f97f16ee4a72e838ee1ccb40e3922da6afcecf165"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv32",
+      "ringlpn": false,
+      "stream_position": 43
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:521",
+        "source_text_sha256": "4d58902a1d01f021774b9103dc252e4f2349e6e103d8cc832f19b7438b368d94"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu34",
+      "ringlpn": false,
+      "stream_position": 44
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:522",
+        "source_text_sha256": "d44565933e3124a41c8019bcee2df3353d39ebd2a88479c0391543ee03bd56c1"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv35",
+      "ringlpn": true,
+      "stream_position": 45
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:522",
+        "source_text_sha256": "d44565933e3124a41c8019bcee2df3353d39ebd2a88479c0391543ee03bd56c1"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv35",
+      "ringlpn": false,
+      "stream_position": 46
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:523",
+        "source_text_sha256": "449214d040c3b5d5ff2dc3b10f9e2861a0925bf5b01fa072457bd59a4b24e188"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu36",
+      "ringlpn": false,
+      "stream_position": 47
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:524",
+        "source_text_sha256": "55c4fd8b84f8816da3d8f5f0cca50941f65c30870a4f40fffd029debb94616b7"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv37",
+      "ringlpn": true,
+      "stream_position": 48
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:524",
+        "source_text_sha256": "55c4fd8b84f8816da3d8f5f0cca50941f65c30870a4f40fffd029debb94616b7"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv37",
+      "ringlpn": false,
+      "stream_position": 49
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:525",
+        "source_text_sha256": "71413c02dc3880af7f2ae74528fbaeafa8cc040ebdfea197f6ad82c561133d6b"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv38",
+      "ringlpn": true,
+      "stream_position": 50
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:525",
+        "source_text_sha256": "71413c02dc3880af7f2ae74528fbaeafa8cc040ebdfea197f6ad82c561133d6b"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv38",
+      "ringlpn": false,
+      "stream_position": 51
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:527",
+        "source_text_sha256": "14f6de815c123b4097d30d41d1a9069b6369b12e971b8e0057f58a46720f5275"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu40",
+      "ringlpn": false,
+      "stream_position": 52
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:528",
+        "source_text_sha256": "507e22caca0b1caec98853c0325cd39fafc3954875f2c9dbefd334d32e7ae733"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv41",
+      "ringlpn": true,
+      "stream_position": 53
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:528",
+        "source_text_sha256": "507e22caca0b1caec98853c0325cd39fafc3954875f2c9dbefd334d32e7ae733"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv41",
+      "ringlpn": false,
+      "stream_position": 54
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:529",
+        "source_text_sha256": "27a0970b1557f72a9428a680f0fb6e98d0d4774f68c52e702bfc4158e99781c8"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu42",
+      "ringlpn": false,
+      "stream_position": 55
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:530",
+        "source_text_sha256": "815ff598c9a0c9f41f483dc7ac6f913bbad0d9ba61454ab89af508507de5ffb2"
+      },
+      "key_kind": "GPUConv2DKey[I,F,O]",
+      "node": "conv43",
+      "ringlpn": true,
+      "stream_position": 56
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:530",
+        "source_text_sha256": "815ff598c9a0c9f41f483dc7ac6f913bbad0d9ba61454ab89af508507de5ffb2"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "conv43",
+      "ringlpn": false,
+      "stream_position": 57
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:532",
+        "source_text_sha256": "202744b9e6f09c78dd79086f2c7e5f65fb9e7c6d61262bc31d9596dbbb543f94"
+      },
+      "key_kind": "GPUReluExtendKey",
+      "node": "relu45",
+      "ringlpn": false,
+      "stream_position": 58
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:533",
+        "source_text_sha256": "b2727723e18007eb0a81865c558a2766316ef1cc65a507d016c0313264b139fa"
+      },
+      "key_kind": "GPUStTRKey",
+      "node": "globalaveragepool46",
+      "ringlpn": false,
+      "stream_position": 59
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:535",
+        "source_text_sha256": "556d59f2fa51cbd578b87eba16768f4a97b2fee8dccb7a85e5517f22c766b29d"
+      },
+      "key_kind": "GPUSignExtendKey",
+      "node": "gemm48",
+      "ringlpn": false,
+      "stream_position": 60
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:535",
+        "source_text_sha256": "556d59f2fa51cbd578b87eba16768f4a97b2fee8dccb7a85e5517f22c766b29d"
+      },
+      "key_kind": "GPUMatmulKey[A,B,C]",
+      "node": "gemm48",
+      "ringlpn": true,
+      "stream_position": 61
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/backend/orca_base.h:175",
+        "source_text_sha256": "470049560338be6c97671d6234e6011a9b2c00058821cea547d545acd8732ac4"
+      },
+      "key_kind": "raw_mask[1000_words]",
+      "node": "output",
+      "ringlpn": false,
+      "stream_position": 62
+    }
+  ],
+  "stock_state_nodes": [
+    {
+      "constructor": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:480",
+        "source_text_sha256": "2c6dc4ab6c27ab60b2bb4cede1cbe5a958ea9b17cedabdf772b0e1c80d2f1e25"
+      },
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:533",
+        "source_text_sha256": "b2727723e18007eb0a81865c558a2766316ef1cc65a507d016c0313264b139fa"
+      },
+      "forward_order": 46,
+      "generic_truncation_call": {
+        "source_anchor": "GPU-MPC/ext/sytorch/include/sytorch/layers/layers.h:169",
+        "source_text_sha256": "610b00ce2f353c1f029617908c51aaa1ed356245e14192caebbaf5a1c022b8d9"
+      },
+      "node": "globalaveragepool46",
+      "operation": "local_gpuAddPool_then_StochasticTR",
+      "operator": "globalaveragepool2d",
+      "ringlpn_scope": "excluded_non_ringlpn_linear_sum",
+      "state_input_kind": "G",
+      "state_output_kind": "T",
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "StochasticTR",
+        "shift": 10
+      }
+    },
+    {
+      "constructor": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:481",
+        "source_text_sha256": "0aed84b62141f60ac898c85802338dceacc2707a7ca1ae8c6436acd6f17829f8"
+      },
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_call": {
+        "source_anchor": "GPU-MPC/experiments/orca/cnn.h:534",
+        "source_text_sha256": "382318c250ee692cd813e169371f153805939dee2332daf94e482370656c840e"
+      },
+      "forward_order": 47,
+      "node": "flatten47",
+      "operator": "flatten_view",
+      "ringlpn_scope": "excluded_no_key_material",
+      "state_input_kind": "T",
+      "state_output_kind": "T"
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_order": 48,
+      "generic_sign_extension_call": {
+        "source_anchor": "GPU-MPC/ext/sytorch/include/sytorch/layers/layers.h:162",
+        "source_text_sha256": "8d2003580eaf9ea6ea295e0760eb95e3aa6c5c7c379a3785285174506054e7d9"
+      },
+      "node": "gemm48_pre_sign_extend",
+      "operator": "SignExtend",
+      "optimizer_terminal_rule": {
+        "source_anchor": "GPU-MPC/nn/orca_opt.h:67",
+        "source_text_sha256": "70afe6e84ab92234b69def3ac3d4be192cb92ac63076a1a0c46df9f438bf3901"
+      },
+      "ringlpn_scope": "excluded_dcf_transition",
+      "state_input_kind": "T",
+      "state_output_kind": "G"
+    },
+    {
+      "execution": "not_executed_by_linear_record_artifact",
+      "forward_order": 49,
+      "node": "gemm48_terminal_output",
+      "operator": "FinalUnmaskLocalARS",
+      "ringlpn_scope": "terminal_mask_share_required_but_not_recorded",
+      "state_input_kind": "MaskedOutput",
+      "state_output_kind": "ClearOutput",
+      "stock_output_call": {
+        "source_anchor": "GPU-MPC/backend/orca_base.h:175",
+        "source_text_sha256": "470049560338be6c97671d6234e6011a9b2c00058821cea547d545acd8732ac4"
+      },
+      "truncation": {
+        "bin": 32,
+        "bout": 22,
+        "kind": "LocalARSAfterFinalUnmask",
+        "shift": 10
+      }
+    }
+  ],
+  "summary": {
+    "branch_input_layers": 3,
+    "conv2d_layers": 20,
+    "fc_layers": 1,
+    "identity_shortcuts": 5,
+    "linear_layers": 21,
+    "projection_shortcuts": 3,
+    "residual_merges": 8,
+    "stock_key_items": 62,
+    "stock_state_nodes": 4,
+    "stock_stochastic_truncations": 21,
+    "total_cross_terms": 1680390912,
+    "total_dpf_bit_triples": 2317936640,
+    "total_dpf_scalar_oles": 695380992,
+    "total_dpf_string_ots": 5099460608,
+    "total_dpf_trees": 231793664,
+    "total_linear_key_payload_bytes_per_party": 130774336,
+    "total_private_dpf_prg_node_expansions": 474481630208,
+    "total_public_a_seed_words": 84,
+    "total_ring_application_capacity": 6722016256,
+    "total_ring_application_slots": 6721563648,
+    "total_ring_application_slots_discarded": 452608,
+    "total_ring_batches": 226361,
+    "total_ring_ole_instances": 905444
+  }
+}

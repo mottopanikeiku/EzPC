@@ -448,13 +448,7 @@ inline bool two_party_dpf_gen_batch_with_state(
             choices[tree] =
                 abit[tree * (size_t)L + (size_t)alpha_bit_index];
         }
-        if (party == 0) {
-            ch.ot_send_128(ot_m0, ot_m1);
-            ot_out = ch.ot_recv_128(choices);
-        } else {
-            ot_out = ch.ot_recv_128(choices);
-            ch.ot_send_128(ot_m0, ot_m1);
-        }
+        ot_out = ch.ot_duplex_128(ot_m0, ot_m1, choices);
         if (stage_counters != nullptr) {
             ++stage_counters->phase_b_dependency_rounds;
         }

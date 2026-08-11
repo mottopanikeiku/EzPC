@@ -1,3 +1,9 @@
+> **HISTORICAL TRANSPORT COMPONENT CHECKPOINT (2026-07-29).** Preserve the
+> measured SCI/IKNP/Gilboa transport and key-validation rows below. Statements
+> that FC/expansion remained one-process, conversion was unwired, GPU batching
+> was future work, or no optional silent backend existed are superseded by the
+> current security contract and `CLAUDE.md`.
+
 # Two-process distributed DPF key generation on a real transport (2026-07-29)
 
 **One sentence:** the frozen S1 keygen protocol now runs as **two OS processes
@@ -39,7 +45,7 @@ deadlock-free without extra synchronisation.
 ```bash
 cd GPU-MPC/ringlpn
 scripts/build_two_party_dpf_keygen.sh          # needs OpenSSL only
-BASE_PORT=44500 scripts/run_two_party_dpf_keygen.sh
+BASE_PORT=20400 scripts/run_two_party_dpf_keygen.sh
 # prints "[two-party-dpf] all configurations pass"
 ```
 
@@ -206,28 +212,32 @@ protocol.
   protocol shape, not a silent-OT figure.
 - **Semi-honest only**, authenticated point-to-point channels assumed. No
   malicious security, no active-attack handling, no side-channel scope.
-- **Host-reference expansion PRG.** The unchanged host evaluator still uses
-  splitmix64 and carries no security claim. The deployed GPU path now uses four
-  domain-separated AES calls per node, retaining full 128-bit child seeds and
-  emitting separate control bits. Device/host parity and GPU evaluation are
-  executable correctness gates; `D-SEED`, `P-RNG`, `P-DIST`, and `P-KEY`
-  remain open proof obligations.
+- **Host-reference expansion PRG.** The unchanged dated host evaluator uses
+  splitmix64 and carries no security claim. The deployed GPU path uses four
+  domain-separated AES calls per node with full 128-bit child seeds and
+  separate control bits. Device/host parity and GPU evaluation are executable
+  correctness gates. `P-DIST` is closed algebraically, `P-RNG` has
+  implementation evidence, and `P-KEY` remains conditional on the standard
+  DPF/PRG theorem; no concrete-security conclusion follows.
 - **Loopback measurements.** No WAN/LAN profile, no bandwidth cap, no latency
   injection.
-- The two-process keys now drive the real Figure 2 OLE engine and pass its GPU
-  validation. That engine and the FC composition still run in one process.
-  The standalone conversion uses real OT-backed correlations in two processes,
-  but it is not wired into the FC transcript.
-- Keygen is CPU-side. GPU-side batched keygen remains future work; emitted keys
-  are already byte-compatible with, and evaluated by, the GPU path.
+- **Current downstream disposition.** The live FC/Conv path now performs
+  party-local Ring-LPN expansion and exact OT-backed conversion across two
+  processes/GPUs; the old one-process/unwired statements below this checkpoint
+  are withdrawn. GPU distributed-DPF generation and dependency instrumentation
+  are implemented. The distinct breadth-first SPFSS batch helper has no live
+  caller and remains unvalidated.
+- **Optional backend.** EMP-Silent is implemented only as historical opt-in,
+  independently unreviewed evidence; SCI/IKNP remains the canonical/headline
+  path.
 
 ## 6. Where this sits in the plan
 
-Milestone M1 requires real silent OT/OLE transport, GPU batching and bytes, and
-round/traffic measurement. This artifact discharges the **real two-party
-transport, level-synchronous batching, measured bytes, and measured
-direction-switch** parts for host keygen with real OT rather than silent OT.
-Direction switches are not a network-round measurement. GPU-consumable key
-emission and the M2 real-OLE-on-two-party-keys gate are now closed. Still open
-for M1: a silent-OT backend, GPU-side batched keygen, and the DPF distribution
-and single-key privacy reductions.
+Milestone M1's dated transport, level-synchronous batching, measured bytes, and
+direction-switch component gates remain preserved here. Current downstream
+integration is tracked in the security contract: `P-DIST` is algebraically
+closed, `P-CONV` is closed in the daBit/edaBit/triple hybrid, `P-RNG` has
+implementation evidence, `P-KEY` remains conditional, and `P-PCG` plus the
+concrete Ring-LPN parameter/reduction remain blocking. Authenticated distinct-
+host execution and independent review also remain open. Direction switches are
+still not network-round measurements.

@@ -2,13 +2,60 @@
 
 > **Start at [`CLAUDE.md`](CLAUDE.md)** — the canonical catch-up document
 > (current status, source map, validated claims vs. open boundaries, roadmap,
-> environment gotchas). The approved full-linear continuation is
-> [`results/reports/full_linear_layer_systems_plan_2026_08_06.md`](results/reports/full_linear_layer_systems_plan_2026_08_06.md);
-> results and all reports are indexed in
-> [`results/README.md`](results/README.md). Older per-artifact pointers below
-> are historical and may lag.
+> environment gotchas). The full-graph checkpoint is driven by
+> [`scripts/run_resnet18_full_graph.sh`](scripts/run_resnet18_full_graph.sh);
+> results and reports are indexed in
+> [`results/README.md`](results/README.md), including the current
+> [publication portfolio](results/reports/publication_portfolio_2026_08_04.md)
+> and [authenticated two-host deployment contract](results/reports/authenticated_two_host_deployment_2026_08_04.md).
+> Older per-artifact pointers below are historical and may lag.
 
-This folder is a standalone Ring-LPN benchmarking harness. It is separate from ORCA.
+The wrapper's default linear preprocessing is serial.  Set `LINEAR_LANES` to
+comma-separated `P0_GPU:P1_GPU:CHECK_GPU:FIRST_PORT-LAST_PORT` descriptors to
+opt into explicitly isolated concurrent GPU-pair lanes; see `CLAUDE.md` for
+the current command example and exclusivity rules.
+
+This folder is the dealerless forward-linear preprocessing artifact and its
+source-bound Orca integration harness. Stock Orca's online consumers remain
+unchanged.
+
+## Canonical component builds
+
+Use `./scripts/build_component.sh list` to discover the maintained library and
+executable targets. In particular:
+
+```bash
+./scripts/build_component.sh linear-library
+./scripts/build_component.sh linear-fc
+./scripts/build_component.sh linear-conv
+./scripts/build_component.sh graph-libraries
+./scripts/build_component.sh resnet18-full-graph
+```
+`linear-library` produces the deterministic
+`build/linear-library/lib/libringlpn_linear.a`, installs the standalone
+`<ringlpn/linear_preprocess.h>`, and links the focused public-API probe under
+`build/linear-library/bin`. The production facade opens and validates exactly
+one party-local private record at a time; it deliberately exposes no record-pair
+loader. The API probe's optional synthetic-fixture mode also closes each
+party's record before opening the other and includes symlink,
+path-replacement, and non-0600-mode negative controls.
+
+
+The FC and Conv targets retain the fixed private canonical source symlink used
+by the binary-approval gate. The full-graph target first builds and links the
+deterministic `libringlpn_linear.a` facade, then source-builds cryptoTools,
+bitpack, and LLAMA—but not the unused `libsytorch.a`—under
+`build/graph-libraries`; it neither compiles a second raw Conv backend,
+downloads dependencies, nor relies on an untracked
+`GPU-MPC/ext/sytorch/build`. A missing recursive submodule, compiler,
+CUDA toolkit, or concurrently held build root fails before compilation. Legacy
+`build_*.sh` entry points remain callable and route the approved adapters and
+full graph through this entry point.
+
+The reproduction image is built with the fixed non-root UID/GID `65532:65532`
+and deterministic epoch. The host dispatcher overrides the runtime user with
+the invoking non-root UID/GID so bind-mounted outputs remain caller-owned;
+runtime UID or GID zero is rejected.
 
 ## Layout
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
@@ -51,17 +98,14 @@ This folder is a standalone Ring-LPN benchmarking harness. It is separate from O
 - scripts/run_vtune_memory.sh: VTune memory-access wrapper for CPU benchmark
 - results/: output files, organized per artifact (see results/README.md for the index)
 
-For the current Figure 2 OLE work, read `results/reports/ole_gpu_handoff.md` first. It records the exact validated claim, caveats, reproduction commands, and follow-up path.
-
-For the current linear-layer work, read `results/reports/linear_ole_handoff.md` first. It records the exact two-OLE-to-Beaver ring-polynomial artifact and why Orca scalar integration remains a separate step.
-
-For the current Orca scalar bridge boundary, read `results/reports/orca_zp_bridge_handoff.md`. It records the carry correction needed for `Z_p` shares, the conservative constant-polynomial scalar packing smoke, and the q62/full-32-bit counterexample.
-
-For the current v1 Orca FC demo, read `results/reports/orca_fc_ringlpn_demo_memo.md`. It records the bounded q62 FC claim, proof sketch, exact command log, result table, and remaining paper gaps.
-
-For the current q128 Orca FC integration plan, read `results/reports/orca_ringlpn_linear_integration_plan.md`. It is the canonical transition document for q128/CRT OLE, linear OLE-to-Beaver, dealer/oracle CRT export, and feature-flagged FC train/infer integration. Older poster/professor-facing files in `results/` are historical snapshots and can contain stale q128 wording.
-
-For execution order and paper-oriented next steps, read `results/reports/paper_execution_next_steps.md`.
+The following per-artifact handoffs are historical implementation context:
+`results/reports/ole_gpu_handoff.md`,
+`results/reports/linear_ole_handoff.md`,
+`results/reports/orca_zp_bridge_handoff.md`,
+`results/reports/orca_fc_ringlpn_demo_memo.md`, and
+`results/reports/orca_ringlpn_linear_integration_plan.md`. Their claims and
+next steps are superseded by `CLAUDE.md`; do not treat
+`results/reports/paper_execution_next_steps.md` as a current roadmap.
 
 ## Quick start (inside container)
 ```bash
@@ -253,10 +297,10 @@ Notes:
 - The default smoke validates a `2 x 2` by `2 x 2` ring-polynomial matrix product using 8 ring products and 16 OLE instances.
 - Each `A[row,k]` and `B[k,col]` operand share is generated once and reused across all products, and the CSV reports `shared_operands=1` when that regression check passes.
 - The regular-noise smoke uses SPFSS domain `2N/t` and validates the same Beaver relation.
-- This is the first OLE-to-Beaver linear-layer artifact. The tiny FC key-writer demo below is the first Orca online integration smoke, but full model integration still needs q128/CRT or concrete value-bound evidence before replacing `gpuKeygenMatmul`.
+- This is a dated OLE-to-Beaver component artifact, not a first-implementation claim. The tiny FC key-writer below is a historical Orca online-integration smoke; use `CLAUDE.md` for the current two-process FC/Conv boundary.
 
 ## Orca Zp-to-Z2k bridge smoke
-The repository includes a host-only bridge test for the first Orca-facing scalar conversion boundary after the ring-polynomial OLE-to-Beaver artifact.
+The repository includes a host-only bridge test for a dated Orca-facing scalar conversion boundary after the ring-polynomial OLE-to-Beaver artifact.
 
 Build and run from the host repository root:
 ```bash
@@ -275,8 +319,8 @@ Notes:
 - Constant-polynomial scalar packing is validated only under the explicit no-prime-wrap bound `inner * value_bound^2 < p`.
 - The smoke intentionally records a q62/full-32-bit counterexample, so unrestricted 32-bit Orca products are not claimed under the current single-prime path.
 
-## Orca FC Ring-LPN v1 demo
-The repository includes a tiny forward-only Orca FC demo for the bounded q62 constant-polynomial bridge path.
+## Orca FC Ring-LPN v1 demo (historical component)
+The repository includes a forward-only Orca FC demo for the bounded q62 bridge and one q128 full-`uint32` control. It is not the live two-process FC/Conv path.
 
 Build and run inside the CUDA-enabled container:
 ```bash
@@ -294,25 +338,37 @@ Outputs:
 - `results/outreach/professor_ringlpn_orca_fc_deliverable_2026_05_15.md`
 
 Notes:
-- The default suite covers `2x2x2`, `2x3x2`, and `3x2x2` at `bw=16`, plus a bounded `2x2x3` case at `bw=32`; all use `value_bound=255`, `poly_n=8192`, `c=2`, `t=8`, `tf=None`, and zero bias.
-- It generates both party buffers in one dealer call and serializes raw additive shares in `A`, `B`, `C_masked` order, with no truncation bytes.
-- It calls the existing `gpuMatmulBeaver` path unchanged and validates the reconstruction against clear FC output plus the output mask.
-- It also generates Orca baseline keys with `gpuKeygenMatmul` under the same masks and checks that baseline online reconstruction matches the Ring-LPN-style raw key writer.
-- This is forward FC only. q128/CRT, high-density packing, secure distributed share conversion, and training/backward keys remain follow-up work.
+- The five-case default suite covers q64 `2x2x2`, `2x3x2`, and `3x2x2` at
+  `bw=16`; q64 bounded `2x2x3` at `bw=32`; and q128 `2x2x2` at `bw=32`
+  with full `uint32` bounds. All use `poly_n=8192,c=2,t=8`.
+- This dated demo generates both party buffers in one dealer call and writes
+  `A`, `B`, `C_masked` raw additive shares with no truncation bytes.
+- It calls `gpuMatmulBeaver` unchanged and checks both its Ring-LPN-style writer
+  and stock `gpuKeygenMatmul` reconstruction under the same logical inputs.
+- It is forward FC component evidence only. The current two-process
+  conversion/full-linear/full-graph disposition is documented in `CLAUDE.md`.
 
 ## Paper checkpoint smoke
-Run the lightweight host smoke from the repository root:
+Run the host-only gate from the repository root:
 ```bash
 GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh
 ```
 
-Run the CUDA smoke inside the `orca-dev` container from `/home/ringlpn`:
+The complete default GPU/full-graph gate needs three visible GPU roles:
 ```bash
-RUN_GPU_SMOKE=1 ./scripts/run_paper_checkpoint_smoke.sh
+cd GPU-MPC/ringlpn
+RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
+CUDA_VISIBLE_DEVICES=<gpu-a>,<gpu-b>,<gpu-c> \
+PATH=/usr/local/cuda/bin:$PATH ./scripts/run_paper_checkpoint_smoke.sh
 ```
 
-The default host smoke avoids CUDA requirements. The CUDA mode builds and runs the SPFSS payload test plus uniform/regular Figure 2 OLE and linear OLE-to-Beaver smokes.
-It also builds and runs the tiny Orca FC Ring-LPN key-writer demo.
+Host mode checks manifests/contracts, private-file and SHAKE controls, host OLE
+and bridge/conversion/truncation components, and host/two-process DPF keygen.
+GPU mode additionally rebuilds and approval-checks the FC/Conv adapters, checks
+all 21 shapes, exercises DPF GPU validation, q64/q128 uniform/regular OLE,
+linear OLE, the five-case demo, ideal/real transcript references, and—by
+default—the fresh 21-record full ResNet18 graph. Only a zero exit ending
+`[paper-smoke] ALL GATES PASS` is the complete-gate marker.
 
 ## Standalone DPF online key generation benchmark
 The repository also includes a standalone DPF online key generation benchmark for the memory-efficiency track. This benchmark lives outside `ringlpn/src`, but its sweep artifacts are written into `ringlpn/results` so they can be used alongside the Ring-LPN VOLE and NTT results.

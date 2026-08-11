@@ -3,17 +3,29 @@
 # then invokes the TEST-ONLY offline checker on their separate output files.
 # Outputs per-party transport rows, per-configuration checks, and a raw log.
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/host_bin/test_secure_convert"
 OUTDIR="$ROOT/results/secure_convert"
-WORKDIR="${WORKDIR:-$OUTDIR/two_party_outputs}"
+WORKDIR="${WORKDIR:-}"
+PRIVATE_WORKDIR=0
+if [[ -z "$WORKDIR" ]]; then
+  WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ringlpn-secure-convert.XXXXXX")"
+  PRIVATE_WORKDIR=1
+fi
+cleanup_private_workdir() {
+  local rc=$?
+  if (( PRIVATE_WORKDIR )); then rm -rf -- "$WORKDIR"; fi
+  exit "$rc"
+}
+trap cleanup_private_workdir EXIT
 CSV="$OUTDIR/secure_convert_two_party_2026_08_03.csv"
 CHECKCSV="$OUTDIR/secure_convert_two_party_check_2026_08_03.csv"
 LOG="$OUTDIR/secure_convert_two_party_2026_08_03.log"
-BASE_PORT="${BASE_PORT:-42600}"
+BASE_PORT="${BASE_PORT:-20600}"
 SELFTEST="${SELFTEST:-4}"
-MISMATCH_PORT="${MISMATCH_PORT:-42590}"
+MISMATCH_PORT="${MISMATCH_PORT:-20590}"
 
 if [[ ! -x "$BIN" ]]; then
   echo "secure-convert test not built. Run scripts/build_secure_convert_test.sh first."

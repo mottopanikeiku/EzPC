@@ -12,6 +12,7 @@
 #   results/dpf/two_party_gpu_dpf_2026_07_29.csv
 #   results/dpf/two_party_gpu_dpf_2026_07_29.log
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_ROOT="$(cd "$ROOT/.." && pwd)"
@@ -20,10 +21,21 @@ EVAL="$ROOT/bin/test_two_party_gpu_dpf_eval"
 PARITY="$ROOT/host_bin/test_gpu_aes_prg_parity"
 DUMP="$ROOT/bin/dump_gpu_aes_prg_vectors"
 OUTDIR="$ROOT/results/dpf"
-WORKDIR="${WORKDIR:-$OUTDIR/two_party_gpu_keys}"
+WORKDIR="${WORKDIR:-}"
+PRIVATE_WORKDIR=0
+if [[ -z "$WORKDIR" ]]; then
+  WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ringlpn-two-party-gpu-dpf.XXXXXX")"
+  PRIVATE_WORKDIR=1
+fi
+cleanup_private_workdir() {
+  local rc=$?
+  if (( PRIVATE_WORKDIR )); then rm -rf -- "$WORKDIR"; fi
+  exit "$rc"
+}
+trap cleanup_private_workdir EXIT
 CSV="$OUTDIR/two_party_gpu_dpf_2026_07_29.csv"
 LOG="$OUTDIR/two_party_gpu_dpf_2026_07_29.log"
-BASE_PORT="${BASE_PORT:-45200}"
+BASE_PORT="${BASE_PORT:-22200}"
 CUDA_ARCH="${CUDA_ARCH:-${GPU_ARCH:-89}}"
 NVCC="${NVCC:-nvcc}"
 

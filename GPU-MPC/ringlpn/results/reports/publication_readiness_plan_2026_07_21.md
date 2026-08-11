@@ -37,43 +37,67 @@
   boundary changes, or a stage would require broader upstream modification.
 
 
-## Execution update — 2026-08-06
+## Execution update — 2026-08-10
 
-- The live runner now composes party-local Ring-LPN expansion, exact
-  conversion, noncircular Ring-OLE-output Phase-C bootstrap, bilateral best-
-  effort party-local record renames, and the unchanged Orca forward-FC consumer
-  across two OS processes and distinct GPUs. One GPU block reduces each DPF
-  tree's correction words/leaves. A crash after one rename can still leave a
-  unilateral raw validation input; only the authenticated coordinator's sealed
-  two-record, fsynced digest-bound `COMMITTED.manifest` is designed as a crash-
-  atomic consumer gate. Six current q64/q128 rows and eleven freshness/record/
-  capacity controls pass.
+- The current measured runner composes party-local Ring-LPN expansion, exact
+  conversion, noncircular Ring-OLE-output Phase-C bootstrap, bilateral
+  publication, and unchanged Orca forward-FC/Conv consumers across two OS
+  processes and distinct GPUs on unauthenticated same-host loopback. Five
+  q64/q128 FC rows and eleven freshness/record/capacity controls pass.
+- A separate fail-closed authenticated coordinator is implemented for
+  publication mode and admits a record set only after two sealed records and a
+  durable digest-bound `COMMITTED.manifest`. It has not been executed on two
+  distinct hosts and contributes no current measured row.
 - The proof boundary retains the corrupt party's realized local noise/key state
   and deterministically recomputes both
   `X_b=e_(b,0)+sum_(i>=1) a_i e_(b,i)` and local `Z_b`. It contains exact DPF
   coupling, role-specific correlated-batch simulators, exact conversion/ideal-
   OT lemmas, the masked-difference bootstrap lemma, a public-epoch induction,
   and a conditional forward-FC theorem. The exact regular-projection/
-  cancellation law is machine-checkable. This is conditional security
-  reasoning, not a concrete-security claim.
-- One warmup plus ten current exact ResNet18 classifier-layer trials pass.
-  Median preprocessing is 8.942 s, application traffic is 159,469,294 bytes,
-  matched stock dealer keygen is 10.706 ms, and unchanged online execution is
-  1.097 ms. The run records 11,298 dependency layers and peak host/GPU memory.
-  Its 276 Ring-OLE instances account exactly for 1,536 epoch-zero and 210,432
-  PCG-supplied Phase-C products per party, with all reserved and unused slots
-  reported.
-- S2 remains the hard blocker: no reviewed module-Ring-LPN parameter pin exists.
-  Phase-A/B/DMPF performance, independent review of the measured EMP-Silent
-  revision, authenticated two-host/WAN execution, a functionality-compatible
-  dealerless baseline, all-forward-linear-layer plus truncation/state coverage,
-  clean reproduction, and independent human review remain open. The work is a
-  strong internal advisor checkpoint, not conference-submission-ready.
-- The selected public coin is exactly `a=(1,a1,...,a_{c-1})`. The identity
-  polynomial is sampled and sent by neither party; each party exchanges one
-  full uniform field-element share for every coefficient of `a1..a_{c-1}`.
-  This makes the `(c-1)n`-coefficient tail exactly uniform. Revealing a short
-  PRG seed would require a separate computational reduction.
+  cancellation law is current-sampler-bound, and the self-tested hybrid-RSD
+  formula artifact is freshly regenerated. They remain model diagnostics, not
+  a concrete-security claim.
+- One warmup plus ten retained older-binary ResNet18 classifier-layer trials
+  pass. They record 4.064 s median preprocessing, 182,372,344 application
+  bytes, 14.863 ms shape/contract-matched stock-dealer keygen, 1.152 ms
+  unchanged online execution, 11,023 dependency layers, and exact slot
+  accounting. The comparison was not controlled on the same physical
+  GPU/occupancy state. Their environment binds binary `ca4b175a...`; the
+  current FC binary begins `29c420c3...`. These are not current-binary timings
+  and must be rerun before a current performance claim.
+- A fresh source-bound q128/bw32 run now publishes and independently verifies
+  all 21 ResNet18 linear record pairs and companion mask states. A compiled
+  contract generated from the source manifest composes them through the exact
+  62-item stock forward order: all 21 unchanged linear consumers, all 21 live
+  secure truncations, all 19 unchanged stock key consumers (one MaxPool, 17
+  ReLUs, and classifier sign extension), 20 remask edges, three projection and
+  five identity residual merges, integer GlobalAvgPool2D, and terminal
+  reconstruction.
+  Source/topology mismatch, publication failure, nonlinear-key corruption, and
+  output corruption reject. The nonlinear stream still comes from a TEST-ONLY
+  trusted adapter that reads both parties' mask shares. This closes the
+  known-zero graph/state-composition seam, not dealerless nonlinear
+  preprocessing, private/trained inference, accuracy, deployment, or a
+  full-model performance/security claim.
+- The sanitized 17-file full-graph checkpoint and final manifest set are
+  retained under `results/graph/resnet18_full_graph_checkpoint_2026_08_10/`,
+  bound by manifest digest
+  `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`;
+  private records and ledgers are not retained.
+- S2 remains the hard theorem blocker: no reviewed module-Ring-LPN parameter
+  pin exists. Beyond the closed known-zero graph/state seam, the remaining
+  systems gates are dealerless nonlinear setup, repeated private-input/trained-
+  model evidence, an authenticated two-host run, and independent review.
+  Further algorithmic Phase-B work, a functionality-compatible dealerless
+  baseline, clean-clone reproduction, and review of the historical opt-in
+  EMP-Silent path also remain open. The work is a strong internal advisor
+  checkpoint, not conference-submission-ready.
+- The selected public vector is `a=(1,a1,...,a_{c-1})`. The identity
+  polynomial is sampled and sent by neither party. Each party exchanges an
+  independent 256-bit seed share; their XOR seeds domain-separated SHAKE256,
+  whose rejection-sampled outputs generate every canonical coefficient of
+  `a1..a_{c-1}`. Thus the tail is uniform in the stated random-oracle model,
+  not information-theoretically uniform from full coefficient-share exchange.
 
 ## 1. Definition of publication-ready
 
@@ -133,7 +157,7 @@ first point at which their protocol-backed paths compose.
 ### S0 — Corrected host checkpoint and truthful proposal — **complete**
 
 **Commit:** `28f8451`  
-**Evidence:** corrected Phase C, old-sign leakage regression, 2,432/2,432 host key pairs, regenerated proposal v2.2, canonical host gate, required GPU gate, warning-free 15-page PDF build and rendered review.
+**Evidence at the 2026-07-21 checkpoint:** corrected Phase C, old-sign leakage regression, 2,432/2,432 host key pairs, proposal v2.2, canonical host gate, required GPU gate, and then-current warning-free 15-page PDF review. The current deterministic 28-page v2.14 PDF has SHA-256 `533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c`; two pinned-image two-pass builds were byte-identical, the log is warning/bad-box free, all fonts are embedded Type 1, and changed pages 18 and 22--24 were visually inspected after the final evidence refresh.
 
 **Claim unlocked:** protocol-logic and host-format functional compatibility using ideal OT/triple/OLE and a non-cryptographic correctness PRG. Nothing stronger.
 
@@ -200,10 +224,13 @@ distributed DMPF prior art, alternative PCGs, and private-project
 ownership/overlap also remain claim gates. See
 `s2_parameter_novelty_provenance_audit_2026_07_29.md`,
 `structured_attack_audit_2026_08_04.md`, `../security/README.md`, and
-`s2_professor_decision_request_2026_07_29.md`. The structured attack audit
-proves orbit/data multiplicity only: its generic estimator rows and
-square-root orbit adjustments are not reviewed concrete-security evidence.
-The owner permits implementation-only S3--S6 work; none of it lifts S2.
+`s2_professor_decision_request_2026_07_29.md`. The projection law and 2024
+regular-ISD artifact remain pinned. Current `two_party_spfss.h` is freshly
+rebound at `fbdb56f8...` after semantic review showed its sampling functions
+unchanged from the prior audited revision. The self-tested hybrid script/CSV
+are freshly paired at `cbcedaf6...`/`1f671d94...`. Orbit/generic-estimator rows
+and these current formula artifacts remain model diagnostics, not concrete
+security. The owner permits implementation-only S3--S6 work; none lifts S2.
 
 **Purpose:** establish a reviewed security reduction and parameter set before
 security, parameter-dependent headline performance, or publication claims.
@@ -222,17 +249,17 @@ security, parameter-dependent headline performance, or publication claims.
    degree and `d` after projection outside the explicit stabilizer event;
    evaluate its parameter-dependent bound and do not turn orbit existence into
    a blanket `sqrt(n)`/`sqrt(d)` decoder theorem.
-4. Independently review both pinned direct-RSD calculators. Resolve the
-   CRYPTO-2024 transcription's CCJ-overflow, delegated generic-BJMM,
-   memory-unit, q-ary and structured-code incompatibilities. Validate the
-   ASIACRYPT-2025 Theorem-1 transcription/optimizer and supply an attack
-   implementation or independently justified concrete execution model,
-   including bit/byte costs for its field-operation time and big-O
-   field-element memory. Explicitly disposition the 2025/2026 QA-SD attacks at
-   the deployed large-prime univariate inputs. Every attack row records source
-   revision/checksum, distribution/model, exact inputs, orbit handling,
-   assumptions, memory, data/preprocessing, success/repetitions, and executable
-   provenance.
+4. Independently review the pinned 2024 regular-ISD calculator and the current
+   self-tested hybrid-RSD script/CSV before relying on the ASIACRYPT-2025
+   transcription/optimizer. Resolve CCJ overflow, delegated
+   generic-BJMM, memory-unit, q-ary and structured-code incompatibilities, and
+   supply an attack implementation or independently justified concrete
+   execution model, including bit/byte costs for field-operation time and
+   big-O field-element memory. Explicitly disposition the 2025/2026 QA-SD
+   attacks at the deployed large-prime univariate inputs. Every attack row
+   records source revision/checksum, distribution/model, exact inputs, orbit
+   handling, assumptions, memory, data/preprocessing, success/repetitions, and
+   executable provenance.
 5. Compose distinguishing advantage across both CRT limbs, every direction,
    factor, ring batch, layer, epoch and PCG hybrid. State classical and quantum
    scope separately.
@@ -246,12 +273,18 @@ security, parameter-dependent headline performance, or publication claims.
 9. Generate machine-readable parameter tables and estimator transcripts from a pinned script/container.
 10. In parallel, compare the exact shared-point/multiplicative-payload,
    three-OLE per-point construction against Doerner--shelat, Programmable DPF,
-   the 2025 improved DMPF, the 2026 fully distributed DMPF for PCGs, and
-   SLAMP-FSS. Compare regular Ring-LPN against Stationary Syndrome Decoding,
-   and Ring-LPN/NTT plus conversion against the 2025 direct-`Z_(2^k)` PCG and
-   2026 QA-SD/WHT prime-field PCG.
-   Record formal deltas, assumptions, asymptotics, implementation availability,
-   and what is systems integration rather than protocol novelty.
+   the 2025 improved DMPF, Agarwal--Raghuraman--Rindal's fully distributed DMPF
+   for PCGs, SLAMP-FSS, Rieder's active-secure *Silentium* Ring-LPN
+   Beaver-triple implementation (ePrint 2025/1013), and libOTe's MIT-licensed
+   `RingLpnTriple`/Reverse-Cuckoo code at `edb5d328...`, and compare Conv
+   preprocessing against Rivinius et al.'s maliciously secure offline
+   convolution triples (ePrint 2023/359; official source `618301c...`).
+   Compare regular Ring-LPN against Stationary Syndrome Decoding, and
+   Ring-LPN/NTT plus conversion against the 2025 direct-`Z_(2^k)` PCG and 2026
+   QA-SD/WHT prime-field PCG. Record deltas and what is exact Ring-LPN-to-Orca
+   GPU FC/Conv integration rather than primitive novelty; claim neither the
+   first Ring-LPN Beaver-triple implementation, the first fully
+   distributed/dealerless DMPF, nor broad first convolution preprocessing.
 11. Audit active and candidate source provenance/licenses: local
    cheddar-derived NTT, GPU-NTT baseline, and the separate GPU-PCG/PIM work.
    Obtain the professor's ownership, contributor-credit, chronology,
@@ -385,12 +418,12 @@ The current runner uses external Phase-C OLE only for the first Ring-OLE
 instance of each CRT limb; every later instance consumes exactly
 `3*c^2*t^2` reserved slots from prior Ring-LPN output. Capacity,
 consume/discard, and masked-opening counters are executable gates.
-An explicit `emp-silent` path pins EMP SilentFerret behind a C++20 opaque
-bridge, predeclares exact directional inventories, preserves packed
-1/62/128-bit chosen-message widths, and now has one warmup plus ten measured
-classifier trials. It remains **opt-in and independently unreviewed**; its
-measurements are internal diagnostics, not publication evidence. SCI remains
-the canonical q64/q128 evidence backend. Authenticated two-host execution,
+The explicit `emp-silent` path pins EMP SilentFerret behind a C++20 opaque
+bridge, predeclares exact directional inventories, and preserves packed
+1/62/128-bit chosen-message widths. It remains **opt-in and independently
+unreviewed** and is not used by the current headline measurements. SCI/IKNP is
+the canonical q64/q128 and classifier evidence backend. Authenticated two-host
+execution,
 packet/network-round measurement, sanitizer evidence, and independent backend
 review remain strict S4 gates.
 
@@ -509,25 +542,26 @@ gate is not complete.
 
 ---
 
-### S7 — M4: exact public coins and two-process forward composition — **executable boundary complete 2026-08-04**
+### S7 — M4: public-vector coin toss and two-process forward composition — **executable boundary updated 2026-08-10**
 
 **Purpose:** make party separation real rather than a one-process discipline.
 
 **Work:**
 
-1. Instantiate D3 with the unsent identity polynomial `a0=1`. For every
-   coefficient of `a1..a_{c-1}`, each party samples and exchanges one full
-   canonical uniform field-element share; the modular sums make the exact
-   uniform `(c-1)n`-coefficient public tail. Reject every supplied public vector
-   whose first polynomial is not identity. Do not replace the tail with a
-   revealed short PRG seed without a separate reduction.
+1. Instantiate D3 with the unsent identity polynomial `a0=1`. Each party
+   samples and exchanges an independent 256-bit seed share; XOR combines them
+   so neither party selects the public vector alone. A domain-separated
+   SHAKE256 XOF, keyed by that joint seed and scoped by the unique correlation
+   handle, limb, `n`, `c`, and chunk, rejection-samples every canonical
+   coefficient of `a1..a_{c-1}`. The proof models SHAKE256 as a random oracle;
+   this is not the earlier information-theoretic full-coefficient coin toss.
 2. Draw DPF roots, masks, and sparse noise only from party-local OpenSSL DRBGs.
    Domain-separate session, party, direction, batch, limb, tree/slot, and
    purpose; reject zero/replayed session identifiers.
 3. Run each party as a separate OS process pinned to a distinct GPU. Each
    process reads only its own noise record, creates one party-local record, and
    cannot select centralized keygen or clear conversion.
-4. Exchange only protocol-declared OT/OLE messages, public-polynomial shares,
+4. Exchange only protocol-declared OT/OLE messages, public-seed shares,
    correction-word shares, derandomization openings, conversion messages, and
    publication handshakes. Validate public preflight parameters before
    correlation setup.
@@ -608,29 +642,49 @@ concrete parameter/reduction gate and authenticated deployment remain open.
 
 ### S9 — M6: publication-quality evaluation
 
-**Status 2026-08-06:** partially exercised, not complete. The current exact
-`1x512x1000` ResNet18 classifier-layer row has one warmup and ten passing
-measured trials, an environment/binary/source digest manifest, matched
-stock-dealer keygen timing, final key/record bytes, unchanged online timing,
-per-stage costs, 11,298 dependency layers, and peak host/GPU memory. Median
-preprocessing is 8.942 s (831x matched dealer), with Phase B now largest at
-3.366 s and Phase C at 0.182 s. A pinned stock Reverse-Cuckoo run and exact-
-`p0` native-folded adapter run are reproducible closest baselines, but neither
-is functionality/layout/GPU matched, so no ratio is reported. Representative
-generalized Conv2D smoke cases pass. No pinned parameters, two-host network
-result, complete real-model linear-layer execution, truncation/state handoff,
-or compatible dealerless baseline exists; the row remains feasibility evidence.
-The owner selected the full forward-linear-layer systems route on 2026-08-06.
-The binding continuation plan is
-`full_linear_layer_systems_plan_2026_08_06.md`: all 20 ResNet18 convolutions,
-its classifier, exact configured truncation/state transitions, model-order and
-branch controls, unchanged stock consumers, and matched baselines. The
-specialized regular-DMPF audit returned NO-GO and is recorded in
-`regular_dmpf_design_no_go_2026_08_06.md`; no DMPF implementation is approved.
-An immediate canonical Conv2D retry was resource-blocked before protocol
-execution because only one GPU had enough free memory for a runner requiring
-two distinct GPUs. It is not counted as completed or failed protocol evidence,
-and the prior dated passing Conv2D rows remain the current evidence.
+**Status 2026-08-10:** partially exercised, not complete. The retained
+older-binary `1x512x1000` ResNet18 classifier artifact has one warmup and ten
+passing trials, source/environment/binary digests, shape/contract-matched
+stock-dealer and unchanged-online timings, per-stage costs, dependency counts,
+and memory observations. The runs were not controlled on the same physical
+GPU/occupancy state. Its binary begins `ca4b175a`, not the current FC binary
+`29c420c3`; 4.064 s median preprocessing, the descriptive 272x median of
+shape-matched per-trial ratios, 2.030 s Phase B, and 0.041 s Phase C are
+historical measurements, not a same-hardware A/B result.
+
+The retained Conv0 breadth-comparison artifact likewise binds older binary
+`1db001...`, not current Conv binary `e4981459...`. Its 358.085-s and
+384.816-s one-trial values do not establish a current-source speedup. The
+breadth-first caller is now integrated: the current focused FC suite passes all
+five q64/q128 cases/controls, every row records positive P0/P1 breadth-call
+counts and zero root-to-leaf calls, and all 21 shape plans pass. This is
+correctness/path-counter evidence only; no current Conv0/model-scale timing or
+breadth-first speedup is claimed. The focused approval digest begins
+`843f837a...`.
+
+A source-bound known-zero run verifies all 21 linear record pairs and executes
+the complete exact ResNet18 graph/state contract, including every truncation,
+stock nonlinear consumer, remask, residual, global pool, sign extension, and
+terminal reconstruction. Its nonlinear key source is an explicitly TEST-ONLY
+trusted adapter that sees both source mask states. This closes the known-zero
+graph/state-composition seam, not dealerless nonlinear preprocessing,
+private/trained inference, accuracy, a timing distribution, or a full-model
+performance/security result. Its fresh 17-file publication checkpoint is
+retained at
+`results/graph/resnet18_full_graph_checkpoint_2026_08_10/`, bound by manifest
+digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`;
+only metrics, logs, digests, approval, and manifests remain. Dealerless
+nonlinear setup, repeated private-input/trained-model measurements,
+authenticated two-host deployment, and independent review remain open systems
+gates.
+
+A pinned stock Reverse-Cuckoo run and exact-`p0` native-folded adapter run are
+reproducible closest baselines, but neither is functionality/layout/GPU matched,
+so no ratio is reported. The specialized regular-DMPF audit returned NO-GO and
+is recorded in `regular_dmpf_design_no_go_2026_08_06.md`; no DMPF
+implementation is approved. The completed full-graph branch supersedes the
+prefix-era `full_linear_layer_systems_plan_2026_08_06.md`; use `CLAUDE.md` for
+the binding continuation.
 
 
 **Purpose:** establish usefulness, costs, and bottlenecks without mixing evidence levels.
@@ -679,11 +733,21 @@ and the prior dated passing Conv2D rows remain the current evidence.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-08-06:** the internal v2.8 technical report builds without
-LaTeX warnings and all 24 rendered pages were inspected after the systems-route
-checkpoint. The pinned reproduction source/container manifests exist, but no
-clean-clone second-person run, venue conversion, or submission-candidate review
-has been executed. S10 remains open.
+**Status 2026-08-10:** the live v2.14 source has a deterministic 28-page PDF at
+SHA-256
+`533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c`.
+Two pinned-image two-pass builds are byte-identical; warning/bad-box and
+embedded-Type-1 font gates pass, and changed pages 18 and 22--24 were visually
+inspected. The v4 environment manifest binds the digest-pinned base image,
+exact built gate-image ID, package/toolchain set, deterministic build epoch,
+current source/PDF hashes, graph checkpoint/provenance, and publication gate.
+The final same-HEAD clean-clone gate still must be executed after the snapshot
+commit. The owner-approved final source commit, annotated release tag,
+externally authenticated source-authorization statement, and immutable final
+runtime image/binary identities do not exist. Therefore the mandatory two-host
+publication mode rejects before execution. No external second-person two-host
+run, venue conversion, or submission-candidate review has been executed. S10
+remains open.
 
 **Purpose:** produce the exact paper/artifact revision that can be submitted after advisor approval.
 
@@ -691,10 +755,18 @@ has been executed. S10 remains open.
 
 1. Build from a clean clone with pinned submodules/dependencies and a versioned container image or deterministic setup script. No absolute user paths, root-owned outputs, hidden external checkout, or pre-generated key dependency.
 2. Provide one host-only gate, one required-GPU gate, and one two-process publication runner. All fail nonzero when hardware, data, or a security-relevant dependency is missing.
-3. Regenerate every paper table/figure from committed raw data. Store commands and checksums; keep raw and summarized artifacts distinct.
-4. Have a second person reproduce the artifact from the instructions on a clean environment. Treat undocumented setup intervention as a failed artifact review.
-5. Archive the exact source commit, container digest, parameter-estimator version, and paper PDF. Tag the accepted candidate only after all gates pass.
-6. Reconcile the final dependency/source/license/citation inventory against
+3. Regenerate every paper table/figure from committed raw data. Store commands
+   and checksums; keep raw and summarized artifacts distinct.
+4. Before sealing evidence, compare every manuscript timing row's binary,
+   raw-trial, environment, and summary identities with the final retained
+   timing files. Any publication-mode rerun that changes those files invalidates
+   a prebuilt PDF and requires manuscript regeneration, two-pass rebuild, and
+   renewed log/font/page review.
+5. Have a second person reproduce the artifact from the instructions on a clean
+   environment. Treat undocumented setup intervention as a failed review.
+6. Archive the exact source commit, container digest, parameter-estimator
+   version, and inspected paper PDF. Tag only after all gates pass.
+7. Reconcile the final dependency/source/license/citation inventory against
    S2's approved provenance record and every dependency actually shipped.
    Cite Özcan--Savaş GPU-NTT (ePrint 2023/1410 and the applicable published
    version) whenever its merge/four-step algorithms or code are discussed or
@@ -706,7 +778,7 @@ has been executed. S10 remains open.
 1. With the advisor, lock the target venue, title, disclosure requirements, and
    page/supplement limits. Alp remains the sole author; do not add commit
    co-author trailers or paper co-authors.
-2. Convert the v2.8 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+2. Convert the v2.14 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.
@@ -766,20 +838,25 @@ Publication readiness is reached only when every box is supported by a committed
 - [ ] S2 exact splittable parameters have a reviewed reduction, only in-domain independently reproducible estimator evidence, and the claimed security level.
 - [ ] S2 formal novelty/overlap, source/license inventory, and professor
   provenance decisions are recorded before overlapping implementation.
-- [ ] S3 remains open. The four-call full-width AES/GPU and seed-bit-0
-  sensitivity component gate passes, but pinned configurations with at least
-  256 trees, sanitizer and serialization evidence, the no-unlabelled-read
-  audit, and the stage checkpoint remain unmet.
-- [ ] S4 real OT/OLE/triple path passes, bootstraps, and reports measured bytes/rounds.
-- [ ] S5 centralized keygen removed from the publication transcript.
-- [ ] S6 dealer-labelled conversion correlations and exact-carry oracle removed.
-- [ ] S7 complete forward/bias/truncation/`dW`/`dX`/bias-gradient/
-  dual-optimizer two-process/two-GPU pipeline passes with exact serialization,
-  persistent mask/velocity handoff, coin-tossed public seeds, and private
-  CSPRNG streams.
-- [ ] S8 both-party simulation proof and implementation audit have no blocking finding.
-- [ ] S9 model-scale FC evaluation and the closest-baseline comparison are
-  statistically reported with evidence levels separated.
+- [x] The current DPF/SPFSS source uses full-width four-call AES expansion,
+  private roots, serialization controls, and GPU compatibility gates.
+- [x] The live forward transcript uses real SCI/IKNP OT/triples and Gilboa OLE;
+  EMP-Silent remains historical opt-in evidence with no headline measurement.
+- [x] Centralized SPFSS key generation is absent from the live publication
+  transcript.
+- [x] Exact share conversion is live and contains no dealer-labelled
+  correlation or exact-carry oracle path.
+- [x] The bounded forward-FC/Conv path runs as two OS processes on distinct
+  GPUs with private DRBG state and the jointly seeded, domain-separated
+  SHAKE256 public-vector boundary.
+- [ ] S8 independent human proof and implementation review has no blocking
+  finding.
+- [x] The source-bound known-zero full graph/state-composition seam is closed
+  with a TEST-ONLY trusted nonlinear adapter, and its sanitized 17-file
+  checkpoint/final manifest set is retained.
+- [ ] S9 dealerless nonlinear setup and repeated private-input/trained-model
+  evaluation are statistically reported with evidence levels separated.
+- [ ] Authenticated distinct-host execution and independent human review pass.
 - [ ] S10 clean-clone artifact reproduction, venue paper build, rendered review, and final full gate pass.
 - [ ] Every completed stage has its own immutable checkpoint commit and current documentation.
 - [ ] Final wording never exceeds: dealerless **linear/FC-layer preprocessing**, two party, semi-honest, pinned splittable Ring-LPN parameters, evaluated environments only.

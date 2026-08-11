@@ -1,9 +1,9 @@
 # Structured Ring-LPN attack audit
 
-**Date:** 2026-08-04
+**Date:** 2026-08-04; live source and hybrid-formula bindings refreshed 2026-08-10
 **Status:** internal/advisor; attack inventory and proof obligation ledger; **not a parameter pin or concrete-security review**
-**Scope:** the live regular sampler, its direct expanded instance, and every one-sparse fully split projection
-**Review state:** source-grounded model/attack triage plus a new elementary orbit lemma; independent human cryptographic review is still required
+**Scope:** the current audited regular sampler revision, its direct expanded instance, and every one-sparse fully split projection
+**Review state:** source-grounded model/attack triage plus an elementary orbit lemma; independent human cryptographic review is required
 
 ## 1. Decision and non-claim
 
@@ -18,9 +18,9 @@ No deployed or candidate tuple has a source-supported concrete-security level. I
 
 A reader must not cite this report, any generic-estimator CSV, or the orbit lemma as “reviewed concrete Ring-LPN security.”
 
-## 2. Exact live instance
+## 2. Exact dated audited instance
 
-The source pin `SRC-LIVE` below samples, independently for every one of the `c` error polynomials and each of its `t` public contiguous buckets,
+The source pin `SRC-AUDITED-2026-08-10` below samples, independently for every one of the `c` error polynomials and each of its `t` public contiguous buckets,
 
 ```text
 position[j] = j*(n/t) + U_j,  U_j uniform in {0,...,n/t-1},
@@ -64,7 +64,7 @@ Pins identify exactly what was reviewed. “Current ePrint revision” means the
 
 | ID | Source pin used by this audit | Role |
 |---|---|---|
-| `SRC-LIVE` | `src/two_party_spfss.h`, SHA-256 `05d2fb62530f445e42f20ad1db8c484979846339c2cfdc2f276327e50b6f1017`, especially `validate_party_noise` and `sample_party_noise` | Exact deployed bucket and iid-uniform-`F_p^*` payload distribution |
+| `SRC-AUDITED-2026-08-10` | `src/two_party_spfss.h`, SHA-256 `fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461`, especially `validate_party_noise` and `sample_party_noise` | Exact current bucket/payload distribution. A semantic diff from audited revision `5ab544996925ad57b0cb422b67ca08c7cf89accf` to current source revision `86b1323ce25792ca1158abc1c57c3051dec1a9ef` changes only the optional Phase-C OLE-source argument and forwarding in the CPU baseline; both sampling functions are unchanged. |
 | `BCG` | Boyle--Couteau--Gilboa--Ishai--Kohl--Scholl, corrected full version dated 2022-08-10, HAL `hal-03374154v1` / ePrint 2022/1035, §§8.2--8.4 and 9.1 | Ring-LPN projection, algebraic-code and quasi-cyclic/DOOM discussion; its informal full-square statement is not a theorem |
 | `FF-2024` | Liu--Wang--Yang--Yu, EUROCRYPT 2024, DOI `10.1007/978-3-031-58751-1_6`; accepted artifact `eurocrypt-2024-a1`, immutable downloaded script SHA-256 `c5771c88665415559b21cc1773dcdf3298ec60db2882f4fb3a8b3a833f2d34dc` | Random-code finite-field exact/regular LPN estimator; includes pooled Gauss, statistical decoding, generic finite-field ISD, and AGB |
 | `RISD-2024` | Esser--Santini, CRYPTO 2024, DOI `10.1007/978-3-031-68391-6_6`; accepted artifact `crypto-2024-a1`, published 2024-08-15, ZIP SHA-256 `04ae2586fccb10481efb861104176e4aaabb380c3cb9704b97ce3c4768a282cb`; upstream snapshot commit `afe1e408f8a46aebc15293462480f478ff969923` | Permutation, enumeration, representation, depth-2 representation, CCJ and generic BJMM regular-ISD costs |
@@ -73,7 +73,7 @@ Pins identify exactly what was reviewed. “Current ePrint revision” means the
 | `QA-BASE` | Bombar--Couteau--Couvreur--Ducros, ePrint 2023/845 full version, especially §§6.4 and 6.6 | Quasi-Abelian structural-code boundary and generalized orbit sensitivity statement |
 | `SENDRIER` | Sendrier, PQCrypto 2011, DOI `10.1007/978-3-642-25405-5_4` | Executable-source scope: almost-square-root gain for a Stern collision-decoding variant in the stated McEliece range |
 | `HYBRID-2025` | Wang--Wang--Yang--Liu--Yu--Zhang--Wang, ePrint 2025/1284 / ASIACRYPT 2025; archive revision published 2025-07-14, modified 2025-09-09, retrieved 2026-08-04 | New hybrid RSD algorithm replacing ISD meet-in-the-middle enumeration by quadratic-equation solving |
-| `ART-HYBRID` | `scripts/audit_hybrid_rsd_asiacrypt2025.py`, SHA-256 `001c7c68fe53ec5f266631500f72e835940f09586aea75f134f4e0e2b87dc8aa`; pinned archived ePrint PDF SHA-256 `a8d050905021bc737537d054ed33de643512d017a4d3d5d893167d844b6d494a`; `results/security/hybrid_regular_sd_asiacrypt2025_2026_08_04.csv`, 20 data rows, SHA-256 `9a442eec7c41fc01afcd2df84494a5703330d2a041693320fc2c0b0248d978d0`; companion report SHA-256 `d05b00618a25866d7b166f4ae3e3c08ce11742a66e816e5757d302560c5a6e72` | Executable Theorem-1 formula calculator, exhaustively optimizing admissible integer `(f_bar,u_bar,g)` for all five direct candidates and both primes; not an attack implementation |
+| `ART-HYBRID` | `scripts/audit_hybrid_rsd_asiacrypt2025.py` SHA-256 `cbcedaf6cdb1e6818aa968ab43c386f1b046b8640dd3d257039d462e7e949764`; regenerated 20-row CSV SHA-256 `1f671d941189180397479f2212ba6445fa218f7b2f60f55301bcbca4066a5f25`, with the same embedded script digest | Self-test reproduces the published 132.60 and 133.15 table rows. These are formula diagnostics, not an attack implementation, quantum cost, structured-code reduction, or security pin. |
 | `SSD-2025` | Kolesnikov--Peceny--Raghuraman--Rindal, CRYPTO 2025 / ePrint 2025/295; archive revision published 2025-02-20, modified 2025-08-19, retrieved 2026-08-04 | Stationary-SD with several noise vectors sharing one hidden support |
 | `QA-CS-2025` | Bouillaguet--Delaplace--Hamdad--Vergnaud, ePrint 2025/892, archive revision 4 modified 2025-11-14, retrieved 2026-08-04 | Practical QA-SD interpolation/compressed-sensing attacks over small fields |
 | `QA-CORR-2026` | Joux, ePrint 2026/1126 v1, published and retrieved revision dated 2026-06-01 | QA-SD correlation attack; about `1000x` time and memory improvement over the 2025 attack over `F_3` is an author-reported comparison |

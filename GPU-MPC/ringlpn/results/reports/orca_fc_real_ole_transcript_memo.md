@@ -1,3 +1,8 @@
+> **HISTORICAL STEP-5 DIAGNOSTIC (2026-06-10).** The 9/9 rows below are
+> artifact-local evidence for the single-process centralized-keygen/clear-
+> conversion transcript. They are not the live two-process FC/Conv path. Use
+> `CLAUDE.md` and the current security contract for downstream status.
+
 # Real-OLE slot-packed FC transcript (Step 5) — 2026-06-10
 
 `bench_orca_fc_real_ole_transcript` replaces the ideal-OLE oracle of the

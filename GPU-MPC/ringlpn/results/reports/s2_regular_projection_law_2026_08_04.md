@@ -1,13 +1,21 @@
 # Exact regular-sampler projection law — S2 proof note
 
-**Date:** 2026-08-04
+**Date:** 2026-08-04; live source binding refreshed 2026-08-10
 **Status:** internal/advisor; exact distribution result, **not** a parameter pin
-**Scope:** the implemented regular sampler only; no protocol source is changed
+**Current source binding:** the theorem models
+`src/two_party_spfss.h@fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461`.
+A semantic diff from the prior audited revision
+`5ab544996925ad57b0cb422b67ca08c7cf89accf` to current source revision
+`86b1323ce25792ca1158abc1c57c3051dec1a9ef` changes only the optional Phase-C
+OLE-source argument and forwarding in the CPU baseline; `derive_spfss_work`,
+`validate_party_noise`, and `sample_party_noise` are unchanged. The law is
+therefore current-source distribution correspondence.
+**Scope:** the audited regular-sampler law only; no protocol source is changed
 
 ## 1. Result and claim boundary
 
-This note derives the exact distribution obtained by reducing the implemented
-regular Ring-LPN noise modulo every two-power one-sparse factor degree `d | n`.
+This note derives the exact distribution obtained by reducing the audited
+regular Ring-LPN sampler law modulo every two-power one-sparse factor degree `d | n`.
 It distinguishes two random variables that must not be conflated:
 
 - `K_d`: the number of projected coordinates that receive at least one source
@@ -25,12 +33,12 @@ shape changes at `d=B=n/t`:
 
 At `d=B` the descriptions agree. In both cases `g*r=c*t`.
 
-This is an exact distribution theorem. It is **not** a reduction from the
-implemented structured Ring-LPN problem to finite-field LPN with a random
-code, not a proof that an estimator row is an attack bound, and not a concrete
+This is an exact distribution theorem for the audited sampler revision. It is
+**not** a reduction from the structured Ring-LPN problem to finite-field LPN
+with a random code, not a proof that an estimator row is an attack bound, and not a concrete
 security claim.
 
-## 2. Primary sources and implementation being modeled
+## 2. Primary sources and audited sampler revision being modeled
 
 1. E. Boyle, G. Couteau, N. Gilboa, Y. Ishai, L. Kohl, and P. Scholl,
    *Efficient Pseudorandom Correlation Generators from Ring-LPN*, corrected
@@ -56,11 +64,12 @@ security claim.
    The [accepted EUROCRYPT 2024 artifact](https://artifacts.iacr.org/eurocrypt/2024/a1/)
    is an attack-cost calculator for those models; it is not a Ring-LPN
    projection theorem.
-3. The live implementation is `src/two_party_spfss.h`, especially
-   `derive_spfss_work`, `validate_party_noise`, and `sample_party_noise`:
-   regular mode requires power-of-two `t`, sets the ring size to `t*B`, samples
-   position `j*B + U_j` with independent `U_j` uniform in `[0,B)`, and samples
-   each payload uniformly in `{1,...,p-1}`. The deployed fields are
+3. The audited current implementation is `src/two_party_spfss.h` at SHA-256
+   `fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461`,
+   especially `derive_spfss_work`, `validate_party_noise`, and
+   `sample_party_noise`: regular mode requires power-of-two `t`, sets the ring
+   size to `t*B`, samples position `j*B + U_j` with independent `U_j` uniform
+   in `[0,B)`, and samples each payload uniformly in `{1,...,p-1}`. The deployed fields are
 
    ```text
    p0 = 4611686018326724609 = 2^62 - 6*2^24 + 1
@@ -68,7 +77,7 @@ security claim.
    ```
 
 The notation differs across sources: BCG+20 uses total weight `w=c*t`, whereas
-this implementation's `t` is the weight of **each** of the `c` polynomials.
+the audited implementation revision's `t` is the weight of **each** of the `c` polynomials.
 
 ## 3. Algebra of one-sparse projection
 
@@ -227,7 +236,7 @@ Define
 H_{p;m,r}(Y) = sum_s D_m(r,s) Y^s.
 ```
 
-The exact implemented nonzero-support law is
+The exact audited-revision nonzero-support law is
 
 ```text
 Pr[W_{p,d}=s]
@@ -328,9 +337,9 @@ reduced degree). Section 8.2 derives the occupied-bin expectation
 E_8.2(d) = c*d*(1-(1-1/d)^t).                    (1)
 ```
 
-Equation (1) is exact for the implemented **occupied** support only when
+Equation (1) is exact for the audited revision's **occupied** support only when
 `d<=B`. It does not include value cancellation. For `d=B*k>B`, the exact
-implemented occupied expectation is instead
+audited-revision occupied expectation is instead
 
 ```text
 E_impl_occ(d)
@@ -346,7 +355,7 @@ E_9.1(d)
 ```
 
 Equations (1) and (3) are algebraically different, and (3) is not the mean of
-either branch of the implemented regular sampler. The actual nonzero mean is
+either branch of the audited regular-sampler law. The actual nonzero mean is
 the prime-dependent `E[W_{p,d}]` in Section 5.3, so neither BCG formula includes
 coefficient cancellation.
 
@@ -654,7 +663,7 @@ This report does **not** claim:
 - that any `(n,c,t,p0,p1)` tuple is pinned;
 - 128-bit, 80-bit, classical, quantum, or any other concrete security level;
 - that `q64` or `q128` denotes security bits;
-- that BCG+20 Table 1 validates this implementation's parameters;
+- that BCG+20 Table 1 validates the audited revision's parameters or the current source;
 - that a finite-field estimator output is a Ring-LPN attack cost or lower bound;
 - that occupied weight equals nonzero Hamming weight;
 - that expected projected weight controls the lower tail;
@@ -664,7 +673,7 @@ This report does **not** claim:
 - that the accepted estimator covers the projected dependent noise or the
   structured/quasi-cyclic code;
 - that two CRT limbs add their modeled bit costs;
-- that BCG+20's suggested rejection sampling is implemented; or
+- that BCG+20's suggested rejection sampling follows from this theorem; or
 - that this exact sampler theorem closes the PCG, DPF/PRG, transport,
   conversion, malicious-security, or side-channel proof obligations.
 

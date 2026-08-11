@@ -1,0 +1,28 @@
+{
+  "breadth": {
+    "archive_time_checker_status": "pass",
+    "invocation_id": "5334df78bd4cd72beeb56f32cbf7f471",
+    "ledger_digest": "348833b02288a6430f029fcba3a2dad07b31834ccd4df327ac7bb1367697f2a8",
+    "p0_record_sha256": "9cb5cb4af0427168f4643d946defdef2d28963076966747460476e2ee6f3d06f",
+    "p1_record_sha256": "855f4b14c6812ae344f26936c9ae35363422f5fd5b4e9cba7b6da2d42da556ad",
+    "party_critical_path_us": 358085000.0
+  },
+  "checker_gpu": 2,
+  "checker_binary_sha256_at_revalidation": "1db001a9e86df261cbba30900cd70c75140468f25377a8d15de2635273ebdab7",
+  "critical_path_reduction_percent": 6.946436738597147,
+  "observation_date": "2026-08-09",
+  "pre_breadth": {
+    "archive_time_checker_status": "pass",
+    "invocation_id": "97710a83a6969c8a8b917f6aa04125fa",
+    "ledger_digest": "4979fea2931d975ad37ccfaa87585e5161af7f457c1723c6e0f7c41b420abb3d",
+    "p0_record_sha256": "e5d3ec5ccf3005bf1cbdd754cf472c20f087211dd1b9e77da9b178d6d26f2edb",
+    "p1_record_sha256": "2743237d44f92b93dde9c4e82bdd4b2a306662fa850cd30e7a8c179137f8b5d0",
+    "party_critical_path_us": 384816000.0
+  },
+  "producer_binary": "bin/test_two_party_conv_preprocess",
+  "producer_binary_sha256_at_generation": "1db001a9e86df261cbba30900cd70c75140468f25377a8d15de2635273ebdab7",
+  "raw_private_records_policy": "record digests retained; raw key records deleted after archive-time checker revalidation",
+  "raw_private_records_retained": false,
+  "schema": "ringlpn-conv0-breadth-comparison-v1",
+  "scope": "single q128/bw32 ResNet18 Conv0 isolated preprocessing records; not graph execution"
+}

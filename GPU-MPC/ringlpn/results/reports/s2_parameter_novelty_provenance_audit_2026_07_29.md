@@ -63,10 +63,12 @@ The GPU generator runs independently over these NTT primes:
 - `p1 = 4611686018309947393 = 2^62 - 7*2^24 + 1`.
 
 `q64` means one instance over `p0` (62 actual bits). `q128` means two
-independently seeded prime-field instances followed by CRT reconstruction over
-`Q=p0*p1` (124 actual bits). It is **not** one Ring-LPN instance over a
-124-bit field. Any q128 security argument needs a two-limb hybrid/composition
-argument and a Ring-LPN claim for each 62-bit limb.
+prime-field instances followed by CRT reconstruction over `Q=p0*p1` (124
+actual bits). Both public vectors come from independently domain-separated V2
+SHAKE256 queries using one jointly combined 256-bit seed; the limbs are **not**
+independently seeded. It is **not** one Ring-LPN instance over a 124-bit field.
+Any q128 security argument still needs a two-limb hybrid/composition argument
+and a Ring-LPN claim for each 62-bit limb.
 
 For each party, the code samples `c` independent sparse polynomials and chooses
 every nonzero coefficient uniformly from `Z_p^*`. In `uniform` mode, each
@@ -139,11 +141,14 @@ exact or regular finite-field noise and random linear codes, not this dependent
 projected distribution or structured Ring-LPN code.
 
 **Parameter disposition:** no `(n,c,t,p0,p1)` set is pinned. The raw projection
-CSV is retained only as a function transcript with the current erratum in
-`results/security/README.md`; every dated `conservative_pin` result is invalid
-for parameter selection. A reviewed projection-distribution/tail/structured-
-code lemma, advantage budget for both limbs, and BCG rule clarification are
-required before another estimator sweep.
+CSV is retained only as a function transcript with the current erratum and
+binding status in `results/security/README.md`; every dated `conservative_pin`
+result is invalid for parameter selection. The current live sampler hash no
+longer matches the structured-attack report, and the hybrid-RSD script/CSV no
+longer match their embedded/report pins, so those source bindings must be
+regenerated before use. A reviewed projection-distribution/tail/structured-code
+lemma, advantage budget for both limbs, and BCG rule clarification are required
+before another estimator sweep.
 
 ## 3. Candidate feasibility, not security
 
@@ -325,8 +330,8 @@ The parties privately hold the respective positions and nonzero coefficients.
 The domain is `[0,2n)`, duplicate sums must accumulate rather than abort, and
 the two keys must full-evaluate to additive `Z_p` shares accepted by the
 existing polynomial-product path. There are `c^2` such functions per
-direction, two directions per Beaver cross term, and one or two independent
-prime limbs for q64 or q128.
+direction, two directions per Beaver cross term, and one or two prime limbs for
+q64 or q128.
 
 The end-to-end setup boundary begins at those private factor lists, not at a
 DMPF API that already holds shared point/value vectors. It includes secure

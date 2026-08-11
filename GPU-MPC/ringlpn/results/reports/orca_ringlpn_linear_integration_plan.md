@@ -1,4 +1,8 @@
-> **Living document with dated update sections** (read bottom-up for newest). For current status always start at `GPU-MPC/ringlpn/CLAUDE.md`; sections above the latest update describe earlier states by design.
+> **HISTORICAL/SUPERSEDED INTEGRATION PLAN.** Preserve the dated phases and
+> paths below as project history. The centralized-SPFSS and conversion-oracle
+> gaps are closed in the current two-process FC/Conv source; the known-zero
+> 21-linear/62-item graph/state composition is retained. Start with
+> `GPU-MPC/ringlpn/CLAUDE.md` and `results/README.md` for current status.
 
 # Ring-LPN Linear Layer Integration Plan for Orca
 

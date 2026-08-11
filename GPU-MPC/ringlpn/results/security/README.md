@@ -4,6 +4,29 @@
 classical or quantum security claim is supported.** Read this file before using
 any dated artifact in this directory.
 
+## Live public-vector random-oracle binding
+
+The implementation, functionality, theorem, and simulator use this exact byte
+query and no abbreviated tuple:
+
+```text
+ASCII("RINGLPN_PUBLIC_A_V2\0")
+|| seed[32] || scope_id[32]
+|| LE64(n) || LE64(c) || LE64(t) || LE64(log_domain)
+|| LE64(direction) || LE64(limb) || LE64(slot_batch)
+|| LE64(modulus) || LE64(regular) || LE64(chunk)
+```
+
+The ASCII domain is 20 bytes including the terminal NUL. `seed` is the raw
+256-bit XOR of the two parties' four-word seed shares, `scope_id` is the full
+raw 256-bit scope identifier, and every encoded field is one unsigned 64-bit
+little-endian word in the displayed order, with `regular` canonically encoded
+as zero or one. SHAKE256 output is rejection-sampled to exact-uniform field
+elements. The q128 path uses this one jointly combined
+seed for both limbs; `limb` and `modulus` independently domain-separate the two
+queries. Any `PUBLIC_A_V1`, shortened-scope, omitted-field, or independently
+seeded-limb description is stale.
+
 ## Invalid for parameter selection or security claims
 
 The following files are immutable historical transcripts of a failed local
@@ -66,6 +89,25 @@ lower-tail bound justifies replacing either distribution by
 than this fully split quasi-cyclic structure. The two 62-bit CRT limbs and all
 PCG hybrids also require an explicit distinguishing-advantage composition.
 
+
+## Current live-source bindings
+
+The security index is fail-closed on source/evidence drift. The audited live
+sampler `src/two_party_spfss.h` has SHA-256
+`fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461`.
+A semantic diff from the prior audited `05d2fb62...` revision changes only the
+optional Phase-C OLE-source argument and forwarding in the CPU baseline;
+`validate_party_noise` and `sample_party_noise` are unchanged. The structured
+attack report is therefore freshly rebound to the live sampling distribution.
+
+The hybrid-RSD formula script has SHA-256
+`cbcedaf6cdb1e6818aa968ab43c386f1b046b8640dd3d257039d462e7e949764`;
+after its self-test reproduced the two published table rows, its 20-row CSV was
+regenerated with the same embedded script digest and has SHA-256
+`1f671d941189180397479f2212ba6445fa218f7b2f60f55301bcbca4066a5f25`.
+These refreshed bindings close only evidence staleness. They remain internal
+formula/distribution diagnostics and supply no concrete security pin.
+
 ## Evidence that remains usable
 
 - `s2_candidate_gpu_feasibility_2026_07_29.csv` is engineering-only correctness,
@@ -78,7 +120,7 @@ PCG hybrids also require an explicit distinguishing-advantage composition.
   7,272,923,136 host slots at 17 bytes each, at least 123.6 GB in one process.
   Its former 257.023-bit label is invalid and must not accompany that result.
 
-Current diagnostic scripts are:
+Current diagnostic entry points (not current live-source security bindings) are:
 
 - `scripts/audit_ringlpn_regular_projection.py`, which implements the exact
   integer occupied-support law for every two-power `d|n`, the exact
@@ -103,14 +145,14 @@ Current diagnostic scripts are:
   puncturing iterations. The calculator is executable; no author attack
   artifact, quantum cost, or reviewed structured-code reduction is available.
   Its full-orbit square-root subtraction is a separate heuristic sensitivity.
-- `../reports/structured_attack_audit_2026_08_04.md`, which records the exact
-  live iid-uniform-`F_p^*` direct RSD instance, projected-distribution boundary,
-  source-pinned 2024 regular-ISD and 2025 hybrid-RSD plus omitted 2025/2026
-  attacks, and a formal negacyclic/cyclic orbit and stabilizer bound. Outside
-  the explicitly bounded stabilizer event, the orbit has `d` elements at a
-  degree-`d` projection; a `sqrt(d)` decoder speedup remains heuristic outside
-  Sendrier's concrete Stern scope. The report
-  is an internal/advisor attack ledger, not reviewed concrete-security evidence.
+- `../reports/structured_attack_audit_2026_08_04.md`, which retains an exact
+  regular-projection law, current sampler binding, source-pinned 2024
+  regular-ISD and self-tested 2025 hybrid-RSD diagnostics, omitted 2025/2026
+  attack notes, and a formal negacyclic/cyclic orbit and stabilizer bound.
+  Outside the explicitly bounded stabilizer event, the orbit has `d` elements
+  at a degree-`d` projection; a `sqrt(d)` decoder speedup remains heuristic
+  outside Sendrier's concrete Stern scope. The report is an internal/advisor
+  attack ledger, not reviewed concrete-security evidence.
 
 Executed 2026-08-04 evidence:
 
@@ -139,15 +181,14 @@ Executed 2026-08-04 evidence:
   retained CCJ numeric failures and the unversioned binary-BJMM/Sage dependency
   are incompatibility evidence, not missing values to replace with a current
   estimator. No row pins security.
-- `hybrid_regular_sd_asiacrypt2025_2026_08_04.csv`: 20 source-pinned direct
-  regular-SD formula rows (five candidates, both live primes, baseline plus
-  separately labelled orbit sensitivity); SHA-256
-  `9a442eec7c41fc01afcd2df84494a5703330d2a041693320fc2c0b0248d978d0`.
-  The executable calculator has SHA-256
-  `001c7c68fe53ec5f266631500f72e835940f09586aea75f134f4e0e2b87dc8aa`
-  and reproduces the paper's `132.60` and `133.15` table rows in its self-test.
-  These are classical field-operation diagnostics, not an executable attack,
-  concrete Ring-LPN evidence, or a parameter pin.
+- `hybrid_regular_sd_asiacrypt2025_2026_08_04.csv`: 20 current formula rows,
+  SHA-256
+  `1f671d941189180397479f2212ba6445fa218f7b2f60f55301bcbca4066a5f25`,
+  with embedded calculator SHA-256
+  `cbcedaf6cdb1e6818aa968ab43c386f1b046b8640dd3d257039d462e7e949764`.
+  The calculator self-test reproduced the published 132.60 and 133.15 table
+  rows before regeneration. This is not an executable attack, concrete
+  Ring-LPN evidence, a quantum cost, or a parameter pin.
 
 - `scripts/audit_ringlpn_projection_security.py`, which omits mechanically
   undefined aggregate calls;

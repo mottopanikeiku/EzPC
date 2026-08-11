@@ -1,13 +1,15 @@
-// Party-local Figure 2 Ring-LPN OLE expansion.
+// BENCHMARK_ONLY correctness diagnostic for party-local Figure 2 expansion.
 //
-// One invocation reads exactly one party's noise record and one party's SPFSS
-// key file. It never accepts a peer path and never reconstructs an OLE. This
-// diagnostic writer is not the live FC path and is intentionally direction 0
-// only; the live two-direction composition samples fresh state in memory.
+// This executable uses a deterministic mt19937_64 public vector and is not a
+// theorem-aligned or security-evidence path. One invocation reads exactly one
+// party's noise record and one party's SPFSS key file; it never accepts a peer
+// path or reconstructs an OLE.
 
 #include <cuda_runtime.h>
 
-#define RINGLPN_DEVICE_LABEL "cuda_ringlpn_ole_party"
+#ifndef RINGLPN_DEVICE_LABEL
+#define RINGLPN_DEVICE_LABEL "cuda_ringlpn_ole_party_BENCHMARK_ONLY"
+#endif
 #include "ringlpn_ole_party.cuh"
 
 #include <cerrno>
@@ -24,7 +26,7 @@
 namespace {
 using Word = ringlpn_ole_party::Word;
 
-uint64_t mix_public_seed(uint64_t seed, uint64_t tag) {
+uint64_t mix_BENCHMARK_ONLY_public_seed(uint64_t seed, uint64_t tag) {
     uint64_t z = seed + 0x9E3779B97F4A7C15ULL + (tag << 6) + (tag >> 2);
     z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
     z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
@@ -39,7 +41,7 @@ struct PartyArgs {
     int qbits = 64;
     int limb = 0;
     int direction = 0;
-    uint64_t public_seed = 1;
+    uint64_t benchmark_only_public_seed = 1;
     std::string noise_mode = "uniform";
     std::string noise_path;
     std::string key_path;
@@ -49,7 +51,7 @@ struct PartyArgs {
 [[noreturn]] void party_usage(const char *prog) {
     std::fprintf(stderr,
                  "usage: %s --party 0|1 --n N --c C --t T --qbits 64|128 "
-                 "--limb I --direction 0 --public-seed S "
+                 "--limb I --direction 0 --benchmark-only-public-seed S "
                  "--noise-mode uniform|regular --noise OWN.noise "
                  "--keys OWN.spfss --out OWN.slots\n",
                  prog);
@@ -101,7 +103,7 @@ PartyArgs parse_party_args(int argc, char **argv) {
         else if (!std::strcmp(argv[i], "--qbits")) a.qbits = parse_party_int(next(), "qbits");
         else if (!std::strcmp(argv[i], "--limb")) a.limb = parse_party_int(next(), "limb");
         else if (!std::strcmp(argv[i], "--direction")) a.direction = parse_party_int(next(), "direction");
-        else if (!std::strcmp(argv[i], "--public-seed")) a.public_seed = parse_party_u64(next(), "public-seed");
+        else if (!std::strcmp(argv[i], "--benchmark-only-public-seed")) a.benchmark_only_public_seed = parse_party_u64(next(), "benchmark-only-public-seed");
         else if (!std::strcmp(argv[i], "--noise-mode")) a.noise_mode = next();
         else if (!std::strcmp(argv[i], "--noise")) a.noise_path = next();
         else if (!std::strcmp(argv[i], "--keys")) a.key_path = next();
@@ -135,8 +137,6 @@ ringlpn_ole_party::RingOlePublicParams make_public_params(
     params.limb = a.limb;
     params.slot_batch = 0;
     params.modulus = config.modulus;
-    params.public_a_seed =
-        mix_public_seed(a.public_seed, static_cast<uint64_t>(a.limb));
     params.regular = a.noise_mode == "regular";
     params.log_domain = ringlpn_ole_party::log2_exact(
         ringlpn_ole_party::domain_size(params));
@@ -198,7 +198,7 @@ bool write_slots(const PartyArgs &a, Word modulus,
     put_le32(o, static_cast<uint32_t>(a.t));
     put_le32(o, static_cast<uint32_t>(a.noise_mode == "regular"));
     put_le64(o, modulus);
-    put_le64(o, a.public_seed);
+    put_le64(o, a.benchmark_only_public_seed);
     put_le64(o, static_cast<uint64_t>(key_bytes));
     put_le64(o, static_cast<uint64_t>(X.size()));
     for (Word x : X) put_le64(o, x);
@@ -218,12 +218,15 @@ bool write_slots(const PartyArgs &a, Word modulus,
 
 int main(int argc, char **argv) {
     const PartyArgs a = parse_party_args(argc, argv);
-    initGPUMemPool();
+    ;
     AESGlobalContext gaes;
     initAESContext(&gaes);
     const ModulusConfig<Word> config =
         a.limb == 0 ? kConfig62 : kConfig62Crt2;
     const auto params = make_public_params(a, config);
+    const uint64_t benchmark_seed =
+        mix_BENCHMARK_ONLY_public_seed(
+            a.benchmark_only_public_seed, static_cast<uint64_t>(a.limb));
     ringlpn_ole_party::NoiseRecord noise;
     ringlpn_ole_party::RingOlePartyKeys keys;
     if (!load_own_noise(params, a.party, a.noise_path, noise) ||
@@ -234,9 +237,13 @@ int main(int argc, char **argv) {
     }
     ringlpn_ole_party::RingOlePartyShares shares;
     ringlpn_ole_party::RingOlePartyCounters counters;
-    if (!ringlpn_ole_party::expand_ring_ole_party(
-            params, a.party, noise, std::move(keys), &gaes, shares, counters)) {
-        std::fprintf(stderr, "party-local Ring-OLE expansion failed\n");
+    if (!ringlpn_ole_party::
+            expand_ring_ole_party_BENCHMARK_ONLY_mt19937_64(
+                params, a.party, noise, std::move(keys), &gaes, shares,
+                counters, benchmark_seed)) {
+        std::fprintf(
+            stderr,
+            "BENCHMARK_ONLY mt19937_64 party Ring-OLE expansion failed\n");
         freeAESGlobalContext(&gaes);
         return 2;
     }
@@ -248,8 +255,10 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "failed to write party slot record\n");
         return 2;
     }
-    std::fprintf(stderr,
-                 "[ole-party] party %d dir %d limb %d expanded %zu slots\n",
-                 a.party, a.direction, a.limb, shares.X_slots.size());
+    std::fprintf(
+        stderr,
+        "[ole-party-BENCHMARK_ONLY-mt19937_64] party %d dir %d limb %d "
+        "expanded %zu slots; NOT SECURITY EVIDENCE\n",
+        a.party, a.direction, a.limb, shares.X_slots.size());
     return 0;
 }

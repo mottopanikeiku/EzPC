@@ -85,7 +85,7 @@ macoro::task<> genBaseCors(PRNG& prng, Socket& sock);
 
 The initial source-audit boundary is now superseded by the separate dated result `reverse_cuckoo_p0_baseline_2026_08_04.json` with `status: complete`. The exercised adapter uses exact `Fp<p0,u64,__uint128_t>`, a canonical 62-bit context, caller factors, live `genBaseCors`, collision accumulation, and full-domain differential validation. It deliberately exposes and labels libOTe's **native 16-folded raw** layout: 256 sets, 16 points per set, and 4,096 terms. It is therefore an exact distributed runnable row for that native layout, not a raw 31-diagonal timing row and not GPU evidence.
 
-The dated result records setup **18,832,990 us / 52,791,184 wire bytes**, online full-domain evaluation **2,070,844 us / 1,425,584 wire bytes**, and end-to-end including validation **20,948,042 us** with **54,216,768 protocol wire bytes**. It checked 16,777,216 full-domain positions, accumulated 3,840 duplicate terms, and passed the corruption-rejection control. Its `performance_speedup` and `security_level` claims are both null. These values must not be ratioed against the raw 31-diagonal GPU path.
+The dated result records setup **18,523,424 us / 52,791,184 wire bytes**, online full-domain evaluation **2,116,894 us / 1,425,584 wire bytes**, and end-to-end including validation **20,688,314 us** with **54,216,768 protocol wire bytes**. It checked 16,777,216 full-domain positions, accumulated 3,840 duplicate terms, and passed the corruption-rejection control. Its `performance_speedup` and `security_level` claims are both null. These values must not be ratioed against the raw 31-diagonal GPU path.
 
 ## Duplicate-preserving normalization
 

@@ -1,0 +1,44 @@
+{
+  "approval_digest": "fa45edc512e94335be6375391621fdf4c148bb8e6f7b4aeef56369275d12fda7",
+  "binaries": {
+    "test_two_party_conv_preprocess": {
+      "sha256": "975ac7263f77700de7809397650cbbef64cdc2eb3ed3980f9dfee5828a963483",
+      "size": 5898360
+    },
+    "test_two_party_fc_preprocess": {
+      "sha256": "02eaaac9740fde6370cacb7703a965e4785f483da23c2d9795424acd326a0bee",
+      "size": 6285768
+    }
+  },
+  "build_provenance": {
+    "path": "results/fc/linear_adapter_build_provenance_2026_08_10.json",
+    "provenance_digest": "4d18d66088af1617900f811c599219be3c0d4d8efd54a377feddb8099f98ffa8",
+    "receipt_digests": [
+      "7eca819df80f8c98788516b04ce785b91f77e633a1baf16e8ecaf09fb73aaac1",
+      "362a1a15516d03d56919cade021551730fb53a8afda33378fe3da4673754a0e4"
+    ],
+    "sha256": "18b21f1732c05535984b629b4b4b9ead9c1f85408e26a236e4cd2fe01297d4c6",
+    "size": 578588
+  },
+  "classification": "internal/advisor",
+  "schema": "ringlpn-linear-adapter-binary-approval-v2",
+  "scope": "reproducible_linear_adapters_for_internal_advisor_execution",
+  "validation": {
+    "advisor_review": {
+      "receipt": null,
+      "status": "unavailable"
+    },
+    "deterministic_build": {
+      "byte_comparison": "identical",
+      "receipt_digests": [
+        "7eca819df80f8c98788516b04ce785b91f77e633a1baf16e8ecaf09fb73aaac1",
+        "362a1a15516d03d56919cade021551730fb53a8afda33378fe3da4673754a0e4"
+      ],
+      "status": "pass"
+    },
+    "internal_source_review": {
+      "receipt": null,
+      "status": "unavailable"
+    }
+  }
+}

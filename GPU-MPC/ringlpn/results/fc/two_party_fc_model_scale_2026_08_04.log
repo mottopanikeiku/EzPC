@@ -1,401 +1,458 @@
 [two-party-fc-model] build
-In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
-/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28,
+                 from src/linear_preprocess_backend.cuh:8,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
-/home/fatih/EzPC/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
   #pragma GCC optimize("unroll-loops")
               ^
 
 Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
 
-/home/fatih/EzPC/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
       if (x==64) return -1;
                         ^
 
-/home/fatih/EzPC/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
       uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
                                       ^
 
-/home/fatih/EzPC/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
   #pragma GCC optimize("unroll-loops")
               ^
 
-/home/fatih/EzPC/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
       mask = -1;
              ^
 
-/home/fatih/EzPC/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
       mask = -1;
              ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(536): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(536): warning #68-D: integer conversion resulted in a change of sign
       uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
                                         ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(631): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(631): warning #68-D: integer conversion resulted in a change of sign
       uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
                                         ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(723): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(723): warning #68-D: integer conversion resulted in a change of sign
         modulo_mask = -1;
                       ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(756): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(756): warning #68-D: integer conversion resulted in a change of sign
         modulo_mask = -1;
                       ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(799): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(799): warning #68-D: integer conversion resulted in a change of sign
             (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
                                       ^
 
-/home/fatih/EzPC/SCI/src/OT/split-iknp.h(885): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(885): warning #68-D: integer conversion resulted in a change of sign
             (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
                                       ^
 
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
           const block getSeed() const;
           ^
 
-/home/fatih/EzPC/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, bool)"
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, bool)"
       }
       ^
 
-In file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,
-                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/orca_fc_ringlpn_keywriter.cuh:13,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu:22:
-/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28,
+                 from src/linear_preprocess_backend.cuh:8,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
    34 | #define CUTLASS_CHECK(status)                                                                      \
       |                                                                                                     
-/home/fatih/EzPC/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
   #pragma GCC optimize("unroll-loops")
               ^
 
 Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
 
-/home/fatih/EzPC/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
       if (x==64) return -1;
                         ^
 
-/home/fatih/EzPC/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
       uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
                                       ^
 
-/home/fatih/EzPC/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
   #pragma GCC optimize("unroll-loops")
               ^
 
-/home/fatih/EzPC/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
       mask = -1;
              ^
 
-/home/fatih/EzPC/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
       mask = -1;
              ^
 
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
           const block getSeed() const;
           ^
 
-/home/fatih/EzPC/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, __nv_bool)"
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, __nv_bool)"
       }
       ^
 
-/home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
-/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
   287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
       |        ^~~~~~~~~~~~~~~~~~~  ~~~~~~~~~
       |                                     |
       |                                     uint64_t {aka long unsigned int}
-/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
   287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
       |        ^~~~~~~~~~~~~~~~~~~             ~~~~~~~~~
       |                                                |
       |                                                uint64_t {aka long unsigned int}
-/home/fatih/EzPC/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
-/home/fatih/EzPC/SCI/src/utils/group_openssl.h:174:25: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:25: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
   174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
       |   ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
 /usr/include/openssl/ec.h:883:52: note: declared here
   883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
       |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:46:21: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:21: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    46 |   Hash() { SHA256_Init(&hash); }
       |          ~~~~~~~~~~~^~~~~~~~~
 /usr/include/openssl/sha.h:73:52: note: declared here
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                                                    ^~         
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:50:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    50 |       SHA256_Update(&hash, data, nbyte);
       |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:52: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                                                    ^~~          
-/home/fatih/EzPC/SCI/src/utils/hash.h:55:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    55 |       SHA256_Update(&hash, (char *)buffer, size);
       |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:52: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                                                    ^~~          
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:65:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    65 |       SHA256_Update(&hash, (char *)buffer, size);
       |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:52: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                                                    ^~~          
-/home/fatih/EzPC/SCI/src/utils/hash.h:68:13: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:13: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    68 |     SHA256_Final((unsigned char *)a, &hash);
       |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:76:52: note: declared here
    76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
       |                                                    ^~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:71:12: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:12: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    71 |     SHA256_Init(&hash);
       |     ~~~~~~~^~~~~~~~~
 /usr/include/openssl/sha.h:73:52: note: declared here
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                                                    ^~         
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:434:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  434 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+src/two_party_ot.h:434:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  434 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                                               ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+src/two_party_ot.h:435:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  435 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+src/two_party_ot.h:435:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  435 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                                               ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:458:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  458 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                             ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
-  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+src/two_party_ot.h:458:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  458 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                                               ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
    73 |     extern const std::array<block, 2> zeroAndAllOne;
       |                                      ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
    35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
       |                                      ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
    35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
       |                                                                  ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
    56 |         void ecbEncCounterMode(u64 baseIdx, span<block> ciphertext) const
       |                                                  ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
    81 |         MultiKeyAES(span<block> keys) { setKeys(keys); }
       |                        ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
    84 |         void setKeys(span<block> keys)
       |                         ^
-/home/fatih/EzPC/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
   140 |                 std::vector<block> mBuffer;
       |                                   ^
-In file included from /home/fatih/EzPC/SCI/src/utils/utils.h:87,
-                 from /home/fatih/EzPC/SCI/src/utils/group.h:28,
-                 from /home/fatih/EzPC/SCI/src/utils/io_channel.h:31,
-                 from /home/fatih/EzPC/SCI/src/utils/emp-tool.h:1,
-                 from /home/fatih/EzPC/SCI/src/OT/ot.h:30,
-                 from /home/fatih/EzPC/SCI/src/OT/np.h:30,
-                 from /home/fatih/EzPC/SCI/src/OT/split-iknp.h:28,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:38,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.h:3,
-                 from /home/fatih/EzPC/GPU-MPC/ringlpn/src/secure_convert.cpp:1:
-/home/fatih/EzPC/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
-/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:42,
+                 from src/secure_convert.h:3,
+                 from src/secure_convert.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
   287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
       |             ~~~~~~^             ~~~~~~~~~
       |                   |                     |
       |                   |                     uint64_t {aka long unsigned int}
       |                   long long unsigned int
       |             %.16lx
-/home/fatih/EzPC/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
   287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
       |                     ~~~~~~^                ~~~~~~~~~
       |                           |                        |
       |                           long long unsigned int   uint64_t {aka long unsigned int}
       |                     %.16lx
-In file included from /home/fatih/EzPC/SCI/src/utils/group.h:97:
-/home/fatih/EzPC/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
-/home/fatih/EzPC/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
   174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
       |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
-In file included from /home/fatih/EzPC/SCI/src/utils/group.h:31:
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
 /usr/include/openssl/ec.h:883:27: note: declared here
   883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
       |                           ^~~~~~~~~~~~~~~~~~~~~~~~
-In file included from /home/fatih/EzPC/SCI/src/utils/emp-tool.h:15:
-/home/fatih/EzPC/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    46 |   Hash() { SHA256_Init(&hash); }
       |            ~~~~~~~~~~~^~~~~~~
-In file included from /home/fatih/EzPC/SCI/src/utils/hash.h:33:
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
 /usr/include/openssl/sha.h:73:27: note: declared here
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                           ^~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    50 |       SHA256_Update(&hash, data, nbyte);
       |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:27: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                           ^~~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    55 |       SHA256_Update(&hash, (char *)buffer, size);
       |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:27: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                           ^~~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    65 |       SHA256_Update(&hash, (char *)buffer, size);
       |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:74:27: note: declared here
    74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
       |                           ^~~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    68 |     SHA256_Final((unsigned char *)a, &hash);
       |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
 /usr/include/openssl/sha.h:76:27: note: declared here
    76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
       |                           ^~~~~~~~~~~~
-/home/fatih/EzPC/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
-/home/fatih/EzPC/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
    71 |     SHA256_Init(&hash);
       |     ~~~~~~~~~~~^~~~~~~
 /usr/include/openssl/sha.h:73:27: note: declared here
    73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
       |                           ^~~~~~~~~~~
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:378:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  378 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:434:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  434 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
       |                                            ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:379:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  379 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+src/two_party_ot.h:435:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  435 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
       |                                            ^
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
-/home/fatih/EzPC/GPU-MPC/ringlpn/src/two_party_ot.h:399:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
-  399 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:458:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  458 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
       |                                            ^
-Built /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:42,
+                 from src/secure_truncate.h:3,
+                 from src/secure_truncate.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:434:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  434 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h:435:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  435 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:458:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  458 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
+Built /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
 ===== ResNet18 gemm48 / warmup 0 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.79928e+06,pass,11298,117.312,157506,1.85655e+06,3.28993e+06,179645,2321.13,86821.2,1.91001e+06,95371.8,841542,9056.84,74.891,178884608,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,8d86bf4431d427df658d90c939ed2da5,62275c07b5a79d3df1f0806c9a336991650ffd70bf219a54a00982b8a84208d1,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.05626e+06,pass,11023,30.876,21726.2,248560,1.99126e+06,45880.1,1743.17,47722.7,1.22242e+06,94219.5,40755,11290,866.243,142528512,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,bcfa88515aa4bad90009b15761b05bf5,eb5535bc6d0bf04b26fc3d9bd107ec636e28c7c16a0290bf83532594ff4bbf9d,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / warmup 0 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.79934e+06,pass,11298,152.047,157477,1.8569e+06,3.28958e+06,179626,2290.11,90817,1.91198e+06,81099.9,841590,8947.97,181.496,178704384,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,8d86bf4431d427df658d90c939ed2da5,62275c07b5a79d3df1f0806c9a336991650ffd70bf219a54a00982b8a84208d1,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.05628e+06,pass,11023,133.212,21716.7,248565,1.99131e+06,45142,1761.25,52398.9,1.22149e+06,81491.5,40806.5,12041.8,112.1,143212544,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,bcfa88515aa4bad90009b15761b05bf5,eb5535bc6d0bf04b26fc3d9bd107ec636e28c7c16a0290bf83532594ff4bbf9d,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / warmup 0 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10745.5,1094.62,pass,pass,pass,pass,440356,169381888,27259961344,6566576128,8d86bf4431d427df658d90c939ed2da5,62275c07b5a79d3df1f0806c9a336991650ffd70bf219a54a00982b8a84208d1
+128,32,1,512,1000,69,4108096,14855.1,1158.92,pass,pass,pass,pass,177654,171266048,20187643904,13638893568,bcfa88515aa4bad90009b15761b05bf5,eb5535bc6d0bf04b26fc3d9bd107ec636e28c7c16a0290bf83532594ff4bbf9d
 ===== ResNet18 gemm48 / measured 1 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.57202e+06,pass,11298,110.423,158179,1.79493e+06,3.21687e+06,175694,2061.37,82195.2,1.8956e+06,88697.9,821648,9178.82,80.146,179654656,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,c75ce0e0d3821a0db4a8bcfb82f82145,42e25f74950997e86c529c46b181ca18f6bf46d02baf1169ed86726f5d8fa801,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,3.97077e+06,pass,11023,25.662,19961.3,246273,1.93021e+06,41491.9,1694.41,50661.4,1.22802e+06,92882,40775.5,12603.8,144.093,143015936,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,2844e6265d249b5be9dc6c5bb06f1fb1,e6c68e9d28c33fcb85bed123a9687b018eeb32c72a6aebc7a42d617ba41ec992,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 1 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.57203e+06,pass,11298,141.073,158200,1.79526e+06,3.21647e+06,175784,1988.4,86178.4,1.90046e+06,77441.1,821670,8949.92,299.707,179838976,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,c75ce0e0d3821a0db4a8bcfb82f82145,42e25f74950997e86c529c46b181ca18f6bf46d02baf1169ed86726f5d8fa801,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,3.96854e+06,pass,11023,210.279,22183.9,246283,1.93033e+06,41307.1,1738.19,48821.7,1.2245e+06,80771.9,40826.9,12629.5,118.792,142376960,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,2844e6265d249b5be9dc6c5bb06f1fb1,e6c68e9d28c33fcb85bed123a9687b018eeb32c72a6aebc7a42d617ba41ec992,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 1 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10540.1,1094.67,pass,pass,pass,pass,440927,169619456,27259961344,6566576128,c75ce0e0d3821a0db4a8bcfb82f82145,42e25f74950997e86c529c46b181ca18f6bf46d02baf1169ed86726f5d8fa801
+128,32,1,512,1000,69,4108096,15085,1151.81,pass,pass,pass,pass,177639,171405312,20187643904,13638893568,2844e6265d249b5be9dc6c5bb06f1fb1,e6c68e9d28c33fcb85bed123a9687b018eeb32c72a6aebc7a42d617ba41ec992
 ===== ResNet18 gemm48 / measured 2 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.9588e+06,pass,11298,112.494,147231,1.92353e+06,3.41232e+06,173504,2360,88832.6,1.91669e+06,92527.6,818202,9144.3,73.477,179003392,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,e843225a02b798a25cd4ade0b2f17a80,4d0058a06bd1a640d4dfa5311ed7716d6d0e847e63d114498e3890c9a74c70dd,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,3.9275e+06,pass,11023,28.361,24248.5,247314,1.89323e+06,41166.2,1746.06,51298.1,1.22346e+06,94552.7,40888.7,12425.5,1711.54,142118912,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,2213d4c115a802a6deed8373a7bcbf58,c61f616ed02158a58d6eed92e3d63fdc101b4ca0b97f725fe23bc22a89df9de1,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 2 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.95879e+06,pass,11298,141.195,147253,1.92396e+06,3.41219e+06,173131,2268.67,93910.7,1.94069e+06,80369.1,818248,9134.84,74.404,179838976,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,e843225a02b798a25cd4ade0b2f17a80,4d0058a06bd1a640d4dfa5311ed7716d6d0e847e63d114498e3890c9a74c70dd,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,3.92755e+06,pass,11023,50.791,24208.2,247349,1.89273e+06,41612.1,1662.64,47236.8,1.22356e+06,80979.2,40933.7,13844.3,287.058,142319616,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,2213d4c115a802a6deed8373a7bcbf58,c61f616ed02158a58d6eed92e3d63fdc101b4ca0b97f725fe23bc22a89df9de1,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 2 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10511.5,1094.87,pass,pass,pass,pass,392249,169603072,27259961344,6566576128,e843225a02b798a25cd4ade0b2f17a80,4d0058a06bd1a640d4dfa5311ed7716d6d0e847e63d114498e3890c9a74c70dd
+128,32,1,512,1000,69,4108096,14686.2,1146.68,pass,pass,pass,pass,178179,170999808,20187643904,13638893568,2213d4c115a802a6deed8373a7bcbf58,c61f616ed02158a58d6eed92e3d63fdc101b4ca0b97f725fe23bc22a89df9de1
 ===== ResNet18 gemm48 / measured 3 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,9.17199e+06,pass,11298,64.52,143056,1.95567e+06,3.48436e+06,180437,2246.09,88266.1,1.94021e+06,95535.4,901331,9512.31,82.306,179322880,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,ba1ee1115d1e612976d8041697286a53,e82ea7d2355f7f10220f419d8bb2990a6b1de22e147729a8b7b14467b4867308,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.00374e+06,pass,11023,32.041,18946.3,244795,1.96156e+06,42243.5,1738.66,47303.7,1.2235e+06,94486.5,42032.9,12654.4,284.914,142299136,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,56094c41b8d1b8a7454c1a8efcded457,65bba93efe802c325e6afa072f49eb3a4e282f61d42784972062808ef8813b3e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 3 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,9.172e+06,pass,11298,70.1,143056,1.95598e+06,3.48428e+06,180236,2188.84,92818.6,1.95964e+06,82877.3,901375,9369.31,222.789,179183616,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,ba1ee1115d1e612976d8041697286a53,e82ea7d2355f7f10220f419d8bb2990a6b1de22e147729a8b7b14467b4867308,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.00358e+06,pass,11023,143.525,18944,244797,1.96168e+06,42101.2,1787.55,47807.3,1.22642e+06,82336.6,42084.6,11597.3,1334.87,142581760,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,56094c41b8d1b8a7454c1a8efcded457,65bba93efe802c325e6afa072f49eb3a4e282f61d42784972062808ef8813b3e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 3 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10991,1095.44,pass,pass,pass,pass,434507,168640512,27259961344,6566576128,ba1ee1115d1e612976d8041697286a53,e82ea7d2355f7f10220f419d8bb2990a6b1de22e147729a8b7b14467b4867308
+128,32,1,512,1000,69,4108096,15217.6,1155.03,pass,pass,pass,pass,174415,171266048,20187643904,13638893568,56094c41b8d1b8a7454c1a8efcded457,65bba93efe802c325e6afa072f49eb3a4e282f61d42784972062808ef8813b3e
 ===== ResNet18 gemm48 / measured 4 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.86796e+06,pass,11298,103.222,151227,1.86689e+06,3.32108e+06,182447,2158.51,85694,1.92548e+06,92705.3,858288,9568.23,80.92,179433472,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,1258497e2c182c00ee449aa341cfdace,31aa010dae60eb730dcd31a722a38aa6b97620f64a8db04ecf94203384c7374e,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.03316e+06,pass,11023,34.285,24158.9,249199,1.98743e+06,41833.9,1804.17,47905.9,1.22268e+06,94937.8,41898.3,12274.2,160.217,141889536,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,99b5da7de1894be951648ed0851d2a1d,70ac65e860cf3f28871d6b8d8ae1cc7093c970c7cc7ac0677cd3d15da47af9dd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 4 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.86799e+06,pass,11298,131.249,151238,1.86737e+06,3.32068e+06,182661,2177.75,89881.9,1.93764e+06,80076.1,858336,9568.22,79.895,178941952,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,1258497e2c182c00ee449aa341cfdace,31aa010dae60eb730dcd31a722a38aa6b97620f64a8db04ecf94203384c7374e,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.03319e+06,pass,11023,13.299,24138.5,249178,1.98757e+06,41634.2,1797.72,54522.8,1.22544e+06,81286.9,41940,12147.2,278.192,143011840,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,99b5da7de1894be951648ed0851d2a1d,70ac65e860cf3f28871d6b8d8ae1cc7093c970c7cc7ac0677cd3d15da47af9dd,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 4 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,11017.4,1093.88,pass,pass,pass,pass,438007,169095168,27259961344,6566576128,1258497e2c182c00ee449aa341cfdace,31aa010dae60eb730dcd31a722a38aa6b97620f64a8db04ecf94203384c7374e
+128,32,1,512,1000,69,4108096,15535.7,1150.73,pass,pass,pass,pass,174725,171442176,20187643904,13638893568,99b5da7de1894be951648ed0851d2a1d,70ac65e860cf3f28871d6b8d8ae1cc7093c970c7cc7ac0677cd3d15da47af9dd
 ===== ResNet18 gemm48 / measured 5 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,9.19339e+06,pass,11298,113.072,153179,1.97193e+06,3.5325e+06,177822,2253.25,92343.9,1.95165e+06,95904.9,834854,9512.49,86.803,178733056,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,f2fb973b7fed91e1a1647265b64c7af4,78b8d25e5f5b1dbe3ff268556fac6c6971e7db3628859c886c87c65f28797137,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.00588e+06,pass,11023,26.515,20245.4,244965,1.95922e+06,43001.5,1763.62,48419.3,1.22439e+06,95525.2,41848,13932.2,290.009,142024704,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,12067f588be1f1986955b1510072512a,773274d7bb79a2a7ac403731974b146adcf8052ca54aaebec04d6c78c8680aad,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 5 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,9.19341e+06,pass,11298,149.912,153180,1.97211e+06,3.53231e+06,177937,2323.2,95465.4,1.96038e+06,85718.8,834896,9350.59,246.053,179195904,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,f2fb973b7fed91e1a1647265b64c7af4,78b8d25e5f5b1dbe3ff268556fac6c6971e7db3628859c886c87c65f28797137,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.00595e+06,pass,11023,36.422,20200,245006,1.95953e+06,42678.4,1767.02,50543.1,1.23015e+06,82369.6,41887.4,11979.3,2246.31,142344192,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,12067f588be1f1986955b1510072512a,773274d7bb79a2a7ac403731974b146adcf8052ca54aaebec04d6c78c8680aad,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 5 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10611,1097.28,pass,pass,pass,pass,445443,169271296,27259961344,6566576128,f2fb973b7fed91e1a1647265b64c7af4,78b8d25e5f5b1dbe3ff268556fac6c6971e7db3628859c886c87c65f28797137
+128,32,1,512,1000,69,4108096,14702.2,1148.17,pass,pass,pass,pass,184651,171266048,20187643904,13638893568,12067f588be1f1986955b1510072512a,773274d7bb79a2a7ac403731974b146adcf8052ca54aaebec04d6c78c8680aad
 ===== ResNet18 gemm48 / measured 6 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.64571e+06,pass,11298,105.396,143524,1.81987e+06,3.22441e+06,184970,1933.45,82114.7,1.90372e+06,90200.3,836736,9174.35,78.413,179408896,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,8c094adcf055c92d74467881cff55176,d8897cf45e253efbcaf1fdb515897c346084111837633cc53b2c67fef09c6953,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.00973e+06,pass,11023,26.061,19879,247888,1.97781e+06,42641.9,1675.8,48069.1,1.21876e+06,94714.4,39037.6,12217.7,238.535,142503936,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,f490128add4c54aa85c827fdddb8df84,651d2d1f3dfa1fc3f27cd6d6378c8b7b90db5d16f80c66a45828d83de1e2342e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 6 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.64568e+06,pass,11298,134.521,143550,1.82014e+06,3.22422e+06,184987,1971.48,86990.5,1.91817e+06,77948.4,836751,8876.29,373.847,179847168,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,8c094adcf055c92d74467881cff55176,d8897cf45e253efbcaf1fdb515897c346084111837633cc53b2c67fef09c6953,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.00972e+06,pass,11023,11.779,19880.9,247929,1.97799e+06,42411.6,1756.74,47641.1,1.22809e+06,80395.6,39085.5,12215.2,233.003,142147584,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,f490128add4c54aa85c827fdddb8df84,651d2d1f3dfa1fc3f27cd6d6378c8b7b90db5d16f80c66a45828d83de1e2342e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 6 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10559.1,1097.42,pass,pass,pass,pass,442778,168902656,27259961344,6566576128,8c094adcf055c92d74467881cff55176,d8897cf45e253efbcaf1fdb515897c346084111837633cc53b2c67fef09c6953
+128,32,1,512,1000,69,4108096,14604.3,1149.09,pass,pass,pass,pass,175322,171266048,20187643904,13638893568,f490128add4c54aa85c827fdddb8df84,651d2d1f3dfa1fc3f27cd6d6378c8b7b90db5d16f80c66a45828d83de1e2342e
 ===== ResNet18 gemm48 / measured 7 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,9.13986e+06,pass,11298,98.191,156012,1.96899e+06,3.47095e+06,190333,2194.38,91107,1.94062e+06,94578.3,839321,10123.6,102.667,178962432,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,f56991b28684a7ea3c3311826bdbaec7,73cb59826b4f4d4028b28ece8e1c1cf897ec6710a8603f9769b73d4daeebc9b7,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,4.03431e+06,pass,11023,39.227,23383.8,250468,1.97444e+06,41293.8,1783.03,47052.3,1.22895e+06,93427.4,42698.1,13136,350.936,142041088,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,e86ef31612269fbfcee0ffee1418180e,331d126146c17759af3e80cd7acb78ee5805d2434de8c9f7a5178eab6a6f95c1,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 7 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,9.13987e+06,pass,11298,126.683,156031,1.9693e+06,3.47057e+06,190480,2258.08,96959,1.96715e+06,82248.9,839309,9637.98,579.533,179900416,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,f56991b28684a7ea3c3311826bdbaec7,73cb59826b4f4d4028b28ece8e1c1cf897ec6710a8603f9769b73d4daeebc9b7,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,4.03436e+06,pass,11023,254.776,23382.2,250497,1.97424e+06,41429.8,1743.68,47604.7,1.22529e+06,80692.8,42765.7,11822.6,1663.54,142606336,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,e86ef31612269fbfcee0ffee1418180e,331d126146c17759af3e80cd7acb78ee5805d2434de8c9f7a5178eab6a6f95c1,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 7 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10801.8,1098.33,pass,pass,pass,pass,398659,169603072,27259961344,6566576128,f56991b28684a7ea3c3311826bdbaec7,73cb59826b4f4d4028b28ece8e1c1cf897ec6710a8603f9769b73d4daeebc9b7
+128,32,1,512,1000,69,4108096,14644.2,1149.64,pass,pass,pass,pass,181536,170983424,20187643904,13638893568,e86ef31612269fbfcee0ffee1418180e,331d126146c17759af3e80cd7acb78ee5805d2434de8c9f7a5178eab6a6f95c1
 ===== ResNet18 gemm48 / measured 8 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.91693e+06,pass,11298,111.243,144558,1.89691e+06,3.35323e+06,181119,2110.5,86699.1,1.91239e+06,94204,856331,8688.7,192.198,179105792,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,2c43778499ea2b21c7ffd8b145418201,037246bb1e709e3977a35353348867b9f224ad7bd9eabe2b765ff41658087999,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,3.98298e+06,pass,11023,39.858,19706.6,246135,1.94689e+06,41193.7,1666.75,48225.3,1.22688e+06,94464.3,37117.6,11589.1,583.337,141545472,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,7eeaded5e52359c43fc5a33d3ff9ce08,e7b4b17a7c58cf7c2738df1a4eeb94a57934e2f981b63e7b90baa54d70752289,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 8 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.91694e+06,pass,11298,170.326,144576,1.89729e+06,3.35283e+06,181313,2286.61,90180.4,1.93995e+06,79588.1,856395,8821.29,50.361,179195904,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,2c43778499ea2b21c7ffd8b145418201,037246bb1e709e3977a35353348867b9f224ad7bd9eabe2b765ff41658087999,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,3.98292e+06,pass,11023,320.039,19772.7,246166,1.94685e+06,41190.4,1693.05,50812.7,1.22487e+06,80765.6,37171.6,11991.1,177.38,143273984,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,7eeaded5e52359c43fc5a33d3ff9ce08,e7b4b17a7c58cf7c2738df1a4eeb94a57934e2f981b63e7b90baa54d70752289,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 8 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10423.3,1099.96,pass,pass,pass,pass,435251,169558016,27259961344,6566576128,2c43778499ea2b21c7ffd8b145418201,037246bb1e709e3977a35353348867b9f224ad7bd9eabe2b765ff41658087999
+128,32,1,512,1000,69,4108096,14413.2,1147.75,pass,pass,pass,pass,179853,170790912,20187643904,13638893568,7eeaded5e52359c43fc5a33d3ff9ce08,e7b4b17a7c58cf7c2738df1a4eeb94a57934e2f981b63e7b90baa54d70752289
 ===== ResNet18 gemm48 / measured 9 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.98688e+06,pass,11298,60.056,143637,1.91485e+06,3.37927e+06,182108,2256.07,88667.8,1.95144e+06,95848.8,868898,9918.84,1035.86,179654656,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,1f5c7ba97880f8468e8a07bab7a4e6c8,65ec70c939720ec3a47ca8579387d8ec033161c827a102b2272790fe4e83ad12,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,3.93666e+06,pass,11023,29.38,19563.6,238774,1.91071e+06,41359.2,1749.63,47313.7,1.22195e+06,94267.9,40861.3,13252.2,306.381,141733888,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,3c015a3eedff5d122449f6af1bf37d3d,9fab2211b4041298d688b3f399d6dbba5bb1b86f71951727699de85c9c136b4b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 9 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.98691e+06,pass,11298,73.608,143636,1.91534e+06,3.37896e+06,182038,2083.13,93355.2,1.93382e+06,81687.7,868934,10883.1,70.451,180068352,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,1f5c7ba97880f8468e8a07bab7a4e6c8,65ec70c939720ec3a47ca8579387d8ec033161c827a102b2272790fe4e83ad12,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,3.93667e+06,pass,11023,92.044,19561.4,238771,1.91084e+06,41195.6,1857.52,47783.7,1.22587e+06,81231.8,40909.2,11532,2024.04,142495744,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,3c015a3eedff5d122449f6af1bf37d3d,9fab2211b4041298d688b3f399d6dbba5bb1b86f71951727699de85c9c136b4b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 9 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10865,1097.52,pass,pass,pass,pass,384754,169426944,27259961344,6566576128,1f5c7ba97880f8468e8a07bab7a4e6c8,65ec70c939720ec3a47ca8579387d8ec033161c827a102b2272790fe4e83ad12
+128,32,1,512,1000,69,4108096,14768.5,1153.56,pass,pass,pass,pass,170584,170913792,20187643904,13638893568,3c015a3eedff5d122449f6af1bf37d3d,9fab2211b4041298d688b3f399d6dbba5bb1b86f71951727699de85c9c136b4b
 ===== ResNet18 gemm48 / measured 10 / party 0 =====
-reserved memory: 26843545600 18446744073709551615
-0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,82474868,23141,8.92489e+06,pass,11298,47.523,153099,1.9048e+06,3.35038e+06,188396,2252.74,87695.8,1.91808e+06,93747.8,861635,9339.45,78.819,179142656,27241086976,6585450496,82760446,NA,502094,NA,NA,NA,NA,NA,NA,8468d05e461f3371126b0eff0106153e,5f50eb3da0551269ee62b481e8a9cc44da48fd0f503c2c45d98d0c49b3939975,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,501728,NA,285461,NA,216472,NA,30617648,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+0,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,92105212,22591,3.99559e+06,pass,11023,157.842,20318.7,246288,1.9512e+06,44785.1,1695.44,47947.7,1.22336e+06,95808.5,42358.9,14459.2,293.878,142381056,31929597952,1896939520,64179485,NA,27947717,NA,256,21829,NA,128,128,128,128,yes,NA,5d775dcc49bb65a69c9f92bf266beea1,4b3fe00f12727991cd6ebe7507d9b525fb98e2cbf3fdf7a00b958afa9cc5159e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 10 / party 1 =====
-reserved memory: 26843545600 18446744073709551615
-1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,2260992,2048000,1000,622000,1244000,76994426,23141,8.92486e+06,pass,11298,48.705,153095,1.90512e+06,3.35035e+06,188229,2169.88,92506.7,1.94183e+06,81644.4,861682,8934.34,482.694,178880512,27241086976,6585450496,52031473,NA,25324529,NA,NA,NA,NA,NA,NA,8468d05e461f3371126b0eff0106153e,5f50eb3da0551269ee62b481e8a9cc44da48fd0f503c2c45d98d0c49b3939975,emp-silent,2fca139ff1974c039422af545bd4681e8d55acc1,146277,NA,214816,NA,244126,NA,25109552,NA,1953008,1953008,1731776,1731776,unreviewed-unmeasured,1024
+1,128,32,1,512,1000,8192,2,8,regular,69,7424,768,276,2048000,70656,1554432,706560,211968,1536,210432,211968,1536,210432,132925440,239757312,16083072,4,2048000,1000,622000,1244000,90267132,22591,3.9956e+06,pass,11023,40.555,20319.1,246304,1.9515e+06,44451.2,1802.36,52042.3,1.22637e+06,82702.9,42412.3,14455.6,290.637,141967360,31927500800,1899036672,65170738,NA,25118384,NA,256,21829,NA,128,128,128,128,yes,NA,5d775dcc49bb65a69c9f92bf266beea1,4b3fe00f12727991cd6ebe7507d9b525fb98e2cbf3fdf7a00b958afa9cc5159e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,1024,NA,1104,0
 ===== ResNet18 gemm48 / measured 10 / post-exit checker =====
-reserved memory: 26843545600 18446744073709551615
-128,32,1,512,1000,69,4108096,10850.1,1099.26,pass,pass,pass,pass,389119,169164800,27259961344,6566576128,8468d05e461f3371126b0eff0106153e,5f50eb3da0551269ee62b481e8a9cc44da48fd0f503c2c45d98d0c49b3939975
+128,32,1,512,1000,69,4108096,14970.2,1149.74,pass,pass,pass,pass,173138,171528192,20187643904,13638893568,5d775dcc49bb65a69c9f92bf266beea1,4b3fe00f12727991cd6ebe7507d9b525fb98e2cbf3fdf7a00b958afa9cc5159e

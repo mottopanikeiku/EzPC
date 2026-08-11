@@ -290,20 +290,18 @@ Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   140 |                 std::vector<block> mBuffer;
       |                                   ^
 Built:
--rwxrwxr-x 1 fatih fatih 4672800 Aug  5 10:36 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
--rwxrwxr-x 1 fatih fatih 4606192 Aug  5 10:37 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_party
--rwxrwxr-x 1 fatih fatih 1332952 Aug  5 10:37 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
+-rwx------ 1 fatih fatih 4922576 Aug 11 00:17 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_cuda
+-rwx------ 1 fatih fatih 4854296 Aug 11 00:17 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/bench_ole_ringlpn_party
+-rwx------ 1 fatih fatih 1600232 Aug 11 00:17 /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_spfss_zp_cuda
 [ole-two-party] stage 1: independently sample per-party noise and generate keys for 1 limb(s)
-[two-party-spfss-provenance] party=0 sid=1785926194516589272 noise_source=independent_os_drbg local_noise_sha256=05d5776162b2c4a[two-party-spfss-provenance] party=1 sid=1785926194516589272 noise_source=independent_os_drbg local_noise_sha256=cc164366843bad1d576e7a7b6c6ad235efa3fadec98281e9a67096b70428e670 noise_content_sha256=077ec7d3acf6a71e0802933a577976605a513240d4248481670aa96231cb5c8848ebf5a38857d93b4d9412f9c472d3fd97f6d72d56 noise_content_sha256=711c1c88e4569ada95f7b6fc25427ee1b6301dc41bc5a97f68ec307154d12aaf public_manifest_sha256=09fb142d1cb9140083b89ae2ef746e98b84569dddc37059731f81d2a94d39e59 common_cw_sha256=461a42cdc4d2cbfda3d28c public_manifest_sha256=09fb142d1cb9140083b89ae2ef746e98b84569dddc37059731f81d2a94d39e59 common_cw_sha256=461a42cdc4d2cbf46ecc9f0db80833032d864b936787ec6af6f887c1e231b199
-46ecc9f0db80833032d864b936787ec6af6f887c1e231b199
-[two-party-spfss] party 0: 256 trees in 60 groups at L=11, 969856 protocol bytes, 71 direction switches, 90439 us -> /home/fatih[two-party-spfss] party 1: 256 trees in 60 groups at L=11, 993664 protocol bytes, 71 direction switches, 88631 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_regular_c2_t8_n8192/keys_limb0_p0.spfss (pass)
-/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_regular_c2_t8_n8192/keys_limb0_p1.spfss (pass)
-[two-party-spfss-provenance] party=1 sid=1785926194516590273 noise_source=independent_os_drbg local_noise_sha256=b234d27ac928269a84a3f0c6a749bdfee9f8a048b25cddee2d4e42dc123934d7 noise_content_sha256=0491f1dc95a8aec150733bf033cc147740d437d5abb5fd2a1b3b35865069d654 public_manifest_sha256=07fb387160e925b0315a1ad3a659ebb1742a8db969af41cc22fc8eca41747bc3 common_cw_sha256=c4b83fd814a94d65319c772e7472aa0473f73cefc24e996edc3deb7e5c076313
-[two-party-spfss] party 1: 1 trees in 1 groups at L=14, 74452 protocol bytes, 89 direction switches, 15747 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_regular_c2_t8_n8192/rename_failure_p1.spfss (FAIL)
-[two-party-spfss-provenance] party=0 sid=1785926194516590273 noise_source=independent_os_drbg local_noise_sha256=7247e6711080e5a3cd180a080cf67d3aaa675ffbbd7c5ef226572922c927b4b1 noise_content_sha256=b6b299804a7982163147f3b14ab64d9f7efa0d7c292a758836718419cc2022c3 public_manifest_sha256=07fb387160e925b0315a1ad3a659ebb1742a8db969af41cc22fc8eca41747bc3 common_cw_sha256=c4b83fd814a94d65319c772e7472aa0473f73cefc24e996edc3deb7e5c076313
-[two-party-spfss] party 0: 1 trees in 1 groups at L=14, 65068 protocol bytes, 89 direction switches, 15683 us -> /home/fatih/EzPC/GPU-MPC/ringlpn/results/ole/two_party_keys/q64_regular_c2_t8_n8192/rename_failure_p0.spfss (FAIL)
-[ole-two-party] bilateral rename failure removed both parties' staged/final records
+[two-party-spfss-provenance] party=1 sid=1786407413868811357 noise_source=independent_os_drbg local_noise_sha256=eee427719f82135e68dc5aa5f59d28fa93b2b0f6fbc1afbacc988be68ec9548a noise_content_sha256=a87dcfb12c409b72880e63b282ab62519055ad3335dbad42aac4627f9ea59caf public_manifest_sha256=e8bb551b23b478cb8f058f6ff2fc5e493a772abafde55f5b18bd34b9e6045b53 common_cw_sha256=59067272e6f25a2b261a58bf787017bb48d08f589c4ff6bc80298196c3e74c3e
+[two-party-spfss] party 1: 256 trees in 60 groups at L=11, 1010048 protocol bytes, 69 direction switches, 93085 us -> /tmp/ringlpn-ole-two-party.SfSfjM/keys_limb0_p1.spfss (pass)
+[two-party-spfss-provenance] party=0 sid=1786407413868811357 noise_source=independent_os_drbg local_noise_sha256=5ffff5d637cd691450e351f92cd7c6d97aeef26293967a9ea9102181426e6b9b noise_content_sha256=99ca68a0983502ee901919872bd107b465acde053e2fafd699e5d9964a01d5f2 public_manifest_sha256=e8bb551b23b478cb8f058f6ff2fc5e493a772abafde55f5b18bd34b9e6045b53 common_cw_sha256=59067272e6f25a2b261a58bf787017bb48d08f589c4ff6bc80298196c3e74c3e
+[two-party-spfss] party 0: 256 trees in 60 groups at L=11, 969856 protocol bytes, 69 direction switches, 93051 us -> /tmp/ringlpn-ole-two-party.SfSfjM/keys_limb0_p0.spfss (pass)
+[two-party-spfss] unsupported or unavailable local parameter/input work set
+[two-party-spfss] public-parameter/local-validation mismatch; aborting before OT setup/output
+[two-party-spfss] public-parameter/local-validation mismatch; aborting before OT setup/output
+[ole-two-party] bilateral destination preflight rejected before OT and removed staged records
 [ole-two-party] stage 2: OLE engine consumes independently sampled noise and matching keys
 device,input_mode,n,logn,log_domain,requested_qbits,actual_qbits,noise_mode,noise_source,key_source,spfss_domain,c,t,chunk_size,iters,validation,host_validation,spfss_pair_key_bytes,spfss_keygen_us,spfss_key_load_us,ole_expand_mean_us,ole_expand_std_us,correct
-reserved memory: 26843545600 18446744073709551615
-cuda_ringlpn_ole,figure2_spfss_regular,8192,13,11,64,62,regular,party_records,two_party_files,2048,2,8,8192,1,pass,pass,116544,-1,467,9094,0,1
+cuda_ringlpn_ole_BENCHMARK_ONLY,BENCHMARK_ONLY_mt19937_64_figure2_spfss_regular,8192,13,11,64,62,regular,party_records,two_party_files,2048,2,8,8192,1,pass,pass,116544,-1,493,9133,0,1

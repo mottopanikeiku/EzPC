@@ -270,7 +270,7 @@ static Args parse_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     Args args = parse_args(argc, argv);
-    initGPUMemPool();
+    ;
 
     CaseResult r = run_case(args);
 

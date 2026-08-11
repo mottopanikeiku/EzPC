@@ -1,6 +1,6 @@
 # Ring-LPN publication portfolio — two-track decision
 
-**Date:** 2026-08-04
+**Date:** 2026-08-04; systems evidence updated 2026-08-10
 **Status:** internal/advisor; neither paper is submission-ready
 **Authorship:** Alp remains the sole current paper/checkpoint author. Substantive future theorem development or private-project reuse requires an explicit credit/coauthorship decision before circulation.
 
@@ -10,12 +10,14 @@ Pursue exactly two theses. Do not split the current GPU-DPF work into a third pa
 
 The source-pinned [native-ring technology audit](native_ring_technology_audit_2026_08_04.md) is an internal/advisor **NO-GO** for both tracks: the artifact is centralized, unrevalidated after the 2026 QA-SD attack, scalar-only, and not Orca-integrated. Its future $1\times1$ oracle is strictly toy/correctness-only and does not create a third publication path.
 
-The [structured attack audit](structured_attack_audit_2026_08_04.md) is the
-binding attack-inventory starting point for Paper B. It proves only the
-negacyclic/cyclic orbit and an explicit stabilizer-event bound, not a generic
-square-root decoder speedup or concrete security. Its accepted-estimator,
-regular-ISD, AGB and other rows remain random-code/model estimates until the
-listed structured-code reductions and independent human review close.
+The [structured attack audit](structured_attack_audit_2026_08_04.md) is a
+dated attack-inventory starting point for Paper B. Its exact projection law,
+2024 regular-ISD calculator, and orbit lemma remain pinned mathematical/model
+evidence. The sampler is freshly rebound to current `two_party_spfss.h`
+(`fbdb...`) after a semantic diff showed its sampling functions unchanged, and
+the self-tested hybrid-RSD script/CSV are freshly paired at
+`cbcedaf6...`/`1f671d94...`. No generic estimator, orbit adjustment, or formula
+artifact supplies reviewed concrete Ring-LPN security.
 
 The [closest DMPF baseline audit](closest_dmpf_baseline_audit_2026_08_04.md)
 supersedes, but preserves as history, the 2026-07-29 claim that Reverse Cuckoo
@@ -39,25 +41,26 @@ functionality-compatible publication baseline.
 The separate [`p0` adapter result](reverse_cuckoo_p0_baseline_2026_08_04.json)
 now closes the exact field, caller-factor, 62-bit-context, live-setup,
 collision-accumulation, and full-domain correctness gates for libOTe's explicitly
-labelled **native 16-folded** layout. It records 18,832,990 us setup,
-2,070,844 us online full-domain evaluation, and 20,948,042 us end-to-end
+labelled **native 16-folded** layout. It records 18,523,424 us setup,
+2,116,894 us online full-domain evaluation, and 20,688,314 us end-to-end
 including validation. It does not close the raw 31-diagonal or GPU gate; its
 speedup and security claims are null, so it creates no ratio against the
 project's raw-layout GPU path.
 
 ```mermaid
 graph TD
-  A[Exact implemented sampler definition] --> B[Exact projection and cancellation law]
+  A[Regenerate current sampler and hybrid evidence bindings] --> B[Pinned exact projection and cancellation law]
   B --> C[Structured-code attack and estimator bridge]
   C --> D[Two-prime and multi-instance advantage budget]
   D --> E[Independent human cryptographic review]
   E --> F[Reviewed concrete parameter manifest]
   F --> G[Secure-parameter systems reruns]
 
-  H[GPU-batched keygen plus measured stages and memory] --> I[Phase-C and silent-transport optimization]
-  I --> J[All forward linear layers and state handoff]
-  J --> K[Compatible dealerless baseline]
-  K --> L[Authenticated peer-private two-host evaluation]
+  H[Complete: breadth-first DPF caller and focused path counters] --> I[Algorithmic Phase B, Ring expansion, and conversion work]
+  J[Complete: 21 forward-linear/state records and known-zero full graph] --> I
+  I --> K[Compatible dealerless baseline]
+  K --> P[Dealerless nonlinear setup and repeated private/trained-model evaluation]
+  P --> L[Authenticated distinct-host LAN/WAN evaluation]
   L --> M[Clean-clone reproduction]
   G --> N[Systems submission]
   M --> N
@@ -73,21 +76,35 @@ A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG ou
 ### Current evidence
 
 - Real two-process SCI/IKNP/Gilboa distributed DPF setup with private CSPRNG
-  roots and GPU-batched full-width AES expansion.
+  roots and full-width GPU-AES expansion. The integrated breadth-first FC caller
+  passes all five current q64/q128 cases/controls with positive P0/P1 breadth
+  calls and zero root-to-leaf calls in every row; all 21 shape plans pass.
+  This is correctness/path-counter evidence, not current Conv0/model-scale
+  timing or a breadth-first speedup claim.
 - Party-local GPU Ring-LPN expansion on distinct GPUs.
 - Exact two-party `Z_Q -> Z_(2^bw)` conversion.
 - Persistent consume-once correlation claims, current versioned party records,
-  and ten focused duplicate/restart/reuse/collision/truncation/record controls.
-- Current ResNet18 classifier shape `1x512x1000`, q128/bw32 feasibility run:
-  10/10 measured trials after one warmup, 25.715-s median preprocessing,
-  575,846,872 application bytes total, 10.642-ms matched stock dealer median,
-  and 1.106-ms unchanged two-share online checker median. It records 10,338
-  dependency stages, peak host/GPU memory, and the exact `(c-1)n` public tail.
-- Representative generalized Conv2D q64/q128 smoke cases and focused
-  EMP-Silent full-loopback/FC/Conv correctness gates pass.
+  and eleven focused duplicate/restart/reuse/collision/truncation/record controls.
+- Retained older-binary ResNet18 classifier shape `1x512x1000`, q128/bw32
+  feasibility evidence: 10/10 measured trials after one warmup, 4.064-s median
+  preprocessing, 182,372,344 application bytes, 14.863-ms shape/contract-
+  matched stock dealer median, and 1.152-ms unchanged online median. The
+  producer begins `ca4b175a...`, not current FC binary `29c420c3...`, and
+  physical-GPU/occupancy state was not controlled; this is historical,
+  descriptive evidence, not a current or same-hardware A/B result. It records
+  11,023 dependency layers and exact slot accounting. SCI/IKNP supplies the
+  headline row; EMP-Silent remains historical opt-in and unreviewed.
+- Fresh source-bound known-zero ResNet18 systems composition: all 21 isolated
+  linear records feed the exact 21-linear/21-truncation/19-stock-key graph
+  (one MaxPool, 17 ReLUs, and classifier sign extension), including three
+  projection and five identity residuals, integer global pool, and terminal
+  reconstruction. The stock nonlinear keys come from an explicit trusted test
+  adapter, so this is graph/ABI evidence—not dealerless nonlinear preprocessing,
+  private inference, or a new security claim.
 
-These are current negative feasibility measurements, not a performance win,
-full-model result, authenticated deployment, or security-level result.
+These are current feasibility and composition measurements, not a performance
+win, private/trained full-model result, authenticated deployment, or
+security-level result.
 q64/q128 denote one/two approximately 62-bit limbs, not security levels.
 
 ### Submission gates
@@ -104,9 +121,11 @@ q64/q128 denote one/two approximately 62-bit limbs, not security levels.
 5. Measure and independently review the existing EMP-Silent route; either
    establish its exact security/setup/bandwidth boundary or retain SCI/IKNP as
    the explicit negative result.
-6. Execute `full_linear_layer_systems_plan_2026_08_06.md`: cover all 20
-   ResNet18 convolutions and its classifier, including exact masks, branches,
-   layouts, truncation/state handoff, and unchanged online consumers.
+6. **Closed 2026-08-10:** a fresh, source-manifest-bound run covers all 20
+   ResNet18 convolutions and its classifier, exact masks and layouts, all
+   truncation/state handoffs and residual branches, the exact stock nonlinear
+   stream, global pool, sign extension, terminal reconstruction, and unchanged
+   linear consumers. Its nonlinear adapter remains trusted/test-only.
 7. Recheck dependency-stage counts as actual authenticated-network rounds;
    retain stages, base setup, bytes by stream, peak host RSS, peak GPU memory,
    aborts, and dispersion.
@@ -158,7 +177,7 @@ The corrected full version's Section 8.2 uses `c*d*(1-(1-1/d)^t)`. Section 9.1 p
 
 ### Candidate diagnostics, not pins
 
-Exact occupancy and accepted-estimator experiments identify candidate families `(n,c,t)=(2^20,4,32)`, `(2^20,4,64)`, and `(2^20,8,16)`. At the same 16,384 raw DPF-tree count, `(8,16)` has materially stronger finite-field model diagnostics than `(4,32)` but requires four times as many polynomial-pair products and `7/3` as many jointly sampled public polynomial coefficients: `a0` is the unsent identity and only `(c-1)n` coefficients are exchanged. Existing 32-GiB GPU component runs at `n=2^20` memory-failed before measurement because the current allocator reserves 25 GiB and then performs incompatible explicit work allocations. No candidate is selected until the proof and feasibility gates close.
+Exact occupancy and accepted-estimator experiments identify candidate families `(n,c,t)=(2^20,4,32)`, `(2^20,4,64)`, and `(2^20,8,16)`. At the same 16,384 raw DPF-tree count, `(8,16)` has materially stronger finite-field model diagnostics than `(4,32)` but requires four times as many polynomial-pair products and `7/3` as many public tail coefficients. The live artifact no longer transmits those coefficients: it sends four joint-seed words per party and layer and derives independently scoped tails with SHAKE256 rejection sampling in an explicit random-oracle model. This changes communication, not the number of coefficients consumed by Ring-LPN arithmetic. Existing 32-GiB runs support `n=2^18`; `n=2^20` remains unmeasured under the revised allocator/batched evaluator. No candidate is selected until the proof, parameter, and feasibility gates close.
 
 Those generic-estimator candidates were produced before a complete modern
 attack comparison. A pinned CRYPTO-2024 regular-ISD transcription now emits

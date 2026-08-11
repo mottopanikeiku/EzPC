@@ -1,3 +1,9 @@
+> **HISTORICAL/SUPERSEDED M2 COMPONENT CHECKPOINT (2026-07-29; measured
+> 2026-08-04).** Preserve the paired-record q64/q128 uniform/regular evidence
+> below. Its one-process consumer, unwired conversion, and old proof-status
+> statements are artifact-local history, not the current FC/Conv boundary.
+> Use the current security contract and `CLAUDE.md` for live disposition.
+
 # The real Ring-LPN OLE engine running on two-party dealerless keys (2026-07-29)
 
 **One sentence:** the Figure 2 Ring-LPN OLE engine's centralized-keygen oracle
@@ -100,27 +106,27 @@ Two readings worth keeping:
    multiplying with it.
 
 The persistent-AES host PRG optimization remains visible against its dated
-6.15 s predecessor: the current q64-uniform keygen is 0.9296--0.9311 s
-(about 6.6x faster) with the device-parity gate still exact.
+6.15 s predecessor: the retained q64-uniform component run is
+0.9296--0.9311 s (about 6.6x faster), with exact device parity. This is dated
+component evidence, not current-source or end-to-end performance.
 
-## 4. What is still an oracle
+## 4. Historical oracle boundary and current disposition
 
-- **Noise sampling is party-local in the setup gate.** Each independent keygen
-  process samples and persists only its own record. The single-process engine
-  later reads both records solely to run the current composition and validation
-  artifact; a live two-process expansion must remove that paired read.
-- **Conversion is not integrated.** Standalone `test_secure_convert` uses real
-  OT-backed correlations in two processes. Its tested transcript never
-  reconstructs or explicitly opens the wrap bit; this is syntactic/correctness
-  evidence, not a `P-CONV` privacy or composition proof. The flagship FC
-  transcript still calls `exactZmToRingShares()`.
-- **Expansion measurement** is one process. The keys are dealerless; the
-  benchmark that consumes them is still a single-process expansion benchmark.
-- **Silent OT** is not used; IKNP is OT extension, so setup bytes are an upper
-  bound for this protocol shape.
-- **No security claim.** `D-SEED`, `P-RNG`, `P-DIST`, `P-KEY`, `P-PCG` and
-  `P-CONV` in `dealerless_orca_fc_security_contract_2026_07_29.md` remain open,
-  and no parameter set is pinned.
+At this component checkpoint, party-local keygen records were later consumed
+together by a single-process validator, expansion timing was single-process,
+and the FC transcript still used the clear conversion oracle. Those statements
+are preserved only to define what the 2026-07-29/08-04 measurements cover.
+
+The current forward-FC/Conv path instead performs party-local expansion and
+exact OT-backed conversion across two processes/GPUs; `P-DIST` is closed
+algebraically and `P-CONV` is closed in the daBit/edaBit/triple hybrid.
+`P-RNG` has implementation evidence, `P-KEY` remains conditional, and `P-PCG`
+plus a concrete Ring-LPN parameter/reduction remain blocking. GPU DPF key
+generation and dependency instrumentation are implemented; the separate
+breadth-first SPFSS batch helper has no live caller. SCI/IKNP supplies
+canonical/headline evidence. EMP-Silent remains historical opt-in and
+independently unreviewed. Neither the dated nor current feasibility path
+establishes concrete security.
 
 ## 5. Gate
 
