@@ -42,9 +42,11 @@
 - The current measured runner composes party-local Ring-LPN expansion, exact
   conversion, noncircular Ring-OLE-output Phase-C bootstrap, bilateral
   publication, and unchanged Orca forward-FC/Conv consumers across two OS
-  processes and distinct GPUs on unauthenticated same-host loopback. Five
-  q64/q128 FC rows and eleven freshness/record/capacity controls pass.
-- A separate fail-closed authenticated coordinator is implemented for
+  processes and distinct GPUs on same-host loopback. Each socket first performs
+  mutual HMAC-SHA256 endpoint/context establishment bound to roles, direction,
+  invocation, claim digest, and fresh nonces; later protocol bytes have no
+  per-message integrity. Five q64/q128 FC rows and sixteen focused controls
+  pass. A separate fail-closed two-host coordinator is implemented for
   publication mode and admits a record set only after two sealed records and a
   durable digest-bound `COMMITTED.manifest`. It has not been executed on two
   distinct hosts and contributes no current measured row.
@@ -57,14 +59,14 @@
   cancellation law is current-sampler-bound, and the self-tested hybrid-RSD
   formula artifact is freshly regenerated. They remain model diagnostics, not
   a concrete-security claim.
-- One warmup plus ten retained older-binary ResNet18 classifier-layer trials
-  pass. They record 4.064 s median preprocessing, 182,372,344 application
-  bytes, 14.863 ms shape/contract-matched stock-dealer keygen, 1.152 ms
-  unchanged online execution, 11,023 dependency layers, and exact slot
-  accounting. The comparison was not controlled on the same physical
-  GPU/occupancy state. Their environment binds binary `ca4b175a...`; the
-  current FC binary begins `29c420c3...`. These are not current-binary timings
-  and must be rerun before a current performance claim.
+- The regenerated 2026-08-10 SCI/IKNP ResNet18 classifier artifact (binary
+  `02eaaac9...`) passes 10/10 after one warmup. Mean setup-included
+  preprocessing is 4.011203588 s and median is 4.0193924415 s; stock dealer
+  median is 14.73535 ms, unchanged online median is 1.14969 ms, the descriptive
+  per-trial ratio median is 268.6769431352700, Phase B median is 1.955515 s, and
+  Phase C median is 0.041723 s. It is current classifier evidence, but not true
+  end-to-end time, a same-physical-GPU/occupancy-controlled A/B result, current
+  Conv0 timing, or a breadth-first speedup.
 - A fresh source-bound q128/bw32 run now publishes and independently verifies
   all 21 ResNet18 linear record pairs and companion mask states. A compiled
   contract generated from the source manifest composes them through the exact
@@ -74,16 +76,18 @@
   five identity residual merges, integer GlobalAvgPool2D, and terminal
   reconstruction.
   Source/topology mismatch, publication failure, nonlinear-key corruption, and
-  output corruption reject. The nonlinear stream still comes from a TEST-ONLY
-  trusted adapter that reads both parties' mask shares. This closes the
-  known-zero graph/state-composition seam, not dealerless nonlinear
-  preprocessing, private/trained inference, accuracy, deployment, or a
-  full-model performance/security claim.
-- The sanitized 17-file full-graph checkpoint and final manifest set are
-  retained under `results/graph/resnet18_full_graph_checkpoint_2026_08_10/`,
-  bound by manifest digest
-  `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`;
-  private records and ledgers are not retained.
+  output corruption reject. The TEST-ONLY trusted adapter reads both parties'
+  mask states, centrally samples/distributes both truncation successor-mask
+  shares, computes remask/terminal material, and generates the nonlinear stream.
+  This closes the known-zero graph/state-composition seam, not dealerless
+  nonlinear preprocessing, private/trained inference, accuracy, deployment, or
+  a full-model performance/security claim.
+- The original-byte, internal-only full-graph bundle has 17 indexed payload
+  files plus `INDEX.json` under
+  `results/graph/resnet18_full_graph_checkpoint_2026_08_10/`, bound by manifest
+  digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`.
+  Private records and ledgers are not retained; manifest-bound host/build-root
+  provenance blocks external circulation pending a fresh normalized run.
 - S2 remains the hard theorem blocker: no reviewed module-Ring-LPN parameter
   pin exists. Beyond the closed known-zero graph/state seam, the remaining
   systems gates are dealerless nonlinear setup, repeated private-input/trained-
@@ -157,7 +161,7 @@ first point at which their protocol-backed paths compose.
 ### S0 — Corrected host checkpoint and truthful proposal — **complete**
 
 **Commit:** `28f8451`  
-**Evidence at the 2026-07-21 checkpoint:** corrected Phase C, old-sign leakage regression, 2,432/2,432 host key pairs, proposal v2.2, canonical host gate, required GPU gate, and then-current warning-free 15-page PDF review. The current deterministic 28-page v2.14 PDF has SHA-256 `533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c`; two pinned-image two-pass builds were byte-identical, the log is warning/bad-box free, all fonts are embedded Type 1, and changed pages 18 and 22--24 were visually inspected after the final evidence refresh.
+**Evidence at the 2026-07-21 checkpoint:** corrected Phase C, old-sign leakage regression, 2,432/2,432 host key pairs, proposal v2.2, canonical host gate, required GPU gate, and the then-current warning-free 15-page PDF review. Later PDF checkpoints are superseded by the live S10 identity below.
 
 **Claim unlocked:** protocol-logic and host-format functional compatibility using ideal OT/triple/OLE and a non-cryptographic correctness PRG. Nothing stronger.
 
@@ -642,41 +646,45 @@ concrete parameter/reduction gate and authenticated deployment remain open.
 
 ### S9 — M6: publication-quality evaluation
 
-**Status 2026-08-10:** partially exercised, not complete. The retained
-older-binary `1x512x1000` ResNet18 classifier artifact has one warmup and ten
-passing trials, source/environment/binary digests, shape/contract-matched
-stock-dealer and unchanged-online timings, per-stage costs, dependency counts,
-and memory observations. The runs were not controlled on the same physical
-GPU/occupancy state. Its binary begins `ca4b175a`, not the current FC binary
-`29c420c3`; 4.064 s median preprocessing, the descriptive 272x median of
-shape-matched per-trial ratios, 2.030 s Phase B, and 0.041 s Phase C are
-historical measurements, not a same-hardware A/B result.
+**Status 2026-08-10:** partially exercised, not complete. The regenerated
+2026-08-10 SCI/IKNP `1x512x1000` ResNet18 classifier artifact (binary
+`02eaaac9...`) has one warmup and ten passing trials. Mean setup-included
+preprocessing is 4.011203588 s, median is 4.0193924415 s, stock-dealer median is
+14.73535 ms, unchanged-online median is 1.14969 ms, the descriptive per-trial
+ratio median is 268.6769431352700, Phase B median is 1.955515 s, and Phase C
+median is 0.041723 s. The runs were not controlled on the same physical
+GPU/occupancy state, and setup-included timing excludes channel construction,
+socket establishment, and endpoint/context authentication. This is current
+classifier evidence, but not true end-to-end time, a matched A/B result, current
+Conv0 timing, or a breadth-first speedup.
 
-The retained Conv0 breadth-comparison artifact likewise binds older binary
-`1db001...`, not current Conv binary `e4981459...`. Its 358.085-s and
-384.816-s one-trial values do not establish a current-source speedup. The
-breadth-first caller is now integrated: the current focused FC suite passes all
-five q64/q128 cases/controls, every row records positive P0/P1 breadth-call
-counts and zero root-to-leaf calls, and all 21 shape plans pass. This is
-correctness/path-counter evidence only; no current Conv0/model-scale timing or
-breadth-first speedup is claimed. The focused approval digest begins
-`843f837a...`.
+The retained Conv0 breadth-comparison artifact binds older binary `1db001...`,
+not current Conv binary `975ac726...`. Its 358.085-s and 384.816-s one-trial
+values do not establish a current-source speedup. The breadth-first caller is
+integrated: the current focused FC suite passes all five q64/q128 cases, every
+row records positive P0/P1 breadth-call counts and zero root-to-leaf calls, and
+all 21 shape plans pass. This is correctness/path-counter evidence only. The
+current FC/Conv binaries begin `02eaaac9...`/`975ac726...`; the focused approval
+digest begins `ce3cc3a5...`.
 
 A source-bound known-zero run verifies all 21 linear record pairs and executes
 the complete exact ResNet18 graph/state contract, including every truncation,
 stock nonlinear consumer, remask, residual, global pool, sign extension, and
-terminal reconstruction. Its nonlinear key source is an explicitly TEST-ONLY
-trusted adapter that sees both source mask states. This closes the known-zero
-graph/state-composition seam, not dealerless nonlinear preprocessing,
+terminal reconstruction. Its explicitly TEST-ONLY trusted adapter reads both
+source mask states, supplies both truncation successor-mask shares and
+remask/terminal material, and generates nonlinear keys. This closes the
+known-zero graph/state-composition seam, not dealerless nonlinear preprocessing,
 private/trained inference, accuracy, a timing distribution, or a full-model
-performance/security result. Its fresh 17-file publication checkpoint is
-retained at
+performance/security result. Its original-byte, internal-only bundle has 17
+indexed payload files plus `INDEX.json` under
 `results/graph/resnet18_full_graph_checkpoint_2026_08_10/`, bound by manifest
-digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`;
-only metrics, logs, digests, approval, and manifests remain. Dealerless
+digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`.
+Only metrics, logs, digests, approvals, provenance, and manifests remain; the
+manifest-bound provenance retains host/build-root strings and requires
+replacement by a fresh normalized run before external circulation. Dealerless
 nonlinear setup, repeated private-input/trained-model measurements,
-authenticated two-host deployment, and independent review remain open systems
-gates.
+authenticated two-host deployment, and independent review remain
+open systems gates.
 
 A pinned stock Reverse-Cuckoo run and exact-`p0` native-folded adapter run are
 reproducible closest baselines, but neither is functionality/layout/GPU matched,
@@ -733,21 +741,31 @@ the binding continuation.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-08-10:** the live v2.14 source has a deterministic 28-page PDF at
-SHA-256
-`533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c`.
-Two pinned-image two-pass builds are byte-identical; warning/bad-box and
-embedded-Type-1 font gates pass, and changed pages 18 and 22--24 were visually
-inspected. The v4 environment manifest binds the digest-pinned base image,
-exact built gate-image ID, package/toolchain set, deterministic build epoch,
-current source/PDF hashes, graph checkpoint/provenance, and publication gate.
+**Status 2026-08-14:** the live v2.15 internal/advisor source has a deterministic
+29-page PDF at SHA-256
+`a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39`.
+Repeated pinned-image two-pass builds are byte-identical; the final log has no
+warnings, undefined references, or bad boxes, every font is embedded Type 1,
+and all 29 pages were visually inspected. The v4 environment manifest binds the
+digest-pinned base image, internal gate-image ID, package/toolchain set,
+deterministic build epoch, current source/PDF hashes, graph checkpoint, and
+publication gate. The retained 2026-08-10 graph checkpoint preserves
+manifest-bound host-identifying build provenance and a historical non-distinct
+linear party/checker GPU assignment. It is internal-only; a fresh canonical
+three-GPU normalized-provenance run must replace it before circulation.
+The final 2026-08-10 same-worktree canonical source run regenerated all 21 linear records
+and the complete graph, ending literal `ALL GATES PASS` with ephemeral
+full-graph digest
+`2588eac6de148910835e6f8e09b11b3fc409fb949acbcfb42197bc485a88ad92`.
+It is not the still-required same-HEAD clean-clone or two-host publication run.
 The final same-HEAD clean-clone gate still must be executed after the snapshot
 commit. The owner-approved final source commit, annotated release tag,
-externally authenticated source-authorization statement, and immutable final
-runtime image/binary identities do not exist. Therefore the mandatory two-host
-publication mode rejects before execution. No external second-person two-host
-run, venue conversion, or submission-candidate review has been executed. S10
-remains open.
+operator-supplied external source-consistency binding, and immutable final
+runtime image/binary identities do not exist. The current authorization object
+is self-hashed but has no verified signer identity. Therefore mandatory
+two-host publication mode rejects before execution. No external second-person
+two-host run, venue conversion, or submission-candidate review has been
+executed. S10 remains open.
 
 **Purpose:** produce the exact paper/artifact revision that can be submitted after advisor approval.
 
@@ -775,10 +793,11 @@ remains open.
 
 **Paper work:**
 
-1. With the advisor, lock the target venue, title, disclosure requirements, and
-   page/supplement limits. Alp remains the sole author; do not add commit
-   co-author trailers or paper co-authors.
-2. Convert the v2.14 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+1. With the advisor, lock the target venue, title, final authorship,
+   acknowledgements, contributor credit, private-project reuse permission,
+   disclosure requirements, and page/supplement limits. Do not invent or add
+   commit co-author trailers or paper co-authors.
+2. Convert the v2.15 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.
@@ -852,8 +871,8 @@ Publication readiness is reached only when every box is supported by a committed
 - [ ] S8 independent human proof and implementation review has no blocking
   finding.
 - [x] The source-bound known-zero full graph/state-composition seam is closed
-  with a TEST-ONLY trusted nonlinear adapter, and its sanitized 17-file
-  checkpoint/final manifest set is retained.
+  with a TEST-ONLY trusted nonlinear adapter, and its original-byte,
+  internal-only 17-payload-file checkpoint plus final manifest set is retained.
 - [ ] S9 dealerless nonlinear setup and repeated private-input/trained-model
   evaluation are statistically reported with evidence levels separated.
 - [ ] Authenticated distinct-host execution and independent human review pass.

@@ -1,0 +1,3 @@
+party,graph_control_us,conv0_us,secure_truncate_us,maxpool_us,relu_us,conv3_us,total_protocol_bytes_sent,party_channel_bytes_sent,stock_nonlinear_bytes_sent,stock_nonlinear_bytes_received,party_channel_direction_switches,dabits,edabits,logical_opened_bits,triples,maxpool_key_bytes,relu_key_bytes,stock_nonlinear_key_bytes,status
+0,4497533,191653,2362880,76356,9560,4057,600999564,595480203,5519361,5519361,692,1605632,8028160,57802752,15253504,503968064,68289576,572257640,pass
+1,4495948,191578,2362976,76491,9524,4076,446858892,441339531,5519361,5519361,692,1605632,8028160,57802752,15253504,503968064,68289576,572257640,pass

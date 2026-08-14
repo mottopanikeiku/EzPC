@@ -1,5 +1,5 @@
-% Dealerless Orca Ring-LPN proposal, v2.14 (2026-08-10).
-% Version 2.14 (2026-08-10): retained complete full-graph checkpoint and hardened clean-clone reproduction.
+% Dealerless Orca Ring-LPN proposal, v2.15 (2026-08-14): internal/advisor checkpoint
+% Version 2.15 (2026-08-14): retained complete full-graph evidence and hardened clean-clone gate
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
 % All "Figure 2" references to BCG+20 renamed to "BCG+20 generator";
@@ -36,74 +36,72 @@
 \newcommand{\Q}{Q}   % composite CRT modulus Q = p_0 p_1 (renamed from M to avoid clashing with the layer dimension M)
 \newcommand{\dpfd}{d_{\mathrm{DPF}}} % DPF tree depth; distinct from CRT limbs L and conversion bit length \ell
 
-\title{Dealerless Forward-FC Preprocessing for Orca:\\
-GPU Ring-LPN Design, Proof Boundary, and Evaluation (v2.14)}
-\author{Alp}
-\date{2026-08-10 \quad (v2.14; retained full-graph checkpoint)}
+\title{Dealerless GPU Preprocessing for Orca Linear Layers\\
+\large Internal/Advisor Technical Checkpoint}
+\author{Alp Caglar}
+\date{August 14, 2026}
 
 \begin{document}
 \maketitle
 
+\begin{center}
+\fbox{\begin{minipage}{0.92\linewidth}\small
+\textbf{Circulation boundary.} Internal/advisor checkpoint only; not a
+submission candidate. Final authorship, contributor credit, permission to
+reuse any private-project overlap, and disclosure language require an explicit
+professor/owner ruling before external circulation.
+\end{minipage}}
+\end{center}
+
 \begin{abstract}
-Orca's GPU secure-inference/training system uses trusted-dealer preprocessing
-for its linear layers. The corrected source removes that dealer from one
-complete forward fully-connected (FC) preprocessing path: two independent
-processes sample party-local masks and sparse Ring-LPN noise, fix the unsent
-public identity $a_0=1$, exchange four uniform 64-bit seed-share words each,
-XOR them into one jointly sampled public seed, and use domain-separated
-SHAKE256 rejection sampling to derive every exact-uniform Ring-OLE tail in the
-explicit random-oracle model. They generate standard distributed point-function
-keys with real OT, use external Gilboa OLE only for the first Phase-C epoch of
-each CRT limb, reserve earlier Ring-LPN output to bootstrap every later epoch,
-expand Figure-2 Ring-LPN OLEs on separate GPUs, convert exact CRT shares to
-$\mathbb Z_{2^{32}}$, and emit byte-compatible Orca keys.
-Neither live process reads peer-private state; an omniscient checker runs only
-after both exit and validates the keys through Orca's unchanged
-\texttt{gpuMatmulBeaver}.
+We implement a two-process GPU preprocessing path that replaces Orca's trusted
+dealer for forward linear layers at unpinned Ring-LPN feasibility parameters.
+Party-local sparse noise feeds distributed DPF generation, Ring-LPN OLE,
+noncircular Ring-OLE-output bootstrap, exact $\Z_Q\!\to\!\Z_{2^\bw}$
+conversion, stock-format key serialization, and unchanged Orca FC/Conv2D
+consumers. Five focused q64/q128 cases and sixteen rejection controls pass.
+The current ResNet18 classifier row records a 4.0193924415\,s median
+setup-included preprocessing time against a 14.73535\,ms shape/contract-matched
+stock-dealer median; uncontrolled physical-GPU occupancy makes the descriptive
+per-trial ratio median, $268.6769431352700\times$, a negative comparison rather
+than a speedup claim.
 
-The proof contribution is explicit and scoped. A level-by-level coupling shows
-that distributed key generation emits exactly the standard DPF correction
-words conditioned on the two roots; role-specific simulators cover correlated
-batches, the three-product payload step, and the noncircular reserved-slot
-bootstrap without revealing the control sign. A separate simulator proves the
-edaBit/daBit/Boolean-triple hybrid. Under standard DPF/PRG and OT/OLE security,
-authenticated channels, SHAKE256 modeled as the scoped public-vector random
-oracle, and decisional Ring-LPN for the exact sparse distribution, these pieces
-give a conditional static-semi-honest theorem for forward FC.
-
-A current 2026-08-10 artifact at the exact ResNet18 classifier-layer shape
-$1{\times}512{\times}1000$ records ten passing local-loopback SCI/IKNP trials.
-Median post-channel setup-included preprocessing is 4.0193924415\,s and sends
-182{,}372{,}344 application bytes, versus 14.73535\,ms for shape-matched stock
-trusted-dealer key generation. This timing adds each party's preflight and
-selected-backend OT setup to the legacy total, but excludes
-\texttt{PartyChannel} construction, socket establishment, and channel
-authentication; it is not true end-to-end time. Physical-GPU occupancy was
-uncontrolled. Final payload size is 4{,}108{,}096 bytes per party and the
-unchanged two-share online checker takes 1.14969\,ms. The current artifact
-binary SHA-256 begins \texttt{02eaaac9}.
-They remain internal engineering diagnostics rather than publication evidence.
-This is a forward-FC preprocessing/checker measurement, not full-model inference or truncation; the
-negative comparison establishes feasibility and the next
-optimization target, not a speedup. The exercised $(n,c,t)=(8192,2,8)$ setting
-is a correctness point: the primary-source audit found no reviewed
-concrete-security parameter pin. The paper therefore makes no 128-bit-security,
-WAN, malicious-security, training-layer, or full-dealerless-Orca claim.
-
-\textbf{New full-graph systems checkpoint (2026-08-10).} A source-bound
-q128/bw32 known-zero ResNet18 control now composes all 21 independently
-generated convolution/FC records in the exact stock forward order with all 21
-secure stochastic truncations, all 19 stock key consumers (one MaxPool, 17
-ReLUs, and classifier sign extension), three projection and five identity
-residual merges, integer GlobalAvgPool2D, and terminal reconstruction.
-Every linear operation uses the unchanged Orca consumer. A test-only trusted
-compatibility adapter reads both parties' source-bound linear mask states and
-emits the exact stock nonlinear key stream; each live party reads only its own
-private record.
-Thus this closes the full graph/state-composition seam, not dealerless
-nonlinear preprocessing, private or trained inference, accuracy, full-model
-performance, deployment, or a new security claim.
+A source-bound known-zero control separately composes all 21 fresh linear
+records through the exact 62-item ResNet18 stream. Its trusted test-only
+adapter reads both parties' mask states, supplies both truncation
+successor-mask shares and remask/terminal material, and generates the nonlinear
+keys. This proves graph/state compatibility only---not dealerless nonlinear
+preprocessing, private/trained inference, or full-model performance. Mutual
+HMAC-SHA256 authenticates endpoint roles and invocation context before local
+preflight, but later protocol bytes have no per-message integrity. The
+exercised source tuple $(n,c,t)=(8192,2,8)$ and full-graph execution override
+$(262144,2,8)$ are correctness points, not concrete-security pins. Authenticated
+distinct-host execution, a compatible dealerless baseline, qualified
+independent review, clean-clone evidence, and final release identities remain
+open. Accordingly, this document is an internal technical checkpoint, not a
+publication-ready security or systems result.
 \end{abstract}
+
+\paragraph{Artifact and claim discipline.}
+All numerical claims are regenerated from the retained manifests/CSVs named in
+\S\ref{sec:baseline}; source, binary, schema, and evidence digests are checked by
+the release gate. q64/q128 denote one/two approximately 62-bit CRT limbs, not
+security levels. ``Authenticated'' for the current same-host measurements means
+only the preflight endpoint/context handshake; the conditional theorem still
+assumes authenticated channels.
+
+\section{Executive status: what is implemented, what is not}
+
+\paragraph{Thesis.}
+This work has two deliberately separate results:
+\emph{(i)} an executable forward-linear preprocessing pipeline without a
+trusted dealer in the stated random-oracle model, validated by unchanged Orca
+consumers; and \emph{(ii)} a known-zero full-graph compatibility control whose
+nonlinear/truncation state is explicitly trusted. The system result is the
+composition, GPU/system design, fail-closed state machinery, and evidence
+boundary; Ring-LPN, DPF, OT/OLE, conversion, Beaver multiplication, and Orca
+remain prior components. No concrete Ring-LPN parameter or compatible
+dealerless-PCG performance comparison is established.
 
 \section{Problem overview: Orca's preprocessing and its trusted dealer}
 \label{sec:problem}
@@ -198,12 +196,12 @@ executes the stock nonlinear consumers.
   protocol measurements.
 \item[G2 --- Exact share conversion: closed.]
   Batched edaBits, daBits, and Boolean triples from the selected OT backend
-  implement
-  exact $\Z_Q\to\Z_{2^\bw}$ conversion. The canonical and classifier suites use
-  SCI/IKNP; EMP-Silent remains an opt-in, independently unreviewed source path.
-  The wrap bit is never opened; the simulator in
-  \S\ref{sec:design-convert} proves privacy at
-  the correlation boundary. The current TCP transport is unauthenticated.
+  implement exact $\Z_Q\to\Z_{2^\bw}$ conversion. The canonical and classifier
+  suites use SCI/IKNP; EMP-Silent remains an opt-in, independently unreviewed
+  source path. The wrap bit is never opened; the simulator in
+  \S\ref{sec:design-convert} proves privacy at the correlation boundary. The
+  measured runner first performs mutual HMAC-SHA256 endpoint/context
+  establishment; later protocol bytes have no per-message integrity.
 \item[G3 --- Randomness/RO separation: closed.]
   Private roots, masks, and noise come from each process's OpenSSL private
   DRBG. For every Ring-OLE correlation, $a_0=1$ is the unsent public identity
@@ -225,40 +223,39 @@ executes the stock nonlinear consumers.
 \end{description}
 
 \paragraph{Contributions.}
-(1)~A live, trusted-dealer-free two-process forward-FC preprocessing artifact
-in the stated random-oracle model,
-whose party-local outputs are consumed by unchanged Orca code;
+(1)~A live, trusted-dealer-free two-process forward-FC/Conv2D preprocessing
+path in the stated random-oracle model, whose party-local outputs are consumed
+by unchanged Orca code;
 (2)~a source-specific exact algebraic coupling of distributed DPF correction
 words to standard generation, complete role-specific batch simulators, and an
-executable local compatibility repair that bootstraps every post-base Phase-C
-product from Ring-OLE output;
-(3)~a tree-block GPU reduction that removes the measured Phase-C atomic
-bottleneck;
+executable compatibility repair that bootstraps every post-base Phase-C product
+from Ring-OLE output;
+(3)~a tree-block GPU Phase-C implementation whose correctness and component
+timings are retained without claiming an end-to-end speedup;
 (4)~a hybrid-model privacy proof and live realization of exact
 $\Z_Q\to\Z_{2^\bw}$ conversion;
 (5)~a source-to-transcript map and conditional forward-FC theorem with explicit
 leakage, assumptions, and nonclaims;
-(6)~a reproducible exact-ResNet18-classifier evaluation with ten trials and a
+(6)~an exact-ResNet18-classifier feasibility evaluation with ten trials and a
 shape/contract-matched stock trusted-dealer comparator whose physical-GPU
 occupancy was not controlled;
 (7)~a fail-closed source-bound known-zero full-ResNet18 systems composition
 using all 21 linear records and the exact 62-item stock stream; and
-(8)~a digest-pinned clean-clone/container reproducer that rebuilds the paper
-and canonical gates while rejecting source mutation and surviving private
-scratch.
+(8)~a manifest-bound clean-clone/container gate that rebuilds the paper and
+canonical checks while rejecting source mutation and private-artifact
+survivors. A final same-HEAD clean-clone execution remains a release gate.
+
 The corrected three-product Phase C is a local compatibility bug fix, not an
 independent novelty contribution. The canonical audit records chronology and
 conceptual overlap with a private project's earlier correction of a leaky DPF
-output layer; the professor/contributor credit, permission, disclosure, and
-private-project-overlap ruling remains explicitly open and must be settled
+output layer; professor/contributor credit, permission, disclosure, and
+private-project-overlap rulings remain explicitly open and must be settled
 before external circulation. The point-DPF and Ring-LPN generator primitives
-are prior work, not claimed as novel. The systems result is currently a
-feasibility result: the current performance artifact's descriptive
-$268.6769431352700\times$ median of setup-included shape-matched per-trial
-preprocessing/dealer ratios (without controlled physical-GPU occupancy),
-unauthenticated local transport, and unpinned Ring-LPN parameters are
-publication risks, not competitive-system evidence.
-
+are prior work, not claimed as novel. This is feasibility evidence: the
+descriptive $268.6769431352700\times$ preprocessing/dealer ratio median,
+without controlled physical-GPU occupancy, unprotected post-handshake local
+transport, and unpinned Ring-LPN parameters are publication risks rather than
+competitive-system evidence.
 \section{Motivation: why dealerless, and why on GPUs}
 \label{sec:motivation}
 
@@ -367,8 +364,9 @@ byte-compatibly so Orca's GPU online path runs unmodified.
 \toprule
 $M,K,N$ & linear-layer dimensions ($M{\times}K$ by $K{\times}N$ matmul)\\
 $\bw$ & Orca's ring width; shares live in $\modtwo$ (bw $\le 32$ here)\\
-$n$ & ring dimension in $\Ring_p=\Z_p[X]/(X^n+1)$; smoke artifacts use
-$8192$, preliminary feasibility uses $2^{14}$; not pinned\\
+$n$ & ring dimension in $\Ring_p=\Z_p[X]/(X^n+1)$; the source manifest uses
+$8192$, while the retained full-graph control overrides it to $262144$;
+neither is security-pinned\\
 $p_0,p_1$ & current artifact primes
 $2^{62}-6\cdot2^{24}+1,\ 2^{62}-7\cdot2^{24}+1$; not pinned\\
 $L,\Q$ & CRT limbs; $\Q=p_0p_1$ ($L{=}1$: ``q64'', $\Q=p_0$;
@@ -442,11 +440,12 @@ principles govern the artifact:
 \node[tag, right=2mm of conv.east] {interactive};
 \node[tag, right=2mm of wr.east] {local};
 \end{tikzpicture}
-\caption{The live forward-FC pipeline; both parties run it as independent
-processes on distinct GPUs. Blue-framed stages exchange messages over TCP;
-all other stages are party-local, and Ring-LPN expansion runs on the GPU.
-The unchanged online consumer runs only in the post-exit checker for this
-artifact. The transport is loopback and unauthenticated.}
+\caption{Live forward-linear pipeline. Both parties run as independent
+processes on distinct GPUs. Blue-framed stages exchange messages over same-host
+TCP after mutual HMAC-SHA256 endpoint/context establishment; later protocol
+bytes have no per-message integrity. Other stages are party-local, and
+Ring-LPN expansion runs on the GPU. The unchanged online consumer runs only in
+the post-exit checker.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -461,9 +460,10 @@ the Gilboa field-multiplication wrapper, and BGI DPF, plus decisional
 splittable Ring-LPN for the exact selected sparse-noise distribution
 (\S\ref{sec:design-params}). The canonical and classifier suites instantiate
 SCI/IKNP; EMP-Silent remains opt-in and independently unreviewed. Current
-measurements communicate over unauthenticated loopback, so the runs are
-implementation/correctness evidence for the theorem rather than a secure
-network deployment.
+measurements use same-host loopback after a mutual HMAC-SHA256
+endpoint/context handshake, but later protocol bytes have no per-message
+integrity. They are implementation/correctness evidence for the conditional
+theorem rather than an authenticated-channel deployment.
 
 Out of scope: malicious security, external packet attackers, timing and
 microarchitectural side channels, stateful training transitions, and
@@ -962,10 +962,11 @@ before serializing $A_b\Vert B_b\Vert C_b$. Every replacement conditions on
 prior state. Across $m$ fresh direction/limb/batch instances, the hybrid incurs
 at most the sum of the $m$ role-indexed Figure-2/module-Ring-LPN advantages; it
 does not infer a joint claim from one unconditioned single-instance sample.
-This theorem excludes the live
-unauthenticated TCP transport, malicious parties, and the unimplemented
-training-state transitions. The measured $(n,c,t)=(8192,2,8)$ point is a
-feasibility configuration with no concrete-security claim.
+This theorem excludes the measured post-handshake TCP transport, which has no
+per-message integrity, as well as malicious parties and unimplemented training
+state transitions. The source execution uses $(n,c,t)=(8192,2,8)$; the separate
+full-graph control overrides $n=262144$ at the same $(c,t)$. Both are feasibility
+configurations with no concrete-security claim.
 
 \paragraph{Bootstrapping (and why it is not circular).} Key generation
 consumes three scalar OLEs per DPF tree; expansion produces $n$ slot OLEs per
@@ -1213,13 +1214,18 @@ exchange without silently reusing one public vector or pretending the
 construction is exact in the standard model. A malicious extension would
 replace the fixed-order semi-honest seed exchange with commit/open.
 
-\subsection{D4: Two-process deployment (realized for forward FC)}
+\subsection{D4: Two-process deployment and endpoint/context establishment}
 \label{sec:design-deploy}
 
 The composed artifact runs the parties as two OS processes on distinct GPUs
-over two SCI-style TCP channels. Each reads only its own sampled noise and
-emits only its own key record. The post-exit checker reads both records,
-reconstructs the clear masks only for validation, and invokes unchanged
+over two SCI-style TCP channels. Before preflight, each direction performs a
+versioned mutual HMAC-SHA256 challenge/response binding role, direction,
+invocation ID, claim digest, and fresh nonces. This rejects a rogue connector,
+replay, reflection, wrong role/context, or wrong shared secret at connection
+establishment; it does not MAC or encrypt later protocol bytes. Each process
+reads only its own sampled noise and emits only its own key record. The post-exit
+checker reads both records, reconstructs the clear masks only for validation,
+and invokes unchanged
 \texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver}. The runner rejects
 mismatched preflight manifests, stale output, malformed or swapped records,
 and unilateral publication, and removes raw party records after validation.
@@ -1229,9 +1235,11 @@ Gilboa OLE payloads, four public-seed words per party and layer, cross-term
 derandomization openings, conversion correlation and online messages, and
 final synchronization. It excludes selected-backend base-OT setup and TCP/IP
 overhead. Total recorded transport includes the separately counted 43{,}658
-base-OT setup bytes. The current runner uses unauthenticated local loopback.
+base-OT setup bytes. An unexecuted two-host launcher tunnels the streams over
+pinned SSH; current retained rows are same-host loopback and do not establish
+authenticated protocol-channel integrity or host isolation.
 
-\subsection{D5: Security parameter audit (removes G4)}
+\subsection{D5: Security parameter audit (G4 remains open)}
 \label{sec:design-params}
 
 The assumption behind step 1 of \S\ref{sec:motivation-pcg} is
@@ -1403,13 +1411,18 @@ architecture, and TeX toolchain. A clean recursive clone is mounted at runtime;
 untracked checkpoint evidence, checksum drift, root-owned outputs, stale
 destinations, a nonconforming GPU, any gate mutation outside regenerable
 result paths, and any surviving private key, state, ledger, or scratch
-artifact. Its \texttt{local-smoke} mode rebuilds this PDF and the full
-canonical gate but ends with an explicit ``not two-host publication evidence''
-marker. Publication mode additionally requires an owner-authorized annotated
-source tag, an externally authenticated tag/commit binding, an immutable
-runtime image and in-image binary identity, pinned SSH host identity, a
-separate owner-only persistent read-write ledger mount, and the authenticated
-two-host/checker manifests. Those release and deployment identities have not
+artifact. The shared FC/Conv binary approval binds two byte-identical builds
+whose command, working-directory, and build-environment receipts use only
+canonical clone, source, and build-root tokens; a self-consistently rehashed
+receipt with a raw workstation path is rejected before record execution. Its
+\texttt{local-smoke} mode rebuilds this PDF and the full canonical gate but
+ends with an explicit ``not two-host publication evidence'' marker. Publication
+mode additionally requires an owner-authorized annotated source tag, an
+operator-supplied tag/commit consistency object whose shape and self-digest are
+checked (no cryptographic signer is verified), an immutable runtime image and
+in-image binary identity, pinned SSH host identity, a separate owner-only
+persistent read-write ledger mount, and the authenticated two-host/checker
+manifests. Those release and deployment identities have not
 been issued; this remains an internal reproducibility contract rather than
 released two-host evidence.
 
@@ -1526,10 +1539,11 @@ unchanged \texttt{readGPUMatmulKey}/\texttt{gpuMatmulBeaver}.
 
 Ten measured trials followed one warmup using the default SCI/IKNP backend.
 The environment binds current binary SHA-256 \texttt{02eaaac9\ldots}. These
-unauthenticated single-host timing/traffic rows characterize the current
-source. The public-vector construction exchanges four 64-bit seed-share words
-per party and layer, then derives a fresh domain-separated SHAKE256 tail per
-Ring-OLE while
+same-host timing/traffic rows authenticate endpoint roles and invocation
+context before preflight, but later protocol bytes have no per-message
+integrity. The public-vector construction exchanges four 64-bit seed-share
+words per party and layer, then derives a fresh domain-separated SHAKE256 tail
+per Ring-OLE while
 treating $a_0=1$ as public without sending it. The aggregate CSV and
 digest-bound metadata pass execution, record, transcript, freshness,
 bootstrap-accounting, and unchanged-online checks; this table remains a
@@ -1585,13 +1599,16 @@ In the current rows, legacy post-OT median Phase C is 0.041723\,s, Phase B is
 
 \paragraph{Full-graph systems control.}
 One retained source-bound q128/bw32 known-zero run consumes a fresh 21-record
-ResNet18 convolution/FC set through the unchanged Orca linear consumers. The
-compiled graph contract is generated from, and hash-checked against, the same
-source manifest used by the record-set gate. Its explicit value-source
-registry binds every main and shortcut operand; the exact stock forward order
-contains 21 linear calls, 21 stochastic truncations, 19 stock key consumers
-(one MaxPool, 17 ReLUs, and classifier sign extension), 20 remask edges, eight
-residual merges, integer GlobalAvgPool2D, and terminal reconstruction.
+ResNet18 convolution/FC set through the unchanged Orca linear consumers. Its
+execution manifest overrides the source tuple from $(n,c,t)=(8192,2,8)$ to
+$(262144,2,8)$ so the largest layers fit; this is an execution parameter, not a
+security pin. The compiled graph contract is generated from, and hash-checked
+against, the same source manifest used by the record-set gate. Its explicit
+value-source registry binds every main and shortcut operand; the exact stock
+forward order contains 21 linear calls, 21 stochastic truncations, 19 stock key
+consumers (one MaxPool, 17 ReLUs, and classifier sign extension), 20 remask
+edges, eight residual merges, integer GlobalAvgPool2D, and terminal
+reconstruction.
 
 The 21-record set contains 6{,}439 Ring-LPN batches, 25{,}756 Ring-OLE
 instances, 6{,}593{,}536 DPF trees, and 130{,}774{,}336 final payload bytes per
@@ -1603,41 +1620,65 @@ latency. The record-consuming graph critical path was 11.852\,s. These
 are not a timing distribution or competitive result.
 
 A test-only trusted compatibility adapter reads both parties' source-bound
-linear mask states and emits the exact 62-item stock key stream. It took
-9.356\,s and produced 1{,}084{,}582{,}352 raw stock-key bytes per party. Each
-live party reads only its own private linear, nonlinear, and persistent-state
-records. A separate post-exit checker independently reconstructs every linear
-input/output, remask, residual, pool, sign-extension, and terminal value from
-both published records and rejects counter/order drift. Seven fail-closed
+linear mask states, supplies both parties' truncation successor-mask shares
+plus remask and terminal material, and emits the exact 62-item stock key stream,
+including all nonlinear keys. It took 9.356\,s and produced
+1{,}084{,}582{,}352 raw stock-key bytes per party. Each live party reads only
+its own private linear, nonlinear, and persistent-state records. A separate
+post-exit checker independently reconstructs every linear input/output, remask,
+residual, pool, sign-extension, and terminal value from both published records
+and rejects counter/order drift. Seven fail-closed
 graph-output controls---forced second rename, reused invocation, stale output,
 party-record swap, truncated nonlinear record, nonlinear payload corruption,
 and digest-valid trace corruption---all reject without partial output;
 source-manifest and topology mismatch controls also reject.
 
-The retained 17-file bundle at
-\path{results/graph/resnet18_full_graph_checkpoint_2026_08_10/} contains only
-metrics, logs, digests, binary approval, and manifests. Private linear,
-mask-state, nonlinear, ledger, and output records were deleted. The
-orchestration deliberately applies each omniscient per-record correctness
-checker before feeding the same test record to this graph control. It therefore
-does not evidence consume-once online deployment; production consumption must
-omit that test inspection and preserve the deployment-wide one-use boundary.
+The retained 17-indexed-payload-file bundle plus \path{INDEX.json} at
+\path{results/graph/resnet18_full_graph_checkpoint_2026_08_10/} excludes private
+linear, mask-state, nonlinear, ledger, and output records. Its original
+manifest-bound adapter provenance retains workstation/build-root strings, and
+the historical linear assignment reused GPU 1 sequentially for party 1 and its
+checker. These are non-secret internal/advisor metadata, but they block external
+circulation and no longer satisfy the current retained-assignment policy. The
+original bytes are preserved for transitive manifest/approval/INDEX integrity;
+a fresh canonical three-GPU run with normalized provenance must replace this
+checkpoint before release. The orchestration deliberately applied each
+omniscient per-record correctness checker before feeding the same test record
+to the graph control, so it does not evidence consume-once online deployment.
 The trusted nonlinear key source means this is not dealerless nonlinear
 preprocessing or added security evidence; known-zero inputs and weights mean it
-is not private or trained inference, an accuracy result, deployment evidence,
-or a full-model performance claim.
+is not private/trained inference, an accuracy result, deployment evidence, or a
+full-model performance claim.
 
 The closest in-artifact dealer comparator is stock
 \texttt{gpuKeygenMatmul}, aligned on shape, masks, bit width,
 allocator/synchronization boundary, and output bytes. The retained executions
 were not controlled on the same physical GPU and occupancy state, so the
 $268.6769431352700\times$ setup-included statistic is descriptive rather than a hardware-matched A/B result.
-A separately pinned stock libOTe Reverse-Cuckoo run completed in 12.43\,s at
-its nominal $(2^{20},4,16)$ shape, but it uses Goldilocks arithmetic,
-internally sampled factors, a folded 16-group layout, synthetic preloaded base
-correlations, CPU local sockets, and no GPU output. It is therefore a
-reproducible closest distributed baseline, not a function-matched comparator;
-no timing ratio is reported.
+A separately pinned stock libOTe Reverse-Cuckoo run and a project-prime
+exact-$p_0$ native-folded adapter diagnostic are retained:
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}l r r r@{}}
+\toprule
+row & setup & online/full domain & protocol total\\
+\midrule
+stock Goldilocks & \multicolumn{3}{c}{12.43\,s process wall}\\
+exact $p_0$ native-folded & 18.523424\,s & 2.116894\,s & 20.640318\,s\\
+\bottomrule
+\end{tabular}
+\caption{Reverse-Cuckoo baselines at nominal $(n,c,t)=(2^{20},4,16)$.
+The stock row uses internally sampled factors, synthetic preloaded base
+correlations, CPU local sockets, Goldilocks arithmetic, and a 16-folded layout.
+The exact-$p_0$ diagnostic uses 256 sets of 16 points (4,096 terms), checks
+16,777,216 full-domain positions, and records 52,791,184 setup plus 1,425,584
+online wire bytes. Its protocol total is 20.640318\,s and its
+validation-inclusive total is 20.688314\,s.
+Neither row is raw 31-diagonal GPU output, a function-matched
+comparison, or a security-level result; no speedup ratio is reported.}
+\label{tab:reverse-cuckoo}
+\end{table}
 The EMP-Silent source path remains opt-in and independently
 unreviewed; no current headline measurement uses it.
 
@@ -1668,20 +1709,22 @@ FC test).
   distributed GPU-AES DPF keys, self-bootstrapped Ring-LPN OLE shares, converted
   q32 masks, and byte-compatible Orca FC records. Every focused row records
   positive breadth-first call counts for both parties and zero root-to-leaf
-  calls; all 21 shape plans pass. The current FC binary begins
-  \texttt{29c420c3} and the focused approval digest begins
-  \texttt{843f837a}. These are correctness/path-counter results, not current
-  Conv0/model-scale timing or a breadth-first speedup claim. Eleven negative
-  controls cover corrupted or swapped records, malformed messages, replay,
-  stale state, nonpositive capacity, and publication failure; the unchanged
-  online consumer reconstructs the expected product.
+  calls; all 21 shape plans pass. The current FC/Conv binaries begin
+  \texttt{02eaaac9}/\texttt{975ac726}, and the focused approval digest begins
+  \texttt{ce3cc3a5}. These are correctness/path-counter results, not current
+  Conv0/model-scale timing or a breadth-first speedup claim. Sixteen negative
+  controls cover endpoint/context authentication, replay, reflection, freshness,
+  ledger integrity, nonpositive capacity, malformed/swapped records, and
+  publication failure; the unchanged online consumer reconstructs the expected
+  product.
 \item[Closed narrowly --- full-graph systems control.] One source-bound
   known-zero run binds a fresh 21-record set to all unchanged Conv2D/FC
   consumers, all secure truncations and stock nonlinear consumers, every
   projection/identity residual merge, GlobalAvgPool2D, sign extension, and
   terminal reconstruction. Manifest/topology, publication, nonlinear-record,
-  and output-corruption controls reject. The nonlinear keys come from an
-  explicitly trusted test-only adapter that reads both mask states, so
+  and output-corruption controls reject. The trusted test-only adapter reads
+  both mask states, supplies both truncation successor-mask shares plus
+  remask/terminal material, and generates the nonlinear keys. Therefore
   dealerless nonlinear preprocessing remains open.
 \item[Closed conditionally --- proof composition.] The theorem composes
   standard semi-honest DPF, OT/OLE, conversion, DRBG, and authenticated-channel
@@ -1712,11 +1755,13 @@ cryptographic review remain open.
   repeated clean runs with private inputs and trained weights, including an
   accuracy-bearing evaluation, are still required before a broader systems
   claim.
-\item[Open --- deployment.] Source contains fail-closed authenticated
-  two-host coordination and peer-private container orchestration, but no
-  configured second host was available to execute it. Current evidence is
-  unauthenticated same-host loopback and cannot predict LAN/WAN latency or
-  establish OS-level peer isolation.
+\item[Open --- deployment.] Source contains fail-closed two-host coordination
+  and peer-private container orchestration over pinned SSH, but no configured
+  second host was available to execute it. Current evidence uses same-host
+  loopback with authenticated endpoint/context establishment but no
+  post-handshake per-message integrity; it cannot predict LAN/WAN latency,
+  establish authenticated protocol-channel integrity, or prove OS-level peer
+  isolation.
 \item[Open --- review.] A human cryptographer who did not author the artifact
   must review the DPF/OT/OLE/composition proof and the structured-code
   parameter argument. Internal adversarial review is not a substitute.
@@ -1729,15 +1774,17 @@ cryptographic review remain open.
 \label{sec:claims}
 
 The current supported statement is: ``At unpinned feasibility parameters, a
-live local-loopback two-process implementation generates party-local
-forward-FC keys without a trusted dealer in the stated random-oracle model;
-those keys match
-the stock Orca format and pass its unchanged online computation. A separate
-source-bound known-zero control composes a fresh 21-record linear set with the
-exact stock ResNet18 graph, using explicitly trusted test-only nonlinear keys.
-Conditional semi-honest security applies only to the forward-linear theorem
-under its explicit DPF, OT/OLE, authenticated-channel, and exact-distribution
-Ring-LPN assumptions.''
+live same-host two-process implementation generates party-local forward-linear
+keys without a trusted dealer in the stated random-oracle model; those keys
+match the stock Orca format and pass unchanged online computation. Endpoint
+roles and invocation context are mutually HMAC-authenticated before preflight,
+but later protocol bytes have no per-message integrity. A separate source-bound
+known-zero control composes a fresh 21-record linear set with the exact stock
+ResNet18 graph using a trusted test-only adapter that owns both truncation
+successor-mask shares, remask/terminal material, and nonlinear keys. Conditional
+semi-honest security applies only to the forward-linear theorem under its
+explicit DPF, OT/OLE, authenticated-channel, and exact-distribution Ring-LPN
+assumptions.''
 
 The only in-artifact quantitative dealer comparator is stock
 \texttt{gpuKeygenMatmul}, aligned on classifier shape, bit width, masks, output
@@ -1820,37 +1867,40 @@ measured baseline. Neither backend is a contribution of this paper.
 
 The concrete result is narrower and stronger than the earlier proposal
 language: a trusted-dealer-free live preprocessing source path in the stated
-random-oracle model now spans
-GPU-batched distributed DPF generation, executable Ring-LPN-output bootstrap,
-tree-block GPU reduction, slot extraction, secure q128-to-q32 conversion,
-byte-compatible key serialization, and unchanged Orca forward-FC/Conv2D
-consumption. The current five-case focused q64/q128 suite integrates the
-breadth-first path with positive per-party breadth calls, zero root-to-leaf
-calls, and all 21 shape plans passing. The retained older-binary ResNet18
-classifier-layer artifact separately passes one warmup plus ten measured trials. A
-source-bound known-zero control now composes all 21 fresh linear records with
-all 21 secure truncations, the exact 62-item stock stream, every residual
-merge, integer GlobalAvgPool2D, sign extension, and terminal reconstruction.
-Its nonlinear keys come from a test-only trusted adapter that reads both
-parties' mask states; consequently it proves complete graph/state
-compatibility, not dealerless nonlinear preprocessing or a wider security
-theorem. No private or trained inference, accuracy, timing distribution, or
-full-model performance result is claimed. Authenticated peer-isolation
-launchers exist, but no two-host execution has occurred. The opt-in EMP-Silent
-revision remains independently unreviewed and is not used by headline rows.
+random-oracle model now spans GPU-batched distributed DPF generation,
+executable Ring-LPN-output bootstrap, tree-block GPU reduction, slot extraction,
+secure q128-to-q32 conversion, byte-compatible key serialization, and unchanged
+Orca forward-FC/Conv2D consumption. The current five-case focused q64/q128 suite
+integrates the breadth-first path with positive per-party breadth calls, zero
+root-to-leaf calls, and all 21 shape plans passing. The current
+\texttt{02eaaac9\ldots} ResNet18 classifier-layer artifact separately passes
+one warmup plus ten measured trials. A source-bound known-zero control composes
+all 21 fresh linear records with all 21 secure truncations, the exact 62-item
+stock stream, every residual merge, integer GlobalAvgPool2D, sign extension,
+and terminal reconstruction. Its trusted test-only adapter reads both mask
+states, supplies both truncation successor-mask shares and remask/terminal
+material, and generates the nonlinear keys; consequently the run proves
+complete graph/state compatibility, not dealerless nonlinear preprocessing or
+a wider security theorem. No private/trained inference, accuracy, timing
+distribution, or full-model performance result is claimed. A mutual HMAC
+preflight authenticates local endpoints/context but not later protocol bytes.
+Pinned-SSH peer-isolation launchers exist, but no two-host execution has
+occurred. EMP-Silent remains opt-in, independently unreviewed, and absent from
+headline rows.
 
-This is a strong internal advisor checkpoint. It is not yet a submission-ready
-security/systems paper. The known-zero graph/state-composition seam is closed,
-but the remaining systems gates are dealerless nonlinear setup, repeated
-private-input/trained-model evidence, an authenticated two-host run, and
-independent review. Separately, no reviewed concrete-security parameter point
-exists, and the current descriptive median of setup-included shape-matched
-per-trial preprocessing/dealer ratios is $268.6769431352700\times$ without
-controlled physical-GPU occupancy. Novelty is currently
-centered on integration/engineering of
-known DPF/Ring-LPN/conversion primitives. A cryptography-paper claim would
-require a new protocol, reduction, or parameter result; a systems-paper claim
-also requires competitive performance.
+This is an internal/advisor checkpoint, not a submission-ready security or
+systems paper. The known-zero graph/state-composition seam is closed, but the
+remaining systems gates are dealerless nonlinear setup, repeated
+private-input/trained-model evidence, authenticated distinct-host execution,
+competitive/matched evaluation, and independent review. No reviewed
+concrete-security parameter point exists, and the current descriptive median
+of setup-included shape-matched per-trial preprocessing/dealer ratios is
+$268.6769431352700\times$ without controlled physical-GPU occupancy. Novelty is
+centered on integration/engineering of known DPF/Ring-LPN/conversion
+primitives. A cryptography-paper claim would require a new protocol, reduction,
+or parameter result. Authorship, contributor credit, private-project reuse
+permission, acknowledgements, and disclosure remain unresolved external gates
+before any circulation.
 
 The highest-value next evidence is:
 (1)~an independently reviewed reduction and concrete parameter search for the

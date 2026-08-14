@@ -6,6 +6,17 @@ RUN_GPU_SMOKE="${RUN_GPU_SMOKE:-0}"
 REQUIRE_GPU_SMOKE="${REQUIRE_GPU_SMOKE:-0}"
 RUN_REGULAR_SMOKE="${RUN_REGULAR_SMOKE:-1}"
 RUN_FULL_GRAPH_SMOKE="${RUN_FULL_GRAPH_SMOKE:-1}"
+for flag in "$RUN_GPU_SMOKE" "$REQUIRE_GPU_SMOKE" "$RUN_REGULAR_SMOKE" \
+    "$RUN_FULL_GRAPH_SMOKE"; do
+  if [[ "$flag" != 0 && "$flag" != 1 ]]; then
+    echo "[paper-smoke] smoke selectors must be 0 or 1" >&2
+    exit 2
+  fi
+done
+if [[ "$REQUIRE_GPU_SMOKE" == 1 && "$RUN_GPU_SMOKE" != 1 ]]; then
+  echo "[paper-smoke] REQUIRE_GPU_SMOKE=1 requires RUN_GPU_SMOKE=1" >&2
+  exit 2
+fi
 FULL_GRAPH_TEMP=""
 cleanup() {
   status=$?
@@ -30,6 +41,14 @@ if [[ "$RUN_GPU_SMOKE" == "1" ]]; then
   echo "[paper-smoke] rebuilding reproducible shared linear adapters"
   "$ROOT/scripts/build_two_party_fc_preprocess.sh"
   "$ROOT/scripts/build_two_party_conv_preprocess.sh"
+  graph_provenance="$ROOT/bin/resnet18_full_graph_build_provenance.json"
+  if [[ -L "$graph_provenance" ||
+        ( -e "$graph_provenance" && ! -f "$graph_provenance" ) ||
+        ( -e "$graph_provenance" && ! -O "$graph_provenance" ) ]]; then
+    echo "[paper-smoke] refusing unsafe prior graph provenance: $graph_provenance" >&2
+    exit 1
+  fi
+  rm -f -- "$graph_provenance"
   echo "[paper-smoke] building source-bound full ResNet18 graph artifacts"
   "$ROOT/scripts/build_resnet18_full_graph.sh"
 fi

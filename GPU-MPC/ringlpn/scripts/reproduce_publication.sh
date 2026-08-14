@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Host coordinator for publication; pinned-Docker entry point for check/smoke/build.
-# It never records argv or environment values: SSH material and private data stay external.
+# It never records secret bytes or private data; owner-private trust-file paths may be argv.
 set -euo pipefail
 umask 077
 
@@ -193,7 +193,7 @@ if sys.argv[4] != "check":
             "measured final Docker image ID is not exactly tracked and authorized"
         )
 PY
-  docker_args=(run --rm --gpus all
+  docker_args=(run --rm --network=none --gpus all
     --user "$(id -u):$(id -g)" -e HOME=/tmp
     -v "$REPO:/work/EzPC:ro"
     -e RINGLPN_CANONICAL_CONTAINER_LAUNCH=1
@@ -422,43 +422,14 @@ ubuntu_sources_sum="$(sha256sum /etc/apt/sources.list.d/ubuntu.sources)"
 PHASE="clean-clone"
 verify_authorized_worktree
 [[ -z "$(git -C "$REPO" status --porcelain --untracked-files=all)" ]] || fail "repository is dirty or contains untracked files"
-python3 - "$ROOT" <<'PY'
-import pathlib, sys
-root = pathlib.Path(sys.argv[1])
-suffixes = {".claim", ".conv", ".convert", ".fc", ".key", ".noise",
-            ".record", ".spfss", ".state", ".truncate"}
-directory_names = {"correlation-ledger", "ledger", "private_inputs",
-                   "two_party_gpu_keys", "two_party_keys", "two_party_outputs"}
-directory_prefixes = (
-    "two_party_fc_work_", "two_party_conv_work_",
-    "two_party_fc_model_scale_work_", "forward_linear_record_set_",
-)
-bad = []
-for path in root.rglob("*"):
-    relative = path.relative_to(root)
-    private_component = any(
-        part in directory_names or part.startswith(directory_prefixes)
-        for part in relative.parts
-    )
-    if path.is_symlink():
-        if private_component or path.suffix in suffixes:
-            bad.append(str(relative))
-    elif private_component or (path.is_file() and path.suffix in suffixes):
-        bad.append(str(relative))
-    if len(bad) >= 20:
-        break
-if bad:
-    raise SystemExit(
-        "private ignored artifacts or private-named symlinks exist in source "
-        "clone: " + " | ".join(bad)
-    )
-PY
+python3 "$ROOT/scripts/retained_public_evidence.py" \
+  --repo "$REPO" --manifest "$STATIC_MANIFEST"
 python3 - "$REPO" "$STATIC_MANIFEST" "$MODE" <<'PY'
 import hashlib, json, os, pathlib, stat, subprocess, sys
 repo, manifest_path, mode = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3]
 m = json.loads(manifest_path.read_text())
 if m.get("schema") != "ringlpn-publication-environment/v4" or \
-        m.get("date") != "2026-08-10":
+        m.get("date") != "2026-08-14":
     raise SystemExit("unexpected static publication manifest schema or date")
 manifest_digest = m.get("manifest_digest")
 unsigned_manifest = dict(m)
@@ -541,21 +512,38 @@ for name, expected_version in sorted(packages.items()):
             f"container package mismatch: {name}={observed}, "
             f"expected {expected_version}"
         )
-expected = {x["path"]: x["revision"] for x in m["sources"] if x["path"] != "GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu"}
-out = subprocess.check_output(["git", "-C", str(repo), "submodule", "status", "--recursive"], text=True)
+optional = {
+    x["path"]
+    for x in m.get("data_inputs", {}).get("excluded_optional_snapshots", [])
+}
+expected = {
+    x["path"]: x["revision"] for x in m["sources"]
+    if x["path"] != "GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu"
+    and x["path"] not in optional
+}
+roots = sorted(
+    path for path in expected
+    if not any(path.startswith(parent + "/") for parent in expected if parent != path)
+)
+out = subprocess.check_output(
+    ["git", "-C", str(repo), "submodule", "status", "--recursive", "--", *roots],
+    text=True,
+)
 seen = {}
 for line in out.splitlines():
     if not line or line[0] != " ":
-        raise SystemExit("missing, conflicted, or wrong-revision submodule: " + line)
+        raise SystemExit("missing, conflicted, or wrong-revision gate submodule: " + line)
     fields = line[1:].split()
     seen[fields[1]] = fields[0]
 if seen != expected:
-    raise SystemExit("recursive submodule set/revisions differ from immutable manifest")
-for path, revision in expected.items():
-    p = repo / path
-    status = subprocess.check_output(["git", "-C", str(p), "status", "--porcelain", "--untracked-files=all"], text=True)
+    raise SystemExit("gate-required recursive submodule set/revisions differ from immutable manifest")
+for path in expected:
+    status = subprocess.check_output(
+        ["git", "-C", str(repo / path), "status", "--porcelain",
+         "--untracked-files=all"], text=True,
+    )
     if status:
-        raise SystemExit("dirty submodule: " + path)
+        raise SystemExit("dirty gate-required submodule: " + path)
 for source in m["sources"]:
     lf, want = source.get("license_file"), source.get("license_sha256")
     if lf and not (repo / lf).is_file():
@@ -833,32 +821,8 @@ if [[ "$MODE" != "check" && "${RINGLPN_EXECUTION_COPY:-0}" != 1 ]]; then
   fi
   [[ -z "$(git -C "$REPO" status --porcelain --untracked-files=all)" ]] ||
     fail "container gate mutated the original clean source clone"
-  python3 - "$ROOT" <<'PY'
-import pathlib, sys
-root = pathlib.Path(sys.argv[1])
-suffixes = {".claim", ".conv", ".convert", ".fc", ".key", ".noise",
-            ".record", ".spfss", ".state", ".truncate"}
-directory_names = {"correlation-ledger", "ledger", "private_inputs",
-                   "two_party_gpu_keys", "two_party_keys", "two_party_outputs"}
-bad = []
-for path in root.rglob("*"):
-    if path.is_symlink():
-        continue
-    if path.is_dir() and (
-        path.name in directory_names or
-        path.name.startswith(("two_party_fc_work_", "two_party_conv_work_",
-                              "two_party_fc_model_scale_work_",
-                              "forward_linear_record_set_"))
-    ):
-        bad.append(str(path.relative_to(root)))
-    elif path.is_file() and path.suffix in suffixes:
-        bad.append(str(path.relative_to(root)))
-    if len(bad) >= 20:
-        break
-if bad:
-    raise SystemExit("private ignored artifacts appeared in original source: " +
-                     " | ".join(bad))
-PY
+  python3 "$ROOT/scripts/retained_public_evidence.py" \
+    --repo "$REPO" --manifest "$STATIC_MANIFEST"
   exit "$workspace_rc"
 fi
 
@@ -1075,39 +1039,9 @@ if unexpected:
         "gate mutated source, submodules, manuscript, or unapproved paths: "
         + " | ".join(unexpected[:20])
     )
-results = repo / "GPU-MPC/ringlpn/results"
-private_suffixes = {
-    ".claim", ".conv", ".convert", ".fc", ".key", ".noise", ".record",
-    ".spfss", ".state", ".truncate",
-}
-private_directory_names = {
-    "correlation-ledger", "ledger", "private_inputs", "two_party_gpu_keys",
-    "two_party_keys", "two_party_outputs",
-}
-private_directory_prefixes = (
-    "two_party_fc_work_", "two_party_conv_work_",
-    "two_party_fc_model_scale_work_", "forward_linear_record_set_",
-)
-private_paths = []
-for path in results.rglob("*"):
-    relative = path.relative_to(results)
-    private_component = any(
-        part in private_directory_names
-        or part.startswith(private_directory_prefixes)
-        for part in relative.parts
-    )
-    if path.is_symlink():
-        if private_component or path.suffix in private_suffixes:
-            private_paths.append(str(relative))
-    elif private_component or (
-            path.is_file() and path.suffix in private_suffixes):
-        private_paths.append(str(relative))
-if private_paths:
-    raise SystemExit(
-        "private key, state, ledger, scratch artifact, or private-named symlink "
-        "survived gates: " + " | ".join(private_paths[:20])
-    )
 PY
+python3 "$ROOT/scripts/retained_public_evidence.py" \
+  --repo "$REPO" --manifest "$STATIC_MANIFEST"
 
 PHASE="postflight"
 python3 - "$ROOT" <<'PY'

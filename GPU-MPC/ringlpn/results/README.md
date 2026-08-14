@@ -3,7 +3,7 @@
 Reorganized 2026-06-10. Every run script writes into its artifact directory
 below; nothing writes to this top level anymore.
 
-## Current checkpoint (2026-08-10)
+## Current checkpoint (2026-08-14)
 
 The live forward-FC/Conv artifact composes party-local SPFSS, distributed DPF,
 SCI/IKNP or opt-in EMP-Silent OT, epoch-zero Gilboa OLE, consume-once
@@ -26,11 +26,18 @@ shape plans pass. These counters establish current correctness/path use, not
 current Conv0/model-scale timing or a breadth-first speedup. Each Ring-OLE reserves exactly
 `3*c^2*t^2` output slots for the next
 DPF Phase C and exposes only the remainder to the application. Each party is a
-separate process reading only its own private state. The measured loopback
-runner does not enforce OS-level peer-file isolation and uses bilateral
-best-effort publication. In the separate, unexecuted two-host publication mode,
-the authenticated coordinator's sealed digest-bound `COMMITTED.manifest`, not
-either raw record, is the consumer gate.
+separate process reading only its own private state. Each loopback socket first
+performs mutual HMAC-SHA256 endpoint/context establishment bound to roles,
+direction, invocation, claim digest, and fresh nonces. Subsequent protocol
+traffic is plain TCP without per-message integrity. The measured runner does
+not enforce OS-level peer-file isolation and uses bilateral best-effort
+publication. In the separate, unexecuted two-host publication mode, the
+coordinator's sealed digest-bound `COMMITTED.manifest`, not either raw record,
+is the consumer gate.
+
+The source configuration uses `(n,c,t)=(8192,2,8)`. The retained known-zero
+full-graph execution explicitly overrides it to `(262144,2,8)` so the largest
+linear layers fit; neither tuple is a concrete-security pin.
 
 Recorded current live and retained evidence:
 
@@ -38,10 +45,11 @@ Recorded current live and retained evidence:
   regular/uniform, small and q64 multi-batch live configurations; all public,
   key-order, current-transcript, bootstrap-pool, and unchanged-online validators
   pass.
-- `fc/two_party_fc_preprocess_controls_2026_08_04.csv` — eleven focused
-  consume-once, restart, tail-reuse, invocation-collision, ledger-truncation,
-  preflight, stale-output, rename-failure, corrupt-record, swapped-record, and
-  nonpositive-capacity controls; every expected rejection passes.
+- `fc/two_party_fc_preprocess_controls_2026_08_04.csv` — sixteen focused
+  endpoint/context-authentication, consume-once, restart, tail-reuse,
+  invocation-collision, ledger-integrity, preflight, stale-output, capacity,
+  rename-failure, corrupt-record, and swapped-record controls; every expected
+  rejection passes.
 - The current regular-noise Ring-OLE expansion anchors at
   `n=8192,c=2,t=8` are 9.086 ms (q64) and 18.230 ms (q128), each from one
   iteration (`n=1` per configuration), so they are diagnostic rather than
@@ -61,8 +69,9 @@ Recorded current live and retained evidence:
   shape/contract-matched stock trusted-dealer keygen is 14.73535 ms median;
   unchanged two-share online is 1.14969 ms median; and final Orca payload is
   4,108,096 bytes per party. GPU occupancy was uncontrolled and the comparison
-  was not run on the same physical GPU. Its environment binds current binary
-  `02eaaac9...`.
+  was not run on the same physical GPU. Its public environment file is an
+  explicitly labelled sanitized derivative that omits hostname, GPU UUIDs, and
+  absolute workstation paths; it binds current binary `02eaaac9...`.
 - The retained aggregate records 11,023 protocol dependency layers,
   142,542,848 median peak host bytes, and 182,416,324 total transport bytes.
   Its 31,929,597,952-byte GPU peak-used metric is device-wide and includes
@@ -78,6 +87,14 @@ Recorded current live and retained evidence:
   schemas/manifests retain invocation and claim digests, metrics, and logs—not
   raw party key/state records. Publication postflight rejects surviving private
   scratch.
+- `fc/linear_adapter_build_provenance_2026_08_10.json` and its
+  `linear_adapter_binary_approval_2026_08_07.json` bind two independent,
+  byte-identical FC/Conv builds. Schema v2 replaces every clone and
+  build-owned path in commands, working directories, and environment receipts
+  with `${REPO}`, `${CANONICAL_SOURCE}`, or `${BUILD_ROOT}`. A second build
+  under a different temporary root emits the same provenance bytes; the
+  record-set validator's negative control rejects a self-consistently rehashed
+  raw `/home/...` path.
 - `fc/resnet18_adaptive_degree_linear_execution_manifest_2026_08_07.json`
   binds all 20 convolutions and the classifier at q128/bw32,
   `(n,c,t)=(262144,2,8)`, with 6,439 Ring-LPN batches, 25,756 Ring-OLE
@@ -93,7 +110,7 @@ Recorded current live and retained evidence:
   records a 358.085-s legacy post-OT critical path, 445 batches, 1,780 Ring-OLE
   instances, and 455,680 DPF trees; its legacy post-OT comparison row is
   384.816 s. Both bind older binary
-  `1db001...`, not current Conv binary `e4981459...`, so they do not establish
+  `1db001...`, not current Conv binary `975ac726...`, so they do not establish
   a current-source breadth-first speedup. Party metrics, record digests,
   metadata, and archive-time checker revalidations are retained under
   `conv/conv0_breadth_comparison_2026_08_09/`; privacy-sensitive raw key records
@@ -112,36 +129,54 @@ Recorded current live and retained evidence:
   source/state/trace/counter contracts, and an independent post-exit checker.
   The one-run sum of legacy post-OT linear-layer critical paths is 4,720.417 s;
   the record-consuming graph critical path is 11.852 s.
-- The labelled TEST-ONLY trusted adapter reads both parties' mask states and
-  generated 19 stock nonlinear records in 9.356 s, totaling 1,084,582,352 raw
-  stock-key bytes per party. Seven fail-closed graph-output controls—forced
-  second rename, reused invocation, stale output, party-record swap, truncated
-  nonlinear record, nonlinear payload corruption, and digest-valid trace
-  corruption—rejected without partial output. The 17 retained files contain
-  only metrics, logs, digests, approval, and manifests; private records and
-  ledgers were deleted. Manifest digest:
+- The labelled TEST-ONLY trusted adapter reads both parties' mask states,
+  centrally samples/distributes both truncation successor-mask shares,
+  computes remask/terminal material, and generated 19 stock nonlinear records
+  in 9.356 s, totaling 1,084,582,352 raw stock-key bytes per party. Seven
+  fail-closed graph-output controls—forced second rename, reused invocation,
+  stale output, party-record swap, truncated nonlinear record, nonlinear
+  payload corruption, and digest-valid trace corruption—rejected without
+  partial output. The bundle has 17 indexed payload files plus `INDEX.json`;
+  private records and ledgers were deleted. Its two manifest-bound historical
+  adapter-provenance copies retain the original workstation path and ephemeral
+  build-root strings, and the historical linear assignment reused GPU 1 for
+  party 1 and its later checker. Those values are non-secret but
+  host-identifying/internal-only and no longer satisfy the current pairwise-
+  distinct retained-assignment policy. The original bytes are preserved so the
+  graph/linear manifests, approvals, provenance self-digests, and INDEX remain
+  transitively valid; they must not be externally circulated. A fresh canonical
+  three-GPU run with normalized provenance must replace this internal checkpoint
+  before release. Manifest digest:
   `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`.
   This is one shared-machine known-zero composition run, not dealerless
   nonlinear preprocessing, private/trained inference, accuracy, deployment,
-  a timing distribution, or a full-model performance/security claim. Each
-  isolated linear record was first consumed by its omniscient correctness
+  a timing distribution, or a full-model performance/security claim.
+  Each isolated linear record was first consumed by its omniscient correctness
   checker, so this is not consume-once online-deployment evidence. The older
   `graph/resnet18_graph_prefix_*_2026_08_09.*` files are superseded focused
   regression evidence.
+- A final 2026-08-10 same-worktree canonical gate regenerated an ephemeral
+  21-record set and complete graph, ended literal `ALL GATES PASS`, and
+  reported full-graph digest
+  `2588eac6de148910835e6f8e09b11b3fc409fb949acbcfb42197bc485a88ad92`.
+  The successful gate deleted its private temporary output. It is
+  same-worktree revalidation, not another retained checkpoint, a clean-clone
+  run, or two-host publication evidence.
 
 Proof/evidence boundary:
 
-- The v2.14 TeX source and current security contract contain the canonical
+- The v2.15 TeX source and current security contract contain the canonical
   correlation functionality, persistent consume-once ledger, exact
   correction-word coupling, role-specific correlated-batch simulators, the
   masked-difference bootstrap lemma and noncircular epoch induction, conversion
   simulator, source map, conditional forward theorem, regular-DMPF NO-GO, and
-  source-bound full-graph systems route. PDF build/inspection status is recorded
-  below.
+  source-bound full-graph systems route. The first page explicitly marks the
+  internal/advisor and unresolved authorship/permission boundary. PDF
+  build/inspection status is recorded below.
 - `P-FRESH` is source/proof closed only under SHA-256 collision resistance and
   a trusted private persistent filesystem providing one deployment-wide ledger
   namespace, exclusive create, fsync, atomic rename, directory fsync, and no
-  adversarial storage cloning/rollback. Its eleven focused controls pass.
+  adversarial storage cloning/rollback. Its sixteen focused controls pass.
 - Renewed model-assisted source/proof reviews are current, but they are not
   independent human cryptographic review.
 - The exact regular-projection/cancellation law and 2024 regular-ISD artifact
@@ -153,12 +188,15 @@ Proof/evidence boundary:
   concrete Ring-LPN parameter is pinned; q64/q128 are arithmetic limbs, not
   security levels.
 - The canonical rows and current classifier `P-PROC` artifact use SCI/IKNP over
-  unauthenticated local loopback. Application bytes exclude backend setup and
-  TCP/IP overhead; total transport includes 43,658 base-OT setup bytes. The
-  separate EMP-Silent revision remains a historical opt-in path, independently
-  unreviewed and absent from headline rows. Results establish executable
-  correctness and cost at feasibility parameters, not 128-bit, malicious, WAN,
-  trained/private model, accuracy, or full-dealerless-Orca claims.
+  same-host loopback. Mutual HMAC-SHA256 authenticates endpoint roles and the
+  invocation/claim/direction context before preflight, but later protocol bytes
+  have no per-message authentication and do not realize the theorem's
+  authenticated-channel integrity assumption. Application bytes exclude
+  backend setup and TCP/IP overhead; total transport includes 43,658 base-OT
+  setup bytes. The separate EMP-Silent revision remains a historical opt-in
+  path, independently unreviewed and absent from headline rows. Results
+  establish executable correctness/cost at feasibility parameters, not 128-bit,
+  malicious, WAN, trained/private-model, accuracy, or full-dealerless-Orca claims.
 - The current classifier comparison is negative: the median setup-included
   shape-matched per-trial preprocessing/dealer ratio is 268.6769431352700, but
   GPU occupancy was uncontrolled and the runs were not on the same physical
@@ -170,11 +208,13 @@ Proof/evidence boundary:
   root-to-leaf calls. GPU batching, executable self-bootstrap, public-vector
   XOF, and memory/dependency instrumentation remain implemented.
   The source-bound known-zero control closes the full graph/state seam using an
-  explicitly trusted test-only nonlinear key source; its sanitized 17-file
-  checkpoint and final manifest set are retained. Dealerless nonlinear setup,
+  explicitly trusted test-only source for both truncation successor-mask
+  shares, remask/terminal material, and nonlinear keys; its original-byte,
+  internal-only bundle has 17 indexed payload files plus `INDEX.json`.
+  Dealerless nonlinear setup,
   repeated private-input/trained-model evidence, authenticated distinct-host
-  execution, and independent review remain systems publication gates. Further
-  algorithmic Phase-B work, a compatible dealerless baseline, pinned
+  execution, and independent review remain systems publication gates.
+  Further algorithmic Phase-B work, a compatible dealerless baseline, pinned
   clean-clone reproduction, and silent-backend review also remain open.
 
 
@@ -235,10 +275,11 @@ and nonselectable; live tooling accepts only the 2026-08-10
 `ringlpn-publication-environment/v4` manifest. Two-host publication uses the host coordinator
 and each host's native rootless Podman, with no nested Podman and no mounted
 Podman socket. The manifest pins required CPU/GPU/toolchain/source identities
-and currently leaves the final gate image, tagged release authorization, and
-immutable publication runtime unavailable, so publication remains blocked.
-SSH/channel-auth files and the consume-once ledger remain owner-private host
-state and never enter images or public evidence.
+and the internal gate-image ID. It still leaves annotated-tag/operator source
+authorization and the immutable publication runtime unavailable, so
+publication remains blocked. Secret bytes stay out of argv, environment,
+images, and evidence; owner-private identity/known-hosts paths are arguments.
+Consume-once ledgers remain unpublished owner-private host state.
 
 ## Where to look
 
@@ -250,10 +291,10 @@ state and never enter images or public evidence.
 | `linear_ole/` | Ring-matrix OLE-to-Beaver (2x2x2, n=8192): q64/q128 × uniform/regular | `run_linear_ole_sweep.sh` |
 | `vole/` | Standalone VOLE expansion prototype | `run_vole_sweep.sh` |
 | `orca_fc/` | Orca FC artifacts: keywriter demo, ideal-OLE transcript, **real-OLE slot-packed transcript**, Zp bridge | `run_orca_fc_ringlpn_demo.sh`, `run_orca_fc_ideal_ole_transcript.sh`, `run_orca_fc_real_ole_transcript.sh`, `run_orca_zp_bridge_test.sh` |
-| `fc/` | **Live two-process forward-linear evidence:** five q64/q128 FC rows and eleven controls; exact ResNet18 classifier trials; source-bound 21-layer baseline/adaptive manifests; and fail-closed record-set machinery. The former consumed `forward_linear_record_set_2026_08_07/` attempt was incomplete and its private records were deleted. Feasibility parameters and loopback only. | `run_two_party_fc_preprocess.sh`, `run_two_party_fc_model_scale.sh`, `run_full_linear_manifest_gate.sh`, `run_full_linear_record_set.py` |
+| `fc/` | **Live two-process forward-linear evidence:** five q64/q128 FC rows and sixteen controls; exact ResNet18 classifier trials; source-bound 21-layer baseline/adaptive manifests; and fail-closed record-set machinery. The former consumed `forward_linear_record_set_2026_08_07/` attempt was incomplete and its private records were deleted. Feasibility parameters and loopback only. | `run_two_party_fc_preprocess.sh`, `run_two_party_fc_model_scale.sh`, `run_full_linear_manifest_gate.sh`, `run_full_linear_record_set.py` |
 | `conv/` | Focused Conv2D CSV plus the retained maximum-Conv0 breadth/pre-breadth party metrics, record digests, and archive-time checker revalidations. Raw private key records are deliberately excluded. | `run_two_party_conv_preprocess.sh` and the dated isolated Conv0 invocation |
-| `graph/` | Sanitized retained source-bound known-zero full-ResNet18 checkpoint plus superseded focused prefix rows. The checkpoint binds all 21 fresh linear records and executes 21 truncations, the exact 62-item stock order, 20 remasks, eight residuals, global pool, sign extension, terminal reconstruction, source/state/trace/counter equality, an independent checker, and seven negative controls. Private records are deleted; nonlinear keys remain trusted/test-only. | `run_resnet18_full_graph.sh`, `run_resnet18_graph_contract_gate.sh` |
-| `secure_convert/` | Two-process evidence for exact `Z_M -> Z_2^bw` conversion using SCI/IKNP-generated edaBits/daBits/Boolean triples; common preflight, bounded bilateral best-effort outputs, corruption controls, and separate transcript counters. The live forward-FC path consumes this API. The wrap bit is never opened; the current security contract gives the hybrid simulator. Transport remains unauthenticated loopback and ripple-depth. |
+| `graph/` | Internal-only retained source-bound known-zero full-ResNet18 checkpoint plus superseded focused prefix rows. The checkpoint binds all 21 fresh linear records and executes 21 truncations, the exact 62-item stock order, 20 remasks, eight residuals, global pool, sign extension, terminal reconstruction, source/state/trace/counter equality, an independent checker, and seven negative controls. Private records are deleted; the trusted test-only adapter owns both truncation successor-mask shares, remask/terminal material, and nonlinear keys. Its original manifest-bound provenance contains host/build-root strings, so a fresh normalized checkpoint must replace it before external circulation. | `run_resnet18_full_graph.sh`, `run_resnet18_graph_contract_gate.sh` |
+| `secure_convert/` | Two-process evidence for exact `Z_M -> Z_2^bw` conversion using SCI/IKNP-generated edaBits/daBits/Boolean triples; common preflight, bounded bilateral best-effort outputs, corruption controls, and separate transcript counters. The live forward-FC path consumes this API. The wrap bit is never opened; the current security contract gives the hybrid simulator. A mutual endpoint/context handshake precedes protocol traffic, but later plain-TCP messages have no per-message integrity; linear-depth ripple also remains. |
 | `dpf/` | Distributed DPF keygen artifacts: ideal-functionality protocol logic; two-process SCI/IKNP+Gilboa transport with measured bytes/direction switches; full-width four-call GPU AES parity with enforced seed-bit-0 sensitivity; strictly validated GPU-evaluated party keys; offline correctness/corruption/invalid-input controls. Direction switches are not network rounds; security reductions remain open. | `run_distributed_dpf_keygen.sh`, `run_two_party_dpf_keygen.sh`, `run_two_party_gpu_dpf.sh` |
 | `profiling/` | VTune hotspot/memory captures | `run_vtune_*.sh` |
 | `outreach/` | Abstracts, posters, professor memos/status emails | hand-written |
@@ -288,7 +329,7 @@ state and never enter images or public evidence.
 | `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** exact DPF correction-word coupling, role-specific correlated-batch simulators, conversion simulator, full live source-to-transcript map, conditional forward theorem, obligation table, and explicit concrete-parameter/authentication/training limits. |
 | `reports/session_handoff_2026_07_21.md` | **HISTORICAL/SUPERSEDED** corrected-M1/v2.3 checkpoint handoff; current status is in `CLAUDE.md` |
 | `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **HISTORICAL COMPONENT PROTOTYPE:** preserves the corrected ideal OT/triple/OLE host logic and 2,432-tree controls. Its old “GPU batching/dependency measurement open” disposition and one-visible-GPU full-gate command are obsolete; use the current source map and the three-GPU canonical command below. |
-| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+ current `.pdf`) | **LIVE internal v2.14 (2026-08-10):** conditional forward proof boundary, current-source projection law, consume-once bootstrap, current SCI/IKNP classifier measurements, regular-DMPF NO-GO, SHAKE256 public-vector random-oracle boundary, retained full-graph/state checkpoint, and explicit trusted-adapter/dealerless-nonlinear/full-model limits. The deterministic 28-page PDF has SHA-256 `533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c`. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+ current `.pdf`) | **LIVE internal/advisor v2.15 (2026-08-14):** conditional forward proof boundary, current classifier measurements, regular-DMPF NO-GO, endpoint/context-only HMAC establishment, explicit source/execution-parameter distinction, and trusted-adapter limits. The deterministic pinned TeX Live 2023 two-pass PDF is 29 pages, SHA-256 `a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39`; its final log is warning/reference/bad-box free, all fonts are embedded Type 1, and every page was visually inspected. |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |
 | `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |
@@ -344,15 +385,15 @@ GATE_IMAGE_ID="$(docker image inspect --format '{{.Id}}' ringlpn-repro:2026-08-1
 ```
 
 The image uses a fixed build UID/GID and deterministic epoch; the host
-dispatcher always runs it as the invoking UID/GID. Before an owner-authorized
-publication run, the measured `GATE_IMAGE_ID` must equal
-`platform.reproduction_gate_image_id` in
-`scripts/publication_environment_manifest_2026_08_10.json`. The image ID is
-distinct from the pinned CUDA base-image digest. The required CPU flags are
-`aes`, `avx2`, `pclmulqdq`, `rdseed`, and `sse4_1`; every visible CPU must
-provide all five before a build or GPU gate starts. Owner authorization requires
-two clean builds to produce the same measured image ID; that proof is still
-pending while the manifest field is null.
+dispatcher always runs it as the invoking UID/GID. The tracked manifest pins
+`platform.reproduction_gate_image_id=sha256:63b6d387733d145bd26e6d1ada75c3dea568c5144f0e2831dc3590079ab9bd35`.
+The dispatcher measures the installed image and requires exact equality. This
+internal authorization does not itself prove that two independent clean builds
+produced the same image; no such two-build receipt is retained, so image-build
+reproducibility remains an external release check. The image ID is distinct
+from the pinned CUDA base-image digest. The required CPU flags are `aes`,
+`avx2`, `pclmulqdq`, `rdseed`, and `sse4_1`; every visible CPU must provide all
+five before a build or GPU gate starts.
 
 Run the same-HEAD local smoke through the host dispatcher into a fresh
 owner-private external mount. The dispatcher measures the final image ID with
@@ -373,9 +414,10 @@ RINGLPN_EVIDENCE_DIR=/absolute/mount/local-smoke-evidence \
 # [ringlpn-reproduce] LOCAL SMOKE PASS — NOT TWO-HOST PUBLICATION EVIDENCE
 ```
 
-GPU roles default to party 0/party 1/checker devices `0/1/2`. Set `P0_GPU`,
-`P1_GPU`, and `CHECK_GPU` for another distinct assignment. The exact nonlinear
-records remain generated by the explicitly TEST-ONLY trusted adapter; this
+GPU roles default to party 0/party 1/checker devices `0/1/2`; all three must be
+pairwise distinct, including every explicit linear lane. The sequential
+test-only trusted adapter may share a party device. It owns both truncation
+successor-mask shares, remask/terminal material, and nonlinear records, so this
 smoke is known-zero graph/state-composition evidence, not dealerless nonlinear
 preprocessing, private/trained inference, accuracy, deployment, or a new
 security claim. Its finalized runtime manifest records the measured gate-image
@@ -388,24 +430,27 @@ host's native rootless Podman. Running the old container command fails exactly:
 on the coordinator host (never via docker run).`
 
 Before SSH or any party secret, the host coordinator rejects a container,
-root execution, a dirty or untagged HEAD, missing external source authorization,
-executor hash drift, absent/stale same-HEAD local-smoke evidence, non-rootless
-Podman, disabled user namespaces, insufficient `/etc/subuid` or `/etc/subgid`
-ranges, missing CPU flags, unavailable/non-`sm_89` GPU, a mutable image
+root execution, a dirty or untagged HEAD, missing operator-supplied external
+source authorization, executor hash drift, absent/stale same-HEAD local-smoke
+evidence, non-rootless Podman, disabled user namespaces, insufficient
+`/etc/subuid` or `/etc/subgid` ranges, missing CPU flags, unavailable/non-`sm_89`
+GPU, a mutable image
 reference, or an in-image FC binary SHA mismatch. Publication evidence,
 same-HEAD local-smoke evidence, the coordinator ledger, and the local party
 ledger must be owner-only, pairwise non-nested mount points backed by distinct
 sources; ledgers must be read-write and are retained, never copied, published,
 or rolled back. The remote party ledger has the equivalent remote contract.
 
-The manifest currently keeps the annotated source/tag authorization, final
-gate-image ID, immutable publication runtime digest/in-image binary SHA, and
-final executor SHA unavailable. Publication therefore fails closed until the
-owner fills those fields and removes their explicit blocking reasons. The
-external `ringlpn-source-authorization/v1` object contains exactly `schema`,
-`tag`, `tag_object_id`, `commit`, and `authorization_digest`; its digest is
-SHA-256 over canonical sorted-key JSON of the other four fields, and it is
-supplied from a read-only mount outside the clone.
+The manifest currently pins the internal gate-image ID but keeps the annotated
+source/tag authorization and immutable publication runtime digest/in-image
+binary/final executor SHA unavailable. Publication therefore fails closed until
+the operator supplies those release values and removes their explicit blocking
+reasons. The external `ringlpn-source-authorization/v1` object is an
+operator-supplied consistency binding, not a cryptographically verified signer
+attestation: it contains exactly `schema`, `tag`, `tag_object_id`, `commit`, and
+`authorization_digest`; its digest is SHA-256 over canonical sorted-key JSON of
+the other four fields, and it is supplied from a read-only mount outside the
+clone.
 
 After those release prerequisites are satisfied, use this host command for the
 current classifier feasibility shape:

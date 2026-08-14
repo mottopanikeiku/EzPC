@@ -15,7 +15,7 @@ import shutil
 import sys
 from typing import Any, NoReturn
 
-PROVENANCE_SCHEMA = "ringlpn-linear-adapter-build-provenance-v1"
+PROVENANCE_SCHEMA = "ringlpn-linear-adapter-build-provenance-v2"
 APPROVAL_SCHEMA = "ringlpn-linear-adapter-binary-approval-v2"
 APPROVAL_SCOPE = "reproducible_linear_adapters_for_internal_advisor_execution"
 CLASSIFICATION = "internal/advisor"
@@ -42,6 +42,22 @@ REQUIRED_TOOLS = frozenset({
     "host_assembler", "host_cc1plus", "host_collect2", "host_cxx",
     "host_linker", "nvcc", "objcopy",
 })
+REPO_TOKEN = "${REPO}"
+CANONICAL_SOURCE_TOKEN = "${CANONICAL_SOURCE}"
+BUILD_ROOT_TOKEN = "${BUILD_ROOT}"
+ALLOWED_PATH_TOKENS = frozenset({
+    REPO_TOKEN, CANONICAL_SOURCE_TOKEN, BUILD_ROOT_TOKEN,
+})
+RAW_ENVIRONMENT_KEYS = frozenset({
+    "CUDA_ARCH", "CXX", "HOME", "LANG", "LC_ALL", "NVCC", "OBJCOPY",
+    "PATH", "PWD", "RINGLPN_CANONICAL_BUILD_ACTIVE",
+    "RINGLPN_COMPONENT_DISPATCH_ACTIVE", "RINGLPN_LINEAR_COMMAND_FILE",
+    "RINGLPN_LINEAR_DEPFILE", "RINGLPN_LINEAR_ENVIRONMENT_FILE",
+    "RINGLPN_LINEAR_KIND", "RINGLPN_LINEAR_LINK_MAP", "SHLVL",
+    "SOURCE_DATE_EPOCH", "TMPDIR", "TZ", "ZERO_AR_DATE", "_",
+})
+STORED_ENVIRONMENT_KEYS = RAW_ENVIRONMENT_KEYS.difference({"SHLVL", "_"})
+
 class ProvenanceError(RuntimeError):
     pass
 
@@ -210,6 +226,59 @@ def read_environment(path: pathlib.Path) -> dict[str, str]:
     if not result:
         raise ProvenanceError(f"empty build environment receipt: {path}")
     return dict(sorted(result.items()))
+def normalize_receipt_text(value: str, repo: pathlib.Path,
+                           build_root: pathlib.Path) -> str:
+    replacements = (
+        (str(CANONICAL_BUILD_SOURCE), CANONICAL_SOURCE_TOKEN),
+        (str(build_root), BUILD_ROOT_TOKEN),
+        (str(repo), REPO_TOKEN),
+    )
+    normalized = value
+    for prefix, token in replacements:
+        normalized = normalized.replace(prefix, token)
+    if any(prefix in normalized for prefix, _ in replacements):
+        raise ProvenanceError("receipt path normalization was incomplete")
+    return normalized
+
+
+def normalize_commands(commands: list[dict[str, Any]], repo: pathlib.Path,
+                       build_root: pathlib.Path) -> list[dict[str, Any]]:
+    return [{
+        "argv": [
+            normalize_receipt_text(argument, repo, build_root)
+            for argument in command["argv"]
+        ],
+        "cwd": normalize_receipt_text(command["cwd"], repo, build_root),
+    } for command in commands]
+
+
+def normalize_environment(environment: dict[str, str], repo: pathlib.Path,
+                          build_root: pathlib.Path) -> dict[str, str]:
+    if set(environment) != set(RAW_ENVIRONMENT_KEYS):
+        missing = sorted(RAW_ENVIRONMENT_KEYS.difference(environment))
+        extra = sorted(set(environment).difference(RAW_ENVIRONMENT_KEYS))
+        raise ProvenanceError(
+            f"build environment differs from the isolated contract; "
+            f"missing={missing}, extra={extra}"
+        )
+    return {
+        name: normalize_receipt_text(environment[name], repo, build_root)
+        for name in sorted(STORED_ENVIRONMENT_KEYS)
+    }
+
+
+def validate_portable_receipt_text(value: Any, repo: pathlib.Path,
+                                   label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ProvenanceError(f"{label} must be a nonempty string")
+    placeholders = set(re.findall(r"\$\{[^}]+\}", value))
+    if not placeholders.issubset(ALLOWED_PATH_TOKENS):
+        raise ProvenanceError(f"{label} contains an unsupported path token")
+    if (str(repo) in value or "/tmp/ringlpn-linear-provenance." in value or
+            re.search(r"(?:^|[=,:])/home/[^/]+/", value)):
+        raise ProvenanceError(f"{label} contains a workstation-specific path")
+    return value
+
 
 
 def merge_binding(bindings: dict[str, dict[str, Any]], key: str,
@@ -349,7 +418,10 @@ def build_receipt(build_dir: pathlib.Path, build_id: str, repo: pathlib.Path,
     for kind in KINDS:
         commands = read_commands(build_dir / f"{kind}.commands")
         cwd = pathlib.Path(commands[0]["cwd"])
-        environment = read_environment(build_dir / f"{kind}.environment")
+        environment = normalize_environment(
+            read_environment(build_dir / f"{kind}.environment"),
+            repo, build_dir.parent,
+        )
         environments[kind] = environment
         depfiles = sorted(build_dir.glob(f"{kind}.d.*"))
         if len(depfiles) != 6:
@@ -400,7 +472,7 @@ def build_receipt(build_dir: pathlib.Path, build_id: str, repo: pathlib.Path,
         binary_name = f"test_two_party_{kind}_preprocess"
         binary_path = build_dir / f"{kind}.elf"
         adapters[binary_name] = {
-            "commands": commands,
+            "commands": normalize_commands(commands, repo, build_dir.parent),
             "output": file_binding(binary_path),
         }
     receipt: dict[str, Any] = {
@@ -481,6 +553,25 @@ def validate_receipt(receipt: Any, repo: pathlib.Path,
         if (not isinstance(adapter, dict) or set(adapter) != {"commands", "output"} or
                 not isinstance(adapter["commands"], list) or len(adapter["commands"]) != 2):
             raise ProvenanceError(f"invalid adapter command receipt: {name}")
+        commands = adapter["commands"]
+        expected_cwds = [
+            f"{CANONICAL_SOURCE_TOKEN}/GPU-MPC/ringlpn",
+            f"{REPO_TOKEN}/GPU-MPC/ringlpn",
+        ]
+        for index, command in enumerate(commands):
+            if (not isinstance(command, dict) or
+                    set(command) != {"argv", "cwd"} or
+                    command.get("cwd") != expected_cwds[index] or
+                    not isinstance(command.get("argv"), list) or
+                    not command["argv"]):
+                raise ProvenanceError(f"invalid normalized command receipt: {name}")
+            validate_portable_receipt_text(
+                command["cwd"], repo, f"{name} command cwd"
+            )
+            for argument in command["argv"]:
+                validate_portable_receipt_text(
+                    argument, repo, f"{name} command argument"
+                )
         output = adapter["output"]
         if not isinstance(output, dict) or set(output) != {"sha256", "size"}:
             raise ProvenanceError(f"invalid adapter output binding: {name}")
@@ -490,16 +581,38 @@ def validate_receipt(receipt: Any, repo: pathlib.Path,
     environments = receipt.get("environment")
     if not isinstance(environments, dict) or set(environments) != set(KINDS):
         raise ProvenanceError("build receipt lacks exact FC/Conv environments")
+    build_round = receipt["build_id"].rsplit("-", 1)[-1]
     for kind, environment in environments.items():
-        if not isinstance(environment, dict) or not environment:
-            raise ProvenanceError(f"invalid build environment: {kind}")
-        required = {"CUDA_ARCH", "CXX", "HOME", "LANG", "LC_ALL", "NVCC",
-                    "OBJCOPY", "PATH", "SOURCE_DATE_EPOCH", "TZ", "ZERO_AR_DATE"}
-        if not required.issubset(environment):
-            raise ProvenanceError(f"build environment omits deterministic inputs: {kind}")
-        if verify_environment and environment.get("LC_ALL") != "C":
-            raise ProvenanceError(f"uncontrolled locale in build environment: {kind}")
-
+        if (not isinstance(environment, dict) or
+                set(environment) != set(STORED_ENVIRONMENT_KEYS)):
+            raise ProvenanceError(f"invalid normalized build environment: {kind}")
+        expected = {
+            "HOME": f"{BUILD_ROOT_TOKEN}/home",
+            "LANG": "C",
+            "LC_ALL": "C",
+            "PWD": f"{REPO_TOKEN}/GPU-MPC/ringlpn",
+            "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
+            "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
+            "RINGLPN_LINEAR_COMMAND_FILE":
+                f"{BUILD_ROOT_TOKEN}/build-{build_round}/{kind}.commands",
+            "RINGLPN_LINEAR_DEPFILE":
+                f"{BUILD_ROOT_TOKEN}/build-{build_round}/{kind}.d",
+            "RINGLPN_LINEAR_ENVIRONMENT_FILE":
+                f"{BUILD_ROOT_TOKEN}/build-{build_round}/{kind}.environment",
+            "RINGLPN_LINEAR_KIND": kind,
+            "RINGLPN_LINEAR_LINK_MAP":
+                f"{BUILD_ROOT_TOKEN}/build-{build_round}/{kind}.map",
+            "SOURCE_DATE_EPOCH": "0",
+            "TMPDIR": f"{BUILD_ROOT_TOKEN}/tmp-{build_round}",
+            "TZ": "UTC",
+            "ZERO_AR_DATE": "1",
+        }
+        if any(environment.get(name) != value for name, value in expected.items()):
+            raise ProvenanceError(f"normalized build environment differs: {kind}")
+        for name, value in environment.items():
+            validate_portable_receipt_text(
+                value, repo, f"{kind} environment {name}"
+            )
 
 def verify_provenance_document(document: dict[str, Any], repo: pathlib.Path,
                                ringlpn: pathlib.Path,

@@ -143,12 +143,12 @@ projected distribution or structured Ring-LPN code.
 **Parameter disposition:** no `(n,c,t,p0,p1)` set is pinned. The raw projection
 CSV is retained only as a function transcript with the current erratum and
 binding status in `results/security/README.md`; every dated `conservative_pin`
-result is invalid for parameter selection. The current live sampler hash no
-longer matches the structured-attack report, and the hybrid-RSD script/CSV no
-longer match their embedded/report pins, so those source bindings must be
-regenerated before use. A reviewed projection-distribution/tail/structured-code
-lemma, advantage budget for both limbs, and BCG rule clarification are required
-before another estimator sweep.
+result is invalid for parameter selection. The current live sampler is rebound
+to the structured-attack audit at `fbdb56f8...`, and the hybrid-RSD script/CSV
+are freshly paired at `cbcedaf6...`/`1f671d94...`. This closes evidence
+staleness and exact distribution correspondence only; the structured-code/
+two-limb reduction, concrete parameter pin, BCG rule clarification, and
+independent review remain open.
 
 ## 3. Candidate feasibility, not security
 
@@ -229,11 +229,14 @@ The exact ResNet18 classifier-layer preprocessing contract passes with a matched
 dealer timing. This closes the earlier executable-composition gap and makes the
 systems integration a real artifact contribution.
 
-It does not make the work submission-ready. The exact regular-noise projection
-law above, concrete Ring-LPN parameter pin, authenticated/two-host deployment,
-broader model coverage, closest compatible dealerless baseline, and
-independent review remain open. The corrected three-OLE Phase C is classified
-as a local protocol bug fix and compatibility artifact. No reviewed delta from
+It does not make the work submission-ready. The known-zero full-graph seam is
+closed with a trusted test-only adapter that owns both truncation
+successor-mask shares, remask/terminal material, and nonlinear keys. The
+concrete Ring-LPN parameter pin, dealerless nonlinear setup, private/trained
+accuracy evidence, authenticated two-host execution, compatible baseline, and
+independent review remain open.
+The corrected three-OLE Phase C is classified as a local protocol bug fix and
+compatibility artifact. No reviewed delta from
 Doerner--shelat, BCG+20 distributed setup, Programmable DPF, or the 2026 DMPF
 work has been identified. The removed sign opening was a flaw in this
 project's prior prototype, not evidence of a flaw in those papers.

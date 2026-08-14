@@ -12,22 +12,22 @@
                 "-arch=sm_89",
                 "-diag-suppress=20012",
                 "-Xcompiler=-fpermissive,-maes,-msse4.1,-mpclmul,-mavx2,-mrdseed,-pthread",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/tools/util/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/llama/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/bitpack",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/tools/util/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/cryptoTools",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/llama/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/bitpack",
+                "-I${CANONICAL_SOURCE}/SCI/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ringlpn/src",
                 "-ccbin=/usr/bin/x86_64-linux-gnu-g++-13",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.,-fdebug-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source,-fdebug-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source",
                 "-Xcudafe=--orig_src_path_name=/ringlpn/reproducible-two-party-conv.cu",
                 "-Xcompiler=-frandom-seed=ringlpn-two-party-conv-20260810",
                 "-Xlinker=--build-id=none",
-                "-Xlinker=-Map=/tmp/ringlpn-linear-provenance.6vCuH0/build-1/conv.map",
+                "-Xlinker=-Map=${BUILD_ROOT}/build-1/conv.map",
                 "--keep",
                 "--keep-dir=bin/.two-party-conv-nvcc",
                 "src/test_two_party_conv_preprocess.cu",
@@ -44,16 +44,16 @@
                 "-o",
                 "bin/.two-party-conv-nvcc/output"
               ],
-              "cwd": "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn"
+              "cwd": "${CANONICAL_SOURCE}/GPU-MPC/ringlpn"
             },
             {
               "argv": [
                 "/usr/bin/x86_64-linux-gnu-objcopy",
                 "--remove-section",
                 ".comment",
-                "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/.two-party-conv-nvcc/output"
+                "${CANONICAL_SOURCE}/GPU-MPC/ringlpn/bin/.two-party-conv-nvcc/output"
               ],
-              "cwd": "/home/fatih/EzPC/GPU-MPC/ringlpn"
+              "cwd": "${REPO}/GPU-MPC/ringlpn"
             }
           ],
           "output": {
@@ -71,22 +71,22 @@
                 "-arch=sm_89",
                 "-diag-suppress=20012",
                 "-Xcompiler=-fpermissive,-maes,-msse4.1,-mpclmul,-mavx2,-mrdseed,-pthread",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/tools/util/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/llama/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/bitpack",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/tools/util/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/cryptoTools",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/llama/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/bitpack",
+                "-I${CANONICAL_SOURCE}/SCI/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ringlpn/src",
                 "-ccbin=/usr/bin/x86_64-linux-gnu-g++-13",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.,-fdebug-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source,-fdebug-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source",
                 "-Xcudafe=--orig_src_path_name=/ringlpn/reproducible-two-party-fc.cu",
                 "-Xcompiler=-frandom-seed=ringlpn-two-party-fc-20260810",
                 "-Xlinker=--build-id=none",
-                "-Xlinker=-Map=/tmp/ringlpn-linear-provenance.6vCuH0/build-1/fc.map",
+                "-Xlinker=-Map=${BUILD_ROOT}/build-1/fc.map",
                 "--keep",
                 "--keep-dir=bin/.two-party-fc-nvcc",
                 "src/test_two_party_fc_preprocess.cu",
@@ -103,16 +103,16 @@
                 "-o",
                 "bin/.two-party-fc-nvcc/output"
               ],
-              "cwd": "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn"
+              "cwd": "${CANONICAL_SOURCE}/GPU-MPC/ringlpn"
             },
             {
               "argv": [
                 "/usr/bin/x86_64-linux-gnu-objcopy",
                 "--remove-section",
                 ".comment",
-                "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/.two-party-fc-nvcc/output"
+                "${CANONICAL_SOURCE}/GPU-MPC/ringlpn/bin/.two-party-fc-nvcc/output"
               ],
-              "cwd": "/home/fatih/EzPC/GPU-MPC/ringlpn"
+              "cwd": "${REPO}/GPU-MPC/ringlpn"
             }
           ],
           "output": {
@@ -126,50 +126,46 @@
         "conv": {
           "CUDA_ARCH": "89",
           "CXX": "/usr/bin/x86_64-linux-gnu-g++-13",
-          "HOME": "/tmp/ringlpn-linear-provenance.6vCuH0/home",
+          "HOME": "${BUILD_ROOT}/home",
           "LANG": "C",
           "LC_ALL": "C",
           "NVCC": "/usr/local/cuda-12.6/bin/nvcc",
           "OBJCOPY": "/usr/bin/x86_64-linux-gnu-objcopy",
           "PATH": "/usr/local/cuda/bin:/usr/bin:/bin",
-          "PWD": "/home/fatih/EzPC/GPU-MPC/ringlpn",
+          "PWD": "${REPO}/GPU-MPC/ringlpn",
           "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
           "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
-          "RINGLPN_LINEAR_COMMAND_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/conv.commands",
-          "RINGLPN_LINEAR_DEPFILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/conv.d",
-          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/conv.environment",
+          "RINGLPN_LINEAR_COMMAND_FILE": "${BUILD_ROOT}/build-1/conv.commands",
+          "RINGLPN_LINEAR_DEPFILE": "${BUILD_ROOT}/build-1/conv.d",
+          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "${BUILD_ROOT}/build-1/conv.environment",
           "RINGLPN_LINEAR_KIND": "conv",
-          "RINGLPN_LINEAR_LINK_MAP": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/conv.map",
-          "SHLVL": "3",
+          "RINGLPN_LINEAR_LINK_MAP": "${BUILD_ROOT}/build-1/conv.map",
           "SOURCE_DATE_EPOCH": "0",
-          "TMPDIR": "/tmp/ringlpn-linear-provenance.6vCuH0/tmp-1",
+          "TMPDIR": "${BUILD_ROOT}/tmp-1",
           "TZ": "UTC",
-          "ZERO_AR_DATE": "1",
-          "_": "/usr/bin/env"
+          "ZERO_AR_DATE": "1"
         },
         "fc": {
           "CUDA_ARCH": "89",
           "CXX": "/usr/bin/x86_64-linux-gnu-g++-13",
-          "HOME": "/tmp/ringlpn-linear-provenance.6vCuH0/home",
+          "HOME": "${BUILD_ROOT}/home",
           "LANG": "C",
           "LC_ALL": "C",
           "NVCC": "/usr/local/cuda-12.6/bin/nvcc",
           "OBJCOPY": "/usr/bin/x86_64-linux-gnu-objcopy",
           "PATH": "/usr/local/cuda/bin:/usr/bin:/bin",
-          "PWD": "/home/fatih/EzPC/GPU-MPC/ringlpn",
+          "PWD": "${REPO}/GPU-MPC/ringlpn",
           "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
           "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
-          "RINGLPN_LINEAR_COMMAND_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/fc.commands",
-          "RINGLPN_LINEAR_DEPFILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/fc.d",
-          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/fc.environment",
+          "RINGLPN_LINEAR_COMMAND_FILE": "${BUILD_ROOT}/build-1/fc.commands",
+          "RINGLPN_LINEAR_DEPFILE": "${BUILD_ROOT}/build-1/fc.d",
+          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "${BUILD_ROOT}/build-1/fc.environment",
           "RINGLPN_LINEAR_KIND": "fc",
-          "RINGLPN_LINEAR_LINK_MAP": "/tmp/ringlpn-linear-provenance.6vCuH0/build-1/fc.map",
-          "SHLVL": "3",
+          "RINGLPN_LINEAR_LINK_MAP": "${BUILD_ROOT}/build-1/fc.map",
           "SOURCE_DATE_EPOCH": "0",
-          "TMPDIR": "/tmp/ringlpn-linear-provenance.6vCuH0/tmp-1",
+          "TMPDIR": "${BUILD_ROOT}/tmp-1",
           "TZ": "UTC",
-          "ZERO_AR_DATE": "1",
-          "_": "/usr/bin/env"
+          "ZERO_AR_DATE": "1"
         }
       },
       "external_inputs": {
@@ -6061,7 +6057,7 @@
           "size": 9400
         }
       },
-      "receipt_digest": "7eca819df80f8c98788516b04ce785b91f77e633a1baf16e8ecaf09fb73aaac1",
+      "receipt_digest": "572f095e236ba44c2eeb7655c7b77bcc9163a3abc7d518010f59097d3d0b75a2",
       "tools": {
         "cuda_cicc": {
           "path": "/usr/local/cuda-12.6/nvvm/bin/cicc",
@@ -7228,8 +7224,8 @@
           "size": 5158
         },
         "GPU-MPC/ringlpn/scripts/linear_adapter_build_provenance.py": {
-          "sha256": "de72b85bd6560e1705d33cef8e360fdf30c79a4f032b2707b95415ef13127a48",
-          "size": 32388
+          "sha256": "deb8b6f5ac17f80a90603dae43700c58a5d3d242d09edbfc655b586410b14acc",
+          "size": 37323
         },
         "GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu": {
           "sha256": "44886cad675cea967fcdd5c28aee13b43dc1da6675b3aa866c4ddad599b82f11",
@@ -7533,22 +7529,22 @@
                 "-arch=sm_89",
                 "-diag-suppress=20012",
                 "-Xcompiler=-fpermissive,-maes,-msse4.1,-mpclmul,-mavx2,-mrdseed,-pthread",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/tools/util/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/llama/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/bitpack",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/tools/util/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/cryptoTools",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/llama/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/bitpack",
+                "-I${CANONICAL_SOURCE}/SCI/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ringlpn/src",
                 "-ccbin=/usr/bin/x86_64-linux-gnu-g++-13",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.,-fdebug-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source,-fdebug-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source",
                 "-Xcudafe=--orig_src_path_name=/ringlpn/reproducible-two-party-conv.cu",
                 "-Xcompiler=-frandom-seed=ringlpn-two-party-conv-20260810",
                 "-Xlinker=--build-id=none",
-                "-Xlinker=-Map=/tmp/ringlpn-linear-provenance.6vCuH0/build-2/conv.map",
+                "-Xlinker=-Map=${BUILD_ROOT}/build-2/conv.map",
                 "--keep",
                 "--keep-dir=bin/.two-party-conv-nvcc",
                 "src/test_two_party_conv_preprocess.cu",
@@ -7565,16 +7561,16 @@
                 "-o",
                 "bin/.two-party-conv-nvcc/output"
               ],
-              "cwd": "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn"
+              "cwd": "${CANONICAL_SOURCE}/GPU-MPC/ringlpn"
             },
             {
               "argv": [
                 "/usr/bin/x86_64-linux-gnu-objcopy",
                 "--remove-section",
                 ".comment",
-                "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/.two-party-conv-nvcc/output"
+                "${CANONICAL_SOURCE}/GPU-MPC/ringlpn/bin/.two-party-conv-nvcc/output"
               ],
-              "cwd": "/home/fatih/EzPC/GPU-MPC/ringlpn"
+              "cwd": "${REPO}/GPU-MPC/ringlpn"
             }
           ],
           "output": {
@@ -7592,22 +7588,22 @@
                 "-arch=sm_89",
                 "-diag-suppress=20012",
                 "-Xcompiler=-fpermissive,-maes,-msse4.1,-mpclmul,-mavx2,-mrdseed,-pthread",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/cutlass/tools/util/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/llama/include",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/bitpack",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src",
-                "-I/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/cutlass/tools/util/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/cryptoTools",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/llama/include",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ext/sytorch/ext/bitpack",
+                "-I${CANONICAL_SOURCE}/SCI/src",
+                "-I${CANONICAL_SOURCE}/GPU-MPC/ringlpn/src",
                 "-ccbin=/usr/bin/x86_64-linux-gnu-g++-13",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn=.",
-                "-Xcompiler=-ffile-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source,-fdebug-prefix-map=/tmp/ringlpn-linear-adapter-reproducible-build/source=/ringlpn/source",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.,-fdebug-prefix-map=${CANONICAL_SOURCE}/GPU-MPC/ringlpn=.",
+                "-Xcompiler=-ffile-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source,-fdebug-prefix-map=${CANONICAL_SOURCE}=/ringlpn/source",
                 "-Xcudafe=--orig_src_path_name=/ringlpn/reproducible-two-party-fc.cu",
                 "-Xcompiler=-frandom-seed=ringlpn-two-party-fc-20260810",
                 "-Xlinker=--build-id=none",
-                "-Xlinker=-Map=/tmp/ringlpn-linear-provenance.6vCuH0/build-2/fc.map",
+                "-Xlinker=-Map=${BUILD_ROOT}/build-2/fc.map",
                 "--keep",
                 "--keep-dir=bin/.two-party-fc-nvcc",
                 "src/test_two_party_fc_preprocess.cu",
@@ -7624,16 +7620,16 @@
                 "-o",
                 "bin/.two-party-fc-nvcc/output"
               ],
-              "cwd": "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn"
+              "cwd": "${CANONICAL_SOURCE}/GPU-MPC/ringlpn"
             },
             {
               "argv": [
                 "/usr/bin/x86_64-linux-gnu-objcopy",
                 "--remove-section",
                 ".comment",
-                "/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/.two-party-fc-nvcc/output"
+                "${CANONICAL_SOURCE}/GPU-MPC/ringlpn/bin/.two-party-fc-nvcc/output"
               ],
-              "cwd": "/home/fatih/EzPC/GPU-MPC/ringlpn"
+              "cwd": "${REPO}/GPU-MPC/ringlpn"
             }
           ],
           "output": {
@@ -7647,50 +7643,46 @@
         "conv": {
           "CUDA_ARCH": "89",
           "CXX": "/usr/bin/x86_64-linux-gnu-g++-13",
-          "HOME": "/tmp/ringlpn-linear-provenance.6vCuH0/home",
+          "HOME": "${BUILD_ROOT}/home",
           "LANG": "C",
           "LC_ALL": "C",
           "NVCC": "/usr/local/cuda-12.6/bin/nvcc",
           "OBJCOPY": "/usr/bin/x86_64-linux-gnu-objcopy",
           "PATH": "/usr/local/cuda/bin:/usr/bin:/bin",
-          "PWD": "/home/fatih/EzPC/GPU-MPC/ringlpn",
+          "PWD": "${REPO}/GPU-MPC/ringlpn",
           "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
           "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
-          "RINGLPN_LINEAR_COMMAND_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/conv.commands",
-          "RINGLPN_LINEAR_DEPFILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/conv.d",
-          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/conv.environment",
+          "RINGLPN_LINEAR_COMMAND_FILE": "${BUILD_ROOT}/build-2/conv.commands",
+          "RINGLPN_LINEAR_DEPFILE": "${BUILD_ROOT}/build-2/conv.d",
+          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "${BUILD_ROOT}/build-2/conv.environment",
           "RINGLPN_LINEAR_KIND": "conv",
-          "RINGLPN_LINEAR_LINK_MAP": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/conv.map",
-          "SHLVL": "3",
+          "RINGLPN_LINEAR_LINK_MAP": "${BUILD_ROOT}/build-2/conv.map",
           "SOURCE_DATE_EPOCH": "0",
-          "TMPDIR": "/tmp/ringlpn-linear-provenance.6vCuH0/tmp-2",
+          "TMPDIR": "${BUILD_ROOT}/tmp-2",
           "TZ": "UTC",
-          "ZERO_AR_DATE": "1",
-          "_": "/usr/bin/env"
+          "ZERO_AR_DATE": "1"
         },
         "fc": {
           "CUDA_ARCH": "89",
           "CXX": "/usr/bin/x86_64-linux-gnu-g++-13",
-          "HOME": "/tmp/ringlpn-linear-provenance.6vCuH0/home",
+          "HOME": "${BUILD_ROOT}/home",
           "LANG": "C",
           "LC_ALL": "C",
           "NVCC": "/usr/local/cuda-12.6/bin/nvcc",
           "OBJCOPY": "/usr/bin/x86_64-linux-gnu-objcopy",
           "PATH": "/usr/local/cuda/bin:/usr/bin:/bin",
-          "PWD": "/home/fatih/EzPC/GPU-MPC/ringlpn",
+          "PWD": "${REPO}/GPU-MPC/ringlpn",
           "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
           "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
-          "RINGLPN_LINEAR_COMMAND_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/fc.commands",
-          "RINGLPN_LINEAR_DEPFILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/fc.d",
-          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/fc.environment",
+          "RINGLPN_LINEAR_COMMAND_FILE": "${BUILD_ROOT}/build-2/fc.commands",
+          "RINGLPN_LINEAR_DEPFILE": "${BUILD_ROOT}/build-2/fc.d",
+          "RINGLPN_LINEAR_ENVIRONMENT_FILE": "${BUILD_ROOT}/build-2/fc.environment",
           "RINGLPN_LINEAR_KIND": "fc",
-          "RINGLPN_LINEAR_LINK_MAP": "/tmp/ringlpn-linear-provenance.6vCuH0/build-2/fc.map",
-          "SHLVL": "3",
+          "RINGLPN_LINEAR_LINK_MAP": "${BUILD_ROOT}/build-2/fc.map",
           "SOURCE_DATE_EPOCH": "0",
-          "TMPDIR": "/tmp/ringlpn-linear-provenance.6vCuH0/tmp-2",
+          "TMPDIR": "${BUILD_ROOT}/tmp-2",
           "TZ": "UTC",
-          "ZERO_AR_DATE": "1",
-          "_": "/usr/bin/env"
+          "ZERO_AR_DATE": "1"
         }
       },
       "external_inputs": {
@@ -13582,7 +13574,7 @@
           "size": 9400
         }
       },
-      "receipt_digest": "362a1a15516d03d56919cade021551730fb53a8afda33378fe3da4673754a0e4",
+      "receipt_digest": "37d0cb0c4347070a79530b513f5141573cfeaa8466d896f79ae331118076585f",
       "tools": {
         "cuda_cicc": {
           "path": "/usr/local/cuda-12.6/nvvm/bin/cicc",
@@ -14749,8 +14741,8 @@
           "size": 5158
         },
         "GPU-MPC/ringlpn/scripts/linear_adapter_build_provenance.py": {
-          "sha256": "de72b85bd6560e1705d33cef8e360fdf30c79a4f032b2707b95415ef13127a48",
-          "size": 32388
+          "sha256": "deb8b6f5ac17f80a90603dae43700c58a5d3d242d09edbfc655b586410b14acc",
+          "size": 37323
         },
         "GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu": {
           "sha256": "44886cad675cea967fcdd5c28aee13b43dc1da6675b3aa866c4ddad599b82f11",
@@ -15057,6 +15049,6 @@
     "status": "identical"
   },
   "classification": "internal/advisor",
-  "provenance_digest": "4d18d66088af1617900f811c599219be3c0d4d8efd54a377feddb8099f98ffa8",
-  "schema": "ringlpn-linear-adapter-build-provenance-v1"
+  "provenance_digest": "f06270165bb9df6dc496c7bdc917d31e1fb0723d3db83564aa072b58ddb02ce5",
+  "schema": "ringlpn-linear-adapter-build-provenance-v2"
 }

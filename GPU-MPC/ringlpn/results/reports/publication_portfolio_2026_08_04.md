@@ -84,23 +84,26 @@ A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG ou
 - Party-local GPU Ring-LPN expansion on distinct GPUs.
 - Exact two-party `Z_Q -> Z_(2^bw)` conversion.
 - Persistent consume-once correlation claims, current versioned party records,
-  and eleven focused duplicate/restart/reuse/collision/truncation/record controls.
-- Retained older-binary ResNet18 classifier shape `1x512x1000`, q128/bw32
-  feasibility evidence: 10/10 measured trials after one warmup, 4.064-s median
-  preprocessing, 182,372,344 application bytes, 14.863-ms shape/contract-
-  matched stock dealer median, and 1.152-ms unchanged online median. The
-  producer begins `ca4b175a...`, not current FC binary `29c420c3...`, and
-  physical-GPU/occupancy state was not controlled; this is historical,
-  descriptive evidence, not a current or same-hardware A/B result. It records
-  11,023 dependency layers and exact slot accounting. SCI/IKNP supplies the
-  headline row; EMP-Silent remains historical opt-in and unreviewed.
+  and sixteen focused endpoint/context-authentication, freshness, ledger,
+  capacity, and record controls.
+- Current ResNet18 classifier shape `1x512x1000`, q128/bw32 feasibility
+  evidence (binary `02eaaac9...`): 10/10 measured trials after one warmup,
+  4.011203588-s mean and 4.0193924415-s median setup-included preprocessing,
+  182,372,344 application bytes, 14.73535-ms shape/contract-matched stock dealer
+  median, 1.14969-ms unchanged-online median, descriptive per-trial ratio median
+  268.6769431352700, Phase B median 1.955515 s, and Phase C median 0.041723 s.
+  Physical-GPU/occupancy state was not controlled; this is current descriptive
+  classifier evidence, not true end-to-end, same-hardware A/B, current Conv0,
+  or breadth-first speedup evidence. SCI/IKNP supplies the headline row;
+  EMP-Silent remains historical opt-in and unreviewed.
 - Fresh source-bound known-zero ResNet18 systems composition: all 21 isolated
   linear records feed the exact 21-linear/21-truncation/19-stock-key graph
   (one MaxPool, 17 ReLUs, and classifier sign extension), including three
   projection and five identity residuals, integer global pool, and terminal
-  reconstruction. The stock nonlinear keys come from an explicit trusted test
-  adapter, so this is graph/ABI evidence—not dealerless nonlinear preprocessing,
-  private inference, or a new security claim.
+  reconstruction. The trusted test adapter reads both mask states, supplies
+  both truncation successor-mask shares and remask/terminal material, and
+  generates stock nonlinear keys. This is graph/ABI evidence—not dealerless
+  nonlinear preprocessing, private inference, or a new security claim.
 
 These are current feasibility and composition measurements, not a performance
 win, private/trained full-model result, authenticated deployment, or
@@ -110,7 +113,7 @@ q64/q128 denote one/two approximately 62-bit limbs, not security levels.
 ### Submission gates
 
 1. Consume a reviewed concrete parameter manifest from Paper B; rerun every headline row at that exact tuple.
-2. Authenticate both SCI `NetIO` streams end to end and bind peer identity, both ports, SID, manifest, and executable digest. Raw WAN TCP is prohibited.
+2. Protect both SCI streams with authenticated-channel integrity and bind peer identity, both ports, SID, manifest, and executable digest. The current mutual HMAC-SHA256 handshake authenticates endpoints/context before preflight but does not MAC later protocol bytes; raw WAN TCP is prohibited.
 3. Enforce separate OS/container/host identities and party-private roots; checker access begins only after both parties exit.
 4. The 2026-08-06 specialized regular-DMPF audit is a design NO-GO: no
    source-reviewed candidate preserves the fixed transcript, current plain

@@ -1,0 +1,3 @@
+layer,party0_total_us,party1_total_us,critical_path_us,ring_batches,ring_ole_instances,dpf_trees,party0_protocol_bytes_sent,party1_protocol_bytes_sent,final_payload_bytes_per_party,checker_two_share_online_us,linear_record_checker,status
+conv0,3.1815e+08,3.1815e+08,318150000.0,445,1780,455680,11018798352,9400401680,7702016,14471.2,pass,pass
+conv3,2.97313e+08,2.97313e+08,297313000.0,432,1728,442368,5880046215,5475703943,3506176,15516.2,pass,pass

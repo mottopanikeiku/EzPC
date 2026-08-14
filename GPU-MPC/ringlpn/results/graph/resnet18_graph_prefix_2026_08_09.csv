@@ -1,0 +1,2 @@
+conv0_linear,secure_stochastic_truncation,stock_maxpool_execution,stock_relu_execution,conv3_linear,state_link,stock_nonlinear_key_source,scope,status
+pass,pass,pass,pass,pass,pass,stock_trusted_dealer_test_only,known-zero-stock-nonlinear-prefix,pass

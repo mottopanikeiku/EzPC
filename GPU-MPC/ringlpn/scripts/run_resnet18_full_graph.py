@@ -1027,8 +1027,9 @@ def linear_lane_port_range(raw: str, index: int) -> tuple[int, int]:
         first, last = (int(field, 10) for field in port_fields)
     except ValueError:
         fail(f"malformed linear lane {index}; ordinals and ports must be integers")
-    if min(p0_gpu, p1_gpu, check_gpu) < 0 or p0_gpu == p1_gpu:
-        fail(f"linear lane {index} has invalid party GPU ordinals")
+    if min(p0_gpu, p1_gpu, check_gpu) < 0 or \
+            len({p0_gpu, p1_gpu, check_gpu}) != 3:
+        fail(f"linear lane {index} party/checker GPUs must be pairwise distinct")
     if first <= 0 or last > 65535 or last < first + 85:
         fail(f"linear lane {index} port range is invalid or too small")
     return first, last
@@ -1109,9 +1110,12 @@ def main() -> None:
     reject_linux_ephemeral_overlap(
         args.graph_base_port, graph_last_port, "graph port range"
     )
-    if args.p0_gpu == args.p1_gpu or \
-            min(args.p0_gpu, args.p1_gpu, args.check_gpu, args.trusted_gpu) < 0:
-        fail("party GPUs must be distinct and every GPU index nonnegative")
+    if min(args.p0_gpu, args.p1_gpu, args.check_gpu, args.trusted_gpu) < 0 or \
+            len({args.p0_gpu, args.p1_gpu, args.check_gpu}) != 3:
+        fail(
+            "graph party/checker GPUs must be pairwise distinct and every "
+            "GPU index nonnegative"
+        )
     if args.timeout_seconds <= 0:
         fail("timeout must be positive")
     ringlpn = pathlib.Path(__file__).resolve().parents[1]

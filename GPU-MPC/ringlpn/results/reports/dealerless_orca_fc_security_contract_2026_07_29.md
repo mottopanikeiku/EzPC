@@ -788,6 +788,7 @@ adversary, or the open Ring-LPN parameter/reduction obligation.
 | `establish_public_ring_xof()` | one four-word seed share from each party, once per layer; the XOR seed is public | `F_PUBA^(p,H)`, step 2 | at least one honest semi-honest contribution makes the joint 256-bit seed uniform; separately counted as four words per party |
 | `PublicRingVectorXof::generate()` / `validate_public_polynomials()` | no cross-party value; SHAKE256 derives a fresh vector from the joint seed and per-instance scope | `F_PUBA^(p,H)`, step 2 | domain-separated rejection sampling gives independent exact-uniform tails in the random-oracle model; validation fails closed on wrong length, non-identity first polynomial, or noncanonical tail |
 | `sample_party_noise()` | no cross-party value; one party's sparse noise only | step 4 | party-local independent draw |
+| `PartyChannel` socket establishment | versioned mutual HMAC-SHA256 challenge/response over roles, direction, invocation, claim digest, and fresh nonces | endpoint/context establishment before preflight | rejects rogue connector, replay, reflection, and wrong secret; later protocol bytes have no per-message integrity |
 | `agree_spfss_public_manifest()` | public SPFSS dimensions, full Ring-OLE correlation-scope ID, compatibility SID, local-validity bit | step 4, §2.1 | common agreement before DPF output |
 | `two_party_dpf_gen_batch()` Phase A | bit-triple shares and transmitted `delta,epsilon` shares | §4.1 | mapped real SCI/IKNP triples and openings |
 | Phase-B directional OTs and CW exchange | selected 128-bit OT outputs; opened seed/flag CW shares | §4.3 | mapped; exact-CW coupling proved in §4.5 |
@@ -804,17 +805,20 @@ adversary, or the open Ring-LPN parameter/reduction obligation.
 | `publish_record()` | staged-output-validity and rename-result bytes; record carries `iid` and claim digest | step 9, §2.1 | sibling temporary, owner-only mode, bilateral result exchange |
 | `PartyChannel::sync()` | no semantic value | transport accounting | counted separately from logical openings |
 | `run_check()` | reads both finalized records, reconstructs masks, runs matched dealer and unchanged online consumer | validation only | post-exit test oracle; absent from both live parties |
-| runner controls | duplicate ID, restart/retry, compatibility-handle collision, truncated ledger, tail-slot reuse, mismatched preflight, stale output, nonpositive bootstrap capacity, rename failure, corrupt/swapped records | abort/publication contract | eleven corrected-path controls pass |
+| runner controls | rogue first connector, replayed authenticator, direction reflection, wrong secret, duplicate ID, restart/retry, compatibility-handle collision, truncated/corrupt ledger, tail-slot reuse, mismatched preflight, stale output, nonpositive bootstrap capacity, rename failure, corrupt/swapped records | authentication/abort/publication contract | sixteen corrected-path controls pass |
 
 Every live cross-party send is mapped above. In the live source trace, neither
 party reads its peer's file or private arrays. Each party writes its own final
 key record, and the post-exit checker intentionally reads both. The current
 single-UID loopback runner does not enforce OS-level peer file isolation; that
-requires distinct UIDs/containers and inaccessible mounts. TCP is loopback and
-unauthenticated; raw private key records are deleted after the checker. The
-per-record SHA-256 is accidental-corruption detection, not authentication. The
-runner's `COMMITTED` marker is supervisor evidence that both processes exited
-and the checker passed, not a cryptographic commit protocol.
+requires distinct UIDs/containers and inaccessible mounts. Before preflight,
+each plain-TCP socket mutually authenticates endpoint roles and the
+invocation/claim/direction context with HMAC-SHA256 and fresh nonces. Subsequent
+protocol bytes have no per-message MAC/TLS, so this does not realize the
+theorem's authenticated-channel integrity assumption. Raw private key records
+are deleted after the checker. Per-record SHA-256 detects accidental corruption,
+not authentication; `COMMITTED` is supervisor evidence, not a cryptographic
+commit protocol.
 
 ## 6. Leakage contract
 
@@ -845,7 +849,8 @@ In addition to common leakage, `P_b` sees only:
   frontiers, noise shares, fresh output-mask shares, and correlation IDs;
 - its output DPF keys, emitted Orca key fields, and next-state mask shares;
 - messages it sends or receives (authenticated in the target functionality;
-  plain unauthenticated TCP in the current artifact).
+  the current artifact mutually authenticates endpoint/context before preflight,
+  but later plain-TCP messages have no per-message integrity).
 
 ### 6.3 Prohibited leakage
 
@@ -1102,12 +1107,12 @@ composition review extending this forward-only theorem.
 | `P-PAYLOAD` | Three-product Phase C realizes payload correction without sign leakage | Joint three-mask simulation for both parties; zero intermediates and old-sign regression; §4.4 proves the reserved-slot masked-difference realization | closed in ideal-OLE hybrid |
 | `P-BOOT` | Ring-LPN output supplies every post-epoch-zero Phase-C OLE without circular reasoning or correlation reuse | Executable `C_key=3c^2t^2<n` gate; per-limb base case and sequential `F_DDPF`/`F_RINGOLE` induction; exact reserved/consumed/discarded/opening counters; nonpositive-capacity control | closed conditional on `P-PCG` and authenticated semi-honest composition |
 | `P-BATCH` | D1 simulation preserves correlated/repeated tree inputs and public order | Joint state-conditioned sequential hybrid with unique IDs in §7.1--7.4 | closed in D1 hybrid |
-| `P-FRESH` | No primitive correlation or private random-tape draw is reused | §2.1 fixed-width namespace; full IDs in SPFSS/conversion preflights; persistent consume-before-release ledger and record digest binding; eleven duplicate/restart/collision/truncation/tail/capacity/record controls | closed at the stated SHA-256/filesystem boundary; controls pass; independent human review open |
+| `P-FRESH` | No primitive correlation or private random-tape draw is reused | §2.1 fixed-width namespace; full IDs in SPFSS/conversion preflights; persistent consume-before-release ledger and record digest binding; sixteen endpoint/context-authentication, duplicate/restart/collision/ledger/tail/capacity/record controls | closed at the stated SHA-256/filesystem boundary; controls pass; independent human review open |
 | `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | Private roots/noise/masks use OpenSSL's private DRBG; public `a_0` is the unsent identity; each party contributes one 256-bit seed share and domain-separated SHAKE256 rejection-samples the public tail from their XOR in the explicit random-oracle model; GPU DPF expansion uses four domain-separated AES calls | implementation evidence; SHAKE/random-oracle instantiation and concrete reduction review open |
 | `P-PCG` | Role-indexed Figure-2 output is pseudorandom OLE at the exact `a=(1,a_1,...,a_(c-1))`, noise, structured-code, and multi-instance distribution | Figure-2 correctness and leakage-conditioned simulator only. The exact orbit and source-pinned 2024 regular-ISD calculator remain model diagnostics. The self-tested hybrid-RSD script/CSV are freshly paired at `cbcedaf6...`/`1f671d94...`. No reviewed structured-code, resource/success, modern-attack, two-limb, or advantage-composition bridge exists | open/blocking; no parameter pin |
 | `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Exact-conversion lemma above plus two-process SCI/IKNP boundary/control runs | closed in daBit/edaBit/triple hybrid; real transport conditional on semi-honest OT and authenticated channels |
 | `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Live artifact covers one complete forward matmul only | forward closed; training-state extension open |
-| `P-PROC` | Two-process implementation matches the corrected forward transcript | The current focused SCI/IKNP suite passes all five q64/q128 cases/controls; every row records positive P0/P1 breadth-call counts and zero root-to-leaf calls, and all 21 shape plans pass. The current FC binary begins `29c420c3` and the focused approval digest begins `843f837a`. The retained older-binary SCI/IKNP classifier artifact passes 10/10 with 1,536 epoch-zero and 210,432 PCG-supplied Phase-C products per party, exact 211,968 reserved = 210,432 consumed + 1,536 terminal-discarded slots, and unchanged Orca consumption; its binary begins `ca4b175a`. EMP-Silent remains historical opt-in evidence only | corrected SCI/IKNP functional reruns and breadth-path controls pass; retained classifier timings await rerun on the approved current binary; no current Conv0/model-scale timing or speedup claim; no EMP-Silent headline measurement; authenticated peer-isolated deployment open |
+| `P-PROC` | Two-process implementation matches the corrected forward transcript | The current focused SCI/IKNP suite passes all five q64/q128 cases; every row records positive P0/P1 breadth-call counts and zero root-to-leaf calls, and all 21 shape plans pass. Current FC/Conv binaries begin `02eaaac9`/`975ac726`; focused approval digest begins `ce3cc3a5`. The current SCI/IKNP classifier artifact (FC binary `02eaaac9`) passes 10/10 after one warmup with 1,536 epoch-zero and 210,432 PCG-supplied Phase-C products per party, exact 211,968 reserved = 210,432 consumed + 1,536 terminal-discarded slots, and unchanged Orca consumption. EMP-Silent remains historical opt-in evidence only | corrected SCI/IKNP functional reruns, endpoint/context-auth controls, breadth-path controls, and current classifier evidence pass; no true end-to-end, current Conv0, breadth-speedup, same-hardware A/B, or secure-channel claim |
 | `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps epoch-zero OLE, bootstrapped masked differences, the corrected public-polynomial tail, DPF/OT/conversion messages, malformed-vector rejection, records, and post-exit checker | source map current; independent human audit open |
 
 ## 9. Review boundary and current disposition
@@ -1149,31 +1154,33 @@ source-to-transcript map state the corrected
 `a=(1,a_1,...,a_(c-1))` contract. The corrupt party's realized `e_b` is
 preserved and its `X_b` is derived deterministically; only the honest
 expansion/correlation is replaced. The current focused SCI/IKNP suite passes
-all five q64/q128 cases/controls; every row records positive P0/P1 breadth-call
-counts and zero root-to-leaf calls, and all 21 shape plans pass. The current FC
-binary begins `29c420c3` and the focused approval digest begins `843f837a`.
-This is current correctness/path-counter evidence, not a current
-Conv0/model-scale timing or breadth-first speedup claim. The retained
-older-binary ten-trial classifier artifact also passes and records every
-consumed/final-discarded slot; its binary SHA-256 begins `ca4b175a`. Its
-0.041 s median Phase C and 4.064 s median critical-path preprocessing are
-therefore historical internal loopback diagnostics, not current-binary
-timings. Its 272x dealer statistic is shape/contract matched, not controlled on
-the same physical GPU/occupancy, and is not a same-hardware A/B result.
-Independent human cryptographic review remains open.
+all five q64/q128 cases; every row records positive P0/P1 breadth-call counts
+and zero root-to-leaf calls, and all 21 shape plans pass. Current FC/Conv
+binaries begin `02eaaac9`/`975ac726`, and the focused approval digest begins
+`ce3cc3a5`. This is correctness/path-counter evidence, not current Conv0 timing
+or a breadth-first speedup. The regenerated 2026-08-10 SCI/IKNP classifier
+artifact uses the same current FC binary and passes 10/10 after one warmup:
+mean setup-included preprocessing 4.011203588 s, median 4.0193924415 s,
+stock-dealer median 14.73535 ms, unchanged-online median 1.14969 ms,
+descriptive per-trial ratio median 268.6769431352700, Phase B median
+1.955515 s, and Phase C median 0.041723 s. It is not true end-to-end timing, a
+same-physical-GPU/occupancy-controlled A/B result, current Conv0 timing, or a
+breadth-first speedup. Independent human cryptographic review remains open.
 
 The source-bound known-zero full-graph control now composes all 21 fresh linear
 record pairs through the exact 62-item ResNet18 stream, including every secure
 truncation, stock nonlinear consumer, remask, residual, global pool, classifier
-sign extension, and terminal reconstruction. Its stock nonlinear keys come
-from an explicitly TEST-ONLY trusted adapter that reads both parties' mask
-states. This closes the graph/state-composition seam only; it adds no
-dealerless-nonlinear, private/trained-model, concrete-parameter, simulator, or
-end-to-end security claim. The sanitized fresh checkpoint and final manifest
-set are retained under
+sign extension, and terminal reconstruction. Its explicitly TEST-ONLY trusted
+adapter reads both parties' mask states, supplies both truncation successor-mask
+shares and remask/terminal material, and generates stock nonlinear keys. This
+closes the graph/state-composition seam only; it adds no dealerless-nonlinear,
+private/trained-model, concrete-parameter, simulator, or end-to-end security
+claim. The original-byte, internal-only bundle has 17 indexed payload files
+plus `INDEX.json` under
 `results/graph/resnet18_full_graph_checkpoint_2026_08_10/`, bound by manifest
-digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`;
-private records and ledgers are not retained.
+digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`.
+Private records and ledgers are not retained; manifest-bound host/build-root
+provenance blocks external circulation until a fresh normalized run replaces it.
 
 `P-POS` and `P-PCG` remain hard theorem blockers. The exact regular-projection
 and coefficient-cancellation law is freshly rebound to the current sampler,
@@ -1183,16 +1190,18 @@ resource/data/success-normalized direct modern-RSD disposition, role-indexed
 multi-instance advantage bound, two-CRT-limb composition, or concrete parameter
 pin exists. The proved cyclic orbit is not a reviewed arbitrary-decoder speedup.
 `P-KEY` remains conditional on the standard DPF/PRG theorem. `P-FRESH` is
-closed only under the explicit
-SHA-256, one deployment-wide private persistent ledger, OS exclusive-create,
-fsync/atomic-rename, and no deletion/cloning/storage-rollback assumptions.
-The measured live TCP transport is unauthenticated same-host loopback.
-Therefore the honest claim is a *conditionally specified forward-FC theorem
-and current source-aligned functional artifact*, not “security proved,”
-“128-bit secure,” authenticated deployment, or publication readiness. Beyond
-the closed known-zero graph/state seam, the remaining systems gates are
-dealerless nonlinear setup, repeated private-input/trained-model evidence, an
-authenticated two-host run, and independent review.
+closed only under the explicit SHA-256, one deployment-wide private persistent
+ledger, OS exclusive-create, fsync/atomic-rename, and no
+deletion/cloning/storage-rollback assumptions. Each live loopback socket
+performs mutual HMAC-SHA256 endpoint/context establishment before preflight,
+but subsequent protocol traffic has no per-message integrity. The theorem's
+authenticated-channel assumption therefore remains unrealized. The honest
+claim is a *conditionally specified forward-FC theorem and current
+source-aligned functional artifact*, not “security proved,” “128-bit secure,”
+authenticated deployment, or publication readiness. Beyond the closed
+known-zero graph/state seam, the remaining systems gates are dealerless
+nonlinear setup, repeated private-input/trained-model evidence, an authenticated
+two-host run, and independent review.
 
 **Next security checkpoint:** independent human review of the structured-code
 reduction, two-limb advantage composition, and current transcript theorem.

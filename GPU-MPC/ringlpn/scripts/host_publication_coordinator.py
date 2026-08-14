@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 from typing import Any
+from retained_public_evidence import scan_private_artifacts
 
 GUIDANCE = (
     "two-host-publication must run on each host's native rootless Podman; "
@@ -139,42 +140,6 @@ def parse_args(argv: list[str]) -> tuple[str, str, list[str], dict[str, str]]:
     return checker_uid, checker_gpu, launcher, values
 
 
-PRIVATE_SUFFIXES = {
-    ".claim", ".conv", ".convert", ".fc", ".key", ".noise",
-    ".record", ".spfss", ".state", ".truncate",
-}
-PRIVATE_DIRECTORY_NAMES = {
-    "correlation-ledger", "ledger", "private_inputs", "two_party_gpu_keys",
-    "two_party_keys", "two_party_outputs",
-}
-PRIVATE_DIRECTORY_PREFIXES = (
-    "two_party_fc_work_", "two_party_conv_work_",
-    "two_party_fc_model_scale_work_", "forward_linear_record_set_",
-)
-
-
-def private_artifact_scan(repo: pathlib.Path) -> None:
-    root = repo / "GPU-MPC/ringlpn"
-    survivors: list[str] = []
-    for path in root.rglob("*"):
-        relative_to_root = path.relative_to(root)
-        private_component = any(
-            part in PRIVATE_DIRECTORY_NAMES
-            or part.startswith(PRIVATE_DIRECTORY_PREFIXES)
-            for part in relative_to_root.parts
-        )
-        if path.is_symlink():
-            if private_component or path.suffix in PRIVATE_SUFFIXES:
-                survivors.append(path.relative_to(repo).as_posix())
-        elif private_component or (path.is_file() and path.suffix in PRIVATE_SUFFIXES):
-            survivors.append(path.relative_to(repo).as_posix())
-        if len(survivors) >= 20:
-            break
-    if survivors:
-        fail(
-            "private key/state/ledger/scratch artifacts or private-named "
-            "symlinks exist in clean source: " + " | ".join(survivors)
-        )
 
 
 def verify_authorized_worktree(repo: pathlib.Path, commit: str) -> None:
@@ -272,7 +237,7 @@ def validate_source(repo: pathlib.Path, manifest_path: pathlib.Path,
     status = run(["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=all"], capture=True).stdout
     if status:
         fail("source clone is dirty or contains untracked files")
-    private_artifact_scan(repo)
+    scan_private_artifacts(repo, manifest_path, publication=True)
     manifest = load_object(manifest_path, "publication environment manifest")
     if manifest.get("schema") != SCHEMA or manifest.get("manifest_digest") != canonical_digest(manifest, "manifest_digest"):
         fail("publication environment schema or self-digest differs")
@@ -681,7 +646,7 @@ def main() -> int:
         fail("final checker/finalizer COMMITTED contract failed")
     if run(["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=all"], capture=True).stdout:
         fail("publication mutated the original clean source clone")
-    private_artifact_scan(repo)
+    scan_private_artifacts(repo, manifest_path, publication=True)
     runtime_path = pathlib.Path(os.environ.get(
         "RINGLPN_RUNTIME_MANIFEST", str(evidence / f"runtime-{values['invocation-id']}.json")
     ))

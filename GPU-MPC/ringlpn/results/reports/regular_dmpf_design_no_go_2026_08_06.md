@@ -46,4 +46,7 @@ Repository evidence remains in `closest_dmpf_baseline_audit_2026_08_04.md`, `s2_
 
 ## Route selected after the NO-GO
 
-The owner selected the forward-linear-layer systems route. The binding continuation plan is `full_linear_layer_systems_plan_2026_08_06.md`. Reverse Cuckoo remains a labelled non-comparable diagnostic; it is not the implementation route.
+That route has since produced the retained known-zero full-graph checkpoint.
+`CLAUDE.md` and `results/README.md` are the binding continuation;
+`full_linear_layer_systems_plan_2026_08_06.md` is historical. Reverse Cuckoo
+remains a labelled non-comparable diagnostic; it is not the implementation route.

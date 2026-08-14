@@ -1,0 +1,8 @@
+bw,shift,records,boundary_records,exact_integer,rounded_down,rounded_up,mismatch,headers,boundaries,corruption_control,former_predicate_control,status
+3,1,144,16,74,35,35,0,pass,pass,pass,pass,pass
+8,1,144,16,93,23,28,0,pass,pass,pass,pass,pass
+8,7,144,16,6,73,65,0,pass,pass,pass,pass,pass
+16,8,144,16,6,59,79,0,pass,pass,pass,pass,pass
+32,10,144,16,6,66,72,0,pass,pass,pass,pass,pass
+32,24,144,16,6,62,76,0,pass,pass,pass,pass,pass
+32,31,144,16,6,79,59,0,pass,pass,pass,pass,pass

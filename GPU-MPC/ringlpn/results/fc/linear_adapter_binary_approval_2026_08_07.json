@@ -1,5 +1,5 @@
 {
-  "approval_digest": "fa45edc512e94335be6375391621fdf4c148bb8e6f7b4aeef56369275d12fda7",
+  "approval_digest": "ce3cc3a5b5c7d982b37b134c7493a99e03ec116f703ea055940964a35ce03646",
   "binaries": {
     "test_two_party_conv_preprocess": {
       "sha256": "975ac7263f77700de7809397650cbbef64cdc2eb3ed3980f9dfee5828a963483",
@@ -12,13 +12,13 @@
   },
   "build_provenance": {
     "path": "results/fc/linear_adapter_build_provenance_2026_08_10.json",
-    "provenance_digest": "4d18d66088af1617900f811c599219be3c0d4d8efd54a377feddb8099f98ffa8",
+    "provenance_digest": "f06270165bb9df6dc496c7bdc917d31e1fb0723d3db83564aa072b58ddb02ce5",
     "receipt_digests": [
-      "7eca819df80f8c98788516b04ce785b91f77e633a1baf16e8ecaf09fb73aaac1",
-      "362a1a15516d03d56919cade021551730fb53a8afda33378fe3da4673754a0e4"
+      "572f095e236ba44c2eeb7655c7b77bcc9163a3abc7d518010f59097d3d0b75a2",
+      "37d0cb0c4347070a79530b513f5141573cfeaa8466d896f79ae331118076585f"
     ],
-    "sha256": "18b21f1732c05535984b629b4b4b9ead9c1f85408e26a236e4cd2fe01297d4c6",
-    "size": 578588
+    "sha256": "3ad62e87dd8e64994cc9edcf6a202776a5ecb911caa9b3277c450c565616939d",
+    "size": 575584
   },
   "classification": "internal/advisor",
   "schema": "ringlpn-linear-adapter-binary-approval-v2",
@@ -31,8 +31,8 @@
     "deterministic_build": {
       "byte_comparison": "identical",
       "receipt_digests": [
-        "7eca819df80f8c98788516b04ce785b91f77e633a1baf16e8ecaf09fb73aaac1",
-        "362a1a15516d03d56919cade021551730fb53a8afda33378fe3da4673754a0e4"
+        "572f095e236ba44c2eeb7655c7b77bcc9163a3abc7d518010f59097d3d0b75a2",
+        "37d0cb0c4347070a79530b513f5141573cfeaa8466d896f79ae331118076585f"
       ],
       "status": "pass"
     },

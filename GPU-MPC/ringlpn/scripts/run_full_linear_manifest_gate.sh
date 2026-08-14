@@ -11,6 +11,7 @@ RUNNER="$ROOT/scripts/run_full_linear_record_set.py"
 SHAPE_CHECKER="$ROOT/scripts/check_full_linear_shape_coverage.py"
 RUNNER_PLAN_CHECK="${RUNNER_PLAN_CHECK:-0}"
 BINARY_APPROVAL="${BINARY_APPROVAL:-$ROOT/results/fc/linear_adapter_binary_approval_2026_08_07.json}"
+BUILD_PROVENANCE="${BUILD_PROVENANCE:-$ROOT/results/fc/linear_adapter_build_provenance_2026_08_10.json}"
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
@@ -217,14 +218,96 @@ for control in bad-state bad-merge bad-key bad-terminal bad-cost; do
   fi
 done
 
-if [[ "$RUNNER_PLAN_CHECK" != "1" ]]; then
-  echo "[linear-record-set-manifest] PASS (fresh source-bound manifest; stale-output, canonical-path, symlink, tracked-file, held-byte, source-registry, source-line controls rejected; executable plan deferred)"
-  exit 0
-fi
 [[ -f "$BINARY_APPROVAL" ]] || {
   echo "[linear-record-set-manifest] missing binary approval: $BINARY_APPROVAL" >&2
   exit 1
 }
+[[ -f "$BUILD_PROVENANCE" ]] || {
+  echo "[linear-record-set-manifest] missing build provenance: $BUILD_PROVENANCE" >&2
+  exit 1
+}
+python3 - "$RUNNER" "$BINARY_APPROVAL" \
+    "$BUILD_PROVENANCE" <<'PY'
+import hashlib
+import importlib.util
+import json
+import pathlib
+import sys
+
+runner_path = pathlib.Path(sys.argv[1])
+approval = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+provenance = json.loads(pathlib.Path(sys.argv[3]).read_text(encoding="utf-8"))
+spec = importlib.util.spec_from_file_location(
+    "linear_record_set_portability_control", runner_path
+)
+if spec is None or spec.loader is None:
+    raise SystemExit("cannot import linear record-set runner")
+runner = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = runner
+spec.loader.exec_module(runner)
+
+receipt = provenance["builds"][0]
+receipt["adapters"]["test_two_party_fc_preprocess"]["commands"][1][
+    "argv"
+].append("/home/control/private-clone/GPU-MPC/ringlpn")
+unsigned_receipt = dict(receipt)
+unsigned_receipt.pop("receipt_digest")
+receipt["receipt_digest"] = hashlib.sha256(
+    json.dumps(
+        unsigned_receipt, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("ascii")
+).hexdigest()
+unsigned_provenance = dict(provenance)
+unsigned_provenance.pop("provenance_digest")
+provenance["provenance_digest"] = hashlib.sha256(
+    json.dumps(
+        unsigned_provenance, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("ascii")
+).hexdigest()
+provenance_payload = (
+    json.dumps(provenance, sort_keys=True, indent=2, ensure_ascii=True) + "\n"
+).encode("ascii")
+receipt_digests = [
+    item["receipt_digest"] for item in provenance["builds"]
+]
+binding = approval["build_provenance"]
+binding["provenance_digest"] = provenance["provenance_digest"]
+binding["receipt_digests"] = receipt_digests
+binding["sha256"] = hashlib.sha256(provenance_payload).hexdigest()
+binding["size"] = len(provenance_payload)
+approval["validation"]["deterministic_build"][
+    "receipt_digests"
+] = receipt_digests
+unsigned_approval = dict(approval)
+unsigned_approval.pop("approval_digest")
+approval["approval_digest"] = hashlib.sha256(
+    json.dumps(
+        unsigned_approval, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("ascii")
+).hexdigest()
+approval_payload = (
+    json.dumps(approval, sort_keys=True, indent=2, ensure_ascii=True) + "\n"
+).encode("ascii")
+try:
+    runner.validate_binary_approval(
+        approval_payload, provenance_payload, "portability-control"
+    )
+except SystemExit as error:
+    if "workstation-specific path" not in str(error):
+        raise
+else:
+    raise SystemExit(
+        "workstation-specific build-provenance control unexpectedly passed"
+    )
+PY
+
+if [[ "$RUNNER_PLAN_CHECK" != "1" ]]; then
+  echo "[linear-record-set-manifest] PASS (fresh source-bound manifest; relocation-stable build-provenance and stale-output, canonical-path, symlink, tracked-file, held-byte, source-registry, source-line controls pass; executable plan deferred)"
+  exit 0
+fi
 
 "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
   --bin-dir "$ROOT/bin" --output-root "$WORKDIR/planned-run" --plan-only \
@@ -303,12 +386,12 @@ if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
   echo "[linear-record-set-manifest] same-GPU isolation control unexpectedly passed" >&2
   exit 1
 fi
-grep -q 'party GPUs must be distinct' "$WORKDIR/same-gpu.log"
+grep -q 'party and checker GPUs must be pairwise distinct' "$WORKDIR/same-gpu.log"
 
 "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
   --bin-dir "$ROOT/bin" --output-root "$WORKDIR/lpt-plan" --plan-only \
   --binary-approval "$BINARY_APPROVAL" \
-  --lane 0:1:1:22000-22085 --lane 2:3:3:22200-22285 \
+  --lane 0:1:2:22000-22085 --lane 3:4:5:22200-22285 \
   --scheduler-control canonical-aggregation >"$WORKDIR/lpt-plan.log"
 grep -q 'SCHEDULER CONTROL PASS.*shuffled completion aggregated canonically' \
   "$WORKDIR/lpt-plan.log"
@@ -342,7 +425,7 @@ PY
 "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
   --bin-dir "$ROOT/bin" --output-root "$WORKDIR/worker-failure" --plan-only \
   --binary-approval "$BINARY_APPROVAL" \
-  --lane 0:1:1:22400-22485 --lane 2:3:3:22600-22685 \
+  --lane 0:1:2:22400-22485 --lane 3:4:5:22600-22685 \
   --scheduler-control worker-failure >"$WORKDIR/worker-failure.log"
 grep -q 'SCHEDULER CONTROL PASS.*injected failure cancelled all peer lanes' \
   "$WORKDIR/worker-failure.log"
@@ -350,7 +433,7 @@ grep -q 'SCHEDULER CONTROL PASS.*injected failure cancelled all peer lanes' \
 
 if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
     --bin-dir "$ROOT/bin" --output-root "$WORKDIR/malformed-lane" --plan-only \
-    --lane 0:1:1:not-a-range >"$WORKDIR/malformed-lane.log" 2>&1; then
+    --lane 0:1:2:not-a-range >"$WORKDIR/malformed-lane.log" 2>&1; then
   echo "[linear-record-set-manifest] malformed-lane control unexpectedly passed" >&2
   exit 1
 fi
@@ -358,7 +441,7 @@ grep -q 'malformed resource lane' "$WORKDIR/malformed-lane.log"
 
 if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
     --bin-dir "$ROOT/bin" --output-root "$WORKDIR/negative-lane-gpu" --plan-only \
-    --lane=-1:0:0:22000-22085 >"$WORKDIR/negative-lane-gpu.log" 2>&1; then
+    --lane=-1:0:1:22000-22085 >"$WORKDIR/negative-lane-gpu.log" 2>&1; then
   echo "[linear-record-set-manifest] negative-lane-GPU control unexpectedly passed" >&2
   exit 1
 fi
@@ -366,7 +449,7 @@ grep -q 'invalid GPU ordinal' "$WORKDIR/negative-lane-gpu.log"
 
 if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
     --bin-dir "$ROOT/bin" --output-root "$WORKDIR/shared-lane-gpu" --plan-only \
-    --lane 0:1:1:22000-22085 --lane 1:2:2:22200-22285 \
+    --lane 0:1:2:22000-22085 --lane 2:3:4:22200-22285 \
     >"$WORKDIR/shared-lane-gpu.log" 2>&1; then
   echo "[linear-record-set-manifest] shared-lane-GPU control unexpectedly passed" >&2
   exit 1
@@ -375,7 +458,7 @@ grep -q 'share a GPU ordinal' "$WORKDIR/shared-lane-gpu.log"
 
 if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
     --bin-dir "$ROOT/bin" --output-root "$WORKDIR/overlap-lane-port" --plan-only \
-    --lane 0:1:1:22000-22085 --lane 2:3:3:22080-22165 \
+    --lane 0:1:2:22000-22085 --lane 3:4:5:22080-22165 \
     >"$WORKDIR/overlap-lane-port.log" 2>&1; then
   echo "[linear-record-set-manifest] overlapping-lane-port control unexpectedly passed" >&2
   exit 1
@@ -387,7 +470,7 @@ for ((index = 0; index < 22; ++index)); do
   first_port=$((2000 + 100 * index))
   many_lane_args+=(
     --lane
-    "$((3 * index)):$((3 * index + 1)):$((3 * index + 1)):${first_port}-$((first_port + 85))"
+    "$((3 * index)):$((3 * index + 1)):$((3 * index + 2)):${first_port}-$((first_port + 85))"
   )
 done
 if "$RUNNER" --repo-root "$REPO_ROOT" --manifest "$EXECUTION_MANIFEST" \
@@ -501,4 +584,4 @@ if PLAN_CONTROL=mismatch REAL_BIN_DIR="$ROOT/bin" "$RUNNER" \
 fi
 grep -q 'binary plan mismatch for conv0.cross_terms' "$WORKDIR/binary-plan-mismatch.log"
 
-echo "[linear-record-set-manifest] PASS (fresh baseline/adaptive 21-layer approved executable plans; deterministic LPT/canonical aggregation/fail-fast controls pass; malformed/shared-GPU/overlapping-port/excess-lane, degree-frontier, cost-summary, stale-output, source-registry, source-line, stale-root, same-GPU, stale-approval, plan-tamper, binary-plan controls rejected)"
+echo "[linear-record-set-manifest] PASS (fresh baseline/adaptive 21-layer approved executable plans; relocation-stable build-provenance, deterministic LPT/canonical aggregation/fail-fast controls pass; malformed/shared-GPU/overlapping-port/excess-lane, degree-frontier, cost-summary, stale-output, source-registry, source-line, stale-root, same-GPU, stale-approval, plan-tamper, binary-plan controls rejected)"

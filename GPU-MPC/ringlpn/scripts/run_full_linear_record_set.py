@@ -17,6 +17,7 @@ import math
 import os
 import pathlib
 import secrets
+import re
 import stat
 import subprocess
 import signal
@@ -65,8 +66,19 @@ BINARY_APPROVAL_SCOPE = (
     "reproducible_linear_adapters_for_internal_advisor_execution"
 )
 BINARY_BUILD_PROVENANCE_SCHEMA = (
-    "ringlpn-linear-adapter-build-provenance-v1"
+    "ringlpn-linear-adapter-build-provenance-v2"
 )
+PROVENANCE_PATH_TOKENS = frozenset({
+    "${REPO}", "${CANONICAL_SOURCE}", "${BUILD_ROOT}",
+})
+PROVENANCE_ENVIRONMENT_KEYS = frozenset({
+    "CUDA_ARCH", "CXX", "HOME", "LANG", "LC_ALL", "NVCC", "OBJCOPY",
+    "PATH", "PWD", "RINGLPN_CANONICAL_BUILD_ACTIVE",
+    "RINGLPN_COMPONENT_DISPATCH_ACTIVE", "RINGLPN_LINEAR_COMMAND_FILE",
+    "RINGLPN_LINEAR_DEPFILE", "RINGLPN_LINEAR_ENVIRONMENT_FILE",
+    "RINGLPN_LINEAR_KIND", "RINGLPN_LINEAR_LINK_MAP",
+    "SOURCE_DATE_EPOCH", "TMPDIR", "TZ", "ZERO_AR_DATE",
+})
 BINARY_APPROVAL_CLASSIFICATION = "internal/advisor"
 PROBE_TIMEOUT_SECONDS = 60
 PARTY_METRIC_SUFFIX = (
@@ -926,8 +938,8 @@ def parse_lane_descriptor(raw: str, index: int) -> dict[str, int]:
         fail(f"malformed resource lane {index}; ordinals and ports must be integers")
     if min(p0_gpu, p1_gpu, check_gpu) < 0:
         fail(f"resource lane {index} has an invalid GPU ordinal")
-    if p0_gpu == p1_gpu:
-        fail(f"resource lane {index} party GPUs must be distinct")
+    if len({p0_gpu, p1_gpu, check_gpu}) != 3:
+        fail(f"resource lane {index} party/checker GPUs must be pairwise distinct")
     if port_first <= 0 or port_last > 65535 or port_last < port_first + 85:
         fail(f"resource lane {index} port range is invalid or too small for 21 jobs")
     reject_linux_ephemeral_overlap(
@@ -951,8 +963,11 @@ def validate_resource_lanes(lanes: list[dict[str, int]], job_count: int) -> None
     for left_index, left in enumerate(lanes):
         if min(left["p0_gpu"], left["p1_gpu"], left["check_gpu"]) < 0:
             fail(f"resource lane {left['lane']} has an invalid GPU ordinal")
-        if left["p0_gpu"] == left["p1_gpu"]:
-            fail(f"resource lane {left['lane']} party GPUs must be distinct")
+        if len({left["p0_gpu"], left["p1_gpu"], left["check_gpu"]}) != 3:
+            fail(
+                f"resource lane {left['lane']} party/checker GPUs "
+                "must be pairwise distinct"
+            )
         if (
             left["port_first"] <= 0
             or left["port_last"] > 65535
@@ -1174,6 +1189,18 @@ def verify_self_digest(document: dict[str, Any], field: str, label: str) -> str:
         fail(f"invalid {label} self-digest")
     return claimed
 
+def validate_portable_provenance_text(value: Any, label: str) -> str:
+    text = require_string(value, label)
+    placeholders = set(re.findall(r"\$\{[^}]+\}", text))
+    if not placeholders.issubset(PROVENANCE_PATH_TOKENS):
+        fail(f"{label} contains an unsupported path token")
+    if ("/tmp/ringlpn-linear-provenance." in text or
+            "/home/" in text or "/work/EzPC/" in text):
+        fail(f"{label} contains a workstation-specific path")
+    return text
+
+
+
 def validate_binary_approval(
         payload: bytes, provenance_payload: bytes, label: str) -> dict[str, str]:
     document = parse_json_bytes(payload, label)
@@ -1248,6 +1275,38 @@ def validate_binary_approval(
                 not isinstance(environments, dict) or
                 set(environments) != {"fc", "conv"}):
             fail("build receipt omits source, system, tool, or environment inputs")
+        for kind, environment in environments.items():
+            if (not isinstance(environment, dict) or
+                    set(environment) != set(PROVENANCE_ENVIRONMENT_KEYS)):
+                fail("build receipt environment is not normalized")
+            expected_environment = {
+                "HOME": "${BUILD_ROOT}/home",
+                "LANG": "C",
+                "LC_ALL": "C",
+                "PWD": "${REPO}/GPU-MPC/ringlpn",
+                "RINGLPN_CANONICAL_BUILD_ACTIVE": "1",
+                "RINGLPN_COMPONENT_DISPATCH_ACTIVE": "1",
+                "RINGLPN_LINEAR_COMMAND_FILE":
+                    f"${{BUILD_ROOT}}/build-{index}/{kind}.commands",
+                "RINGLPN_LINEAR_DEPFILE":
+                    f"${{BUILD_ROOT}}/build-{index}/{kind}.d",
+                "RINGLPN_LINEAR_ENVIRONMENT_FILE":
+                    f"${{BUILD_ROOT}}/build-{index}/{kind}.environment",
+                "RINGLPN_LINEAR_KIND": kind,
+                "RINGLPN_LINEAR_LINK_MAP":
+                    f"${{BUILD_ROOT}}/build-{index}/{kind}.map",
+                "SOURCE_DATE_EPOCH": "0",
+                "TMPDIR": f"${{BUILD_ROOT}}/tmp-{index}",
+                "TZ": "UTC",
+                "ZERO_AR_DATE": "1",
+            }
+            if any(environment.get(name) != value
+                   for name, value in expected_environment.items()):
+                fail("build receipt normalized environment differs")
+            for name, value in environment.items():
+                validate_portable_provenance_text(
+                    value, f"{kind} build environment {name}"
+                )
         for relative, binding in tracked_inputs.items():
             pure = pathlib.PurePosixPath(relative)
             if (not isinstance(relative, str) or pure.is_absolute() or
@@ -1289,6 +1348,24 @@ def validate_binary_approval(
                     not isinstance(adapter.get("commands"), list) or
                     len(adapter["commands"]) != 2):
                 fail(f"build receipt lacks exact commands for {name}")
+            expected_cwds = [
+                "${CANONICAL_SOURCE}/GPU-MPC/ringlpn",
+                "${REPO}/GPU-MPC/ringlpn",
+            ]
+            for command_index, command in enumerate(adapter["commands"]):
+                if (not isinstance(command, dict) or
+                        set(command) != {"argv", "cwd"} or
+                        command.get("cwd") != expected_cwds[command_index] or
+                        not isinstance(command.get("argv"), list) or
+                        not command["argv"]):
+                    fail(f"build receipt has an invalid portable command for {name}")
+                validate_portable_provenance_text(
+                    command["cwd"], f"{name} command cwd"
+                )
+                for argument in command["argv"]:
+                    validate_portable_provenance_text(
+                        argument, f"{name} command argument"
+                    )
             output = adapter.get("output")
             if not isinstance(output, dict) or set(output) != {"sha256", "size"}:
                 fail(f"invalid build receipt output for {name}")
@@ -2094,9 +2171,9 @@ def main() -> None:
             for index, descriptor in enumerate(args.lane)
         ]
     else:
-        args.p0_gpu = 1 if args.p0_gpu is None else args.p0_gpu
-        args.p1_gpu = 3 if args.p1_gpu is None else args.p1_gpu
-        args.check_gpu = 3 if args.check_gpu is None else args.check_gpu
+        args.p0_gpu = 0 if args.p0_gpu is None else args.p0_gpu
+        args.p1_gpu = 1 if args.p1_gpu is None else args.p1_gpu
+        args.check_gpu = 2 if args.check_gpu is None else args.check_gpu
         args.base_port = 24800 if args.base_port is None else args.base_port
         last_port = args.base_port + 4 * 21 + 1
         if args.base_port <= 0 or last_port > 65535:
@@ -2104,10 +2181,10 @@ def main() -> None:
         reject_linux_ephemeral_overlap(
             args.base_port, last_port, "linear port range"
         )
-        if args.p0_gpu == args.p1_gpu or min(
+        if min(args.p0_gpu, args.p1_gpu, args.check_gpu) < 0 or len({
             args.p0_gpu, args.p1_gpu, args.check_gpu
-        ) < 0:
-            fail("party GPUs must be distinct nonnegative indices")
+        }) != 3:
+            fail("party and checker GPUs must be pairwise distinct nonnegative indices")
         lanes = [{
             "lane": 0,
             "p0_gpu": args.p0_gpu,

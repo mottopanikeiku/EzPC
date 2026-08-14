@@ -1,0 +1,2 @@
+qbits,bw,n,h,w,ci,fh,fw,co,padding,stride,oh,ow,ring_batches,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online_contract,status,checker_us,peak_host_rss_bytes,peak_gpu_bytes,min_gpu_free_bytes,invocation_id,ledger_digest
+128,32,1,224,224,3,7,7,64,3,2,112,112,445,7702016,16159.8,4311.24,pass,pass,pass,pass,5.32645e+06,1008914432,20963590144,12862947328,5334df78bd4cd72beeb56f32cbf7f471,348833b02288a6430f029fcba3a2dad07b31834ccd4df327ac7bb1367697f2a8

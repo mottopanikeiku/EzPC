@@ -381,20 +381,33 @@ matches_control() {
 file_sha256() {
   sha256sum "$1" | cut -d' ' -f1
 }
+public_sha256() {
+  local path="$1"
+  if [[ "$path" != "$REPO_ROOT/"* ]]; then
+    echo "Refusing host-identifying non-repository provenance path: $path" >&2
+    return 2
+  fi
+  printf '%s  %s\n' "$(file_sha256 "$path")" "${path#"$REPO_ROOT/"}"
+}
 BINARY_SHA256="$(file_sha256 "$BIN")"
 {
   echo "measurement_timestamp=$(date --iso-8601=seconds)"
   echo "publication_date=$PUBLICATION_DATE"
   echo "schema_version=$SCHEMA_VERSION"
   echo "claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level"
-  echo "host=$(hostname)"
+  echo "provenance_sanitization=public derivative; hostname, GPU UUIDs, and absolute workstation paths are intentionally omitted"
+  echo "host=withheld_for_publication"
   echo "kernel=$(uname -srvmo)"
   echo "cpu_count=$(nproc)"
   echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:$CHECK_GPU"
   echo "network=single-host IPv4 loopback"
   echo "counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message"
   echo "ot_backend=$OT_BACKEND"
-  echo "emp_silent_bridge=${RINGLPN_EMP_SILENT_BRIDGE:-NA}"
+  if [[ "$OT_BACKEND" == emp-silent ]]; then
+    echo "emp_silent_bridge=external-input-basename:$(basename "$RINGLPN_EMP_SILENT_BRIDGE")"
+  else
+    echo "emp_silent_bridge=NA"
+  fi
   echo "warmups=1"
   echo "measured_trials=$TRIALS"
   echo "models=$MODELS"
@@ -402,9 +415,10 @@ BINARY_SHA256="$(file_sha256 "$BIN")"
   echo "fail_layer_control=${FAIL_LAYER:-none}"
   echo "swap_layer_control=${SWAP_LAYER:-none}"
   echo "aggregate_rule=complete retained layer groups only; statistics are per model over measured aggregate rows"
-  nvidia-smi --query-gpu=index,name,uuid,driver_version,memory.total --format=csv,noheader
+  nvidia-smi --query-gpu=index,name,driver_version,memory.total --format=csv,noheader
   /usr/local/cuda/bin/nvcc --version
-  sha256sum "$BIN" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
+  for artifact in \
+    "$BIN" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
     "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
     "$ROOT/scripts/two_party_fc_metrics_schema_2026_08_04.csv" \
     "$ROOT/src/test_two_party_fc_preprocess.cu" "$ROOT/src/two_party_spfss.h" \
@@ -421,9 +435,12 @@ BINARY_SHA256="$(file_sha256 "$BIN")"
     "$REPO_ROOT/GPU-MPC/experiments/orca/cnn.h" \
     "$REPO_ROOT/GPU-MPC/experiments/orca/orca_inference.cu" \
     "$REPO_ROOT/GPU-MPC/experiments/orca/piranha.cu" \
-    "$REPO_ROOT/GPU-MPC/nn/orca/fc_layer.cu"
+    "$REPO_ROOT/GPU-MPC/nn/orca/fc_layer.cu"; do
+    public_sha256 "$artifact"
+  done
   if [[ "$OT_BACKEND" == emp-silent ]]; then
-    sha256sum "$RINGLPN_EMP_SILENT_BRIDGE"
+    printf '%s  %s\n' "$(file_sha256 "$RINGLPN_EMP_SILENT_BRIDGE")" \
+      "external-input-basename:$(basename "$RINGLPN_EMP_SILENT_BRIDGE")"
   fi
 } > "$ENVIRONMENT"
 RESULT_SCHEMA_SHA256="$(file_sha256 "$RESULT_SCHEMAS")"

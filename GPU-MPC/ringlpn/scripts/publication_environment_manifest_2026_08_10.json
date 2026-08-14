@@ -1,13 +1,21 @@
 {
   "schema": "ringlpn-publication-environment/v4",
-  "date": "2026-08-10",
+  "date": "2026-08-14",
   "classification": "internal/advisor",
   "source_release": {
     "required_annotated_tag": "ringlpn-publication-candidate-v1",
     "external_authorization_schema": "ringlpn-source-authorization/v1",
-    "unavailable_reason": "The owner-approved final source commit, annotated release tag, and externally authenticated source authorization do not exist yet."
+    "unavailable_reason": "The owner-approved final source commit, annotated release tag, and operator-supplied external source-consistency authorization do not exist yet; the coordinator validates object shape/digest but does not verify a cryptographic signer."
   },
   "claim_boundary": "Feasibility and source-bound known-zero full-graph systems reproduction only; nonlinear keys remain test-only trusted, and no concrete Ring-LPN security or private/trained inference claim is made.",
+  "retained_checkpoint_boundary": {
+    "classification": "internal/advisor-only",
+    "external_circulation_blockers": [
+      "manifest-bound host-identifying adapter provenance",
+      "historical linear party/checker GPU assignment is not pairwise distinct"
+    ],
+    "release_replacement": "fresh canonical three-GPU full-graph run with normalized provenance"
+  },
   "platform": {
     "os": "Ubuntu 24.04 amd64",
     "container_image": "nvidia/cuda:12.6.3-devel-ubuntu24.04@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade",
@@ -26,7 +34,13 @@
     "gpu_role_topology": "distinct linear party-0, linear party-1, and post-exit checker devices; the sequential test-only trusted adapter may share a party device",
     "compute_capability": "8.9",
     "cuda_arch": "sm_89",
-    "required_cpu_features": ["aes", "avx2", "pclmulqdq", "rdseed", "sse4_1"],
+    "required_cpu_features": [
+      "aes",
+      "avx2",
+      "pclmulqdq",
+      "rdseed",
+      "sse4_1"
+    ],
     "container_role": "clean-clone check, local-smoke, and build gates only; never two-host orchestration",
     "reproduction_gate_image": "ringlpn-repro:2026-08-10",
     "reproduction_gate_image_id": "sha256:63b6d387733d145bd26e6d1ada75c3dea568c5144f0e2831dc3590079ab9bd35"
@@ -72,9 +86,9 @@
   "build": {
     "publication_source": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex",
     "publication_pdf": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf",
-    "publication_source_sha256": "e66fbd855cd13125f08266d290ca5060b2de8d7ae9ae11527a45aee8dc94edf4",
-    "publication_pdf_sha256": "533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c",
-    "publication_pages": 28,
+    "publication_source_sha256": "8b28385f0958d8286e9de52c7922397b57bdb40dfccebd723de43705ca86ad71",
+    "publication_pdf_sha256": "a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39",
+    "publication_pages": 29,
     "pdf_command": "SOURCE_DATE_EPOCH=1786320000 pdflatex -interaction=nonstopmode -halt-on-error (twice); zero warnings/bad boxes; embedded Type 1 fonts only; exact SHA-256",
     "source_date_epoch": 1786320000,
     "fc_builder": "GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh",
@@ -93,23 +107,100 @@
     ]
   },
   "sources": [
-    {"path":"SCI/extern/SEAL","url":"https://github.com/Microsoft/SEAL","revision":"1d5c8169aa5aca9deb75c4079e53ea8d5e94007d","license":"MIT","license_file":"SCI/extern/SEAL/LICENSE","license_sha256":"27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"},
-    {"path":"SCI/extern/SEAL/native/tests/thirdparty/googletest","url":"https://github.com/google/googletest","revision":"7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c","license":"BSD-3-Clause","license_file":"SCI/extern/SEAL/native/tests/thirdparty/googletest/LICENSE","license_sha256":"9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"},
-    {"path":"SCI/extern/eigen","url":"https://gitlab.com/libeigen/eigen","revision":"603e213d13311af286c8c1abd4ea14a8bd3d204e","license":"MPL-2.0","license_file":"SCI/extern/eigen/COPYING.MPL2","license_sha256":"fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"},
-    {"path":"GPU-MPC/experiments/orca/weights","url":"https://github.com/neha-jawalkar/weights.git","revision":"89fb0e0b35d5374f1bcd72528c05056725637719","license":"NOASSERTION"},
-    {"path":"GPU-MPC/experiments/orca/datasets/mnist","url":"https://github.com/neha-jawalkar/mnist.git","revision":"09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e","license":"NOASSERTION"},
-    {"path":"GPU-MPC/ext/cutlass","url":"https://github.com/NVIDIA/cutlass.git","revision":"66d9cddc832c1cdc2b30a8755274f7f74640cfe6","license":"BSD-3-Clause","license_file":"GPU-MPC/ext/cutlass/LICENSE.txt","license_sha256":"5f0ea053230eb92267e9e80ed67ec08899ebc55d093eff4a2273a7b340a48cca"},
-    {"path":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL","url":"https://github.com/microsoft/SEAL.git","revision":"1d5c8169aa5aca9deb75c4079e53ea8d5e94007d","license":"MIT","license_file":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/LICENSE","license_sha256":"27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"},
-    {"path":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest","url":"https://github.com/google/googletest","revision":"7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c","license":"BSD-3-Clause","license_file":"GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest/LICENSE","license_sha256":"9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"},
-    {"path":"GPU-MPC/ringlpn/extern/NFLlib","url":"https://github.com/quarkslab/NFLlib.git","revision":"5cf40ed6a4929bfc304f3283aafd62c4149c55e2","license":"MIT","license_file":"GPU-MPC/ringlpn/extern/NFLlib/MIT_LICENSE.txt","license_sha256":"24b21400bf5027195428484e8f116fc09243b5df56e83a9f38321c3d5ec5ccc5"},
-    {"path":"GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu","url":"https://github.com/scale-snu/cheddar-fhe","revision":"307b49cbe03e7f8f14bf31485f716c1090c9ec9d","upstream_blob":"b681f4c68f56b6fafd1db13c5dd58822ed6d2d51","license":"MIT","license_file":"GPU-MPC/ringlpn/extern/Cheddar_MIT_LICENSE.txt","license_sha256":"dd73a32f39b0b9fa8cf1c3932c153a3ce90bbac6e7a6b2f0fd7ee66af0d7a2c7"}
+    {
+      "path": "SCI/extern/SEAL",
+      "url": "https://github.com/Microsoft/SEAL",
+      "revision": "1d5c8169aa5aca9deb75c4079e53ea8d5e94007d",
+      "license": "MIT",
+      "license_file": "SCI/extern/SEAL/LICENSE",
+      "license_sha256": "27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"
+    },
+    {
+      "path": "SCI/extern/SEAL/native/tests/thirdparty/googletest",
+      "url": "https://github.com/google/googletest",
+      "revision": "7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c",
+      "license": "BSD-3-Clause",
+      "license_file": "SCI/extern/SEAL/native/tests/thirdparty/googletest/LICENSE",
+      "license_sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+    },
+    {
+      "path": "SCI/extern/eigen",
+      "url": "https://gitlab.com/libeigen/eigen",
+      "revision": "603e213d13311af286c8c1abd4ea14a8bd3d204e",
+      "license": "MPL-2.0",
+      "license_file": "SCI/extern/eigen/COPYING.MPL2",
+      "license_sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    },
+    {
+      "path": "GPU-MPC/experiments/orca/weights",
+      "url": "https://github.com/neha-jawalkar/weights.git",
+      "revision": "89fb0e0b35d5374f1bcd72528c05056725637719",
+      "license": "NOASSERTION"
+    },
+    {
+      "path": "GPU-MPC/experiments/orca/datasets/mnist",
+      "url": "https://github.com/neha-jawalkar/mnist.git",
+      "revision": "09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e",
+      "license": "NOASSERTION"
+    },
+    {
+      "path": "GPU-MPC/ext/cutlass",
+      "url": "https://github.com/NVIDIA/cutlass.git",
+      "revision": "66d9cddc832c1cdc2b30a8755274f7f74640cfe6",
+      "license": "BSD-3-Clause",
+      "license_file": "GPU-MPC/ext/cutlass/LICENSE.txt",
+      "license_sha256": "5f0ea053230eb92267e9e80ed67ec08899ebc55d093eff4a2273a7b340a48cca"
+    },
+    {
+      "path": "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL",
+      "url": "https://github.com/microsoft/SEAL.git",
+      "revision": "1d5c8169aa5aca9deb75c4079e53ea8d5e94007d",
+      "license": "MIT",
+      "license_file": "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/LICENSE",
+      "license_sha256": "27ebda9d51f0a56b7e281ccd8230a27236dcb51c05f64b07869ecf6e965d68b0"
+    },
+    {
+      "path": "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest",
+      "url": "https://github.com/google/googletest",
+      "revision": "7f1c0f6f8122d7978c9de29d9d468f7fac9ba62c",
+      "license": "BSD-3-Clause",
+      "license_file": "GPU-MPC/ext/sytorch/ext/sci/extern/SEAL/native/tests/thirdparty/googletest/LICENSE",
+      "license_sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/extern/NFLlib",
+      "url": "https://github.com/quarkslab/NFLlib.git",
+      "revision": "5cf40ed6a4929bfc304f3283aafd62c4149c55e2",
+      "license": "MIT",
+      "license_file": "GPU-MPC/ringlpn/extern/NFLlib/MIT_LICENSE.txt",
+      "license_sha256": "24b21400bf5027195428484e8f116fc09243b5df56e83a9f38321c3d5ec5ccc5"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/src/bench_ntt_cuda_cheddar.cu",
+      "url": "https://github.com/scale-snu/cheddar-fhe",
+      "revision": "307b49cbe03e7f8f14bf31485f716c1090c9ec9d",
+      "upstream_blob": "b681f4c68f56b6fafd1db13c5dd58822ed6d2d51",
+      "license": "MIT",
+      "license_file": "GPU-MPC/ringlpn/extern/Cheddar_MIT_LICENSE.txt",
+      "license_sha256": "dd73a32f39b0b9fa8cf1c3932c153a3ce90bbac6e7a6b2f0fd7ee66af0d7a2c7"
+    }
   ],
   "data_inputs": {
     "required": [],
     "reason": "The publication gates generate known-zero public graph inputs and weights and do not consume datasets or trained weights.",
     "excluded_optional_snapshots": [
-      {"path":"GPU-MPC/experiments/orca/weights","revision":"89fb0e0b35d5374f1bcd72528c05056725637719","git_archive_sha256":"4355e51144d4fbb2e9a21e474df5eb6d6f610715058bb1cdfd4ca5aa5444be60","license":"NOASSERTION"},
-      {"path":"GPU-MPC/experiments/orca/datasets/mnist","revision":"09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e","git_archive_sha256":"4126216f7204a9ef89094a1d61445c9ad7383a94524ae373e6f835eec9d0131b","license":"NOASSERTION"}
+      {
+        "path": "GPU-MPC/experiments/orca/weights",
+        "revision": "89fb0e0b35d5374f1bcd72528c05056725637719",
+        "git_archive_sha256": "4355e51144d4fbb2e9a21e474df5eb6d6f610715058bb1cdfd4ca5aa5444be60",
+        "license": "NOASSERTION"
+      },
+      {
+        "path": "GPU-MPC/experiments/orca/datasets/mnist",
+        "revision": "09f5c2ca42489e5369f5b5560fce2fc6b1e2f81e",
+        "git_archive_sha256": "4126216f7204a9ef89094a1d61445c9ad7383a94524ae373e6f835eec9d0131b",
+        "license": "NOASSERTION"
+      }
     ]
   },
   "gates": {
@@ -122,7 +213,7 @@
     ],
     "two_host_publication_required": [
       "run scripts/reproduce_publication.sh two-host-publication directly on the coordinator host, never inside Docker or another container",
-      "clean annotated-tagged HEAD and authenticated external source authorization",
+      "clean annotated-tagged HEAD and operator-supplied external source-consistency authorization (object shape/digest checked; no cryptographic signer verification)",
       "fresh same-HEAD local-smoke PASS from the tracked final reproduction image reference/ID, including PDF and source-bound full-graph gates",
       "byte-identical manifest-authorized local and remote executors",
       "native rootless Podman with user namespaces, sufficient subordinate UID/GID ranges, required CPU features, and selected sm_89 GPU capability on both hosts",
@@ -136,23 +227,79 @@
   },
   "required_tracked_evidence_policy": "Every retained tracked artifact is a canonical clone-relative regular non-symlink with an immutable SHA-256 pinned here. Publication execution never mutates tracked source results; invocation-scoped outputs are written only to an external owner-private evidence directory.",
   "required_tracked_evidence": [
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.csv","sha256":"d06286a954af9d51274764a1104b937a80040e2c1deb59cf28196738b64a6dd0"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.log","sha256":"b7d5d07d452fc7ade5fc6c57a6c1cdb353d9d4bcce367f736c3ba46002937243"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_controls_2026_08_04.csv","sha256":"0f83965c0f56c3126ce187719cae4171d9ef5c48bad676ef19aa5828eae622ef"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.csv","sha256":"cc07de40cd35aeadab63152c5f2f10dc4f56fb9222aaa26458ed91aaa728b7e5"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_aggregate_2026_08_04.csv","sha256":"474e227e7d659a376d29dcb35fb77788aa2e55bdfe6ffc7a7d42d4f8415c0c3c"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_controls_2026_08_04.csv","sha256":"22a0b7228cc77039634e6936c11034b15730ea0e2fc276520d01633a137b30c0"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_result_schemas_2026_08_04.json","sha256":"fb519e51c5e427da315ba5660588f239fd9381a3a6ce299464a50a042d7b9e43"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.log","sha256":"9bfb77fad3a17089b5edc5408c0e5ea9b03953425d7ead9a4ca8b33eab4f62d7"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_summary_2026_08_04.csv","sha256":"c2b882f8663061cabf80d11f185e35e6fef832f6210a4950826c3f5ffa0c0121"},
-    {"path":"GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_environment_2026_08_04.txt","sha256":"59f400cb347774372eb190b498659466e648d9dbd39e8a742e65e27988f2c563"},
-    {"path":"GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv","sha256":"4ead0d24a8f9fe24ff7bf7d58bd1ef0c87d0e51b644db8893a27de9b8569ae26"},
-    {"path":"GPU-MPC/ringlpn/results/fc/resnet18_full_graph_binary_approval_2026_08_10.json","sha256":"c8f3802b396dd6fd62f54cc788b57eb498098e0d52d1fbf36fbc56eb4241c2e8"},
-    {"path":"GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json","sha256":"863ec37b047ab30ebb0478861f6f3a1b88d203f6a6d0a375130ec5b696c46828"},
-    {"path":"GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/FULL_GRAPH.manifest","sha256":"426dd76155df4b2b9524153e6b00285a68f513a4d7b35eca1a9f95092657b206"},
-    {"path":"GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/private_inputs/graph_build_provenance.json","sha256":"014347c6db4fc33923c67a120443fb36aea718abcbda7b8f2193c59353aefd31"},
-    {"path":"GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf","sha256":"533b7567dc9ff7ffed3a7638b3a83c6c673316138f4123e1c9ec8e33d27df32c"}
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.csv",
+      "sha256": "d06286a954af9d51274764a1104b937a80040e2c1deb59cf28196738b64a6dd0"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.log",
+      "sha256": "b7d5d07d452fc7ade5fc6c57a6c1cdb353d9d4bcce367f736c3ba46002937243"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_controls_2026_08_04.csv",
+      "sha256": "0f83965c0f56c3126ce187719cae4171d9ef5c48bad676ef19aa5828eae622ef"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.csv",
+      "sha256": "bdbd770b869beee792094e4330b9a1928c019df447139aa1626801d06e8c8e98"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_aggregate_2026_08_04.csv",
+      "sha256": "8f2fcbf409e109ab1e726ad9b6cc046b0b131921b02d90516776619d36893930"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_controls_2026_08_04.csv",
+      "sha256": "22a0b7228cc77039634e6936c11034b15730ea0e2fc276520d01633a137b30c0"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_result_schemas_2026_08_04.json",
+      "sha256": "fb519e51c5e427da315ba5660588f239fd9381a3a6ce299464a50a042d7b9e43"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_2026_08_04.log",
+      "sha256": "9bfb77fad3a17089b5edc5408c0e5ea9b03953425d7ead9a4ca8b33eab4f62d7"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_summary_2026_08_04.csv",
+      "sha256": "1525ccb1c860ec9e60a66bf6a58cc08b1f0c1e9d325d21c5e7610710be0c1c67"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_environment_2026_08_04.txt",
+      "sha256": "bd996e4e987479a9925d49936e70723a3d789fdb77f343a02ee6ccbaf1cff2f7"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
+      "sha256": "4ead0d24a8f9fe24ff7bf7d58bd1ef0c87d0e51b644db8893a27de9b8569ae26"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/linear_adapter_build_provenance_2026_08_10.json",
+      "sha256": "3ad62e87dd8e64994cc9edcf6a202776a5ecb911caa9b3277c450c565616939d"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/linear_adapter_binary_approval_2026_08_07.json",
+      "sha256": "24bc4eb4757801ab66da2f33736175e761bd8f0feef5edecf4e552afba16fff1"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/resnet18_full_graph_binary_approval_2026_08_10.json",
+      "sha256": "c8f3802b396dd6fd62f54cc788b57eb498098e0d52d1fbf36fbc56eb4241c2e8"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json",
+      "sha256": "863ec37b047ab30ebb0478861f6f3a1b88d203f6a6d0a375130ec5b696c46828"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/FULL_GRAPH.manifest",
+      "sha256": "426dd76155df4b2b9524153e6b00285a68f513a4d7b35eca1a9f95092657b206"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/private_inputs/graph_build_provenance.json",
+      "sha256": "014347c6db4fc33923c67a120443fb36aea718abcbda7b8f2193c59353aefd31"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.pdf",
+      "sha256": "a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39"
+    }
   ],
-  "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files and are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "f5224ee842809e0d938c3dbca04408978829e7e2a1dd1065e5eea175edfb9ee3"
+  "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
+  "manifest_digest": "a42a5272ff4ad8fedc2d93eec179d7ca67cd7b43ce3f6ec7ad44035550e6be87"
 }
