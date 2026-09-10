@@ -57,8 +57,9 @@ oracles. The full-graph runner shares the compiled-contract checker's reviewed
 manifest pin; changing approval-bound source still requires a fresh approval.
 
 The SCI duplex sender now uses one lazy channel-owned worker, preserving
-synchronous single-caller semantics without per-job allocation or payload
-copies. In the counterbalanced same-host CNN3 FC5-shaped `100x64x10`
+synchronous single-caller semantics. After worker creation, its per-job
+scheduling handoff allocates no storage and copies no payloads.
+In the counterbalanced same-host CNN3 FC5-shaped `100x64x10`
 experiment, all 20 measured invocations pass and all 68 per-party
 contract/accounting fields match. Process-latency median falls from 1.0413 s
 to 0.9652 s (7.31%); slower-party DPF Phase B falls from 278.18 ms to 226.25 ms
@@ -67,6 +68,15 @@ to 0.9652 s (7.31%); slower-party DPF Phase B falls from 278.18 ms to 226.25 ms
 unpinned feasibility point, not a GPU, matched-dealerless-baseline,
 full-model, or security claim. Producer freshness does not provide persistent
 application-consumer replay prevention; callers must use fresh material.
+
+The application/helper build now also enters a private fixed source path;
+host prefix maps alone left checkout-dependent CUDA fatbins. The main and
+source-only worktrees produce identical binaries and complete provenance
+(`f2d16c75...`), and both provenance verifiers pass after that temporary path
+is removed. Dependency-only preprocessing uses the equivalent physical source
+view, preserving strict rejection of symlinked source inputs. All ten compiler
+dependency groups, environment inputs, and linked archives match the pre-fix
+build; only the application build recipe changed.
 
 The current live composition uses thin
 `src/test_two_party_{fc,conv}_preprocess.cu` entrypoints over

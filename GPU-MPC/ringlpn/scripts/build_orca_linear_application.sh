@@ -7,18 +7,43 @@ if [[ "${RINGLPN_COMPONENT_DISPATCH_ACTIVE:-0}" != "1" ]]; then
     orca-linear-application
 fi
 
+# nvcc embeds source-tree paths in CUDA fatbins despite host prefix maps.
+# Use the same private fixed-source convention as the approved linear adapters.
+if [[ "${RINGLPN_CANONICAL_BUILD_ACTIVE:-0}" != "1" ]]; then
+  ACTUAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+  ACTUAL_REPO_ROOT="$(cd "$ACTUAL_ROOT/../.." && pwd -P)"
+  CANONICAL_BUILD_PARENT="/tmp/ringlpn-orca-linear-application-reproducible-build"
+  if ! mkdir -m 700 -- "$CANONICAL_BUILD_PARENT"; then
+    echo "stale or concurrent canonical application build root: $CANONICAL_BUILD_PARENT" >&2
+    exit 1
+  fi
+  cleanup_canonical_build_root() {
+    rm -f -- "$CANONICAL_BUILD_PARENT/source"
+    rmdir -- "$CANONICAL_BUILD_PARENT"
+  }
+  trap cleanup_canonical_build_root EXIT
+  ln -s -- "$ACTUAL_REPO_ROOT" "$CANONICAL_BUILD_PARENT/source"
+  cd "$ACTUAL_ROOT"
+  unset OLDPWD
+  RINGLPN_CANONICAL_BUILD_ACTIVE=1 \
+    "$CANONICAL_BUILD_PARENT/source/GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh"
+  exit 0
+fi
+
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/build_common.sh"
 ringlpn_build_init
 ROOT="$RINGLPN_ROOT"
+PHYSICAL_ROOT="$(cd "$ROOT" && pwd -P)"
+PHYSICAL_REPO_ROOT="$(cd "$RINGLPN_REPO_ROOT" && pwd -P)"
 PROJECT_ROOT="$RINGLPN_PROJECT_ROOT"
 OUT_DIR="$RINGLPN_OUT_DIR"
 BUILD_DIR="$RINGLPN_BUILD_DIR/orca-linear-application"
 GRAPH_BUILD="$RINGLPN_BUILD_DIR/graph-libraries"
 GRAPH_LIB_DIR="$GRAPH_BUILD/lib"
 LINEAR_ARCHIVE="$RINGLPN_BUILD_DIR/linear-library/lib/libringlpn_linear.a"
-APPLICATION_OUTPUT="$OUT_DIR/orca_inference_ringlpn"
-HELPER_OUTPUT="$OUT_DIR/test_orca_linear_helpers"
-PROVENANCE_OUTPUT="$OUT_DIR/orca_linear_application_build_provenance.json"
+APPLICATION_OUTPUT="$PHYSICAL_ROOT/bin/orca_inference_ringlpn"
+HELPER_OUTPUT="$PHYSICAL_ROOT/bin/test_orca_linear_helpers"
+PROVENANCE_OUTPUT="$PHYSICAL_ROOT/bin/orca_linear_application_build_provenance.json"
 CUDA_ARCH="${CUDA_ARCH:-${GPU_ARCH:-89}}"
 NVCC="${NVCC:-nvcc}"
 CXX="${CXX:-g++}"
@@ -146,8 +171,15 @@ generate_depfile() {
   else
     flags=("${HELPER_FLAGS[@]}")
   fi
+  # Resolve dependencies through the equivalent physical source view so the
+  # provenance collector can keep rejecting symlinked repository inputs.
+  # The recorded compile/link commands retain their actual canonical paths.
+  local index
+  for index in "${!flags[@]}"; do
+    flags[$index]="${flags[$index]//"$RINGLPN_REPO_ROOT"/"$PHYSICAL_REPO_ROOT"}"
+  done
   (
-    cd "$ROOT"
+    cd "$PHYSICAL_ROOT"
     "$NVCC" "${flags[@]}" -MM -MT provenance \
       -MF "$KEEP_DIR/$label.d" "$source"
   )
@@ -231,6 +263,9 @@ done
 for label in application-link helper-link objcopy-orca_inference_ringlpn \
     objcopy-test_orca_linear_helpers; do
   PROVENANCE_COMMAND+=(--command "$label=$KEEP_DIR/$label.command")
+done
+for index in "${!PROVENANCE_COMMAND[@]}"; do
+  PROVENANCE_COMMAND[$index]="${PROVENANCE_COMMAND[$index]//"$RINGLPN_REPO_ROOT"/"$PHYSICAL_REPO_ROOT"}"
 done
 "${PROVENANCE_COMMAND[@]}"
 

@@ -31,6 +31,24 @@ timers, including masked-share reconstruction, rather than changing the stock
 baseline's measurement scope. Conv key sizes come from the validated plan,
 which rejects coordinates outside the stock signed-integer ABI.
 
+The root-distinct build check exposed checkout-dependent CUDA fatbins despite
+identical normalized source/library inputs. The application recipe now uses
+the same private fixed-source build convention as the FC/Conv adapters.
+Dependency-only preprocessing uses the equivalent physical view, so the
+unchanged provenance collector still rejects symlinked source dependencies.
+The main and source-only worktrees now produce byte-identical application and
+helper executables and complete provenance. Both API probes and both
+post-cleanup provenance verifiers pass. Current application/helper SHA-256:
+
+- `f00f7b89db5156426eca1df28629a0572addf552339ae83c0648701e538f7885`;
+- `5f702062a3b999451abdff39d3e90a3db6a0769a20aecb924e68f9b4ef5e52b3`;
+- build-provenance digest:
+  `f2d16c7578f1ca6fd697c69b7702ffa49ab7327c3502b0d6d7dfe9b2c089ff0b`.
+
+All ten compiler dependency groups, environment inputs, and linked archives
+match the pre-fix build; only the build recipe changed. The August bindings
+below remain historical and are not silently rebound to these executables.
+
 The producer's consume-once ledger is **not** persistent application-consumer
 replay prevention. The terminal API still requires fresh, single-use material
 from its caller; reloading a record in a later process is not prevented by
