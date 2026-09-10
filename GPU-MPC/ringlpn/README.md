@@ -14,7 +14,7 @@ source-native terminal FC/Conv2D integration with Orca.
 ## Source review branch — 2026-09-10
 
 This branch publishes reviewed source without importing the internal-only
-full-graph checkpoint, manuscript, measurements, historical binary approvals,
+full-graph checkpoint, manuscript, historical measurements or binary approvals,
 or their unpublished commit ancestry. Older reports below are historical;
 this is not a permission-cleared paper/artifact release.
 
@@ -24,8 +24,9 @@ bounds, empty OT handling, a reusable SCI sender worker, source-native
 terminal linear material consumption, and bounded process-group cleanup.
 The stock Orca kernels and enclosing stock timing scope remain intact.
 
-With CUDA, the documented system libraries, and pinned submodules installed,
-run from `GPU-MPC/` on three available GPUs (adjust the indices):
+Initialize the pinned `GPU-MPC/ext/cutlass` and `SCI/extern/eigen` submodules
+from the repository root. With CUDA and the documented system libraries
+installed, run from `GPU-MPC/` on three available GPUs (adjust the indices):
 
 ```bash
 PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
