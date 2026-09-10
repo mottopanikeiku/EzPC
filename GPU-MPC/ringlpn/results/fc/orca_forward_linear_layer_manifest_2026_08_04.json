@@ -9,7 +9,7 @@
     },
     {
       "path": "GPU-MPC/experiments/orca/orca_inference.cu",
-      "sha256": "9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986"
+      "sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483"
     },
     {
       "path": "GPU-MPC/experiments/orca/piranha.cu",
@@ -21,7 +21,7 @@
     },
     {
       "path": "GPU-MPC/backend/orca_base.h",
-      "sha256": "6672c368a4008bbf88f2fe754c7a87d3b7803367bc761620e378af68a64f6413"
+      "sha256": "e17b88d85ab849c029beeb08a043719a6e5c198966a403caf4f3335f36f9238b"
     },
     {
       "path": "GPU-MPC/backend/orca.h",

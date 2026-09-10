@@ -81,81 +81,137 @@ public:
         // printf("Key read=%lu\n", keyBuf - startPtr);
     }
 
-    void conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci, u64 co, const Tensor4D<T> &input, const Tensor2D<T> &filter, bool useBias, const Tensor1D<T> &bias, Tensor4D<T> &output, bool isFirst)
+protected:
+    // Callbacks own wall-clock timing, including online operand transfers.
+    void runConv2DWithKey(
+        GPUConv2DKey<T> key, const Tensor4D<T> &input,
+        T *d_online_filter, bool use_bias, const Tensor1D<T> &bias,
+        Tensor4D<T> &output, bool is_first)
     {
-        auto comm_start = s.comm_time;
-        auto start = std::chrono::high_resolution_clock::now();
-        GPUConv2DKey<T> k;
-        k.p = {
-            bw, bw, (int)input.d1, (int)input.d2, (int)input.d3, (int)ci,
-            (int)fh, (int)fw, (int)co, (int)padding, (int)padding, (int)padding, (int)padding,
-            (int)stride, (int)stride, 0, 0, 0, 0, 0};
-        fillConv2DParams(&(k.p));
-        k.mem_size_I = k.p.size_I * sizeof(T);
-        k.mem_size_F = k.p.size_F * sizeof(T);
-        k.mem_size_O = k.p.size_O * sizeof(T);
-
-        k.I = (T *)keyBuf;
-        keyBuf += k.mem_size_I;
-        k.F = (T *)keyBuf;
-        keyBuf += k.mem_size_F;
-        k.O = (T *)keyBuf;
-        keyBuf += k.mem_size_O;
-
-        auto d_mask_I = (T *)moveToGPU((u8 *)k.I, k.mem_size_I, &s);
-        if (isFirst)
+        auto d_mask_input =
+            (T *)moveToGPU((u8 *)key.I, key.mem_size_I, &s);
+        if (is_first)
         {
-            gpuLinearComb(bw, k.p.size_I, input.d_data, T(1), input.d_data, T(1), d_mask_I);
-            peer->reconstructInPlace(input.d_data, bw, k.p.size_I, &s);
+            gpuLinearComb(bw, key.p.size_I, input.d_data, T(1),
+                          input.d_data, T(1), d_mask_input);
+            peer->reconstructInPlace(input.d_data, bw, key.p.size_I, &s);
         }
-        // printf("Input=%lx\n", input.d_data);
-        auto d_F = (T *)moveToGPU((u8 *)filter.data, k.mem_size_F, &s);
-        // printf("filter=%lu\n", filter.data[k.p.size_F - 1]);
-        auto d_mask_F = (T *)moveToGPU((u8 *)k.F, k.mem_size_F, &s);
-        auto d_C = gpuConv2DBeaver<T>(k, party, input.d_data, d_F, d_mask_I, d_mask_F, useBias && party == SERVER0 ? bias.data : (T *)NULL, &s, 0);
+        auto d_mask_filter =
+            (T *)moveToGPU((u8 *)key.F, key.mem_size_F, &s);
+        auto d_output = gpuConv2DBeaver<T>(
+            key, party, input.d_data, d_online_filter, d_mask_input,
+            d_mask_filter,
+            use_bias && party == SERVER0 ? bias.data : (T *)NULL, &s, 0);
 
-        gpuFree(d_F);
-        gpuFree(d_mask_I);
-        gpuFree(d_mask_F);
-        // printf("size O=%lu\n", k.p.size_O);
-        peer->reconstructInPlace(d_C, k.p.bout, k.p.size_O, &s);
-        output.d_data = d_C;
+        gpuFree(d_mask_input);
+        gpuFree(d_mask_filter);
+        peer->reconstructInPlace(d_output, key.p.bout, key.p.size_O, &s);
+        output.d_data = d_output;
 
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = end - start;
-        s.conv_time += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-        auto comm_end = s.comm_time;
-        s.conv_comm_time += (comm_end - comm_start);
     }
 
-    void matmul(const Tensor2D<T> &a, const Tensor2D<T> &b, Tensor2D<T> &c, bool useBias, Tensor1D<T> &d, bool isFirst)
+    void runMatmulWithKey(
+        const MatmulParams &params, GPUMatmulKey<T> &key,
+        const Tensor2D<T> &input, T *d_online_weight,
+        bool use_bias, Tensor1D<T> &bias, Tensor2D<T> &output,
+        bool is_first)
     {
-        // auto h_data = (T*) moveToCPU((u8*) a.d_data, a.size() * sizeof(T), NULL);
-        // printf("Matmul input=%ld, %ld\n", h_data[0], h_data[1]);
-        // for(int i = 0; i < a.size(); i++) printf("Matmul input=%ld\n", h_data[i]);
-        auto comm_start = s.comm_time;
-        auto start = std::chrono::high_resolution_clock::now();
-
-        MatmulParams p;
-        p.M = a.d1;
-        p.K = a.d2;
-        p.N = b.d2;
-        p.batchSz = 1;
-        stdInit(p, bw, 0);
-        auto k = readGPUMatmulKey<T>(p, TruncateType::None, &keyBuf);
-
-        auto d_mask_A = (T *)moveToGPU((u8 *)k.A, k.mem_size_A, &s);
-        if (isFirst)
+        auto d_mask_input =
+            (T *)moveToGPU((u8 *)key.A, key.mem_size_A, &s);
+        if (is_first)
         {
-            gpuLinearComb(bw, p.size_A, a.d_data, T(1), a.d_data, T(1), d_mask_A);
-            peer->reconstructInPlace(a.d_data, bw, p.size_A, &s);
+            gpuLinearComb(bw, params.size_A, input.d_data, T(1),
+                          input.d_data, T(1), d_mask_input);
+            peer->reconstructInPlace(input.d_data, bw, params.size_A, &s);
         }
-        c.d_data = gpuMatmul(peer, party, p, k, a.d_data, b.data, useBias ? d.data : (T *)NULL, TruncateType::None, &g, &s, false, d_mask_A);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = end - start;
-        s.matmul_time += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-        auto comm_end = s.comm_time;
-        s.matmul_comm_time += (comm_end - comm_start);
+        const u64 linear_comm_start =
+            peer->bytesSent() + peer->bytesReceived();
+        auto d_mask_weight =
+            (T *)moveToGPU((u8 *)key.B, key.mem_size_B, &s);
+        T *d_bias = NULL;
+        if (use_bias && party == SERVER0)
+        {
+            d_bias =
+                (T *)moveToGPU((u8 *)bias.data,
+                               params.N * sizeof(T), &s);
+        }
+        auto d_output = gpuMatmulBeaver(
+            params, key, party, input.d_data, d_online_weight,
+            d_mask_input, d_mask_weight, d_bias, &s);
+
+        gpuFree(d_mask_input);
+        gpuFree(d_mask_weight);
+        if (d_bias)
+            gpuFree(d_bias);
+        peer->reconstructInPlace(d_output, params.bw, params.size_C, &s);
+        output.d_data = d_output;
+
+        const u64 linear_comm_end =
+            peer->bytesSent() + peer->bytesReceived();
+        s.linear_comm_bytes += linear_comm_end - linear_comm_start;
+    }
+
+public:
+    void conv2D(u64 fh, u64 fw, u64 padding, u64 stride, u64 ci,
+                u64 co, const Tensor4D<T> &input,
+                const Tensor2D<T> &filter, bool useBias,
+                const Tensor1D<T> &bias, Tensor4D<T> &output,
+                bool isFirst)
+    {
+        const auto comm_start = s.comm_time;
+        const auto start = std::chrono::high_resolution_clock::now();
+        GPUConv2DKey<T> key;
+        key.p = {
+            bw, bw, (int)input.d1, (int)input.d2, (int)input.d3, (int)ci,
+            (int)fh, (int)fw, (int)co, (int)padding, (int)padding,
+            (int)padding, (int)padding, (int)stride, (int)stride,
+            0, 0, 0, 0, 0};
+        fillConv2DParams(&(key.p));
+        key.mem_size_I = key.p.size_I * sizeof(T);
+        key.mem_size_F = key.p.size_F * sizeof(T);
+        key.mem_size_O = key.p.size_O * sizeof(T);
+
+        key.I = (T *)keyBuf;
+        keyBuf += key.mem_size_I;
+        key.F = (T *)keyBuf;
+        keyBuf += key.mem_size_F;
+        key.O = (T *)keyBuf;
+        keyBuf += key.mem_size_O;
+
+        auto d_online_filter =
+            (T *)moveToGPU((u8 *)filter.data, key.mem_size_F, &s);
+        runConv2DWithKey(key, input, d_online_filter, useBias, bias,
+                         output, isFirst);
+        gpuFree(d_online_filter);
+        s.conv_time += std::chrono::duration_cast<std::chrono::microseconds>(
+                           std::chrono::high_resolution_clock::now() - start)
+                           .count();
+        s.conv_comm_time += s.comm_time - comm_start;
+    }
+
+    void matmul(const Tensor2D<T> &input, const Tensor2D<T> &weight,
+                Tensor2D<T> &output, bool useBias, Tensor1D<T> &bias,
+                bool isFirst)
+    {
+        const auto comm_start = s.comm_time;
+        const auto start = std::chrono::high_resolution_clock::now();
+        MatmulParams params;
+        params.M = input.d1;
+        params.K = input.d2;
+        params.N = weight.d2;
+        params.batchSz = 1;
+        stdInit(params, bw, 0);
+        auto key =
+            readGPUMatmulKey<T>(params, TruncateType::None, &keyBuf);
+        auto d_online_weight =
+            (T *)moveToGPU((u8 *)weight.data, key.mem_size_B, &s);
+        runMatmulWithKey(params, key, input, d_online_weight, useBias,
+                         bias, output, isFirst);
+        gpuFree(d_online_weight);
+        s.matmul_time += std::chrono::duration_cast<std::chrono::microseconds>(
+                             std::chrono::high_resolution_clock::now() - start)
+                             .count();
+        s.matmul_comm_time += s.comm_time - comm_start;
     }
 
     void avgPool2D(u64 ks, u64 padding, u64 stride, const Tensor4D<T> &in, Tensor4D<T> &out, u64 scale)

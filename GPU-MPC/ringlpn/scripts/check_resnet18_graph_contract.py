@@ -17,7 +17,7 @@ from typing import Any, NoReturn
 
 
 EXPECTED_MANIFEST_SHA256 = (
-    "f5f17ee9be08a7d94f89927b0314a95dec59104f73d0c645f9acdd421555a986"
+    "85cc36085aa7d9a36875aeabe922beeeb87c83f02e1d4cdd16ab91376f83f341"
 )
 PROBE_SCHEMA = "ringlpn-resnet18-compiled-graph-contract-v1"
 CNN_ANCHOR = re.compile(r"GPU-MPC/experiments/orca/cnn\.h:(\d+)")
