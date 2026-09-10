@@ -40,6 +40,12 @@ bash ringlpn/scripts/build_correlation_freshness_test.sh
 ringlpn/host_bin/test_correlation_freshness
 ```
 
+The application/helper build enters a private fixed source path because host
+prefix maps alone do not make CUDA fatbins relocation-stable. Root-distinct
+builds produce identical binaries and provenance. Dependency-only preprocessing
+uses the equivalent physical view without relaxing source-symlink rejection;
+the fixed build directory rejects stale/concurrent use and is removed on exit.
+
 The application is terminal-only. Its caller must supply fresh, single-use
 material: producer freshness is not persistent application-consumer replay
 prevention. Local HMAC establishes endpoints/context; subsequent local TCP
