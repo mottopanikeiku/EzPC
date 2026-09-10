@@ -24,6 +24,8 @@ if [[ "${RINGLPN_CANONICAL_BUILD_ACTIVE:-0}" != "1" ]]; then
   }
   trap cleanup_canonical_build_root EXIT
   ln -s -- "$ACTUAL_REPO_ROOT" "$CANONICAL_BUILD_PARENT/source"
+  cd "$ACTUAL_ROOT"
+  unset OLDPWD
   RINGLPN_CANONICAL_BUILD_ACTIVE=1 \
     "$CANONICAL_BUILD_PARENT/source/GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh"
   exit 0

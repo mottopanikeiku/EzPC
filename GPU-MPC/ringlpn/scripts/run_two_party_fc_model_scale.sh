@@ -18,6 +18,14 @@ fi
 CHANNEL_AUTH_FILES=()
 cleanup_private_workdir() {
   local rc=$?
+  trap - EXIT
+  trap '' INT TERM HUP
+  local pid
+  # GNU timeout owns each background party's process group.
+  for pid in $(jobs -pr); do
+    kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  done
   local auth_file
   for auth_file in "${CHANNEL_AUTH_FILES[@]}"; do
     rm -f -- "$auth_file"
@@ -26,20 +34,25 @@ cleanup_private_workdir() {
   exit "$rc"
 }
 trap cleanup_private_workdir EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 LAYER_MANIFEST="${LAYER_MANIFEST:-$OUTDIR/orca_forward_linear_layer_manifest_2026_08_04.json}"
 WORKLOAD_MANIFEST="${WORKLOAD_MANIFEST:-$OUTDIR/orca_model_scale_workload_manifest_2026_08_04.json}"
 RESULT_SCHEMAS="$OUTDIR/two_party_fc_model_scale_result_schemas_2026_08_04.json"
-CSV="$OUTDIR/two_party_fc_model_scale_2026_08_04.csv"
-AGGREGATE="$OUTDIR/two_party_fc_model_scale_aggregate_2026_08_04.csv"
-CONTROLS="$OUTDIR/two_party_fc_model_scale_controls_2026_08_04.csv"
-SUMMARY="$OUTDIR/two_party_fc_model_scale_summary_2026_08_04.csv"
-ENVIRONMENT="$OUTDIR/two_party_fc_model_scale_environment_2026_08_04.txt"
-LOG="$OUTDIR/two_party_fc_model_scale_2026_08_04.log"
+CSV="${CSV:-$OUTDIR/two_party_fc_model_scale_2026_08_04.csv}"
+AGGREGATE="${AGGREGATE:-$OUTDIR/two_party_fc_model_scale_aggregate_2026_08_04.csv}"
+CONTROLS="${CONTROLS:-$OUTDIR/two_party_fc_model_scale_controls_2026_08_04.csv}"
+SUMMARY="${SUMMARY:-$OUTDIR/two_party_fc_model_scale_summary_2026_08_04.csv}"
+ENVIRONMENT="${ENVIRONMENT:-$OUTDIR/two_party_fc_model_scale_environment_2026_08_04.txt}"
+LOG="${LOG:-$OUTDIR/two_party_fc_model_scale_2026_08_04.log}"
+AB_AUDIT="${AB_AUDIT:-$OUTDIR/two_party_fc_model_scale_ab_audit_2026_08_14.csv}"
 PLAN="$WORKDIR/execution_plan.tsv"
 PLAN_META="$WORKDIR/execution_plan.json"
 P0_GPU="${P0_GPU:-1}"
 P1_GPU="${P1_GPU:-3}"
 CHECK_GPU="${CHECK_GPU:-$P0_GPU}"
+CONTROLLED_SAME_GPU="${CONTROLLED_SAME_GPU:-0}"
 BASE_PORT="${BASE_PORT:-24280}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-1800}"
 OT_BACKEND="${OT_BACKEND:-sci-iknp}"
@@ -73,9 +86,19 @@ SWAP_LAYER="${SWAP_LAYER:-}"
 SCHEMA_VERSION="ringlpn.two-party-fc-model-scale.v6"
 PUBLICATION_DATE="2026-08-10"
 RESULT_COLUMNS=176
+AB_AUDIT_SCHEMA="ringlpn.controlled-fc-ab.v1"
 
 if [[ "$P0_GPU" == "$P1_GPU" ]]; then
   echo "P0_GPU and P1_GPU must be distinct" >&2
+  exit 2
+fi
+if [[ "$CONTROLLED_SAME_GPU" != 0 && "$CONTROLLED_SAME_GPU" != 1 ]]; then
+  echo "CONTROLLED_SAME_GPU must be 0 or 1" >&2
+  exit 2
+fi
+if (( CONTROLLED_SAME_GPU )) &&
+   [[ -n "$FAIL_LAYER" || -n "$SWAP_LAYER" ]]; then
+  echo "controlled A/B measurements reject injected failure controls" >&2
   exit 2
 fi
 if ! [[ "$BASE_PORT" =~ ^[0-9]+$ && "$TIMEOUT_SECONDS" =~ ^[0-9]+$ &&
@@ -87,23 +110,76 @@ if ! [[ "$BASE_PORT" =~ ^[0-9]+$ && "$TIMEOUT_SECONDS" =~ ^[0-9]+$ &&
 fi
 mkdir -p "$OUTDIR"
 outdir_real="$(realpath "$OUTDIR")"
+declare -A seen_output_paths=()
+for output_path in "$CSV" "$AGGREGATE" "$CONTROLS" "$SUMMARY" \
+                   "$ENVIRONMENT" "$LOG" "$AB_AUDIT"; do
+  output_real="$(realpath -m "$output_path")"
+  if [[ "$output_real" != "$outdir_real/"* ]]; then
+    echo "result outputs must remain children of $OUTDIR: $output_path" >&2
+    exit 2
+  fi
+  if [[ -n "${seen_output_paths[$output_real]+present}" ]]; then
+    echo "result output paths must be distinct: $output_path" >&2
+    exit 2
+  fi
+  seen_output_paths["$output_real"]=1
+done
 if (( PRIVATE_WORKDIR )); then
   workdir_real="$(realpath -e "$WORKDIR")"
 else
+  if [[ -e "$WORKDIR" || -L "$WORKDIR" ]]; then
+    echo "caller-supplied WORKDIR must be fresh; refusing to erase records or ledger" >&2
+    exit 2
+  fi
   workdir_real="$(realpath -m "$WORKDIR")"
   if [[ "$workdir_real" != "$outdir_real/"* ]]; then
     echo "caller-supplied WORKDIR must be a child of $OUTDIR" >&2
     exit 2
   fi
-  rm -rf -- "$workdir_real"
-  mkdir -p "$workdir_real"
+  mkdir -m 700 -- "$workdir_real"
 fi
 WORKDIR="$workdir_real"
 LEDGER_ROOT="${LEDGER_ROOT:-$WORKDIR/ledger}"
-LEDGER_ROOT="$(realpath -m "$LEDGER_ROOT")"
-mkdir -p "$LEDGER_ROOT"
-chmod 700 "$LEDGER_ROOT"
+ledger_real="$(realpath -m "$LEDGER_ROOT")"
+if [[ "$ledger_real" != "$(realpath -ms "$LEDGER_ROOT")" ]]; then
+  echo "LEDGER_ROOT must not contain symlink components" >&2
+  exit 2
+fi
+LEDGER_ROOT="$ledger_real"
+mkdir -p -m 700 -- "$LEDGER_ROOT"
+ledger_mode="$(stat -c %a "$LEDGER_ROOT")"
+if [[ ! -d "$LEDGER_ROOT" || -L "$LEDGER_ROOT" || ! -O "$LEDGER_ROOT" ]] ||
+   (( (8#$ledger_mode & 077) != 0 )); then
+  echo "LEDGER_ROOT must be an existing owner-only directory or a fresh path" >&2
+  exit 2
+fi
 : > "$LOG"
+require_quiescent_gpu() {
+  local gpu="$1" boundary="$2" processes
+  if ! processes="$(nvidia-smi --id="$gpu" --query-compute-apps=pid,process_name \
+      --format=csv,noheader,nounits 2>&1)"; then
+    echo "cannot query GPU $gpu occupancy at $boundary: $processes" >&2
+    return 1
+  fi
+  if [[ -n "${processes//[[:space:]]/}" ]]; then
+    echo "GPU $gpu is not quiescent at $boundary: $processes" >&2
+    return 1
+  fi
+}
+
+if (( CONTROLLED_SAME_GPU )); then
+  LOCK_ROOT="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}/ringlpn-gpu-locks-$UID}"
+  mkdir -p -m 700 "$LOCK_ROOT"
+  chmod 700 "$LOCK_ROOT"
+  exec {P0_GPU_LOCK_FD}>"$LOCK_ROOT/gpu-$P0_GPU.lock"
+  exec {P1_GPU_LOCK_FD}>"$LOCK_ROOT/gpu-$P1_GPU.lock"
+  if ! flock -n "$P0_GPU_LOCK_FD" || ! flock -n "$P1_GPU_LOCK_FD"; then
+    echo "another controlled Ring-LPN run holds a selected GPU lock" >&2
+    exit 2
+  fi
+  require_quiescent_gpu "$P0_GPU" initial-preflight
+  require_quiescent_gpu "$P1_GPU" initial-preflight
+fi
 
 # Validate every executable dimension, bit width, layout, constructor anchor,
 # batch anchor, and pinned source digest before building or invoking a layer.
@@ -342,6 +418,9 @@ with open(controls_arg, "w", newline="", encoding="utf-8") as handle:
         "sample_role", "control", "expected", "observed", "artifact_sha256", "status",
     ])
 PY
+printf '%s\n' \
+  'schema_version,publication_date,model,source_layer,trial,sample_role,invocation_id,party0_gpu,party1_gpu,critical_party,party0_setup_included_us,party1_setup_included_us,preprocess_gpu,checker_gpu,same_physical_gpu,pre_protocol_quiescent,pre_checker_quiescent,post_checker_quiescent,comparison_order,status' \
+  > "$AB_AUDIT"
 
 manifest_sha256="$(sha256sum "$LAYER_MANIFEST" | cut -d' ' -f1)"
 workload_manifest_sha256="$(sha256sum "$WORKLOAD_MANIFEST" | cut -d' ' -f1)"
@@ -375,6 +454,15 @@ append_control_row() {
   local IFS=,
   printf '%s\n' "${row[*]}" >> "$CONTROLS"
 }
+append_ab_audit_row() {
+  local -a row=("$@")
+  if (( ${#row[@]} != 20 )); then
+    echo "internal controlled A/B audit schema mismatch" >&2
+    return 1
+  fi
+  local IFS=,
+  printf '%s\n' "${row[*]}" >> "$AB_AUDIT"
+}
 matches_control() {
   [[ "$1" == all || "$1" == "$2:$3" ]]
 }
@@ -399,7 +487,16 @@ BINARY_SHA256="$(file_sha256 "$BIN")"
   echo "host=withheld_for_publication"
   echo "kernel=$(uname -srvmo)"
   echo "cpu_count=$(nproc)"
-  echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:$CHECK_GPU"
+  if (( CONTROLLED_SAME_GPU )); then
+    echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:per-sample-critical-party"
+    echo "controlled_same_gpu=1"
+    echo "critical_party_rule=max(total_us+preflight_us+ot_setup_us); ties select party0"
+    echo "comparison_order=dealer baseline after both preprocessing parties exit"
+    echo "gpu_quiescence_contract=selected GPUs empty before protocol and after both parties exit; selected critical-party GPU empty after checker; advisory per-GPU locks held for full run"
+  else
+    echo "process_gpu_map=party0:$P0_GPU,party1:$P1_GPU,checker:$CHECK_GPU"
+    echo "controlled_same_gpu=0"
+  fi
   echo "network=single-host IPv4 loopback"
   echo "counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message"
   echo "ot_backend=$OT_BACKEND"
@@ -420,7 +517,9 @@ BINARY_SHA256="$(file_sha256 "$BIN")"
   for artifact in \
     "$BIN" "$LAYER_MANIFEST" "$WORKLOAD_MANIFEST" "$RESULT_SCHEMAS" \
     "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
+    "$ROOT/scripts/verify_controlled_fc_ab.py" \
     "$ROOT/scripts/two_party_fc_metrics_schema_2026_08_04.csv" \
+    "$ROOT/scripts/run_two_party_fc_model_scale.sh" \
     "$ROOT/src/test_two_party_fc_preprocess.cu" "$ROOT/src/two_party_spfss.h" \
     "$ROOT/src/linear_preprocess.h" \
     "$ROOT/src/linear_preprocess_backend.cuh" \
@@ -566,13 +665,17 @@ run_sample() {
     --ole-n "$ole_n" --ole-c "$ole_c" --ole-t "$ole_t" --noise "$noise"
     "${OT_ARGS[@]}")
   local rc0 rc1 check_rc swap_rc pid0 pid1
+  if (( CONTROLLED_SAME_GPU )); then
+    require_quiescent_gpu "$P0_GPU" "$model:$source_layer:$role:$trial:pre-protocol"
+    require_quiescent_gpu "$P1_GPU" "$model:$source_layer:$role:$trial:pre-protocol"
+  fi
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 0 \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --party 0 \
     --channel-auth-file "$p0_auth" \
     "${common[@]}" --out-prefix "$p0_prefix" > "$dir/p0.out" 2>&1 &
   pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 1 \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --party 1 \
     --channel-auth-file "$p1_auth" \
     "${common[@]}" --out-prefix "$p1_prefix" > "$dir/p1.out" 2>&1 &
   pid1=$!
@@ -585,6 +688,10 @@ run_sample() {
     echo "===== $model $source_layer / $role $trial / party 1 ====="
     cat "$dir/p1.out"
   } >> "$LOG"
+  if (( CONTROLLED_SAME_GPU )); then
+    require_quiescent_gpu "$P0_GPU" "$model:$source_layer:$role:$trial:pre-checker"
+    require_quiescent_gpu "$P1_GPU" "$model:$source_layer:$role:$trial:pre-checker"
+  fi
   if (( rc0 != 0 || rc1 != 0 )) || [[ ! -f "$p0_record" || ! -f "$p1_record" ]]; then
     rm -f "$p0_record" "$p1_record" "${p0_record}.tmp" "${p1_record}.tmp"
     append_failed FAIL supported_untruncated
@@ -599,6 +706,46 @@ run_sample() {
     had_failure=1
     return 0
   fi
+  local p0_row p1_row check_row
+  local -a f0 f1 fc
+  p0_row="$(sed -n '/^0,/p' "$dir/p0.out" | tail -n 1)"
+  p1_row="$(sed -n '/^1,/p' "$dir/p1.out" | tail -n 1)"
+  IFS=',' read -r -a f0 <<< "$p0_row"
+  IFS=',' read -r -a f1 <<< "$p1_row"
+  local sample_check_gpu="$CHECK_GPU" critical_party=NA
+  local p0_setup_included_us=NA p1_setup_included_us=NA
+  if (( CONTROLLED_SAME_GPU )); then
+    if [[ "${#f0[@]}" -ne 86 || "${#f1[@]}" -ne 86 ||
+          "${f0[35]}" != pass || "${f1[35]}" != pass ]]; then
+      echo "cannot select the critical-party GPU from malformed party output" >&2
+      return 2
+    fi
+    read -r critical_party p0_setup_included_us p1_setup_included_us < <(
+      python3 - "${f0[34]}" "${f0[37]}" "${f0[38]}" \
+                  "${f1[34]}" "${f1[37]}" "${f1[38]}" <<'PY'
+from decimal import Decimal, InvalidOperation
+import sys
+
+try:
+    values = [Decimal(value) for value in sys.argv[1:]]
+except InvalidOperation as error:
+    raise SystemExit(f"invalid critical-path timing: {error}")
+if any(not value.is_finite() or value < 0 for value in values):
+    raise SystemExit("critical-path timings must be finite and nonnegative")
+party0 = sum(values[:3])
+party1 = sum(values[3:])
+print(0 if party0 >= party1 else 1, party0, party1)
+PY
+    )
+    if [[ "$critical_party" == 0 ]]; then
+      sample_check_gpu="$P0_GPU"
+    elif [[ "$critical_party" == 1 ]]; then
+      sample_check_gpu="$P1_GPU"
+    else
+      echo "critical-party selector returned an invalid party" >&2
+      return 2
+    fi
+  fi
 
   local p0_record_bytes p1_record_bytes
   p0_record_bytes="$(stat -c %s "$p0_record")"
@@ -607,7 +754,7 @@ run_sample() {
   p1_record_sha="$(file_sha256 "$p1_record")"
   if matches_control "$SWAP_LAYER" "$model" "$source_layer"; then
     set +e
-    CUDA_VISIBLE_DEVICES="$CHECK_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --check \
+    CUDA_VISIBLE_DEVICES="$sample_check_gpu" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --check \
       --p0-record "$p1_record" --p1-record "$p0_record" > "$dir/check_swapped.out" 2>&1
     swap_rc=$?
     set -e
@@ -626,10 +773,14 @@ run_sample() {
   fi
 
   set +e
-  CUDA_VISIBLE_DEVICES="$CHECK_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --check \
+  CUDA_VISIBLE_DEVICES="$sample_check_gpu" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --check \
     --p0-record "$p0_record" --p1-record "$p1_record" > "$dir/check.out" 2>&1
   check_rc=$?
   set -e
+  if (( CONTROLLED_SAME_GPU )); then
+    require_quiescent_gpu "$sample_check_gpu" \
+      "$model:$source_layer:$role:$trial:post-checker"
+  fi
   {
     echo "===== $model $source_layer / $role $trial / post-exit checker ====="
     cat "$dir/check.out"
@@ -641,10 +792,6 @@ run_sample() {
     return 0
   fi
 
-  local p0_row p1_row check_row
-  local -a f0 f1 fc
-  p0_row="$(sed -n '/^0,/p' "$dir/p0.out" | tail -n 1)"
-  p1_row="$(sed -n '/^1,/p' "$dir/p1.out" | tail -n 1)"
   check_row="$(sed -n "/^${qbits},/p" "$dir/check.out" | tail -n 1)"
   IFS=',' read -r -a f0 <<< "$p0_row"
   IFS=',' read -r -a f1 <<< "$p1_row"
@@ -662,6 +809,10 @@ run_sample() {
         "${f0[3]}" -ne "$rows" || "${f1[3]}" -ne "$rows" ||
         "${f0[4]}" -ne "$inner" || "${f1[4]}" -ne "$inner" ||
         "${f0[5]}" -ne "$cols" || "${f1[5]}" -ne "$cols" ||
+        "${f0[6]}" != "$ole_n" || "${f1[6]}" != "$ole_n" ||
+        "${f0[7]}" != "$ole_c" || "${f1[7]}" != "$ole_c" ||
+        "${f0[8]}" != "$ole_t" || "${f1[8]}" != "$ole_t" ||
+        "${f0[9]}" != "$noise" || "${f1[9]}" != "$noise" ||
         "${f0[10]}" -ne "$ring_batches" || "${f1[10]}" -ne "$ring_batches" ||
         "${f0[11]}" -ne "$application_slots" ||
         "${f1[11]}" -ne "$application_slots" ||
@@ -749,6 +900,13 @@ run_sample() {
     "${f0[20]}" "${f1[20]}" "${f0[21]}" "${f1[21]}" "${f0[22]}" "${f1[22]}" \
     "${f0[23]}" "${f1[23]}" "${f0[82]}" "${f1[82]}" "${raw_metrics[@]}" \
     "$BINARY_SHA256" "$ENVIRONMENT_SHA256" "$RESULT_SCHEMA_SHA256"
+  if (( CONTROLLED_SAME_GPU )); then
+    append_ab_audit_row \
+      "$AB_AUDIT_SCHEMA" "$PUBLICATION_DATE" "$model" "$source_layer" "$trial" \
+      "$role" "$invocation_id" "$P0_GPU" "$P1_GPU" "$critical_party" \
+      "$p0_setup_included_us" "$p1_setup_included_us" "$sample_check_gpu" \
+      "$sample_check_gpu" yes yes yes yes protocol_then_dealer pass
+  fi
   printf 'validated_after_both_party_exits sid=%s invocation_id=%s ledger_digest=%s\n' \
     "$sid" "$invocation_id" "${f0[66]}" > "$dir/COMMITTED"
   rm -f "$p0_record" "$p1_record"
@@ -787,6 +945,10 @@ python3 "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
   --require-current-binary \
   --environment "$ENVIRONMENT" \
   --result-schema "$RESULT_SCHEMAS"
+if (( CONTROLLED_SAME_GPU )); then
+  python3 "$ROOT/scripts/verify_controlled_fc_ab.py" \
+    --raw "$CSV" --audit "$AB_AUDIT" --environment "$ENVIRONMENT"
+fi
 
 aggregate_failed="$(python3 -c 'import csv, sys; rows = csv.DictReader(open(sys.argv[1], newline="", encoding="utf-8")); print(int(any(row.get("status") != "pass" for row in rows)))' "$AGGREGATE")"
 if (( had_failure != 0 || aggregate_failed != 0 )); then
@@ -800,4 +962,7 @@ echo "[two-party-fc-model] aggregate results: $AGGREGATE"
 echo "[two-party-fc-model] controls: $CONTROLS"
 echo "[two-party-fc-model] summary: $SUMMARY"
 echo "[two-party-fc-model] environment: $ENVIRONMENT"
+if (( CONTROLLED_SAME_GPU )); then
+  echo "[two-party-fc-model] controlled A/B audit: $AB_AUDIT"
+fi
 echo "[two-party-fc-model] log: $LOG"
