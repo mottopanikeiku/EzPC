@@ -509,6 +509,12 @@ bool derive_work(const Args &args, PublicWork &work) {
         args.padding < 0 || args.stride <= 0) {
         return false;
     }
+    // The unchanged stock convolution kernels use signed-int coordinates,
+    // including padded extents and output-index * stride intermediates.
+    if (static_cast<int64_t>(args.inner) + 2 * int64_t{args.padding} > INT_MAX ||
+        static_cast<int64_t>(args.cols) + 2 * int64_t{args.padding} > INT_MAX) {
+        return false;
+    }
 #endif
     work.regular = args.noise == "regular";
     work.limbs = args.qbits == 128 ? 2 : 1;
@@ -672,7 +678,7 @@ bool derive_work(const Args &args, PublicWork &work) {
 #else
     const U128 max_inner = static_cast<U128>(args.inner);
 #endif
-    if (max_inner >= (modulus >> (2 * args.bw + 2))) return false;
+    if (max_inner > ((modulus - 1) >> (2 * args.bw + 2))) return false;
 
 #ifndef RINGLPN_LIVE_CONV
     MatmulParams p;
@@ -2615,7 +2621,7 @@ int run_party(Args args) {
         std::cout << ",NA," << straight.declared_count << ','
                   << straight.consumed_count << ',' << reversed.declared_count
                   << ',' << reversed.consumed_count
-                  << ",unreviewed-unmeasured,"
+                  << ",unreviewed-measured,"
                   << counters.ring_application_slots_discarded << ','
                   << ringlpn_freshness::hex(
                          args.emp_silent_bridge_digest)

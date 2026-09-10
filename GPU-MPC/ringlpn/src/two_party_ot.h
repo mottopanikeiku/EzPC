@@ -21,21 +21,25 @@
 //
 // WHAT IS NOT CLAIMED
 //   * The opt-in EMP SilentFerret source path and exact 1/62/128-bit packed
-//     chosen-message adapter are unreviewed and unmeasured. They are never the
-//     default and support no security or bandwidth claim until focused evidence
-//     and independent review pass. SCI/IKNP remains the default evidence path.
+//     chosen-message adapter remain unreviewed. A 2026-08-14 focused FC
+//     correctness suite measures their exact inventories and transport bytes,
+//     but uncontrolled occupancy and missing independent review permit no
+//     performance, bandwidth-improvement, or security claim. SCI/IKNP remains
+//     the default publication-evidence path.
 //   * DPF expansion is outside this transport wrapper. The host-reference mode
 //     uses non-cryptographic splitmix64; the GPU-consumable mode uses four
 //     domain-separated AES calls with full 128-bit seeds. Device parity is
 //     gated, but P-RNG/P-DIST/P-KEY and the DPF reduction remain open; see
 //     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md.
-//   * SCI NetIO remains plain TCP, so live deployment admits only loopback
-//     endpoints carried by the authenticated SSH launcher. Before NetIO,
-//     preflight, or OT bytes, each socket mutually authenticates the party
-//     process with a versioned per-run HMAC transcript bound to the invocation,
-//     complete claim digest, stream direction, roles, and fresh nonces. Active
-//     protocol attacks after that boundary, denial of service, and side channels
-//     remain out of scope.
+//   * SCI NetIO itself remains plain TCP. Local evidence binds it to mutually
+//     authenticated loopback sockets. The distinct-host launcher carries both
+//     complete post-handshake streams inside one pinned-host-key, AEAD-only
+//     OpenSSH tunnel and rekeys it at a bounded byte/time interval. The HMAC
+//     preflight still authenticates the exact party process, invocation, claim
+//     digest, stream direction, roles, and fresh nonces end to end through that
+//     tunnel. This protects protocol confidentiality and integrity from network
+//     attackers; malicious authenticated endpoints, denial of service, and side
+//     channels remain out of scope.
 
 #pragma once
 
@@ -428,6 +432,7 @@ class PartyChannel {
         if (m0.size() != m1.size())
             throw std::invalid_argument("128-bit OT sender vector size mismatch");
         const int n = checked_ot_count(m0.size());
+        if (n == 0) return;
         if (ot_backend_ == OtBackend::EmpSilent) {
             sender_emp()->send(128, m0.data(), m1.data(), (uint64_t)n);
         } else {
@@ -448,6 +453,7 @@ class PartyChannel {
 
     std::vector<U128> ot_recv_128(const std::vector<uint8_t> &choices) {
         const int n = checked_ot_count(choices.size());
+        if (n == 0) return {};
         std::vector<U128> res((size_t)n);
         if (ot_backend_ == OtBackend::EmpSilent) {
             receiver_emp()->recv(128, choices.data(), res.data(), (uint64_t)n);
@@ -477,6 +483,7 @@ class PartyChannel {
         if (m0.size() != m1.size() || m0.size() != choices.size()) {
             throw std::invalid_argument("duplex 128-bit OT vector size mismatch");
         }
+        if (m0.empty()) return {};
         if (ot_backend_ == OtBackend::EmpSilent) {
             if (is_p0()) {
                 ot_send_128(m0, m1);

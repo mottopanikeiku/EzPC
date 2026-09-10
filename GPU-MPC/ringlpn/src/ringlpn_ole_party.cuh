@@ -670,18 +670,20 @@ class RingOlePartyContext {
 
     bool expand_device(AESGlobalContext *gaes) {
         if (!initialized_ || gaes == nullptr) return false;
+        expanded_ = false;
         counters_.dpf_breadth_evaluator_calls = 0;
         counters_.dpf_root_to_leaf_evaluator_calls = 0;
         run_x_streamed(params_, tables_, d_a_ntt_, d_e_, d_bw_, d_cw_,
                        d_terms_, d_x_);
-        return run_spfss_z_streamed(
+        expanded_ = run_spfss_z_streamed(
             params_, tables_, d_a_ntt_, device_keys_, d_group_,
             d_group_batch_, d_group_batch_words_, d_u2n_, d_u_, d_aw_, d_bw_,
             d_cw_, d_terms_, d_z_, gaes, counters_);
+        return expanded_;
     }
 
     bool copy_shares(RingOlePartyShares &out) const {
-        if (!initialized_) return false;
+        if (!initialized_ || !expanded_) return false;
         out.X_slots.resize(static_cast<size_t>(params_.n));
         out.Z_slots.resize(static_cast<size_t>(params_.n));
         check(cudaMemcpy(out.X_slots.data(), d_x_, sizeof(Word) * params_.n,
@@ -715,6 +717,7 @@ class RingOlePartyContext {
         d_x_ = d_u_ = d_u2n_ = d_group_ = d_group_batch_ = d_z_ = nullptr;
         d_group_batch_words_ = 0;
         initialized_ = false;
+        expanded_ = false;
     }
 
   private:
@@ -823,6 +826,7 @@ class RingOlePartyContext {
     RingOlePublicParams params_;
     int log_degree_ = 0;
     bool initialized_ = false;
+    bool expanded_ = false;
     ModulusConfig<Word> config_ = kConfig62;
     DeviceTables<Word> tables_;
     std::vector<Word> phi_norm_;

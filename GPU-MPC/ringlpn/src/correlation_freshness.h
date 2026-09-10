@@ -7,6 +7,9 @@
 // making every retry/restart of that party fail closed.  Claim files and pending
 // files are immutable append-only ledger entries.  A malformed/truncated entry
 // makes the ledger unusable rather than permitting rollback.
+// Cooperating processes serialize validation and durable publication with an
+// exclusive directory flock, so an in-flight peer claim is never mistaken for
+// a crash-truncated entry. All writers sharing a ledger must use this protocol.
 #pragma once
 
 #include <openssl/evp.h>
@@ -22,6 +25,7 @@
 #include <fcntl.h>
 #include <limits>
 #include <string>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -212,7 +216,7 @@ inline bool has_suffix(const std::string &value, const char *suffix) {
 inline bool read_exact_claim(const std::string &path) {
     constexpr size_t kBodyBytes = 16 + 4 + kInvocationBytes + 2 * kDigestBytes;
     constexpr size_t kFileBytes = kBodyBytes + kDigestBytes;
-    int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
     if (fd < 0) return false;
     struct stat info {};
     std::array<uint8_t, kFileBytes> bytes{};
@@ -333,9 +337,19 @@ inline bool claim_namespace_once(const std::string &ledger_root, int party,
     };
     if ((party != 0 && party != 1) || !nonzero(invocation) ||
         !nonzero(layer_identity) || !nonzero(plan_digest) ||
-        !mkdirs_private(ledger_root) || !validate_ledger_entries(ledger_root)) {
+        !mkdirs_private(ledger_root)) {
         return false;
     }
+    struct LedgerDirectory {
+        int fd;
+        ~LedgerDirectory() { if (fd >= 0) (void)::close(fd); }
+    } directory{::open(ledger_root.c_str(),
+                       O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)};
+    if (directory.fd < 0) return false;
+    while (::flock(directory.fd, LOCK_EX) != 0) {
+        if (errno != EINTR) return false;
+    }
+    if (!validate_ledger_entries(ledger_root)) return false;
     static constexpr uint8_t magic[16] = {
         'R','L','P','N','F','R','E','S','H','L','E','D','G','E','R','1'};
     std::vector<uint8_t> body;
@@ -360,12 +374,10 @@ inline bool claim_namespace_once(const std::string &ledger_root, int party,
     if (::close(fd) != 0) ok = false;
     if (!ok) return false;  // retain pending entry: never roll back consumption
     if (!rename_no_replace(pending, final)) return false;
-    const int directory_fd = ::open(ledger_root.c_str(), O_RDONLY | O_DIRECTORY |
-                                                          O_CLOEXEC | O_NOFOLLOW);
-    if (directory_fd < 0) return false;
-    ok = ::fsync(directory_fd) == 0;
-    if (::close(directory_fd) != 0) ok = false;
-    if (!ok) return false;
+    const bool synced = ::fsync(directory.fd) == 0;
+    const bool closed = ::close(directory.fd) == 0;
+    directory.fd = -1;
+    if (!synced || !closed) return false;
     claim.invocation = invocation;
     claim.layer_identity = layer_identity;
     claim.plan_digest = plan_digest;
