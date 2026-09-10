@@ -1,0 +1,33 @@
+{
+  "schema": "ringlpn-internal-paper-review-v1",
+  "classification": "internal/advisor",
+  "source": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex",
+  "source_sha256": "a325b78bb3d7bb7f63e463fd6bc4840609a549e91e631ed89e45c4ac69a74463",
+  "pdf": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
+  "pdf_sha256": "dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1",
+  "pages": 34,
+  "deterministic_builds": {
+    "source_sha256": "a325b78bb3d7bb7f63e463fd6bc4840609a549e91e631ed89e45c4ac69a74463",
+    "source_date_epoch": 1786320000,
+    "container_image_id": "sha256:63b6d387733d145bd26e6d1ada75c3dea568c5144f0e2831dc3590079ab9bd35",
+    "builds": [
+      {
+        "build": "a",
+        "sha256": "dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1",
+        "bytes": 547370
+      },
+      {
+        "build": "b",
+        "sha256": "dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1",
+        "bytes": 547370
+      }
+    ]
+  },
+  "publication_pdf_subgate": "pass",
+  "warnings_and_bad_boxes": "none",
+  "fonts": "embedded Type 1 only",
+  "visual_inspection": "all 34 pages inspected in six contact sheets; new experiment table and bibliography have no visible clipping or overlap",
+  "static_manifest_self_digest": "pass",
+  "publication_runtime": "not executed: authorized final release identity and distinct-host prerequisites unavailable",
+  "conference_verdict": "not submission-ready; explicit research, concrete security, matched-baseline, network, independent review, and release gates remain"
+}

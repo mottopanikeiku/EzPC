@@ -4,6 +4,41 @@
 **Scope:** two-party, semi-honest, dealerless preprocessing for one Orca **forward-FC matmul** from splittable Ring-LPN. Stateful training transitions, nonlinear-layer FSS keys, malicious security, and full-model dealer removal remain out of scope.
 **Starting checkpoint:** commit `28f8451` (`ringlpn: add corrected distributed DPF keygen artifact`), with the required GPU gate ending `ALL GATES PASS`.
 
+## ASPLOS research decision — 2026-09-10
+
+**Not submission-ready.** The target is an accelerator-systems result, not
+another compatibility demonstration. The revised internal proposal's
+conference-readiness section defines the falsifiable scheduling/cost-model
+hypothesis, matched-security baseline, cryptographic host/GPU and setup/reuse
+ablations, held-out workloads, authenticated distinct-host network matrix,
+raw-data regeneration, independent human security review, and release gates.
+It follows the [ASPLOS 2027 CFP](https://www.asplos-conference.org/asplos2027/cfp/)
+and [artifact appendix guidance](https://www.asplos-conference.org/asplos2027/ae-artifact-appendix/);
+passing functional gates alone establishes neither novelty nor acceptance.
+
+The first executed causal slice replaces SCI per-call sender threads with a
+channel-owned reusable worker. A counterbalanced same-host CNN3 FC5-shaped
+`100x64x10` experiment at q128/bw32, `(8192,2,8)`, passes all 20 measured
+invocations after one warmup per version. Process-latency median changes from
+1.0413064545 s to 0.965220348 s (7.31% lower); slower-party Phase B median
+changes from 278.1845 ms to 226.2475 ms (18.67% lower). All 68 per-party
+non-timing contract/accounting fields match. The median paired ratio is
+1.0722x; its descriptive 95% paired-bootstrap interval is [1.0615,1.0842].
+This is a shared-host, one-shape scheduling result at unpinned feasibility
+parameters, not a dealerless baseline, GPU speedup, full-model result, or
+clean-clone release claim. Raw samples, scope, variability, binary/source
+identities, and calculation rules are in
+`../fc/sci_duplex_worker_review_2026_09_10.json`.
+
+**Next decisive research gate:** establish the exact security/assumption
+contract with qualified independent human review, then evaluate the composed
+system and matched dealerless baseline at that reviewed point. In parallel,
+test whether the resource/dependency model predicts held-out shapes; do not
+promote the worker micro-optimization itself to the paper's novelty claim.
+Distinct-host access/identities, external overlap/circulation permission, and
+independent cryptographic sign-off remain external prerequisites, not checks
+an automated coding review can self-certify.
+
 ## Direction decision — 2026-07-29
 
 - **Primary thesis candidate:** an integrated dealerless Orca FC-preprocessing
@@ -37,7 +72,7 @@
   boundary changes, or a stage would require broader upstream modification.
 
 
-## Execution update — 2026-08-10
+## Execution update — 2026-08-14
 
 - The current measured runner composes party-local Ring-LPN expansion, exact
   conversion, noncircular Ring-OLE-output Phase-C bootstrap, bilateral
@@ -59,12 +94,25 @@
   cancellation law is current-sampler-bound, and the self-tested hybrid-RSD
   formula artifact is freshly regenerated. They remain model diagnostics, not
   a concrete-security claim.
-- The regenerated 2026-08-10 SCI/IKNP ResNet18 classifier artifact (binary
-  `02eaaac9...`) passes 10/10 after one warmup. Mean setup-included
+- A controlled source-manifest matrix now covers CNN2 FC4/FC5 and CNN3 FC5
+  under current binary `bf4e4f90...`, q128/bw32 regular noise, and
+  `(n,c,t)=(8192,2,8)`. Each layer passes one warmup plus ten measured trials:
+  30/30 measured layer trials. Party GPUs 1 and 3 were quiescent and locked.
+  After both protocol parties exited, each stock `gpuKeygenMatmul` comparator
+  ran on the same quiescent physical GPU as that sample's slower
+  setup-included party. CNN2 FC4+FC5 has 26.8818423365-s mean,
+  26.89771076-s median, 30.5729-ms stock-dealer median, and
+  `879.2970985824659x` paired-ratio median. CNN3 FC5 has 0.903894393-s mean,
+  0.904909782-s median, 14.96295-ms stock-dealer median, and
+  `60.3181599795375x` paired-ratio median. Fixed protocol-then-dealer order may
+  retain order bias. This closes the narrow controlled local model-FC
+  comparator measurement, but it is a strongly negative feasibility result—not
+  a speedup, network, full-model, or security claim.
+- The retained 2026-08-10 SCI/IKNP `1x512x1000` ResNet18 classifier artifact
+  (binary `02eaaac9...`) passes 10/10 after one warmup. Mean setup-included
   preprocessing is 4.011203588 s and median is 4.0193924415 s; stock dealer
-  median is 14.73535 ms, unchanged online median is 1.14969 ms, the descriptive
-  per-trial ratio median is 268.6769431352700, Phase B median is 1.955515 s, and
-  Phase C median is 0.041723 s. It is current classifier evidence, but not true
+  median is 14.73535 ms, unchanged online median is 1.14969 ms, and the
+  descriptive per-trial ratio median is 268.6769431352700. It is not true
   end-to-end time, a same-physical-GPU/occupancy-controlled A/B result, current
   Conv0 timing, or a breadth-first speedup.
 - A fresh source-bound q128/bw32 run now publishes and independently verifies
@@ -91,11 +139,16 @@
 - S2 remains the hard theorem blocker: no reviewed module-Ring-LPN parameter
   pin exists. Beyond the closed known-zero graph/state seam, the remaining
   systems gates are dealerless nonlinear setup, repeated private-input/trained-
-  model evidence, an authenticated two-host run, and independent review.
-  Further algorithmic Phase-B work, a functionality-compatible dealerless
-  baseline, clean-clone reproduction, and review of the historical opt-in
-  EMP-Silent path also remain open. The work is a strong internal advisor
-  checkpoint, not conference-submission-ready.
+  model evidence, authenticated distinct-host execution, a compatible
+  dealerless baseline, competitive performance, and independent review.
+  The same-GPU stock-dealer comparator is now executed for the controlled
+  CNN2/CNN3 model-FC matrix, but its strongly negative result is not a
+  compatible dealerless-baseline comparison or a performance win. A current
+  opt-in EMP-Silent rerun closes its five-case/16-control correctness and exact
+  inventory/byte-accounting check only; independent backend review,
+  clean-clone reproduction, and any security/bandwidth inference remain open.
+  The work is a strong internal advisor checkpoint, not
+  conference-submission-ready.
 - The selected public vector is `a=(1,a1,...,a_{c-1})`. The identity
   polynomial is sampled and sent by neither party. Each party exchanges an
   independent 256-bit seed share; their XOR seeds domain-separated SHAKE256,
@@ -412,7 +465,7 @@ under `src/` rather than code embedded in a benchmark.
 
 ### S4 — M1b: real OT/OLE/triple transport and self-bootstrapping
 
-**Status 2026-08-06:** real SCI/IKNP string OT, Boolean triples, and Gilboa
+**Status 2026-08-14:** real SCI/IKNP string OT, Boolean triples, and Gilboa
 scalar OLE are integrated and measured. The live FC/Conv source claims a
 CSPRNG-generated 128-bit invocation namespace in a persistent consume-once
 ledger before OT/CSPRNG state, binds full Ring-OLE/conversion scope IDs and the
@@ -424,11 +477,15 @@ instance of each CRT limb; every later instance consumes exactly
 consume/discard, and masked-opening counters are executable gates.
 The explicit `emp-silent` path pins EMP SilentFerret behind a C++20 opaque
 bridge, predeclares exact directional inventories, and preserves packed
-1/62/128-bit chosen-message widths. It remains **opt-in and independently
-unreviewed** and is not used by the current headline measurements. SCI/IKNP is
-the canonical q64/q128 and classifier evidence backend. Authenticated two-host
-execution,
-packet/network-round measurement, sanitizer evidence, and independent backend
+1/62/128-bit chosen-message widths. A current focused rerun under binary
+`bf4e4f90...` and bridge `435f3be6...` passes the same five q64/q128 FC cases
+and all sixteen controls, exhausts every declared inventory, and records split
+correlation/adjustment/ciphertext bytes. It remains opt-in and independently
+unreviewed; one occupied-GPU trial per case supports no performance,
+bandwidth-improvement, security, or headline claim. SCI/IKNP remains the
+canonical q64/q128/classifier evidence backend. The source includes an
+AEAD-only pinned-SSH two-host tunnel, but no two-host execution exists.
+Packet/network-round measurement, sanitizer evidence, and independent backend
 review remain strict S4 gates.
 
 
@@ -646,26 +703,46 @@ concrete parameter/reduction gate and authenticated deployment remain open.
 
 ### S9 — M6: publication-quality evaluation
 
-**Status 2026-08-10:** partially exercised, not complete. The regenerated
-2026-08-10 SCI/IKNP `1x512x1000` ResNet18 classifier artifact (binary
-`02eaaac9...`) has one warmup and ten passing trials. Mean setup-included
-preprocessing is 4.011203588 s, median is 4.0193924415 s, stock-dealer median is
-14.73535 ms, unchanged-online median is 1.14969 ms, the descriptive per-trial
-ratio median is 268.6769431352700, Phase B median is 1.955515 s, and Phase C
-median is 0.041723 s. The runs were not controlled on the same physical
-GPU/occupancy state, and setup-included timing excludes channel construction,
-socket establishment, and endpoint/context authentication. This is current
-classifier evidence, but not true end-to-end time, a matched A/B result, current
-Conv0 timing, or a breadth-first speedup.
+**Status 2026-08-14:** partially exercised, not complete. A source-manifest
+matrix covers CNN2 FC4/FC5 and CNN3 FC5 under binary `bf4e4f90...`, q128/bw32
+regular noise, and `(n,c,t)=(8192,2,8)`. Each layer has one warmup plus ten
+measured trials; all 30 measured layer trials pass. Both party GPUs are
+quiescence-checked and locked. After both parties exit, each shape-matched stock
+`gpuKeygenMatmul` comparator runs on the same quiescent physical GPU as that
+sample's slower setup-included party. CNN2's FC4+FC5 aggregate has
+26.8818423365-s mean, 26.89771076-s median, 0.06575381975-s R-7 IQR, and 95%
+Student-`t` CI `[26.8453839508,26.9183007222]` s; its dealer median is
+30.5729 ms and paired-ratio median is `879.2970985824659x`. CNN3 FC5 has
+0.903894393-s mean, 0.904909782-s median, 0.02851206825-s IQR, CI
+`[0.8903232433,0.9174655427]` s, 14.96295-ms dealer median, and
+`60.3181599795375x` paired-ratio median. Fixed protocol-then-dealer order can
+retain order bias. These are controlled, strongly negative local feasibility
+comparisons—not speedup, network, full-model, or security-level results.
+
+The retained 2026-08-10 SCI/IKNP `1x512x1000` ResNet18 classifier artifact
+(binary `02eaaac9...`) has one warmup and ten passing trials. Mean
+setup-included preprocessing is 4.011203588 s, median is 4.0193924415 s,
+stock-dealer median is 14.73535 ms, unchanged-online median is 1.14969 ms, and
+the descriptive per-trial ratio median is 268.6769431352700. The runs were not
+controlled on the same physical GPU/occupancy state, and setup-included timing
+excludes channel construction, socket establishment, and endpoint/context
+authentication. This remains classifier evidence, but not true end-to-end
+time, a matched A/B result, current Conv0 timing, or a breadth-first speedup.
 
 The retained Conv0 breadth-comparison artifact binds older binary `1db001...`,
-not current Conv binary `975ac726...`. Its 358.085-s and 384.816-s one-trial
+not current Conv binary `6a9ae142...`. Its 358.085-s and 384.816-s one-trial
 values do not establish a current-source speedup. The breadth-first caller is
 integrated: the current focused FC suite passes all five q64/q128 cases, every
 row records positive P0/P1 breadth-call counts and zero root-to-leaf calls, and
 all 21 shape plans pass. This is correctness/path-counter evidence only. The
-current FC/Conv binaries begin `02eaaac9...`/`975ac726...`; the focused approval
-digest begins `ce3cc3a5...`.
+current FC/Conv binaries begin `ab282ab6...`/`6a9ae142...`; the focused approval
+digest begins `2764ac2a...`.
+
+The 2026-08-24 source-native terminal application gate now consumes a bound
+party-local record/state pair through the real Orca inference source for
+nonzero FC and Conv2D fixtures. Eight controls reject bilaterally before output.
+This closes terminal linear ingestion only; arbitrary multi-layer state
+chaining remains an open systems gate.
 
 A source-bound known-zero run verifies all 21 linear record pairs and executes
 the complete exact ResNet18 graph/state contract, including every truncation,
@@ -741,12 +818,12 @@ the binding continuation.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-08-14:** the live v2.15 internal/advisor source has a deterministic
-29-page PDF at SHA-256
-`a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39`.
-Repeated pinned-image two-pass builds are byte-identical; the final log has no
-warnings, undefined references, or bad boxes, every font is embedded Type 1,
-and all 29 pages were visually inspected. The v4 environment manifest binds the
+**Status 2026-09-10:** the live internal/advisor v2.17 source includes the
+conference-readiness contract and measured SCI scheduling supplement.
+Two fresh pinned-image two-pass builds produce the same 34-page PDF,
+SHA-256 `dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`.
+The final log has no warnings, undefined references, or bad boxes; every font
+is embedded Type 1, and all 34 pages were visually inspected. The v4 manifest binds the
 digest-pinned base image, internal gate-image ID, package/toolchain set,
 deterministic build epoch, current source/PDF hashes, graph checkpoint, and
 publication gate. The retained 2026-08-10 graph checkpoint preserves
@@ -797,7 +874,7 @@ executed. S10 remains open.
    acknowledgements, contributor credit, private-project reuse permission,
    disclosure requirements, and page/supplement limits. Do not invent or add
    commit co-author trailers or paper co-authors.
-2. Convert the v2.15 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
+2. Convert the v2.17 technical report into a venue-specific results paper only after the parameter and performance gates close: research question, novelty, protocol, theorem, parameter audit, implementation, evaluation, related work, limitations, and reproducibility appendix.
 3. Expand related work against the exact distributed-DPF, silent OT/VOLE, Ring-LPN PCG, mixed-circuit conversion, and secure-ML systems baselines. Distinguish inherited primitives from this work's contribution.
 4. Remove proposal/future-tense language and any dashed “today” oracle box only when the corresponding gate is genuinely closed.
 5. Run three reviews: cryptographic correctness/claims, systems methodology/performance, and artifact reproducibility. Resolve every blocking comment in a committed revision.
@@ -859,8 +936,10 @@ Publication readiness is reached only when every box is supported by a committed
   provenance decisions are recorded before overlapping implementation.
 - [x] The current DPF/SPFSS source uses full-width four-call AES expansion,
   private roots, serialization controls, and GPU compatibility gates.
-- [x] The live forward transcript uses real SCI/IKNP OT/triples and Gilboa OLE;
-  EMP-Silent remains historical opt-in evidence with no headline measurement.
+- [x] The live forward transcript uses real selected-backend OT/triples and
+  Gilboa OLE. SCI/IKNP remains headline evidence; a separate current EMP-Silent
+  five-case/16-control correctness and exact-accounting rerun passes, while
+  independent review and any performance/security claim remain open.
 - [x] Centralized SPFSS key generation is absent from the live publication
   transcript.
 - [x] Exact share conversion is live and contains no dealer-labelled

@@ -1,9 +1,30 @@
 # ringlpn results — directory index
 
-Reorganized 2026-06-10. Every run script writes into its artifact directory
-below; nothing writes to this top level anymore.
+Reorganized 2026-06-10. Evidence-producing runners write into their artifact
+directory below. The terminal application gate emits only sanitized public rows
+and deletes private scratch; its dated CSV/log are explicit retained summaries.
 
-## Current checkpoint (2026-08-14)
+## Engineering review supplement (2026-09-10)
+
+`fc/sci_duplex_worker_review_2026_09_10.json` retains every final warmup and
+measured sample from the counterbalanced SCI sender-worker experiment,
+including variability, exact binary/header identities, command/timer scope,
+and post-measurement source-export commits. All 20 measured invocations pass;
+68 per-party contract/accounting fields match. Process-latency median changes
+from 1.0413064545 s to 0.965220348 s; slower-party Phase B median changes from
+278.1845 ms to 226.2475 ms. These are shared-host, one-shape feasibility
+measurements, not security, GPU, full-model, or matched-dealerless claims.
+Historical measurements below retain their original identities; they are
+not silently replaced by smoke-test timings.
+
+The internal v2.17 paper now includes the measured scheduling result and
+explicit ASPLOS research/evaluation/release gates. Its verdict remains
+**not submission-ready**. The terminal integration review additionally
+records output-substitution, unsupported-callback, FIFO, signed/wrapping,
+and stock-timer coverage, while preserving the caller-owned application
+freshness and terminal-only boundaries.
+
+## Current checkpoint (2026-08-24)
 
 The live forward-FC/Conv artifact composes party-local SPFSS, distributed DPF,
 SCI/IKNP or opt-in EMP-Silent OT, epoch-zero Gilboa OLE, consume-once
@@ -23,7 +44,7 @@ party per layer. Its bounded breadth-first FC caller is integrated: the current
 focused suite passes all five q64/q128 cases/controls, every row records
 positive P0/P1 breadth-call counts and zero root-to-leaf calls, and all 21
 shape plans pass. These counters establish current correctness/path use, not
-current Conv0/model-scale timing or a breadth-first speedup. Each Ring-OLE reserves exactly
+current Conv0 timing or a breadth-first speedup. Each Ring-OLE reserves exactly
 `3*c^2*t^2` output slots for the next
 DPF Phase C and exposes only the remainder to the application. Each party is a
 separate process reading only its own private state. Each loopback socket first
@@ -39,7 +60,23 @@ The source configuration uses `(n,c,t)=(8192,2,8)`. The retained known-zero
 full-graph execution explicitly overrides it to `(262144,2,8)` so the largest
 linear layers fit; neither tuple is a concrete-security pin.
 
+The stable facade now atomically exposes one party's bound linear record and
+mask state. A macro-gated role in the real Orca inference source consumes one
+terminal FC or Conv2D record through the Sytorch lifecycle and stock Beaver
+kernels. It intentionally rejects every multi-layer, truncation, nonlinear,
+residual, and invalid-output path.
+
 Recorded current live and retained evidence:
+
+- `application/orca_linear_application_2026_08_24.{csv,log}` and
+  `application/orca_linear_application_build_provenance_2026_08_24.json` —
+  fresh
+  q128/bw32 nonzero terminal FC and Conv2D source-native application runs,
+  independent additive input/weight shares, public nonzero biases, clear
+  modulo-$2^{32}$ oracles, public record/state API coverage, extracted-helper
+  regression, and eight bilateral preflight rejection controls. This is
+  terminal functional evidence only, not trained-model, multi-layer,
+  deployment, performance, or concrete-security evidence.
 
 - `fc/two_party_fc_preprocess_2026_08_04.csv` — five q64/q128,
   regular/uniform, small and q64 multi-batch live configurations; all public,
@@ -56,6 +93,33 @@ Recorded current live and retained evidence:
   distribution estimates. The retained q64 `t=64` anchors are 881 ms uniform
   and 61 ms regular, with two timed iterations per mode (`n=2` each; four
   total). The distributions and SPFSS domains differ, so no ratio is claimed.
+- `fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.csv` and its
+  aggregate/summary/environment/A-B-audit/control/log companions are the current
+  controlled model-FC matrix. A source manifest selects CNN2 FC4
+  `(100x256x128)`, CNN2 FC5 `(100x128x10)`, and CNN3 FC5 `(100x64x10)`, all
+  q128/bw32 regular at `(n,c,t)=(8192,2,8)`. Each layer has one warmup plus ten
+  measured trials; all 30 measured layer trials pass. Both party GPUs were
+  quiescent and locked for each run. After both parties exited, the
+  shape/contract-matched stock `gpuKeygenMatmul` comparator ran on the same
+  quiescent physical GPU as that sample's slower setup-included party.
+- CNN2's two-layer aggregate has 26.8818423365-s mean,
+  26.89771076-s median, 0.05096530898-s sample SD, 0.06575381975-s R-7 IQR,
+  and 95% Student-`t` mean CI `[26.8453839508,26.9183007222]` s. Its
+  shape-matched stock-dealer median is 30.5729 ms, paired-ratio median is
+  `879.2970985824659x`, application bytes are 1,302,752,736, total recorded
+  transport bytes are 1,302,840,696, mean peak host RSS / process GPU bytes are
+  305,696,768 / 431,095,808, and semantic dependency layers are 72,278.
+- CNN3 FC5 has 0.903894393-s mean, 0.904909782-s median,
+  0.01897115914-s sample SD, 0.02851206825-s R-7 IQR, and CI
+  `[0.8903232433,0.9174655427]` s. Its dealer median is 14.96295 ms,
+  paired-ratio median is `60.3181599795375x`, application bytes are 39,432,504,
+  total recorded transport bytes are 39,476,484, mean peak host RSS / process
+  GPU bytes are 137,465,446.4 / 431,095,808, and semantic dependency layers are
+  1,663. Dependency layers
+  are implementation schedule depth, not packet/network rounds. Fixed
+  protocol-then-dealer order can retain order bias. These are controlled,
+  strongly negative local feasibility comparisons—not speedup, network,
+  full-model, or security-level results.
 - The retained `fc/two_party_fc_model_scale_2026_08_04.*` v6 artifact family
   (regenerated 2026-08-10) covers the exact ResNet18 classifier-layer shape
   `1x512x1000`, q128/bw32, `n=8192,c=2,t=8`, one warmup plus ten measured
@@ -71,7 +135,7 @@ Recorded current live and retained evidence:
   4,108,096 bytes per party. GPU occupancy was uncontrolled and the comparison
   was not run on the same physical GPU. Its public environment file is an
   explicitly labelled sanitized derivative that omits hostname, GPU UUIDs, and
-  absolute workstation paths; it binds current binary `02eaaac9...`.
+  absolute workstation paths; it binds retained binary `02eaaac9...`.
 - The retained aggregate records 11,023 protocol dependency layers,
   142,542,848 median peak host bytes, and 182,416,324 total transport bytes.
   Its 31,929,597,952-byte GPU peak-used metric is device-wide and includes
@@ -95,6 +159,8 @@ Recorded current live and retained evidence:
   under a different temporary root emits the same provenance bytes; the
   record-set validator's negative control rejects a self-consistently rehashed
   raw `/home/...` path.
+  The refreshed approval digest begins `2764ac2a...`; current FC/Conv binaries
+  begin `ab282ab6...`/`6a9ae142...`.
 - `fc/resnet18_adaptive_degree_linear_execution_manifest_2026_08_07.json`
   binds all 20 convolutions and the classifier at q128/bw32,
   `(n,c,t)=(262144,2,8)`, with 6,439 Ring-LPN batches, 25,756 Ring-OLE
@@ -110,7 +176,7 @@ Recorded current live and retained evidence:
   records a 358.085-s legacy post-OT critical path, 445 batches, 1,780 Ring-OLE
   instances, and 455,680 DPF trees; its legacy post-OT comparison row is
   384.816 s. Both bind older binary
-  `1db001...`, not current Conv binary `975ac726...`, so they do not establish
+  `1db001...`, not current Conv binary `6a9ae142...`, so they do not establish
   a current-source breadth-first speedup. Party metrics, record digests,
   metadata, and archive-time checker revalidations are retained under
   `conv/conv0_breadth_comparison_2026_08_09/`; privacy-sensitive raw key records
@@ -162,10 +228,16 @@ Recorded current live and retained evidence:
   The successful gate deleted its private temporary output. It is
   same-worktree revalidation, not another retained checkpoint, a clean-clone
   run, or two-host publication evidence.
+- The 2026-08-24 same-worktree canonical gate retained every prior component
+  and full-graph check, included the new terminal application rows, ended
+  literal `ALL GATES PASS`, and reported fresh ephemeral full-graph digest
+  `ec026fa850dfca7b3f51fd7eaef1e729b17a82d03464976a63c662a662a7b410`.
+  Its private output was deleted. Unrelated resident GPU workloads make this
+  correctness-only shared-machine evidence.
 
 Proof/evidence boundary:
 
-- The v2.15 TeX source and current security contract contain the canonical
+- The v2.17 TeX source and current security contract contain the canonical
   correlation functionality, persistent consume-once ledger, exact
   correction-word coupling, role-specific correlated-batch simulators, the
   masked-difference bootstrap lemma and noncircular epoch induction, conversion
@@ -177,6 +249,10 @@ Proof/evidence boundary:
   a trusted private persistent filesystem providing one deployment-wide ledger
   namespace, exclusive create, fsync, atomic rename, directory fsync, and no
   adversarial storage cloning/rollback. Its sixteen focused controls pass.
+- The public record/state loader and terminal role-2 path close one source-native
+  FC/Conv2D ingestion seam. Arbitrary multi-layer state transitions, secure
+  truncation dispatch, nonlinear setup, residual composition, and trained
+  private inference remain outside this result.
 - Renewed model-assisted source/proof reviews are current, but they are not
   independent human cryptographic review.
 - The exact regular-projection/cancellation law and 2024 regular-ISD artifact
@@ -187,35 +263,46 @@ Proof/evidence boundary:
   freshly paired at `cbcedaf6...`/`1f671d94...`. No reviewed reduction or
   concrete Ring-LPN parameter is pinned; q64/q128 are arithmetic limbs, not
   security levels.
-- The canonical rows and current classifier `P-PROC` artifact use SCI/IKNP over
-  same-host loopback. Mutual HMAC-SHA256 authenticates endpoint roles and the
-  invocation/claim/direction context before preflight, but later protocol bytes
-  have no per-message authentication and do not realize the theorem's
-  authenticated-channel integrity assumption. Application bytes exclude
-  backend setup and TCP/IP overhead; total transport includes 43,658 base-OT
-  setup bytes. The separate EMP-Silent revision remains a historical opt-in
-  path, independently unreviewed and absent from headline rows. Results
-  establish executable correctness/cost at feasibility parameters, not 128-bit,
-  malicious, WAN, trained/private-model, accuracy, or full-dealerless-Orca claims.
-- The current classifier comparison is negative: the median setup-included
-  shape-matched per-trial preprocessing/dealer ratio is 268.6769431352700, but
-  GPU occupancy was uncontrolled and the runs were not on the same physical
-  GPU. It is not same-hardware A/B evidence. Setup-included time still excludes
-  channel construction, socket establishment, and authentication.
-  The integrated breadth-first caller's current five-case q64/q128 suite and
-  21 shape-plan pass establish correctness/path
-  use only; every focused row records positive P0/P1 breadth calls and zero
-  root-to-leaf calls. GPU batching, executable self-bootstrap, public-vector
-  XOF, and memory/dependency instrumentation remain implemented.
+- The canonical rows and classifier `P-PROC` headline artifact use SCI/IKNP
+  over same-host loopback. Mutual HMAC-SHA256 authenticates endpoint roles and
+  the invocation/claim/direction context before preflight; local post-handshake
+  traffic remains plain loopback. Application bytes exclude backend setup and
+  TCP/IP overhead; total transport includes 43,658 base-OT setup bytes.
+- A current separate opt-in EMP-Silent rerun is retained as
+  `fc/two_party_fc_emp_silent_correctness_2026_08_14.csv`, its sixteen-control
+  CSV, log, and sanitized environment binding. Under binary `bf4e4f90...`,
+  bridge `435f3be6...`, and EMP-OT revision `2fca139f...`, all five live cases
+  and all controls pass, every declared straight/reversed 128-bit-OT inventory
+  is consumed exactly, and correlation/adjustment/ciphertext bytes are split by
+  direction. One trial per case ran while all four GPUs carried unrelated
+  workloads. The custom backend remains independently unreviewed; these rows
+  support correctness and exact accounting only, not performance,
+  bandwidth-improvement, security, or headline claims.
+- Results establish executable correctness/cost at feasibility parameters, not
+  128-bit, malicious, WAN, trained/private-model, accuracy, or
+  full-dealerless-Orca claims.
+- The current controlled CNN2/CNN3 model-FC matrix is strongly negative:
+  same-physical-GPU, quiescence-checked median paired preprocessing/dealer
+  ratios are `879.2970985824659x` for CNN2 FC4+FC5 and
+  `60.3181599795375x` for CNN3 FC5. Fixed protocol-then-dealer order remains a
+  possible order bias. The retained ResNet18 classifier ratio
+  `268.6769431352700x` used uncontrolled occupancy and different physical GPUs;
+  it remains descriptive rather than same-hardware A/B evidence.
+  Setup-included time still excludes channel construction, socket
+  establishment, and authentication. The integrated breadth-first caller's
+  current five-case q64/q128 suite and 21 shape-plan pass establish
+  correctness/path use only; every focused row records positive P0/P1 breadth
+  calls and zero root-to-leaf calls. GPU batching, executable self-bootstrap,
+  public-vector XOF, and memory/dependency instrumentation remain implemented.
   The source-bound known-zero control closes the full graph/state seam using an
   explicitly trusted test-only source for both truncation successor-mask
   shares, remask/terminal material, and nonlinear keys; its original-byte,
   internal-only bundle has 17 indexed payload files plus `INDEX.json`.
-  Dealerless nonlinear setup,
-  repeated private-input/trained-model evidence, authenticated distinct-host
-  execution, and independent review remain systems publication gates.
-  Further algorithmic Phase-B work, a compatible dealerless baseline, pinned
-  clean-clone reproduction, and silent-backend review also remain open.
+  Dealerless nonlinear setup, repeated private-input/trained-model evidence,
+  authenticated distinct-host execution, a compatible dealerless baseline,
+  competitive performance, and independent review remain systems publication
+  gates. Further algorithmic Phase-B work, pinned clean-clone reproduction,
+  and silent-backend review also remain open.
 
 
 The source-pinned closest-baseline audit now ranks newly public Reverse Cuckoo /
@@ -248,8 +335,10 @@ the 21-layer source-bound plan, shared FC/Conv producer, isolated truncation,
 ordered fail-closed record runner, SHAKE256 public-vector XOF, one fresh
 complete 21-record set, and the exact 62-item stock graph/state composition.
 Current focused evidence validates breadth-first caller integration and path
-counters, but supplies no current Conv0/model-scale timing or speedup claim. Its trusted
-nonlinear adapter remains the explicit dealer boundary. See
+counters, but supplies no current Conv0 timing or breadth-first speedup claim.
+The separate controlled CNN2/CNN3 model-FC matrix supplies current timing and
+same-physical-GPU stock-dealer comparisons; its result is strongly negative.
+The trusted nonlinear adapter remains the explicit dealer boundary. See
 `reports/regular_dmpf_design_no_go_2026_08_06.md` and the canonical
 `../CLAUDE.md`; the older systems plan and handoff are historical.
 
@@ -291,7 +380,8 @@ Consume-once ledgers remain unpublished owner-private host state.
 | `linear_ole/` | Ring-matrix OLE-to-Beaver (2x2x2, n=8192): q64/q128 × uniform/regular | `run_linear_ole_sweep.sh` |
 | `vole/` | Standalone VOLE expansion prototype | `run_vole_sweep.sh` |
 | `orca_fc/` | Orca FC artifacts: keywriter demo, ideal-OLE transcript, **real-OLE slot-packed transcript**, Zp bridge | `run_orca_fc_ringlpn_demo.sh`, `run_orca_fc_ideal_ole_transcript.sh`, `run_orca_fc_real_ole_transcript.sh`, `run_orca_zp_bridge_test.sh` |
-| `fc/` | **Live two-process forward-linear evidence:** five q64/q128 FC rows and sixteen controls; exact ResNet18 classifier trials; source-bound 21-layer baseline/adaptive manifests; and fail-closed record-set machinery. The former consumed `forward_linear_record_set_2026_08_07/` attempt was incomplete and its private records were deleted. Feasibility parameters and loopback only. | `run_two_party_fc_preprocess.sh`, `run_two_party_fc_model_scale.sh`, `run_full_linear_manifest_gate.sh`, `run_full_linear_record_set.py` |
+| `application/` | Source-native terminal Orca FC/Conv2D public pass/control rows and sanitized gate log. Private records, states, shares, authentication files, ledgers, and outputs are temporary and are never evidence. | `run_orca_linear_application.sh` |
+| `fc/` | **Live two-process forward-linear evidence:** the default SCI/IKNP five-case q64/q128 FC rows and sixteen controls; a separately labeled current EMP-Silent five-case/16-control correctness and exact-inventory/byte-accounting rerun with sanitized environment binding; a controlled source-manifest-selected CNN2 FC4/FC5 and CNN3 FC5 matrix with 30/30 measured layer trials and same-physical-GPU quiescence-checked stock-dealer comparisons; retained ResNet18 classifier trials; source-bound 21-layer baseline/adaptive manifests; and fail-closed record-set machinery. The EMP rows are single-trial, occupied-GPU, independently unreviewed non-headline evidence. The controlled CNN comparisons are strongly negative. The former consumed `forward_linear_record_set_2026_08_07/` attempt was incomplete and its private records were deleted. Feasibility parameters and loopback only. | `run_two_party_fc_preprocess.sh`, `verify_emp_silent_fc_evidence.py`, `run_two_party_fc_model_scale.sh`, `verify_controlled_fc_ab.py`, `run_full_linear_manifest_gate.sh`, `run_full_linear_record_set.py` |
 | `conv/` | Focused Conv2D CSV plus the retained maximum-Conv0 breadth/pre-breadth party metrics, record digests, and archive-time checker revalidations. Raw private key records are deliberately excluded. | `run_two_party_conv_preprocess.sh` and the dated isolated Conv0 invocation |
 | `graph/` | Internal-only retained source-bound known-zero full-ResNet18 checkpoint plus superseded focused prefix rows. The checkpoint binds all 21 fresh linear records and executes 21 truncations, the exact 62-item stock order, 20 remasks, eight residuals, global pool, sign extension, terminal reconstruction, source/state/trace/counter equality, an independent checker, and seven negative controls. Private records are deleted; the trusted test-only adapter owns both truncation successor-mask shares, remask/terminal material, and nonlinear keys. Its original manifest-bound provenance contains host/build-root strings, so a fresh normalized checkpoint must replace it before external circulation. | `run_resnet18_full_graph.sh`, `run_resnet18_graph_contract_gate.sh` |
 | `secure_convert/` | Two-process evidence for exact `Z_M -> Z_2^bw` conversion using SCI/IKNP-generated edaBits/daBits/Boolean triples; common preflight, bounded bilateral best-effort outputs, corruption controls, and separate transcript counters. The live forward-FC path consumes this API. The wrap bit is never opened; the current security contract gives the hybrid simulator. A mutual endpoint/context handshake precedes protocol traffic, but later plain-TCP messages have no per-message integrity; linear-depth ripple also remains. |
@@ -308,6 +398,8 @@ Consume-once ledgers remain unpublished owner-private host state.
 
 | File | What it is |
 |---|---|
+| `reports/chief_of_staff_handoff_2026_09_10.md` | **CURRENT NEXT-MODEL OPERATING BRIEF:** repository-wide review scope, dirty-work classification, terminal-integration invariants, security audit map, staged verification sequence, frequent atomic-commit protocol, non-negotiable claim/evidence boundaries, and required final-report format. `CLAUDE.md` remains the technical authority. |
+| `reports/orca_linear_application_integration_2026_08_24.md` | **CURRENT SOURCE-NATIVE TERMINAL LINEAR INTEGRATION:** stable bound record/state ingestion, extracted Orca helpers, real role-2 Sytorch lifecycle, nonzero FC/Conv2D oracles, eight bilateral controls, reproducible build provenance, refreshed source/approval pins, complete canonical PASS, and explicit terminal-only claim boundary. |
 | `reports/session_handoff_2026_08_09.md` | **HISTORICAL/SUPERSEDED:** prefix-era handoff; use `CLAUDE.md` and this index for current state. |
 | `reports/full_linear_layer_systems_plan_2026_08_06.md` | **HISTORICAL/SUPERSEDED:** plan that led to the completed 21-record/full-graph checkpoint; its prefix-only status statements are obsolete. |
 | `reports/regular_dmpf_design_no_go_2026_08_06.md` | **SPECIALIZED REGULAR-DMPF DESIGN NO-GO:** exact functionality/cost ceiling, six candidate dispositions, simulator obligations, source boundary, and explicit selection of the full-linear systems route. Not an impossibility theorem or implementation result. |
@@ -318,7 +410,7 @@ Consume-once ledgers remain unpublished owner-private host state.
 | `reports/structured_attack_audit_2026_08_04.md` | **STALE IN PART; NO PIN:** the exact projection law, 2024 regular-ISD calculator, and orbit derivation remain pinned mathematical/model evidence. Current sampler source and hybrid-RSD script/CSV differ from the report pins, so implementation correspondence and hybrid evidence require regeneration. No concrete Ring-LPN security claim follows. |
 | `reports/closest_dmpf_baseline_audit_2026_08_04.md` | **CURRENT CLOSEST DMPF BASELINE AUDIT (internal/advisor):** Reverse Cuckoo/libOTe is the newly public rank-1 distributed candidate, not zero-change exact/GPU/setup-inclusive evidence. Complete pinned/license matrix, exact 31-diagonal adaptation, collision normalization, stock and exact-control commands, author-contact gates, and mandatory noncomparability rules. Supersedes the 2026-07-29 no-code statement without deleting history. |
 | `reports/native_ring_technology_audit_2026_08_04.md` | **INTERNAL/ADVISOR NO-GO:** source-pinned native-ring QA-SD PCG audit covering arithmetic defects, 2025/2026 attacks, centralized/non-matrix/non-Orca boundaries, SPDZ2k semantic mismatch, and a strictly toy-only future correctness oracle. Not a fallback for either publication track. |
-| `reports/two_party_dpf_transport_memo_2026_07_29.md` | **HISTORICAL TRANSPORT COMPONENT CHECKPOINT:** retains dated SCI/IKNP/Gilboa transport, host-reference, and GPU-key validation evidence. Its old downstream one-process/unwired-conversion/no-silent-backend status is superseded; use the current security contract/source map. EMP-Silent is historical opt-in, independently unreviewed, and not headline evidence. |
+| `reports/two_party_dpf_transport_memo_2026_07_29.md` | **HISTORICAL TRANSPORT COMPONENT CHECKPOINT:** retains dated SCI/IKNP/Gilboa transport, host-reference, and GPU-key validation evidence. Its old downstream one-process/unwired-conversion/no-silent-backend status and historical EMP disposition are superseded; use the current security contract/source map and the separately labeled current EMP correctness/accounting rows above. |
 | `reports/dealerless_ole_two_party_keys_memo_2026_07_29.md` | **HISTORICAL/SUPERSEDED M2 COMPONENT CHECKPOINT:** preserves paired-record q64/q128 uniform/regular evidence. Its stated live expansion/conversion/proof gaps are obsolete; the current FC/Conv disposition is in the security contract, with `P-PCG` still blocking. |
 | `reports/session_handoff_2026_07_29_dmpf_comparison.md` | **HISTORICAL/SUPERSEDED** pre-sweep, pre-transport handoff; use `CLAUDE.md` for current catch-up and the measured S2 comparison for final rows |
 | `reports/s2_architecture_comparison_2026_07_29.md` | **HISTORICAL ARCHITECTURE MEASUREMENTS:** preserves dated 275x/329x uniform, 0.79x regular-OKVS, and 2.29x big-state rows. Its no-public-source/no-frozen-route/no-live-FC status is withdrawn; use the closest-baseline audit and `CLAUDE.md`. The rows remain non-comparable to the live deployed path. |
@@ -329,7 +421,8 @@ Consume-once ledgers remain unpublished owner-private host state.
 | `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** exact DPF correction-word coupling, role-specific correlated-batch simulators, conversion simulator, full live source-to-transcript map, conditional forward theorem, obligation table, and explicit concrete-parameter/authentication/training limits. |
 | `reports/session_handoff_2026_07_21.md` | **HISTORICAL/SUPERSEDED** corrected-M1/v2.3 checkpoint handoff; current status is in `CLAUDE.md` |
 | `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **HISTORICAL COMPONENT PROTOTYPE:** preserves the corrected ideal OT/triple/OLE host logic and 2,432-tree controls. Its old “GPU batching/dependency measurement open” disposition and one-visible-GPU full-gate command are obsolete; use the current source map and the three-GPU canonical command below. |
-| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` (+ current `.pdf`) | **LIVE internal/advisor v2.15 (2026-08-14):** conditional forward proof boundary, current classifier measurements, regular-DMPF NO-GO, endpoint/context-only HMAC establishment, explicit source/execution-parameter distinction, and trusted-adapter limits. The deterministic pinned TeX Live 2023 two-pass PDF is 29 pages, SHA-256 `a8684d2d9c5f80d3644f745b47afb80f41e39a89cc280d17d206e66a03ed7f39`; its final log is warning/reference/bad-box free, all fonts are embedded Type 1, and every page was visually inspected. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex` (+ current `.pdf`) | **LIVE internal/advisor v2.17 with September 10 review supplement:** conditional forward proof, historical controlled comparisons, scoped SCI scheduling experiment, source-native terminal checks, and explicit ASPLOS research/AE gates. Two fresh pinned TeX Live 2023 two-pass builds produce the same 34-page PDF, SHA-256 `dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`; no warnings, undefined references, or bad boxes, embedded Type 1 fonts only, and all pages visually inspected. Not a conference submission or external-circulation authorization. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.{tex,pdf}` | **HISTORICAL v2.16 advisor predecessor:** frozen after the 2026-08-14 checkpoint; superseded by v2.17 above. |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |
 | `reports/ntt_baseline_comparison_2026_06_10.md` | GPU-NTT external baseline vs cheddar (measured; keep-cheddar decision + revisit triggers) |
