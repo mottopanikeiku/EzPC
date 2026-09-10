@@ -20,6 +20,7 @@ import signal
 import sys
 import time
 from typing import Any, NoReturn
+import check_resnet18_graph_contract
 import graph_build_provenance
 
 
@@ -47,7 +48,6 @@ CONTROL_HEADER = ("control", "expected_rejection", "no_partial_output", "status"
 SCHEMA = "ringlpn-known-zero-full-resnet18-graph-v4"
 EXPECTED_LINEAR_SCHEMA = "ringlpn-forward-linear-record-set-v4"
 EXPECTED_SOURCE_SCHEMA = "ringlpn-full-linear-execution-v1"
-EXPECTED_MANIFEST_SHA256 = "cecb699ab73e2348b4c733bc627ded76a6cf1e81dccd406fa62dd4180902e4d3"
 GRAPH_APPROVAL_SCHEMA = graph_build_provenance.APPROVAL_SCHEMA
 GRAPH_APPROVAL_SCOPE = graph_build_provenance.APPROVAL_SCOPE
 GRAPH_BINARY_FILES = {
@@ -1216,7 +1216,7 @@ def main() -> None:
     source_document, manifest_sha, _ = load_json_once(
         manifest, "source execution manifest"
     )
-    if manifest_sha != EXPECTED_MANIFEST_SHA256:
+    if manifest_sha != check_resnet18_graph_contract.EXPECTED_MANIFEST_SHA256:
         fail("source execution manifest hash differs from the approved checkpoint")
     if source_document.get("schema") != EXPECTED_SOURCE_SCHEMA:
         fail("source execution manifest schema differs from the approved checkpoint")
