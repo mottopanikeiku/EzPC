@@ -8,7 +8,46 @@
 > [`results/README.md`](results/README.md). Older per-artifact pointers below
 > are historical and may lag.
 
-This folder is a standalone Ring-LPN benchmarking harness. It is separate from ORCA.
+This folder contains standalone Ring-LPN benchmarks and a macro-gated,
+source-native terminal FC/Conv2D integration with Orca.
+
+## Source review branch — 2026-09-10
+
+This branch publishes reviewed source without importing the internal-only
+full-graph checkpoint, manuscript, measurements, historical binary approvals,
+or their unpublished commit ancestry. Older reports below are historical;
+this is not a permission-cleared paper/artifact release.
+
+Changes include serialized consume-once producer claims, nonblocking private
+file admission, safe GPU expansion lifetimes, conservative arithmetic/Conv
+bounds, empty OT handling, a reusable SCI sender worker, source-native
+terminal linear material consumption, and bounded process-group cleanup.
+The stock Orca kernels and enclosing stock timing scope remain intact.
+
+With CUDA, the documented system libraries, and pinned submodules installed,
+run from `GPU-MPC/` on three available GPUs (adjust the indices):
+
+```bash
+PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
+  P0_GPU=1 P1_GPU=2 CHECK_GPU=3 \
+  bash ringlpn/scripts/run_two_party_fc_preprocess.sh
+PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
+  P0_GPU=1 P1_GPU=2 CHECK_GPU=3 \
+  bash ringlpn/scripts/run_two_party_conv_preprocess.sh
+PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
+  P0_GPU=1 P1_GPU=2 \
+  bash ringlpn/scripts/run_orca_linear_application.sh
+bash ringlpn/scripts/build_correlation_freshness_test.sh
+ringlpn/host_bin/test_correlation_freshness
+```
+
+The application is terminal-only. Its caller must supply fresh, single-use
+material: producer freshness is not persistent application-consumer replay
+prevention. Local HMAC establishes endpoints/context; subsequent local TCP
+traffic has no per-message integrity. Feasibility parameters are not security
+pins. Full-graph execution still uses TEST-ONLY trusted nonlinear/truncation
+material and requires fresh source-bound approvals; old/internal receipts are
+not silently carried onto this branch.
 
 ## Layout
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
