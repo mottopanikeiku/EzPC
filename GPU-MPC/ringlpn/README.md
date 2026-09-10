@@ -1,12 +1,10 @@
 # Ring-LPN Benchmarks (CPU + GPU)
 
-> **Start at [`CLAUDE.md`](CLAUDE.md)** — the canonical catch-up document
-> (current status, source map, validated claims vs. open boundaries, roadmap,
-> environment gotchas). The approved full-linear continuation is
-> [`results/reports/full_linear_layer_systems_plan_2026_08_06.md`](results/reports/full_linear_layer_systems_plan_2026_08_06.md);
-> results and all reports are indexed in
-> [`results/README.md`](results/README.md). Older per-artifact pointers below
-> are historical and may lag.
+> **Start with the source-review section below for this branch.** Previously
+> published catch-up notes and reports describe historical snapshots; they are
+> not approvals for this source revision. Current runnable source checks,
+> deployment boundaries, and the intentionally excluded release prerequisites
+> are listed here.
 
 This folder contains standalone Ring-LPN benchmarks and a macro-gated,
 source-native terminal FC/Conv2D integration with Orca.
