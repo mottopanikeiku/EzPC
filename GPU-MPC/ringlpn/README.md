@@ -49,6 +49,12 @@ traffic has no per-message integrity. Feasibility parameters are not security
 pins. Full-graph execution still uses TEST-ONLY trusted nonlinear/truncation
 material and requires fresh source-bound approvals; old/internal receipts are
 not silently carried onto this branch.
+Publication/coordinator gates also require a freshly pinned environment
+manifest, release authorization, and retained evidence. Those deployment and
+paper-release prerequisites are intentionally not supplied by this source-only
+branch; its executable tooling must reject their absence, not use obsolete
+interfaces or bypass approval.
+
 
 ## Layout
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
