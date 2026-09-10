@@ -7,7 +7,7 @@ PROJECT_ROOT="$(cd "$BASE_DIR/.." && pwd)"
 OUT_DIR="$BASE_DIR/bin"
 CUDA_ARCH="${CUDA_ARCH:-${GPU_ARCH:-89}}"
 NVCC="${NVCC:-nvcc}"
-DEVICE_LABEL="${DEVICE_LABEL:-cuda_ringlpn_ole}"
+DEVICE_LABEL="${DEVICE_LABEL:-cuda_ringlpn_ole_BENCHMARK_ONLY}"
 
 mkdir -p "$OUT_DIR"
 

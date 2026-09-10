@@ -25,6 +25,7 @@ SCHEMA = "ringlpn-peer-private-v1"
 PRIVATE_MODE = 0o700
 PRIVATE_FILE_MODE = 0o600
 PARTY_MOUNT = "/run/ringlpn/private"
+LEDGER_MOUNT = "/run/ringlpn/ledger"
 CHECK_P0_MOUNT = "/run/ringlpn/checker/party0"
 CHECK_P1_MOUNT = "/run/ringlpn/checker/party1"
 CHECK_OUT_MOUNT = "/run/ringlpn/checker/output"
@@ -137,6 +138,276 @@ def prepare_private_root(root: pathlib.Path, *, party: bool) -> None:
                 fail(f"private {name} path is not a real directory")
             os.chmod(child, PRIVATE_MODE)
     private_evidence(root)
+def fsync_directory(path: pathlib.Path) -> None:
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def channel_auth_cleanup_marker(root: pathlib.Path) -> pathlib.Path:
+    return root.parent / f".{root.name}.channel-auth-cleanup"
+
+
+def channel_auth_marker_document(
+    root: pathlib.Path,
+    expected: str,
+    session_id: str,
+    invocation_id: str,
+    party: int,
+    root_info: os.stat_result,
+) -> dict[str, Any]:
+    return {
+        "schema": "ringlpn-channel-auth-cleanup-v1",
+        "session_id": str(session_id),
+        "invocation_id": invocation_id,
+        "party": party,
+        "private_root": str(root.resolve(strict=False)),
+        "channel_auth_secret_sha256": expected,
+        "owner_uid": os.geteuid(),
+        "root_device": root_info.st_dev,
+        "root_inode": root_info.st_ino,
+    }
+
+
+def channel_auth_marker_payload(document: dict[str, Any]) -> bytes:
+    return (
+        json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+
+
+def validate_channel_auth_cleanup_marker(
+    root: pathlib.Path,
+    expected: str,
+    session_id: str,
+    invocation_id: str,
+    party: int,
+) -> tuple[pathlib.Path, dict[str, Any]]:
+    marker = channel_auth_cleanup_marker(root)
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(marker, flags)
+        try:
+            info = os.fstat(fd)
+            payload = bytearray()
+            while True:
+                chunk = os.read(fd, 65536)
+                if not chunk:
+                    break
+                payload.extend(chunk)
+        finally:
+            os.close(fd)
+        document = json.loads(payload)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        fail(f"channel authenticator cleanup marker is unavailable: {exc}")
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_IMODE(info.st_mode) != PRIVATE_FILE_MODE
+        or info.st_uid != os.geteuid()
+        or info.st_nlink != 1
+        or document.get("schema") != "ringlpn-channel-auth-cleanup-v1"
+        or document.get("session_id") != str(session_id)
+        or document.get("invocation_id") != invocation_id
+        or document.get("party") != party
+        or document.get("private_root") != str(root.resolve(strict=False))
+        or document.get("channel_auth_secret_sha256") != expected
+        or document.get("owner_uid") != os.geteuid()
+        or not isinstance(document.get("root_device"), int)
+        or not isinstance(document.get("root_inode"), int)
+    ):
+        fail("channel authenticator cleanup marker is not the exact owner-only authorization")
+    if root.exists() or root.is_symlink():
+        root_info = root.lstat()
+        if (
+            not stat.S_ISDIR(root_info.st_mode)
+            or stat.S_IMODE(root_info.st_mode) != PRIVATE_MODE
+            or root_info.st_dev != document["root_device"]
+            or root_info.st_ino != document["root_inode"]
+        ):
+            fail("private root no longer matches its cleanup-authorized inode")
+    return marker, document
+
+
+def remove_channel_auth_transaction(
+    root: pathlib.Path,
+    expected: str,
+    session_id: str,
+    invocation_id: str,
+    party: int,
+) -> None:
+    marker, _ = validate_channel_auth_cleanup_marker(
+        root, expected, session_id, invocation_id, party
+    )
+    if root.exists() or root.is_symlink():
+        allowed = {"input", "tmp", "output", "channel-auth.key"}
+        if {path.name for path in root.iterdir()} - allowed:
+            fail("cleanup-authorized private root contains unexpected entries")
+        private_evidence(root)
+        shutil.rmtree(root)
+        fsync_directory(root.parent)
+    marker.unlink()
+    fsync_directory(marker.parent)
+    if root.exists() or root.is_symlink() or marker.exists() or marker.is_symlink():
+        fail("channel authenticator transaction cleanup left private state behind")
+
+
+def provision_channel_auth_command(args: argparse.Namespace) -> int:
+    root = require_absolute(args.private_root, "private root")
+    expected = require_sha256(args.channel_auth_secret_sha256, "channel authenticator digest")
+    party = int(args.party)
+    if (
+        not args.session_id
+        or not args.invocation_id
+        or len(args.invocation_id) != 32
+        or any(character not in "0123456789abcdef" for character in args.invocation_id)
+    ):
+        fail("channel authenticator cleanup binding is malformed")
+    marker = channel_auth_cleanup_marker(root)
+    if root.exists() or root.is_symlink():
+        fail("channel authenticator private root must be fresh")
+    if marker.exists() or marker.is_symlink():
+        fail("channel authenticator cleanup marker must be fresh")
+    try:
+        parent_info = root.parent.lstat()
+    except OSError as exc:
+        fail(f"channel authenticator private-root parent is unavailable: {exc}")
+    if (
+        not stat.S_ISDIR(parent_info.st_mode)
+        or root.parent.is_symlink()
+        or parent_info.st_uid != os.geteuid()
+        or stat.S_IMODE(parent_info.st_mode) & 0o077
+    ):
+        fail("channel authenticator private-root parent must be an owner-only real directory")
+    secret = bytearray(sys.stdin.buffer.read(33))
+    root_created = False
+    root_identity: tuple[int, int] | None = None
+    marker_created = False
+    marker_identity: tuple[int, int] | None = None
+    authorization_durable = False
+    try:
+        if len(secret) != 32 or hashlib.sha256(secret).hexdigest() != expected:
+            fail("channel authenticator input is not the expected 32-byte secret")
+
+        # Reserve the exact inode while it is empty. No secret-bearing mutation
+        # occurs until its durable adjacent cleanup authorization is complete.
+        root.mkdir(mode=PRIVATE_MODE)
+        root_created = True
+        root_info = root.lstat()
+        root_identity = (root_info.st_dev, root_info.st_ino)
+        if (
+            not stat.S_ISDIR(root_info.st_mode)
+            or stat.S_IMODE(root_info.st_mode) != PRIVATE_MODE
+            or root_info.st_uid != os.geteuid()
+        ):
+            raise OSError("reserved private root identity is invalid")
+        fsync_directory(root.parent)
+
+        marker_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        marker_flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        marker_fd = os.open(marker, marker_flags, PRIVATE_FILE_MODE)
+        marker_created = True
+        marker_info = os.fstat(marker_fd)
+        marker_identity = (marker_info.st_dev, marker_info.st_ino)
+        try:
+            payload = channel_auth_marker_payload(
+                channel_auth_marker_document(
+                    root,
+                    expected,
+                    args.session_id,
+                    args.invocation_id,
+                    party,
+                    root_info,
+                )
+            )
+            cursor = 0
+            while cursor < len(payload):
+                wrote = os.write(marker_fd, payload[cursor:])
+                if wrote <= 0:
+                    raise OSError("short write while creating cleanup authorization")
+                cursor += wrote
+            os.fchmod(marker_fd, PRIVATE_FILE_MODE)
+            os.fsync(marker_fd)
+        finally:
+            os.close(marker_fd)
+        fsync_directory(marker.parent)
+        validate_channel_auth_cleanup_marker(
+            root, expected, args.session_id, args.invocation_id, party
+        )
+        authorization_durable = True
+
+        prepare_private_root(root, party=True)
+        path = root / "channel-auth.key"
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(path, flags, PRIVATE_FILE_MODE)
+        try:
+            os.fchmod(fd, PRIVATE_FILE_MODE)
+            cursor = 0
+            while cursor < len(secret):
+                wrote = os.write(fd, secret[cursor:])
+                if wrote <= 0:
+                    raise OSError("short write while provisioning channel authenticator")
+                cursor += wrote
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        fsync_directory(root)
+        validate_channel_auth_file(root, expected)
+    except BaseException:
+        try:
+            if authorization_durable:
+                remove_channel_auth_transaction(
+                    root, expected, args.session_id, args.invocation_id, party
+                )
+            else:
+                if marker_created:
+                    info = marker.lstat()
+                    if marker_identity != (info.st_dev, info.st_ino):
+                        fail("cleanup marker identity changed during provisioning rollback")
+                    marker.unlink()
+                    fsync_directory(marker.parent)
+                if root_created:
+                    info = root.lstat()
+                    if (
+                        root_identity != (info.st_dev, info.st_ino)
+                        or not stat.S_ISDIR(info.st_mode)
+                        or any(root.iterdir())
+                    ):
+                        fail("reserved private root changed before authorization rollback")
+                    root.rmdir()
+                    fsync_directory(root.parent)
+        except BaseException as cleanup_exc:
+            fail(f"channel authenticator provisioning rollback failed: {cleanup_exc}")
+        raise
+    finally:
+        for index in range(len(secret)):
+            secret[index] = 0
+    return 0
+
+
+def validate_channel_auth_file(root: pathlib.Path, expected: str) -> None:
+    path = root / "channel-auth.key"
+    info = path.lstat()
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or stat.S_IMODE(info.st_mode) != PRIVATE_FILE_MODE
+        or info.st_uid != os.geteuid()
+        or info.st_nlink != 1
+        or info.st_size != 32
+        or sha256_file(path) != expected
+    ):
+        fail("channel authenticator is not the provisioned owner-only regular file")
+
+
+def abort_provisioned_channel_auth_command(args: argparse.Namespace) -> int:
+    root = require_absolute(args.private_root, "private root")
+    expected = require_sha256(args.channel_auth_secret_sha256, "channel authenticator digest")
+    remove_channel_auth_transaction(
+        root, expected, args.session_id, args.invocation_id, int(args.party)
+    )
+    return 0
+
 
 
 def write_manifest(path: pathlib.Path, document: dict[str, Any]) -> None:
@@ -154,6 +425,11 @@ def write_manifest(path: pathlib.Path, document: dict[str, Any]) -> None:
             os.fsync(stream.fileno())
         os.replace(temporary, path)
         os.chmod(path, PRIVATE_FILE_MODE)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     except BaseException:
         try:
             os.close(fd)
@@ -308,8 +584,215 @@ def sha256_file(path: pathlib.Path) -> str:
         fail(f"cannot hash committed artifact {path}: {exc}")
     return digest.hexdigest()
 
+def require_sha256(value: Any, label: str) -> str:
+    if not isinstance(value, str) or len(value) != 64 or any(
+        character not in "0123456789abcdef" for character in value
+    ):
+        fail(f"{label} must be 64 lowercase hexadecimal characters")
+    return value
 
-def load_commit_manifest(
+
+def machine_identity_sha256() -> str:
+    for candidate in (pathlib.Path("/etc/machine-id"), pathlib.Path("/var/lib/dbus/machine-id")):
+        try:
+            value = candidate.read_text(encoding="ascii").strip().lower()
+        except OSError:
+            continue
+        if len(value) == 32 and all(character in "0123456789abcdef" for character in value):
+            return hashlib.sha256(
+                b"ringlpn-stable-machine-identity-v1\0" + value.encode("ascii")
+            ).hexdigest()
+    fail("no valid stable OS machine identity is available")
+
+
+def machine_identity_command(_: argparse.Namespace) -> int:
+    print(machine_identity_sha256())
+    return 0
+
+
+def runtime_identity_command(args: argparse.Namespace) -> int:
+    binary = require_absolute(args.binary, "in-image binary")
+    expected_image_digest = args.image.rsplit("@sha256:", 1)
+    if len(expected_image_digest) != 2 or len(expected_image_digest[1]) != 64:
+        fail("runtime image must be an immutable sha256 digest reference")
+    require_sha256(expected_image_digest[1].lower(), "runtime image digest")
+    podman, _ = podman_info()
+    inspected = run([podman, "image", "inspect", args.image], capture=True)
+    try:
+        values = json.loads(inspected.stdout)
+        image_id = values[0]["Id"]
+        repo_digests = values[0].get("RepoDigests") or []
+    except (json.JSONDecodeError, IndexError, KeyError, TypeError):
+        fail("cannot establish exact local runtime image identity")
+    if args.image not in repo_digests:
+        fail("local runtime image does not expose the authorized repository digest")
+    measured = run(
+        [
+            podman,
+            "run",
+            "--rm",
+            "--network=none",
+            "--read-only",
+            "--entrypoint",
+            "/usr/bin/sha256sum",
+            args.image,
+            str(binary),
+        ],
+        capture=True,
+    ).stdout.split()
+    if len(measured) != 2 or measured[1] != str(binary):
+        fail("runtime binary identity output is malformed")
+    binary_sha256 = require_sha256(measured[0], "runtime binary digest")
+    print(
+        json.dumps(
+            {
+                "image": args.image,
+                "image_id": image_id,
+                "binary_path": str(binary),
+                "binary_sha256": binary_sha256,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    return 0
+
+
+def capability_preflight_command(args: argparse.Namespace) -> int:
+    ensure_gpu(args.gpu)
+    expected_binary = require_sha256(args.binary_sha256, "authorized binary digest")
+    binary = require_absolute(args.binary, "in-image binary")
+    podman, info = podman_info()
+    if os.geteuid() == 0 or info.get("host", {}).get("security", {}).get("rootless") is not True:
+        fail("capability preflight requires native rootless Podman")
+    required_cpu_features = {"aes", "avx2", "pclmulqdq", "rdseed", "sse4_1"}
+    try:
+        cpuinfo = pathlib.Path("/proc/cpuinfo").read_text(encoding="ascii")
+    except OSError as exc:
+        fail(f"cannot read host CPU capabilities: {exc}")
+    processor_features = []
+    for block in cpuinfo.split("\n\n"):
+        fields = {
+            key.strip(): value.strip()
+            for line in block.splitlines() if ":" in line
+            for key, value in (line.split(":", 1),)
+        }
+        if "processor" in fields:
+            processor_features.append(set(fields.get("flags", "").split()))
+    common_features = (
+        set.intersection(*processor_features) if processor_features else set()
+    )
+    missing_cpu = sorted(required_cpu_features - common_features)
+    if missing_cpu:
+        fail(
+            "required CPU features unavailable on every visible CPU: "
+            + ", ".join(missing_cpu)
+        )
+    user_names = {str(os.getuid())}
+    try:
+        import pwd
+
+        user_names.add(pwd.getpwuid(os.getuid()).pw_name)
+    except (ImportError, KeyError):
+        pass
+    subordinate = {}
+    for label, source in (
+        ("subuid", pathlib.Path("/etc/subuid")),
+        ("subgid", pathlib.Path("/etc/subgid")),
+    ):
+        try:
+            entries = [
+                line.split(":")
+                for line in source.read_text(encoding="utf-8").splitlines()
+                if line and not line.startswith("#")
+            ]
+        except OSError as exc:
+            fail(f"cannot read /etc/{label}: {exc}")
+        matching = [
+            parts
+            for parts in entries
+            if len(parts) == 3
+            and parts[0] in user_names
+            and parts[1].isdigit()
+            and parts[2].isdigit()
+            and int(parts[2]) > 0
+        ]
+        if not matching:
+            fail(f"rootless Podman user has no usable /etc/{label} allocation")
+        subordinate[label] = sum(int(parts[2]) for parts in matching)
+    runtime = json.loads(
+        subprocess.check_output(
+            [sys.executable, str(pathlib.Path(__file__).resolve()), "runtime-identity",
+             "--image", args.image, "--binary", str(binary)],
+            text=True,
+        )
+    )
+    if runtime.get("binary_sha256") != expected_binary:
+        fail("capability preflight measured an unauthorized in-image binary")
+    probe = run(
+        [
+            podman,
+            "run",
+            "--rm",
+            "--network=none",
+            "--read-only",
+            "--cap-drop=all",
+            "--security-opt=no-new-privileges",
+            "--userns=auto",
+            "--device",
+            f"nvidia.com/gpu={args.gpu}",
+            "--entrypoint",
+            "/bin/sh",
+            args.image,
+            "-c",
+            (
+                'test -r "$1" && '
+                'test "$(sha256sum "$1" | cut -d" " -f1)" = "$2" && '
+                "exec nvidia-smi --query-gpu=compute_cap,uuid,pci.bus_id "
+                "--format=csv,noheader,nounits"
+            ),
+            "ringlpn-preflight",
+            str(binary),
+            expected_binary,
+        ],
+        capture=True,
+    )
+    probe_lines = [line.strip() for line in probe.stdout.splitlines() if line.strip()]
+    if len(probe_lines) != 1:
+        fail("selected CDI device did not expose exactly one physical GPU")
+    measured_gpu = [field.strip() for field in probe_lines[0].split(",")]
+    if (
+        len(measured_gpu) != 3
+        or measured_gpu[0] != "8.9"
+        or not measured_gpu[1].startswith("GPU-")
+        or ":" not in measured_gpu[2]
+        or "." not in measured_gpu[2]
+    ):
+        fail("selected GPU physical identity output is malformed or not sm_89")
+    print(
+        json.dumps(
+            {
+                "schema": "ringlpn-native-podman-preflight-v1",
+                "machine_identity_sha256": machine_identity_sha256(),
+                "rootless": True,
+                "subuid_count": subordinate["subuid"],
+                "subgid_count": subordinate["subgid"],
+                "gpu": f"nvidia.com/gpu={args.gpu}",
+                "gpu_uuid": measured_gpu[1],
+                "gpu_pci_bus_id": measured_gpu[2].lower(),
+                "compute_capability": measured_gpu[0],
+                "required_cpu_features": sorted(required_cpu_features),
+                "runtime": runtime,
+                "status": "PASS",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    return 0
+
+
+def load_prepared_manifest(
     path: pathlib.Path,
     *,
     session_id: Any,
@@ -321,31 +804,35 @@ def load_commit_manifest(
     try:
         info = path.lstat()
         if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != PRIVATE_FILE_MODE:
-            fail("COMMITTED manifest must be an owner-only regular file")
+            fail("PREPARED manifest must be an owner-only regular file")
         document = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        fail(f"cannot read COMMITTED manifest: {exc}")
+        fail(f"cannot read PREPARED manifest: {exc}")
     exact_keys = {
         "schema",
         "state",
         "session_id",
+        "invocation_id",
         "channel",
         "base_port",
         "reversed_port",
         "public_parameters_sha256",
+        "channel_auth_secret_sha256",
+        "runtime_identity",
+        "machine_identities",
         "p0_exit_code",
         "p1_exit_code",
         "p0_record",
         "p1_record",
         "p0_isolation_manifest",
         "p1_isolation_manifest",
-        "committed_at",
+        "prepared_at",
     }
     if set(document) != exact_keys:
-        fail("COMMITTED manifest does not have the exact required fields")
+        fail("PREPARED manifest does not have the exact required fields")
     if (
-        document.get("schema") != "ringlpn-two-host-commit-v1"
-        or document.get("state") != "COMMITTED"
+        document.get("schema") != "ringlpn-two-host-prepare-v1"
+        or document.get("state") != "PREPARED"
         or type(document.get("session_id")) is not int
         or document["session_id"] <= 0
         or str(document["session_id"]) != str(session_id)
@@ -360,12 +847,36 @@ def load_commit_manifest(
         or type(document.get("p1_exit_code")) is not int
         or document["p1_exit_code"] != 0
     ):
-        fail("COMMITTED manifest boundary, session, port, or exit state is invalid")
-    public_digest = document.get("public_parameters_sha256")
-    if not isinstance(public_digest, str) or len(public_digest) != 64 or any(
-        character not in "0123456789abcdef" for character in public_digest
+        fail("PREPARED manifest boundary, session, port, or exit state is invalid")
+    require_sha256(
+        document.get("channel_auth_secret_sha256"),
+        "PREPARED channel authenticator digest",
+    )
+    invocation_id = document.get("invocation_id")
+    if not isinstance(invocation_id, str) or len(invocation_id) != 32 or any(
+        character not in "0123456789abcdef" for character in invocation_id
     ):
-        fail("COMMITTED manifest public-parameter digest is malformed")
+        fail("PREPARED manifest invocation ID is malformed")
+    runtime = document.get("runtime_identity")
+    if not isinstance(runtime, dict) or set(runtime) != {
+        "container_image",
+        "container_binary",
+        "container_binary_sha256",
+    }:
+        fail("PREPARED manifest runtime identity is incomplete")
+    require_absolute(str(runtime["container_binary"]), "PREPARED container binary")
+    require_sha256(runtime["container_binary_sha256"], "PREPARED container binary digest")
+    machine_identities = document.get("machine_identities")
+    if not isinstance(machine_identities, dict) or set(machine_identities) != {
+        "party0_sha256",
+        "party1_sha256",
+    }:
+        fail("PREPARED manifest machine identities are incomplete")
+    machine0 = require_sha256(machine_identities["party0_sha256"], "party 0 machine identity")
+    machine1 = require_sha256(machine_identities["party1_sha256"], "party 1 machine identity")
+    if machine0 == machine1:
+        fail("PREPARED manifest identifies both parties as the same machine")
+    require_sha256(document.get("public_parameters_sha256"), "PREPARED public-parameter digest")
     expected = {
         "p0_record": ("party0/key_p0.fc", p0_record),
         "p1_record": ("party1/key_p1.fc", p1_record),
@@ -375,21 +886,15 @@ def load_commit_manifest(
     for key, (relative_path, expected_path) in expected.items():
         entry = document.get(key)
         if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
-            fail(f"COMMITTED manifest lacks exact {key} fields")
+            fail(f"PREPARED manifest lacks exact {key} fields")
         if entry.get("path") != relative_path:
-            fail(f"COMMITTED manifest {key} path is not canonical")
+            fail(f"PREPARED manifest {key} path is not canonical")
         if (path.parent / relative_path).resolve(strict=False) != expected_path.resolve(strict=False):
-            fail(f"COMMITTED manifest {key} path does not match checker input")
-        digest = entry.get("sha256")
-        if not isinstance(digest, str) or len(digest) != 64 or any(
-            character not in "0123456789abcdef" for character in digest
-        ):
-            fail(f"COMMITTED manifest {key} digest is malformed")
-        if sha256_file(expected_path) != digest:
-            fail(f"COMMITTED manifest {key} digest mismatch")
-    committed_at = document.get("committed_at")
-    if not isinstance(committed_at, str) or not committed_at:
-        fail("COMMITTED manifest lacks a durable commit timestamp")
+            fail(f"PREPARED manifest {key} path does not match checker input")
+        require_sha256(entry.get("sha256"), f"PREPARED {key} digest")
+        if sha256_file(expected_path) != entry["sha256"]:
+            fail(f"PREPARED manifest {key} digest mismatch")
+    parse_utc(document.get("prepared_at"), "PREPARED timestamp")
     return document
 
 def verify_container_isolation(
@@ -431,12 +936,47 @@ def party_command(args: argparse.Namespace) -> int:
         fail("run-party requires a command after --")
     party = int(args.party)
     root = require_absolute(args.private_root, "private root")
+    ledger_root = require_absolute(args.ledger_root, "persistent ledger root")
     manifest = require_absolute(args.manifest, "manifest")
+    require_separate([root, ledger_root])
     require_manifest_outside(root, manifest)
+    require_manifest_outside(ledger_root, manifest)
+    try:
+        ledger_info = ledger_root.lstat()
+    except OSError as exc:
+        fail(f"persistent ledger root is unavailable: {exc}")
+    if (
+        not stat.S_ISDIR(ledger_info.st_mode)
+        or ledger_root.is_symlink()
+        or stat.S_IMODE(ledger_info.st_mode) & 0o077
+    ):
+        fail("persistent ledger root must be an owner-only real directory")
+    private_evidence(ledger_root)
     ensure_gpu(args.gpu)
     if args.uid < 1:
         fail("container UID must be non-root and positive")
+    require_sha256(args.public_parameters_sha256, "public-parameter digest")
+    require_sha256(args.container_binary_sha256, "container binary digest")
+    require_sha256(args.machine_identity_sha256, "machine identity digest")
+    channel_auth_secret_sha256 = require_sha256(
+        args.channel_auth_secret_sha256, "channel authenticator digest"
+    )
+    if args.machine_identity_sha256 != machine_identity_sha256():
+        fail("party machine identity does not match the authenticated coordinator binding")
+    if len(args.invocation_id) != 32 or any(
+        character not in "0123456789abcdef" for character in args.invocation_id
+    ):
+        fail("invocation ID must be 32 lowercase hexadecimal characters")
+    container_binary = require_absolute(args.container_binary, "container binary")
+    validate_channel_auth_cleanup_marker(
+        root,
+        channel_auth_secret_sha256,
+        args.session_id,
+        args.invocation_id,
+        party,
+    )
     prepare_private_root(root, party=True)
+    validate_channel_auth_file(root, channel_auth_secret_sha256)
     podman, info = podman_info()
     name = args.container_name or f"ringlpn-{args.session_id}-party{party}"
     if not name.replace("-", "").replace("_", "").isalnum():
@@ -446,7 +986,13 @@ def party_command(args: argparse.Namespace) -> int:
         "umask 077; "
         "test ! -e /run/ringlpn/peer-private || exit 125; "
         "test \"$(stat -c %a /run/ringlpn/private)\" = 700 || exit 125; "
+        "test -f /run/ringlpn/private/channel-auth.key || exit 125; "
+        "test ! -L /run/ringlpn/private/channel-auth.key || exit 125; "
+        "test \"$(stat -c %a /run/ringlpn/private/channel-auth.key)\" = 600 || exit 125; "
+        "test \"$(stat -c %s /run/ringlpn/private/channel-auth.key)\" = 32 || exit 125; "
+        "test \"$(stat -c %a /run/ringlpn/ledger)\" = 700 || exit 125; "
         "set +e; \"$@\" > /run/ringlpn/private/output/process.log 2>&1; rc=$?; "
+        "test ! -e /run/ringlpn/private/channel-auth.key || rc=125; "
         "printf '%s\\n' \"$rc\" > /run/ringlpn/private/output/return-code; "
         "chmod 600 /run/ringlpn/private/output/process.log "
         "/run/ringlpn/private/output/return-code; "
@@ -495,6 +1041,8 @@ def party_command(args: argparse.Namespace) -> int:
         f"RINGLPN_PRIVATE_OUTPUT_DIR={PARTY_MOUNT}/output",
         "--mount",
         f"type=bind,src={root},dst={PARTY_MOUNT},rw=true,relabel=private,U=true",
+        "--mount",
+        f"type=bind,src={ledger_root},dst={LEDGER_MOUNT},rw=true,relabel=private,U=true",
         "--tmpfs",
         "/tmp:rw,noexec,nosuid,nodev,mode=700",
         args.image,
@@ -515,6 +1063,16 @@ def party_command(args: argparse.Namespace) -> int:
         "coordinator_gid": os.getgid(),
         "container_uid": args.uid,
         "gpu": {"requested_cdi_device": f"nvidia.com/gpu={args.gpu}", "cuda_visible_devices": "0"},
+        "invocation_id": args.invocation_id,
+        "public_parameters_sha256": args.public_parameters_sha256,
+        "channel_auth_secret_sha256": channel_auth_secret_sha256,
+        "channel_auth_protocol": "ringlpn-mutual-hmac-sha256-v1",
+        "machine_identity_sha256": args.machine_identity_sha256,
+        "runtime_identity": {
+            "container_image": args.image,
+            "container_binary": str(container_binary),
+            "container_binary_sha256": args.container_binary_sha256,
+        },
         "container_name": name,
         "private_root": str(root),
         "started_at": started,
@@ -522,17 +1080,29 @@ def party_command(args: argparse.Namespace) -> int:
             "private_bind_source": str(root),
             "private_bind_destination": PARTY_MOUNT,
             "private_access": "rw",
+            "persistent_ledger_bind_source": str(ledger_root),
+            "persistent_ledger_bind_destination": LEDGER_MOUNT,
+            "persistent_ledger_access": "rw",
             "peer_private_mounted": False,
             "shared_rw_private_mounts": [],
         },
         "podman": {"version": info.get("version", {}), "rootless": True, "userns": "auto"},
-        "mount_contract": {"own_private": "rw", "peer_private": "absent", "rootfs": "ro"},
+        "mount_contract": {
+            "own_private": "rw",
+            "persistent_ledger": "rw",
+            "peer_private": "absent",
+            "rootfs": "ro",
+        },
     }
     write_manifest(manifest, initial)
     run(create, capture=True)
     before = inspect_container(podman, name)
     before_evidence = container_evidence(before)
-    verify_container_isolation(before_evidence, writable_mounts={PARTY_MOUNT}, readonly_mounts=set())
+    verify_container_isolation(
+        before_evidence,
+        writable_mounts={PARTY_MOUNT, LEDGER_MOUNT},
+        readonly_mounts=set(),
+    )
     execution = run([podman, "start", "--attach", name], capture=True, check=False)
     rc = execution.returncode
     ended = now()
@@ -591,57 +1161,135 @@ def seal_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def labeled_containers(
+    podman: str, expected_labels: dict[str, str]
+) -> list[str]:
+    command = [podman, "ps", "--all"]
+    for key, value in expected_labels.items():
+        command.extend(["--filter", f"label={key}={value}"])
+    command.extend(["--format", "{{.Names}}"])
+    completed = run(command, capture=True)
+    return sorted({name for name in completed.stdout.splitlines() if name})
+
+
+def require_derived_container_labels(
+    podman: str, name: str, expected_labels: dict[str, str]
+) -> None:
+    if run([podman, "container", "exists", name], check=False).returncode != 0:
+        return
+    inspected = inspect_container(podman, name)
+    labels = inspected.get("Config", {}).get("Labels", {})
+    if any(labels.get(key) != value for key, value in expected_labels.items()):
+        fail(f"derived-name container has mismatched cleanup labels: {name}")
+
+
+def stop_wait_remove_labeled_containers(
+    podman: str, expected_labels: dict[str, str]
+) -> list[dict[str, Any]]:
+    removed: list[dict[str, Any]] = []
+    for name in labeled_containers(podman, expected_labels):
+        inspected = inspect_container(podman, name)
+        labels = inspected.get("Config", {}).get("Labels", {})
+        if any(labels.get(key) != value for key, value in expected_labels.items()):
+            fail(f"refusing cleanup of container with mismatched labels: {name}")
+        evidence = container_evidence(inspected)
+        if evidence["running"]:
+            run([podman, "kill", "--signal", "TERM", name], capture=True)
+            run([podman, "wait", name], capture=True)
+            inspected = inspect_container(podman, name)
+            if container_evidence(inspected)["running"]:
+                fail(f"labeled worker remained live after kill/wait: {name}")
+        run([podman, "rm", name], capture=True)
+        removed.append(evidence)
+    survivors = labeled_containers(podman, expected_labels)
+    if survivors:
+        fail("labeled containers survived the second absence sweep: " + ", ".join(survivors))
+    return removed
+
+
 def abort_command(args: argparse.Namespace) -> int:
     party = int(args.party)
     root = require_absolute(args.private_root, "private root")
+    ledger_root = require_absolute(args.ledger_root, "persistent ledger root")
     manifest = require_absolute(args.manifest, "manifest")
-    if not manifest.exists():
-        fail("abort requires the owner-only session manifest; refusing an unbound private root")
+    expected_auth = require_sha256(
+        args.channel_auth_secret_sha256, "channel authenticator digest"
+    )
     require_manifest_outside(root, manifest)
-    podman, _ = podman_info()
-    name = f"ringlpn-{args.session_id}-party{party}"
+    require_manifest_outside(ledger_root, manifest)
+    require_separate([root, ledger_root])
+    auth_transaction_present = (
+        root.exists()
+        or root.is_symlink()
+        or channel_auth_cleanup_marker(root).exists()
+        or channel_auth_cleanup_marker(root).is_symlink()
+    )
+    if auth_transaction_present:
+        validate_channel_auth_cleanup_marker(
+            root, expected_auth, args.session_id, args.invocation_id, party
+        )
+
     existing: dict[str, Any] = {}
-    if manifest.exists():
+    if manifest.exists() and not manifest.is_symlink() and manifest.is_file():
         try:
-            existing = json.loads(manifest.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            fail(f"cannot validate abort manifest: {exc}")
+            candidate = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            candidate = {}
         if (
-            existing.get("schema") != SCHEMA
-            or str(existing.get("session_id")) != str(args.session_id)
-            or existing.get("party") != party
-            or pathlib.Path(existing.get("private_root", "")).resolve(strict=False) != root.resolve(strict=False)
+            candidate.get("schema") == SCHEMA
+            and str(candidate.get("session_id")) == str(args.session_id)
+            and candidate.get("invocation_id") == args.invocation_id
+            and candidate.get("party") == party
+            and pathlib.Path(candidate.get("private_root", "")).resolve(strict=False)
+            == root.resolve(strict=False)
         ):
-            fail("abort manifest does not match requested session, party, and private root")
-        name = existing.get("container", {}).get("name") or existing.get("container_name") or name
-    exists = run([podman, "container", "exists", name], check=False).returncode == 0
-    removed_container: dict[str, Any] | None = None
-    if exists:
-        inspected = inspect_container(podman, name)
-        labels = inspected.get("Config", {}).get("Labels", {})
-        expected = {
-            "io.ezpc.ringlpn.schema": SCHEMA,
-            "io.ezpc.ringlpn.session": str(args.session_id),
-            "io.ezpc.ringlpn.party": str(party),
-        }
-        if any(labels.get(key) != value for key, value in expected.items()):
-            fail("refusing to abort a container without exact Ring-LPN session labels")
-        removed_container = container_evidence(inspected)
-        run([podman, "rm", "--force", name], capture=True)
+            existing = candidate
+
+    podman, _ = podman_info()
+    expected_labels = {
+        "io.ezpc.ringlpn.schema": SCHEMA,
+        "io.ezpc.ringlpn.session": str(args.session_id),
+        "io.ezpc.ringlpn.party": str(party),
+    }
+    require_derived_container_labels(
+        podman, f"ringlpn-{args.session_id}-party{party}", expected_labels
+    )
+    removed_containers = stop_wait_remove_labeled_containers(podman, expected_labels)
+
     retained_log: str | None = None
     deleted_evidence: list[dict[str, Any]] = []
     if root.exists():
         run([podman, "unshare", "chown", "-R", "0:0", str(root)], capture=True)
-        deleted_evidence = harden_tree(root)
         source_log = root / "output" / "process.log"
-        if source_log.exists():
-            if source_log.is_symlink() or not source_log.is_file():
-                fail("refusing to retain a non-regular party process log")
+        if (
+            source_log.exists()
+            and not source_log.is_symlink()
+            and source_log.is_file()
+            and source_log.lstat().st_nlink == 1
+        ):
             retained = manifest.parent / f"{args.session_id}.party{party}.abort.log"
             shutil.copyfile(source_log, retained)
             os.chmod(retained, PRIVATE_FILE_MODE)
             retained_log = str(retained)
-        shutil.rmtree(root)
+    if auth_transaction_present:
+        remove_channel_auth_transaction(
+            root, expected_auth, args.session_id, args.invocation_id, party
+        )
+
+    if not ledger_root.exists():
+        fail("persistent party ledger disappeared during abort")
+    run([podman, "unshare", "chown", "-R", "0:0", str(ledger_root)], capture=True)
+    harden_tree(ledger_root)
+    ledger_info = ledger_root.lstat()
+    if (
+        not stat.S_ISDIR(ledger_info.st_mode)
+        or ledger_root.is_symlink()
+        or stat.S_IMODE(ledger_info.st_mode) & 0o077
+        or ledger_info.st_uid != os.geteuid()
+    ):
+        fail("abort did not retain the persistent ledger owner-only")
+    fsync_directory(ledger_root)
+
     document = {
         **existing,
         "schema": SCHEMA,
@@ -650,12 +1298,15 @@ def abort_command(args: argparse.Namespace) -> int:
         "party": party,
         "private_root": str(root),
         "aborted_at": now(),
-        "container_removed": exists,
-        "removed_container": removed_container,
+        "container_removed": bool(removed_containers),
+        "removed_container": removed_containers[0] if removed_containers else None,
+        "removed_containers": removed_containers,
         "records_staged": False,
         "records_deleted": True,
         "deleted_private_path_evidence": deleted_evidence,
         "retained_owner_only_log": retained_log,
+        "retained_persistent_ledger": str(ledger_root),
+        "cleanup_status": "PASS",
     }
     write_manifest(manifest, document)
     return 0
@@ -717,6 +1368,166 @@ def stage_command(args: argparse.Namespace) -> int:
     write_manifest(manifest, own)
     return 0
 
+def purge_party_command(args: argparse.Namespace) -> int:
+    party = int(args.party)
+    root = require_absolute(args.private_root, "private root")
+    export_root = require_absolute(args.export_root, "checker export root")
+    manifest = require_absolute(args.manifest, "manifest")
+    require_separate([root, export_root])
+    require_manifest_outside(root, manifest)
+    require_manifest_outside(export_root, manifest)
+    document = load_manifest(manifest, party)
+    expected_auth = require_sha256(
+        document.get("channel_auth_secret_sha256"),
+        "manifest channel authenticator digest",
+    )
+    validate_channel_auth_cleanup_marker(
+        root,
+        expected_auth,
+        str(document["session_id"]),
+        str(document["invocation_id"]),
+        party,
+    )
+    if document.get("staged_for_checker") is not True:
+        fail("success purge requires a staged party manifest")
+    if root.resolve(strict=False) != pathlib.Path(
+        str(document.get("private_root", ""))
+    ).resolve(strict=False):
+        fail("success purge private root does not match the party manifest")
+    if {path.name for path in root.iterdir()} - {
+        "input",
+        "tmp",
+        "output",
+        "channel-auth.key",
+    }:
+        fail("success purge private root contains unexpected entries")
+    if export_root.resolve(strict=False) != pathlib.Path(
+        str(document.get("checker_export_root", ""))
+    ).resolve(strict=False):
+        fail("success purge export root does not match the party manifest")
+    podman, _ = podman_info()
+    container_name = document.get("container", {}).get("name")
+    if not isinstance(container_name, str) or not container_name:
+        fail("success purge requires the stopped party container identity")
+    inspected = inspect_container(podman, container_name)
+    if container_evidence(inspected)["running"]:
+        fail("refusing to purge records while the party container is live")
+    labels = inspected.get("Config", {}).get("Labels", {})
+    expected_labels = {
+        "io.ezpc.ringlpn.schema": SCHEMA,
+        "io.ezpc.ringlpn.session": str(document["session_id"]),
+        "io.ezpc.ringlpn.party": str(party),
+    }
+    if any(labels.get(key) != value for key, value in expected_labels.items()):
+        fail("refusing to purge a container without exact party/session labels")
+    deleted = []
+    for identity, private_tree in (("private-root", root), ("export-root", export_root)):
+        if not private_tree.is_dir() or private_tree.is_symlink():
+            fail("success purge requires both bound private trees")
+        run(
+            [podman, "unshare", "chown", "-R", "0:0", str(private_tree)],
+            capture=True,
+        )
+        harden_tree(private_tree)
+        parent = private_tree.parent
+        shutil.rmtree(private_tree)
+        directory_fd = os.open(parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        if private_tree.exists():
+            fail("success purge left a private tree behind")
+        deleted.append(
+            {"identity": identity, "path": str(private_tree), "status": "absent"}
+        )
+    remove_channel_auth_transaction(
+        root,
+        expected_auth,
+        str(document["session_id"]),
+        str(document["invocation_id"]),
+        party,
+    )
+    channel_auth = root / "channel-auth.key"
+    if channel_auth.exists() or channel_auth.is_symlink():
+        fail("channel authentication secret survived private-root deletion")
+    deleted.append(
+        {
+            "identity": "channel-auth-secret",
+            "path": str(channel_auth),
+            "status": "absent",
+        }
+    )
+    run([podman, "rm", container_name], capture=True)
+    if run([podman, "container", "exists", container_name], check=False).returncode == 0:
+        fail("success purge left the labeled party container behind")
+    deleted.append(
+        {
+            "identity": f"party{party}-container",
+            "path": container_name,
+            "status": "absent",
+        }
+    )
+    for identity, optional_path in (
+        ("party-manifest", getattr(args, "remove_manifest", None)),
+        ("peer-manifest-copy", getattr(args, "peer_manifest", None)),
+    ):
+        if optional_path is None:
+            continue
+        target = require_absolute(optional_path, identity)
+        for private_tree in (root, export_root):
+            require_manifest_outside(private_tree, target)
+        if target.is_symlink() or not target.is_file():
+            fail(f"success purge requires the exact {identity} regular file")
+        target.unlink()
+        directory_fd = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        if target.exists():
+            fail(f"success purge left {identity} behind")
+        deleted.append({"identity": identity, "path": str(target), "status": "absent"})
+    ledger_root = require_absolute(
+        str(document.get("volume_topology", {}).get("persistent_ledger_bind_source", "")),
+        "persistent ledger root",
+    )
+    require_separate([root, export_root, ledger_root])
+    run([podman, "unshare", "chown", "-R", "0:0", str(ledger_root)], capture=True)
+    harden_tree(ledger_root)
+    directory_fd = os.open(ledger_root, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    ledger_info = ledger_root.lstat()
+    if (
+        not stat.S_ISDIR(ledger_info.st_mode)
+        or ledger_root.is_symlink()
+        or stat.S_IMODE(ledger_info.st_mode) & 0o077
+        or ledger_info.st_uid != os.geteuid()
+    ):
+        fail("persistent ledger root was not retained owner-only")
+    persistent_ledger = {
+        "identity": f"party{party}-consume-once-ledger",
+        "path": str(ledger_root),
+        "status": "retained-owner-only-distinct-mount",
+    }
+    print(
+        json.dumps(
+            {
+                "schema": "ringlpn-deletion-fragment-v1",
+                "party": party,
+                "machine_identity_sha256": machine_identity_sha256(),
+                "deletions": deleted,
+                "persistent_ledger": persistent_ledger,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    return 0
+
 
 def launch_command(args: argparse.Namespace) -> int:
     launcher = require_absolute(args.authenticated_launcher, "authenticated launcher")
@@ -745,6 +1556,15 @@ def launch_command(args: argparse.Namespace) -> int:
 def verify_party_pair(p0: dict[str, Any], p1: dict[str, Any]) -> None:
     if p0.get("session_id") != p1.get("session_id"):
         fail("party completion manifests have different session IDs")
+    auth_digest = require_sha256(
+        p0.get("channel_auth_secret_sha256"), "party channel authenticator digest"
+    )
+    if (
+        p1.get("channel_auth_secret_sha256") != auth_digest
+        or p0.get("channel_auth_protocol") != "ringlpn-mutual-hmac-sha256-v1"
+        or p1.get("channel_auth_protocol") != "ringlpn-mutual-hmac-sha256-v1"
+    ):
+        fail("party completion manifests do not bind the same channel authenticator")
     identity0 = (p0.get("host"), tuple(p0.get("mapped_host_uids", [])), p0.get("container", {}).get("id"))
     identity1 = (p1.get("host"), tuple(p1.get("mapped_host_uids", [])), p1.get("container", {}).get("id"))
     if identity0 == identity1:
@@ -755,14 +1575,142 @@ def verify_party_pair(p0: dict[str, Any], p1: dict[str, Any]) -> None:
         if p0.get("gpu", {}).get("requested_cdi_device") == p1.get("gpu", {}).get("requested_cdi_device"):
             fail("same-host parties are not pinned to distinct GPUs")
     for party in (p0, p1):
-        if party.get("mount_contract") != {"own_private": "rw", "peer_private": "absent", "rootfs": "ro"}:
+        if party.get("mount_contract") != {
+            "own_private": "rw",
+            "persistent_ledger": "rw",
+            "peer_private": "absent",
+            "rootfs": "ro",
+        }:
             fail("party mount contract is incomplete")
         mounts = party.get("container_before_start", {}).get("mounts", [])
         private = [mount for mount in mounts if mount.get("destination") == PARTY_MOUNT]
+        ledger = [mount for mount in mounts if mount.get("destination") == LEDGER_MOUNT]
         if len(private) != 1 or private[0].get("rw") is not True:
             fail("party did not receive exactly one private read-write mount")
+        if len(ledger) != 1 or ledger[0].get("rw") is not True:
+            fail("party did not receive exactly one persistent ledger mount")
+        topology = party.get("volume_topology", {})
+        if topology.get("private_bind_source") == topology.get(
+            "persistent_ledger_bind_source"
+        ):
+            fail("party private and persistent ledger mounts alias")
         if any(mount.get("destination") == "/run/ringlpn/peer-private" for mount in mounts):
             fail("party container received a peer-private mount")
+
+def verify_publication_bindings(
+    args: argparse.Namespace,
+    p0: dict[str, Any],
+    p1: dict[str, Any],
+    p0_path: pathlib.Path,
+    p1_path: pathlib.Path,
+    prepared_path: pathlib.Path,
+    prepared: dict[str, Any],
+) -> dict[str, Any]:
+    if not getattr(args, "publication", False):
+        return {}
+    required_names = (
+        "expected_session_id",
+        "expected_invocation_id",
+        "expected_public_parameters_sha256",
+        "expected_container_image",
+        "expected_container_binary",
+        "expected_container_binary_sha256",
+        "expected_executor_sha256",
+        "launcher_result",
+    )
+    if any(not isinstance(getattr(args, name, None), str) or not getattr(args, name) for name in required_names):
+        fail("publication verification requires every expected session/runtime binding")
+    machine0 = require_sha256(p0.get("machine_identity_sha256"), "party 0 machine identity")
+    machine1 = require_sha256(p1.get("machine_identity_sha256"), "party 1 machine identity")
+    if machine0 == machine1:
+        fail("publication verification requires two distinct stable machine identities")
+    expected_runtime = {
+        "container_image": args.expected_container_image,
+        "container_binary": str(require_absolute(args.expected_container_binary, "expected container binary")),
+        "container_binary_sha256": require_sha256(
+            args.expected_container_binary_sha256, "expected container binary digest"
+        ),
+    }
+    expected = {
+        "session_id": args.expected_session_id,
+        "invocation_id": args.expected_invocation_id,
+        "public_parameters_sha256": require_sha256(
+            args.expected_public_parameters_sha256, "expected public-parameter digest"
+        ),
+    }
+    for label, party in (("party 0", p0), ("party 1", p1)):
+        if str(party.get("session_id")) != str(expected["session_id"]):
+            fail(f"{label} manifest is not bound to the expected publication session")
+        if party.get("invocation_id") != expected["invocation_id"]:
+            fail(f"{label} manifest is not bound to the expected invocation")
+        if party.get("public_parameters_sha256") != expected["public_parameters_sha256"]:
+            fail(f"{label} manifest is not bound to the expected public parameters")
+        if party.get("runtime_identity") != expected_runtime:
+            fail(f"{label} manifest is not bound to the authorized runtime")
+        if party.get("channel_auth_secret_sha256") != prepared.get(
+            "channel_auth_secret_sha256"
+        ):
+            fail(f"{label} manifest is not bound to the prepared channel authenticator")
+    if (
+        str(prepared.get("session_id")) != str(expected["session_id"])
+        or prepared.get("invocation_id") != expected["invocation_id"]
+        or prepared.get("public_parameters_sha256") != expected["public_parameters_sha256"]
+        or prepared.get("runtime_identity") != expected_runtime
+        or prepared.get("machine_identities")
+        != {"party0_sha256": machine0, "party1_sha256": machine1}
+        or prepared.get("channel_auth_secret_sha256")
+        != p0.get("channel_auth_secret_sha256")
+    ):
+        fail("PREPARED manifest is not bound to the expected publication launch")
+    result_path = require_absolute(args.launcher_result, "launcher preparation")
+    try:
+        result_info = result_path.lstat()
+        if not stat.S_ISREG(result_info.st_mode) or stat.S_IMODE(result_info.st_mode) != PRIVATE_FILE_MODE:
+            fail("launcher preparation must be an owner-only regular file")
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"cannot read launcher preparation: {exc}")
+    if (
+        result.get("schema") != "ringlpn-authenticated-launch-preparation-v1"
+        or result.get("status") != "PREPARED"
+        or str(result.get("session_id")) != str(expected["session_id"])
+        or result.get("invocation_id") != expected["invocation_id"]
+        or result.get("public_parameters_sha256") != expected["public_parameters_sha256"]
+        or result.get("runtime_identity") != expected_runtime
+        or result.get("executor_sha256") != require_sha256(
+            args.expected_executor_sha256, "expected executor digest"
+        )
+        or result.get("machine_identities")
+        != {"party0_sha256": machine0, "party1_sha256": machine1}
+        or result.get("checker_stage") != str(prepared_path.parent)
+    ):
+        fail("launcher preparation does not match the expected publication launch")
+    expected_parties = {
+        "party0": {"path": str(p0_path), "sha256": sha256_file(p0_path)},
+        "party1": {"path": str(p1_path), "sha256": sha256_file(p1_path)},
+    }
+    if result.get("party_manifests") != expected_parties:
+        fail("launcher preparation is not bound to the checker party manifests")
+    source0 = result_path.parent / "party0-sealed.json"
+    source1 = result_path.parent / "party1-sealed.json"
+    source0_sha256 = sha256_file(source0)
+    source1_sha256 = sha256_file(source1)
+    if (
+        source0_sha256 != expected_parties["party0"]["sha256"]
+        or source1_sha256 != expected_parties["party1"]["sha256"]
+    ):
+        fail("launcher party manifests differ from their prepared checker copies")
+    if result.get("launcher_party_manifests") != {
+        "party0": {"path": str(source0), "sha256": source0_sha256},
+        "party1": {"path": str(source1), "sha256": source1_sha256},
+    }:
+        fail("launcher preparation is not bound to its generated party manifests")
+    if result.get("prepared_manifest") != {
+        "path": str(prepared_path),
+        "sha256": sha256_file(prepared_path),
+    }:
+        fail("launcher preparation is not bound to the exact PREPARED manifest")
+    return result
 
 
 def checker_command(args: argparse.Namespace) -> int:
@@ -782,24 +1730,27 @@ def checker_command(args: argparse.Namespace) -> int:
     verify_party_pair(p0, p1)
     if p0.get("staged_for_checker") is not True or p1.get("staged_for_checker") is not True:
         fail("checker requires both authenticated post-exit stage records")
-    commit_path = require_absolute(args.commit_manifest, "COMMITTED manifest")
+    prepared_path = require_absolute(args.prepared_manifest, "PREPARED manifest")
     for checker_stage_root in (p0_root, p1_root, output_root):
-        require_manifest_outside(checker_stage_root, commit_path)
+        require_manifest_outside(checker_stage_root, prepared_path)
     p0_record = p0_root / "key_p0.fc"
     p1_record = p1_root / "key_p1.fc"
-    commit = load_commit_manifest(
-        commit_path,
+    prepared = load_prepared_manifest(
+        prepared_path,
         session_id=p0["session_id"],
         p0_record=p0_record,
         p1_record=p1_record,
         p0_manifest=p0_manifest_path,
         p1_manifest=p1_manifest_path,
     )
-    if parse_utc(commit["committed_at"], "commit timestamp") <= max(
+    verify_publication_bindings(
+        args, p0, p1, p0_manifest_path, p1_manifest_path, prepared_path, prepared
+    )
+    if parse_utc(prepared["prepared_at"], "PREPARED timestamp") <= max(
         parse_utc(p0["sealed_at"], "party 0 seal timestamp"),
         parse_utc(p1["sealed_at"], "party 1 seal timestamp"),
     ):
-        fail("COMMITTED manifest predates a party seal")
+        fail("PREPARED manifest predates a party seal")
     prepare_private_root(p0_root, party=False)
     prepare_private_root(p1_root, party=False)
     prepare_private_root(output_root, party=False)
@@ -811,14 +1762,22 @@ def checker_command(args: argparse.Namespace) -> int:
         fail("checker UID must be non-root and positive")
     if args.uid in (p0.get("container_uid"), p1.get("container_uid")):
         fail("checker UID must differ from both party container UIDs")
+    if args.publication:
+        checker_device = f"nvidia.com/gpu={args.gpu}"
+        party_devices = {
+            p0.get("gpu", {}).get("requested_cdi_device"),
+            p1.get("gpu", {}).get("requested_cdi_device"),
+        }
+        if checker_device in party_devices:
+            fail("publication checker GPU must differ from both party GPUs")
 
     checker_started = now()
     if checker_started <= max(p0["ended_at"], p1["ended_at"]):
         fail("checker phase did not begin strictly after both party exit timestamps")
     if parse_utc(checker_started, "checker start timestamp") <= parse_utc(
-        commit["committed_at"], "commit timestamp"
+        prepared["prepared_at"], "PREPARED timestamp"
     ):
-        fail("checker phase did not begin strictly after durable COMMITTED publication")
+        fail("checker phase did not begin strictly after durable preparation")
     podman, info = podman_info()
     name = args.container_name or f"ringlpn-{p0['session_id']}-checker"
     wrapper = (
@@ -907,6 +1866,17 @@ def checker_command(args: argparse.Namespace) -> int:
         "schema": SCHEMA,
         "phase": "checker-exited",
         "session_id": p0["session_id"],
+        "invocation_id": prepared["invocation_id"],
+        "public_parameters_sha256": prepared["public_parameters_sha256"],
+        "runtime_identity": prepared["runtime_identity"],
+        "machine_identities": prepared["machine_identities"],
+        "publication_mode": bool(args.publication),
+        "launcher_preparation": str(args.launcher_result) if args.publication else None,
+        "launcher_preparation_sha256": (
+            sha256_file(require_absolute(args.launcher_result, "launcher preparation"))
+            if args.publication
+            else None
+        ),
         "started_at": checker_started,
         "ended_at": ended,
         "return_code": rc,
@@ -918,8 +1888,8 @@ def checker_command(args: argparse.Namespace) -> int:
         "podman": {"version": info.get("version", {}), "rootless": True, "userns": "auto"},
         "party_completion": {"party0_ended_at": p0["ended_at"], "party1_ended_at": p1["ended_at"]},
         "party_manifests": {"party0": str(args.p0_manifest), "party1": str(args.p1_manifest)},
-        "commit_manifest": str(commit_path),
-        "commit_manifest_sha256": sha256_file(commit_path),
+        "prepared_manifest": str(prepared_path),
+        "prepared_manifest_sha256": sha256_file(prepared_path),
         "checker_stage_roots": {"party0": str(p0_root), "party1": str(p1_root)},
         "container_before_start": before_evidence,
         "container": after,
@@ -942,7 +1912,7 @@ def checker_command(args: argparse.Namespace) -> int:
             "both_parties_exited_before_checker": True,
             "checker_had_no_live_access": True,
             "party_inputs_read_only": True,
-            "digest_bound_committed_records": True,
+            "digest_bound_prepared_records": True,
             "checker_network": "none",
         },
     }
@@ -973,35 +1943,244 @@ def verify_command(args: argparse.Namespace) -> int:
     roots = checker.get("checker_stage_roots", {})
     p0_record = pathlib.Path(str(roots.get("party0", ""))) / "key_p0.fc"
     p1_record = pathlib.Path(str(roots.get("party1", ""))) / "key_p1.fc"
-    commit_path = require_absolute(args.commit_manifest, "COMMITTED manifest")
-    commit = load_commit_manifest(
-        commit_path,
+    prepared_path = require_absolute(args.prepared_manifest, "PREPARED manifest")
+    prepared = load_prepared_manifest(
+        prepared_path,
         session_id=p0["session_id"],
         p0_record=p0_record,
         p1_record=p1_record,
         p0_manifest=p0_path,
         p1_manifest=p1_path,
     )
-    if checker.get("commit_manifest") != str(commit_path) or checker.get(
-        "commit_manifest_sha256"
-    ) != sha256_file(commit_path):
-        fail("checker manifest is not bound to the durable COMMITTED manifest")
+    verify_publication_bindings(args, p0, p1, p0_path, p1_path, prepared_path, prepared)
+    if args.publication:
+        if checker.get("publication_mode") is not True:
+            fail("checker manifest lacks the publication boundary marker")
+        if (
+            checker.get("invocation_id") != prepared["invocation_id"]
+            or checker.get("public_parameters_sha256") != prepared["public_parameters_sha256"]
+            or checker.get("runtime_identity") != prepared["runtime_identity"]
+            or checker.get("machine_identities") != prepared["machine_identities"]
+            or checker.get("launcher_preparation")
+            != str(require_absolute(args.launcher_result, "launcher preparation"))
+            or checker.get("launcher_preparation_sha256")
+            != sha256_file(require_absolute(args.launcher_result, "launcher preparation"))
+        ):
+            fail("checker manifest is not bound to the exact publication preparation")
+        if checker.get("container_uid") in (
+            p0.get("container_uid"),
+            p1.get("container_uid"),
+        ):
+            fail("publication checker manifest reuses a party container UID")
+        checker_device = checker.get("gpu", {}).get("requested_cdi_device")
+        if checker_device in {
+            p0.get("gpu", {}).get("requested_cdi_device"),
+            p1.get("gpu", {}).get("requested_cdi_device"),
+        }:
+            fail("publication checker manifest reuses a party GPU")
+    if checker.get("prepared_manifest") != str(prepared_path) or checker.get(
+        "prepared_manifest_sha256"
+    ) != sha256_file(prepared_path):
+        fail("checker manifest is not bound to the durable PREPARED manifest")
     if parse_utc(checker.get("started_at"), "checker start timestamp") <= parse_utc(
-        commit["committed_at"], "commit timestamp"
+        prepared["prepared_at"], "PREPARED timestamp"
     ):
-        fail("checker manifest predates durable COMMITTED publication")
+        fail("checker manifest predates durable preparation")
     invariants = checker.get("invariants", {})
     required = {
         "both_parties_exited_before_checker": True,
         "checker_had_no_live_access": True,
         "party_inputs_read_only": True,
-        "digest_bound_committed_records": True,
+        "digest_bound_prepared_records": True,
         "checker_network": "none",
     }
     if invariants != required:
         fail("checker invariant evidence is incomplete")
     print("peer-private: manifest isolation checks pass")
     return 0
+
+def purge_checker_records_command(args: argparse.Namespace) -> int:
+    p0_root = require_absolute(args.p0_root, "party 0 checker-stage root")
+    p1_root = require_absolute(args.p1_root, "party 1 checker-stage root")
+    checker_root = require_absolute(args.checker_root, "checker output root")
+    retained_log = require_absolute(args.retained_log, "retained checker log")
+    p0_path = require_absolute(args.p0_manifest, "party 0 manifest")
+    p1_path = require_absolute(args.p1_manifest, "party 1 manifest")
+    prepared_path = require_absolute(args.prepared_manifest, "PREPARED manifest")
+    checker_path = require_absolute(args.checker_manifest, "checker manifest")
+    require_separate([p0_root, p1_root, checker_root])
+    for root in (p0_root, p1_root, checker_root):
+        require_manifest_outside(root, retained_log)
+    p0 = load_manifest(p0_path, 0)
+    p1 = load_manifest(p1_path, 1)
+    verify_party_pair(p0, p1)
+    p0_record = p0_root / "key_p0.fc"
+    p1_record = p1_root / "key_p1.fc"
+    prepared = load_prepared_manifest(
+        prepared_path,
+        session_id=p0["session_id"],
+        p0_record=p0_record,
+        p1_record=p1_record,
+        p0_manifest=p0_path,
+        p1_manifest=p1_path,
+    )
+    try:
+        checker = json.loads(checker_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"cannot read checker manifest for finalization: {exc}")
+    if (
+        checker.get("schema") != SCHEMA
+        or checker.get("phase") != "checker-exited"
+        or checker.get("return_code") != 0
+        or checker.get("session_id") != prepared["session_id"]
+        or checker.get("prepared_manifest") != str(prepared_path)
+        or checker.get("prepared_manifest_sha256") != sha256_file(prepared_path)
+        or checker.get("volume_topology", {}).get("checker_output_source")
+        != str(checker_root)
+    ):
+        fail("finalization requires the successful bound post-exit checker")
+    if retained_log.exists():
+        fail("retained checker log must be fresh")
+    process_log = checker_root / "process.log"
+    return_code = checker_root / "return-code"
+    if (
+        not checker_root.is_dir()
+        or checker_root.is_symlink()
+        or not process_log.is_file()
+        or process_log.is_symlink()
+        or return_code.read_text(encoding="utf-8").strip() != "0"
+    ):
+        fail("checker output root does not contain the exact successful raw outputs")
+    if {entry.name for entry in checker_root.iterdir()} != {"process.log", "return-code"}:
+        fail("checker output root contains an unexpected duplicate or private output")
+    shutil.copyfile(process_log, retained_log)
+    os.chmod(retained_log, PRIVATE_FILE_MODE)
+    with retained_log.open("rb+") as stream:
+        os.fsync(stream.fileno())
+    directory_fd = os.open(retained_log.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    podman, _ = podman_info()
+    checker_name = checker.get("container", {}).get("name")
+    if not isinstance(checker_name, str) or not checker_name:
+        fail("checker manifest lacks the stopped checker container identity")
+    inspected = inspect_container(podman, checker_name)
+    if container_evidence(inspected)["running"]:
+        fail("refusing finalization while checker container is live")
+    labels = inspected.get("Config", {}).get("Labels", {})
+    if (
+        labels.get("io.ezpc.ringlpn.schema") != SCHEMA
+        or labels.get("io.ezpc.ringlpn.session") != str(prepared["session_id"])
+        or labels.get("io.ezpc.ringlpn.role") != "checker"
+    ):
+        fail("refusing to remove checker container with mismatched labels")
+    deletions = []
+    for identity, root, record in (
+        ("checker-stage-party0-record", p0_root, p0_record),
+        ("checker-stage-party1-record", p1_root, p1_record),
+    ):
+        if not root.is_dir() or root.is_symlink():
+            fail("checker-stage root is unavailable during finalization")
+        run([podman, "unshare", "chown", "-R", "0:0", str(root)], capture=True)
+        if not record.is_file() or record.is_symlink():
+            fail("finalization requires the exact prepared regular record")
+        record.unlink()
+        directory_fd = os.open(root, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        if record.exists() or {entry.name for entry in root.iterdir()} != {
+            "isolation-manifest.json"
+        }:
+            fail("checker-stage root retained a raw or duplicate output")
+        deletions.append({"identity": identity, "path": str(record), "status": "absent"})
+    shutil.rmtree(checker_root)
+    directory_fd = os.open(checker_root.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    if checker_root.exists():
+        fail("raw checker output root survived finalization")
+    deletions.append(
+        {"identity": "checker-output-root", "path": str(checker_root), "status": "absent"}
+    )
+    run([podman, "rm", checker_name], capture=True)
+    if run([podman, "container", "exists", checker_name], check=False).returncode == 0:
+        fail("labeled checker container survived finalization")
+    deletions.append(
+        {"identity": "checker-container", "path": checker_name, "status": "absent"}
+    )
+    print(
+        json.dumps(
+            {
+                "schema": "ringlpn-deletion-fragment-v1",
+                "machine_identity_sha256": machine_identity_sha256(),
+
+                "retained_log": {
+                    "path": str(retained_log),
+                    "sha256": sha256_file(retained_log),
+                },
+                "deletions": deletions,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    return 0
+def abort_checker_command(args: argparse.Namespace) -> int:
+    checker_root = require_absolute(args.checker_root, "checker output root")
+    checker_manifest = require_absolute(args.checker_manifest, "checker manifest")
+    require_manifest_outside(checker_root, checker_manifest)
+    podman, _ = podman_info()
+    expected_labels = {
+        "io.ezpc.ringlpn.schema": SCHEMA,
+        "io.ezpc.ringlpn.session": str(args.session_id),
+        "io.ezpc.ringlpn.role": "checker",
+    }
+    require_derived_container_labels(
+        podman, f"ringlpn-{args.session_id}-checker", expected_labels
+    )
+    stop_wait_remove_labeled_containers(podman, expected_labels)
+    if checker_root.exists() or checker_root.is_symlink():
+        if not checker_root.is_dir() or checker_root.is_symlink():
+            fail("checker abort root is not a real directory")
+        run([podman, "unshare", "chown", "-R", "0:0", str(checker_root)], capture=True)
+        harden_tree(checker_root)
+        shutil.rmtree(checker_root)
+        fsync_directory(checker_root.parent)
+    if checker_root.exists() or checker_root.is_symlink():
+        fail("checker cleanup left its exact raw-output root behind")
+    survivors = labeled_containers(podman, expected_labels)
+    if survivors:
+        fail("checker cleanup second absence sweep failed: " + ", ".join(survivors))
+    return 0
+
+
+def verify_session_containers_absent_command(args: argparse.Namespace) -> int:
+    podman, _ = podman_info()
+    completed = run(
+        [
+            podman,
+            "ps",
+            "--all",
+            "--filter",
+            f"label=io.ezpc.ringlpn.schema={SCHEMA}",
+            "--filter",
+            f"label=io.ezpc.ringlpn.session={args.session_id}",
+            "--format",
+            "{{.Names}}",
+        ],
+        capture=True,
+    )
+    survivors = [name for name in completed.stdout.splitlines() if name]
+    if survivors:
+        fail("labeled session containers survived cleanup: " + ", ".join(survivors))
+    return 0
+
 
 
 def add_container_options(parser: argparse.ArgumentParser, *, default_uid: int) -> None:
@@ -1011,6 +2190,17 @@ def add_container_options(parser: argparse.ArgumentParser, *, default_uid: int) 
     parser.add_argument("--pids-limit", type=int, default=4096)
     parser.add_argument("--container-name")
     parser.add_argument("--manifest", required=True)
+
+def add_publication_binding_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--publication", action="store_true")
+    parser.add_argument("--expected-session-id")
+    parser.add_argument("--expected-invocation-id")
+    parser.add_argument("--expected-public-parameters-sha256")
+    parser.add_argument("--expected-container-image")
+    parser.add_argument("--expected-container-binary")
+    parser.add_argument("--expected-container-binary-sha256")
+    parser.add_argument("--expected-executor-sha256")
+    parser.add_argument("--launcher-result")
 
 
 def parse_args() -> argparse.Namespace:
@@ -1022,10 +2212,37 @@ def parse_args() -> argparse.Namespace:
     )
     subparsers = parser.add_subparsers(dest="operation", required=True)
 
+    provision_auth = subparsers.add_parser(
+        "provision-channel-auth",
+        help="read one 32-byte channel authenticator from stdin into a fresh private root",
+    )
+    provision_auth.add_argument("--private-root", required=True)
+    provision_auth.add_argument("--channel-auth-secret-sha256", required=True)
+    provision_auth.add_argument("--party", required=True, choices=("0", "1"))
+    provision_auth.add_argument("--session-id", required=True)
+    provision_auth.add_argument("--invocation-id", required=True)
+    abort_provisioned_auth = subparsers.add_parser(
+        "abort-provisioned-channel-auth",
+        help="remove a not-yet-started provisioned channel authenticator root",
+    )
+    abort_provisioned_auth.add_argument("--private-root", required=True)
+    abort_provisioned_auth.add_argument("--channel-auth-secret-sha256", required=True)
+    abort_provisioned_auth.add_argument("--party", required=True, choices=("0", "1"))
+    abort_provisioned_auth.add_argument("--session-id", required=True)
+    abort_provisioned_auth.add_argument("--invocation-id", required=True)
+
+
     party = subparsers.add_parser("run-party", help="run one live party in a private user namespace")
     party.add_argument("--party", required=True, choices=("0", "1"))
     party.add_argument("--session-id", required=True)
     party.add_argument("--private-root", required=True)
+    party.add_argument("--ledger-root", required=True)
+    party.add_argument("--invocation-id", required=True)
+    party.add_argument("--public-parameters-sha256", required=True)
+    party.add_argument("--machine-identity-sha256", required=True)
+    party.add_argument("--container-binary", required=True)
+    party.add_argument("--container-binary-sha256", required=True)
+    party.add_argument("--channel-auth-secret-sha256", required=True)
     party.add_argument("--network", choices=("host", "slirp4netns", "pasta"), default="host")
     add_container_options(party, default_uid=10001)
     party.add_argument("command", nargs=argparse.REMAINDER)
@@ -1038,7 +2255,10 @@ def parse_args() -> argparse.Namespace:
     abort = subparsers.add_parser("abort-party", help="terminate one labeled session container and delete private records")
     abort.add_argument("--party", required=True, choices=("0", "1"))
     abort.add_argument("--session-id", required=True)
+    abort.add_argument("--invocation-id", required=True)
     abort.add_argument("--private-root", required=True)
+    abort.add_argument("--ledger-root", required=True)
+    abort.add_argument("--channel-auth-secret-sha256", required=True)
     abort.add_argument("--manifest", required=True)
 
     stage = subparsers.add_parser("stage-party", help="expose one sealed output only after both parties exited")
@@ -1048,26 +2268,83 @@ def parse_args() -> argparse.Namespace:
     stage.add_argument("--peer-manifest", required=True)
     stage.add_argument("--export-root", required=True)
 
+    purge_party = subparsers.add_parser(
+        "purge-party", help="delete one successfully staged party's private trees"
+    )
+    purge_party.add_argument("--party", required=True, choices=("0", "1"))
+    purge_party.add_argument("--private-root", required=True)
+    purge_party.add_argument("--export-root", required=True)
+    purge_party.add_argument("--manifest", required=True)
+    purge_party.add_argument("--remove-manifest")
+    purge_party.add_argument("--peer-manifest")
+
     checker = subparsers.add_parser("run-checker", help="start a networkless checker only from two exit manifests")
     checker.add_argument("--p0-root", required=True)
     checker.add_argument("--p1-root", required=True)
     checker.add_argument("--p0-manifest", required=True)
     checker.add_argument("--p1-manifest", required=True)
-    checker.add_argument("--commit-manifest", required=True)
+    checker.add_argument("--prepared-manifest", required=True)
     checker.add_argument("--checker-root", required=True)
     add_container_options(checker, default_uid=10003)
+    add_publication_binding_options(checker)
     checker.add_argument("command", nargs=argparse.REMAINDER)
 
     verify = subparsers.add_parser("verify-manifest", help="check recorded isolation and phase-order evidence")
     verify.add_argument("--p0-manifest", required=True)
     verify.add_argument("--p1-manifest", required=True)
     verify.add_argument("--checker-manifest", required=True)
-    verify.add_argument("--commit-manifest", required=True)
+    verify.add_argument("--prepared-manifest", required=True)
+    add_publication_binding_options(verify)
+
+    purge_checker = subparsers.add_parser(
+        "purge-checker-records",
+        help="remove checker raw outputs, prepared records, and the checker container",
+    )
+    purge_checker.add_argument("--p0-root", required=True)
+    purge_checker.add_argument("--p1-root", required=True)
+    purge_checker.add_argument("--p0-manifest", required=True)
+    purge_checker.add_argument("--p1-manifest", required=True)
+    purge_checker.add_argument("--checker-manifest", required=True)
+    purge_checker.add_argument("--prepared-manifest", required=True)
+    purge_checker.add_argument("--checker-root", required=True)
+    purge_checker.add_argument("--retained-log", required=True)
+
+    abort_checker = subparsers.add_parser(
+        "abort-checker", help="remove one labeled checker container and raw output root"
+    )
+    abort_checker.add_argument("--session-id", required=True)
+    abort_checker.add_argument("--checker-manifest", required=True)
+    abort_checker.add_argument("--checker-root", required=True)
+
+    verify_absent = subparsers.add_parser(
+        "verify-session-containers-absent",
+        help="reject any labeled container retained for a finalized session",
+    )
+    verify_absent.add_argument("--session-id", required=True)
 
     launch = subparsers.add_parser("launch-two-host", help="invoke the required external authenticated launcher")
     launch.add_argument("--authenticated-launcher", required=True)
     launch.add_argument("--remote-executor", required=True)
     launch.add_argument("launcher_args", nargs=argparse.REMAINDER)
+
+    machine_identity = subparsers.add_parser(
+        "machine-identity", help="emit a one-way stable OS machine identity"
+    )
+
+    runtime_identity = subparsers.add_parser(
+        "runtime-identity", help="measure an immutable image and in-image binary"
+    )
+    runtime_identity.add_argument("--image", required=True)
+    runtime_identity.add_argument("--binary", required=True)
+
+    capability_preflight = subparsers.add_parser(
+        "capability-preflight",
+        help="prove native rootless Podman, userns, immutable runtime, and GPU readiness",
+    )
+    capability_preflight.add_argument("--image", required=True)
+    capability_preflight.add_argument("--binary", required=True)
+    capability_preflight.add_argument("--binary-sha256", required=True)
+    capability_preflight.add_argument("--gpu", required=True)
 
     args = parser.parse_args()
     if hasattr(args, "command") and args.command and args.command[0] == "--":
@@ -1079,6 +2356,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.operation == "provision-channel-auth":
+        return provision_channel_auth_command(args)
+    if args.operation == "abort-provisioned-channel-auth":
+        return abort_provisioned_channel_auth_command(args)
     if args.operation == "run-party":
         return party_command(args)
     if args.operation == "seal-party":
@@ -1087,10 +2368,24 @@ def main() -> int:
         return abort_command(args)
     if args.operation == "stage-party":
         return stage_command(args)
+    if args.operation == "purge-party":
+        return purge_party_command(args)
     if args.operation == "run-checker":
         return checker_command(args)
     if args.operation == "verify-manifest":
         return verify_command(args)
+    if args.operation == "purge-checker-records":
+        return purge_checker_records_command(args)
+    if args.operation == "abort-checker":
+        return abort_checker_command(args)
+    if args.operation == "verify-session-containers-absent":
+        return verify_session_containers_absent_command(args)
+    if args.operation == "machine-identity":
+        return machine_identity_command(args)
+    if args.operation == "runtime-identity":
+        return runtime_identity_command(args)
+    if args.operation == "capability-preflight":
+        return capability_preflight_command(args)
     if args.operation == "launch-two-host":
         return launch_command(args)
     fail("unknown operation")

@@ -1,10 +1,10 @@
 {
-  "schema_version": "ringlpn.orca-model-scale-workloads.v1",
-  "publication_date": "2026-08-04",
+  "schema_version": "ringlpn.orca-model-scale-workloads.v2",
+  "publication_date": "2026-08-09",
   "claim_scope": "internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level",
   "layer_manifest": {
     "path": "GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json",
-    "sha256": "8bb46a4e3f802d180a9207e813e80082055202b74da315db25556ee3727dc43f"
+    "sha256": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984"
   },
   "execution": {
     "order": ["model_order", "linear_order", "sample_role", "trial"],

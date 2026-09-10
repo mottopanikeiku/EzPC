@@ -19,6 +19,7 @@
 #pragma once
 
 #include "spfss_host.h"
+#include "private_file.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -50,6 +51,18 @@ inline bool put(std::FILE *f, const T &v) {
     }
     return std::fwrite(buf, 1, sizeof(buf), f) == sizeof(buf);
 }
+template <typename T>
+inline bool put(int fd, const T &v) {
+    static_assert(std::is_integral<T>::value, "integer serialization only");
+    using U = typename std::make_unsigned<T>::type;
+    U x = static_cast<U>(v);
+    uint8_t buf[sizeof(T)];
+    for (size_t i = 0; i < sizeof(T); ++i) {
+        buf[i] = static_cast<uint8_t>(x >> (8 * i));
+    }
+    return ringlpn_private_file::AtomicWriter::write_descriptor(
+        fd, buf, sizeof(buf));
+}
 
 template <typename T>
 inline bool get(std::FILE *f, T &v) {
@@ -72,6 +85,14 @@ inline bool put_u128(std::FILE *f, spfss_host::U128 v) {
     }
     return std::fwrite(buf, 1, sizeof(buf), f) == sizeof(buf);
 }
+inline bool put_u128(int fd, spfss_host::U128 v) {
+    uint8_t buf[16];
+    for (int i = 0; i < 16; ++i) {
+        buf[i] = static_cast<uint8_t>(v >> (8 * i));
+    }
+    return ringlpn_private_file::AtomicWriter::write_descriptor(
+        fd, buf, sizeof(buf));
+}
 
 inline bool get_u128(std::FILE *f, spfss_host::U128 &v) {
     uint8_t buf[16];
@@ -85,33 +106,55 @@ inline bool get_u128(std::FILE *f, spfss_host::U128 &v) {
 
 }  // namespace detail
 
+inline bool stage_keys(ringlpn_private_file::AtomicWriter &writer,
+                       const std::string &path, int party,
+                       const std::vector<spfss_host::DPFKey> &keys) {
+    return writer.stage_stream(path, [&](int fd) {
+        bool ok = ringlpn_private_file::AtomicWriter::write_descriptor(
+            fd, kMagic, sizeof(kMagic));
+        ok = ok && detail::put<uint8_t>(fd, kVersion);
+        ok = ok && detail::put<uint8_t>(fd, static_cast<uint8_t>(party));
+        ok = ok &&
+             detail::put<uint32_t>(fd, static_cast<uint32_t>(keys.size()));
+        for (const spfss_host::DPFKey &K : keys) {
+            if (!ok) break;
+            const int L = K.log_domain;
+            if (L <= 0 || L > 40 || static_cast<int>(K.sCW.size()) != L ||
+                static_cast<int>(K.tLCW.size()) != L ||
+                static_cast<int>(K.tRCW.size()) != L) {
+                ok = false;
+                break;
+            }
+            ok = detail::put<int32_t>(fd, static_cast<int32_t>(L)) &&
+                 detail::put<uint64_t>(fd, static_cast<uint64_t>(K.modulus)) &&
+                 detail::put_u128(fd, K.seed) &&
+                 detail::put<uint8_t>(fd, K.t0);
+            for (int i = 0; i < L && ok; ++i) {
+                ok = detail::put_u128(fd, K.sCW[static_cast<size_t>(i)]);
+            }
+            for (int i = 0; i < L && ok; ++i) {
+                ok = detail::put<uint8_t>(
+                    fd, K.tLCW[static_cast<size_t>(i)]);
+            }
+            for (int i = 0; i < L && ok; ++i) {
+                ok = detail::put<uint8_t>(
+                    fd, K.tRCW[static_cast<size_t>(i)]);
+            }
+            ok = ok && detail::put<uint64_t>(
+                           fd, static_cast<uint64_t>(K.finalCW));
+        }
+        return ok;
+    });
+}
+
 inline bool write_keys(const std::string &path, int party,
                        const std::vector<spfss_host::DPFKey> &keys) {
-    std::FILE *f = std::fopen(path.c_str(), "wb");
-    if (!f) return false;
-    bool ok = std::fwrite(kMagic, 1, 8, f) == 8;
-    ok = ok && detail::put<uint8_t>(f, kVersion);
-    ok = ok && detail::put<uint8_t>(f, (uint8_t)party);
-    ok = ok && detail::put<uint32_t>(f, (uint32_t)keys.size());
-    for (const spfss_host::DPFKey &K : keys) {
-        if (!ok) break;
-        const int L = K.log_domain;
-        if (L <= 0 || L > 40 || (int)K.sCW.size() != L ||
-            (int)K.tLCW.size() != L || (int)K.tRCW.size() != L) {
-            ok = false;
-            break;
-        }
-        ok = ok && detail::put<int32_t>(f, (int32_t)L);
-        ok = ok && detail::put<uint64_t>(f, (uint64_t)K.modulus);
-        ok = ok && detail::put_u128(f, K.seed);
-        ok = ok && detail::put<uint8_t>(f, K.t0);
-        for (int i = 0; i < L && ok; ++i) ok = detail::put_u128(f, K.sCW[i]);
-        for (int i = 0; i < L && ok; ++i) ok = detail::put<uint8_t>(f, K.tLCW[i]);
-        for (int i = 0; i < L && ok; ++i) ok = detail::put<uint8_t>(f, K.tRCW[i]);
-        ok = ok && detail::put<uint64_t>(f, (uint64_t)K.finalCW);
+    ringlpn_private_file::AtomicWriter writer;
+    if (!stage_keys(writer, path, party, keys) || !writer.publish()) {
+        return false;
     }
-    if (std::fclose(f) != 0) ok = false;
-    return ok;
+    writer.commit();
+    return true;
 }
 
 inline bool read_keys(const std::string &path, int &party,
@@ -165,18 +208,23 @@ inline bool read_keys(const std::string &path, int &party,
 // count * (u64 off, u64 beta_factor).
 inline bool write_test_inputs(const std::string &path, int party,
                               const std::vector<TestInput> &inputs) {
-    std::FILE *f = std::fopen(path.c_str(), "wb");
-    if (!f) return false;
-    bool ok = std::fwrite("RLPNMETA", 1, 8, f) == 8;
-    ok = ok && detail::put<uint8_t>(f, kVersion);
-    ok = ok && detail::put<uint8_t>(f, (uint8_t)party);
-    ok = ok && detail::put<uint32_t>(f, (uint32_t)inputs.size());
-    for (const TestInput &in : inputs) {
-        ok = ok && detail::put<uint64_t>(f, in.off);
-        ok = ok && detail::put<uint64_t>(f, in.beta_factor);
-    }
-    if (std::fclose(f) != 0) ok = false;
-    return ok;
+    ringlpn_private_file::AtomicWriter writer;
+    const bool staged = writer.stage_stream(path, [&](int fd) {
+        bool ok = ringlpn_private_file::AtomicWriter::write_descriptor(
+            fd, "RLPNMETA", 8);
+        ok = ok && detail::put<uint8_t>(fd, kVersion);
+        ok = ok && detail::put<uint8_t>(fd, static_cast<uint8_t>(party));
+        ok = ok &&
+             detail::put<uint32_t>(fd, static_cast<uint32_t>(inputs.size()));
+        for (const TestInput &input : inputs) {
+            ok = ok && detail::put<uint64_t>(fd, input.off) &&
+                 detail::put<uint64_t>(fd, input.beta_factor);
+        }
+        return ok;
+    });
+    if (!staged || !writer.publish()) return false;
+    writer.commit();
+    return true;
 }
 
 inline bool read_test_inputs(const std::string &path, int &party,
@@ -227,7 +275,8 @@ constexpr uint8_t kGroupedVersion = 2;
 constexpr uint32_t kMaxGroupedItems = 1U << 20;
 constexpr uint32_t kMaxBindingWords = (1U << 21) + 8;
 
-inline bool write(const std::string &path, int party, int log_domain,
+inline bool stage(ringlpn_private_file::AtomicWriter &writer,
+                  const std::string &path, int party, int log_domain,
                   uint64_t modulus,
                   const std::vector<uint64_t> &noise_binding,
                   const std::vector<std::vector<spfss_host::DPFKey>> &groups) {
@@ -237,56 +286,76 @@ inline bool write(const std::string &path, int party, int log_domain,
         return false;
     }
     uint64_t total_keys = 0;
-    for (const auto &g : groups) {
-        if (g.empty() || g.size() > kMaxGroupedItems ||
-            total_keys > kMaxGroupedItems - g.size()) {
+    for (const auto &group : groups) {
+        if (group.empty() || group.size() > kMaxGroupedItems ||
+            total_keys > kMaxGroupedItems - group.size()) {
             return false;
         }
-        total_keys += g.size();
+        total_keys += group.size();
     }
-    std::FILE *f = std::fopen(path.c_str(), "wb");
-    if (!f) return false;
-    bool ok = std::fwrite("RLPNSPF2", 1, 8, f) == 8;
-    ok = ok && detail::put<uint8_t>(f, kGroupedVersion);
-    ok = ok && detail::put<uint8_t>(f, static_cast<uint8_t>(party));
-    ok = ok && detail::put<int32_t>(f, static_cast<int32_t>(log_domain));
-    ok = ok && detail::put<uint64_t>(f, modulus);
-    ok = ok && detail::put<uint32_t>(f, static_cast<uint32_t>(groups.size()));
-    ok = ok && detail::put<uint32_t>(
-                   f, static_cast<uint32_t>(noise_binding.size()));
-    for (uint64_t word : noise_binding) {
-        ok = ok && detail::put<uint64_t>(f, word);
-    }
-    for (const auto &g : groups) {
-        ok = ok && detail::put<uint32_t>(f, static_cast<uint32_t>(g.size()));
-        for (const spfss_host::DPFKey &K : g) {
-            if (!ok) break;
-            if (K.t0 != static_cast<uint8_t>(party) ||
-                K.log_domain != log_domain ||
-                static_cast<uint64_t>(K.modulus) != modulus ||
-                K.sCW.size() != static_cast<size_t>(log_domain) ||
-                K.tLCW.size() != static_cast<size_t>(log_domain) ||
-                K.tRCW.size() != static_cast<size_t>(log_domain) ||
-                K.finalCW >= modulus) {
-                ok = false;
-                break;
-            }
-            ok = detail::put_u128(f, K.seed);
-            for (int i = 0; i < log_domain && ok; ++i) {
-                if (K.tLCW[static_cast<size_t>(i)] > 1 ||
-                    K.tRCW[static_cast<size_t>(i)] > 1) {
+    return writer.stage_stream(path, [&](int fd) {
+        bool ok = ringlpn_private_file::AtomicWriter::write_descriptor(
+            fd, "RLPNSPF2", 8);
+        ok = ok && detail::put<uint8_t>(fd, kGroupedVersion);
+        ok = ok && detail::put<uint8_t>(fd, static_cast<uint8_t>(party));
+        ok = ok &&
+             detail::put<int32_t>(fd, static_cast<int32_t>(log_domain));
+        ok = ok && detail::put<uint64_t>(fd, modulus);
+        ok = ok && detail::put<uint32_t>(
+                       fd, static_cast<uint32_t>(groups.size()));
+        ok = ok && detail::put<uint32_t>(
+                       fd, static_cast<uint32_t>(noise_binding.size()));
+        for (uint64_t word : noise_binding) {
+            ok = ok && detail::put<uint64_t>(fd, word);
+        }
+        for (const auto &group : groups) {
+            ok = ok && detail::put<uint32_t>(
+                           fd, static_cast<uint32_t>(group.size()));
+            for (const spfss_host::DPFKey &key : group) {
+                if (!ok) break;
+                if (key.t0 != static_cast<uint8_t>(party) ||
+                    key.log_domain != log_domain ||
+                    static_cast<uint64_t>(key.modulus) != modulus ||
+                    key.sCW.size() != static_cast<size_t>(log_domain) ||
+                    key.tLCW.size() != static_cast<size_t>(log_domain) ||
+                    key.tRCW.size() != static_cast<size_t>(log_domain) ||
+                    key.finalCW >= modulus) {
                     ok = false;
                     break;
                 }
-                ok = detail::put_u128(f, K.sCW[static_cast<size_t>(i)]) &&
-                     detail::put<uint8_t>(f, K.tLCW[static_cast<size_t>(i)]) &&
-                     detail::put<uint8_t>(f, K.tRCW[static_cast<size_t>(i)]);
+                ok = detail::put_u128(fd, key.seed);
+                for (int i = 0; i < log_domain && ok; ++i) {
+                    if (key.tLCW[static_cast<size_t>(i)] > 1 ||
+                        key.tRCW[static_cast<size_t>(i)] > 1) {
+                        ok = false;
+                        break;
+                    }
+                    ok = detail::put_u128(
+                             fd, key.sCW[static_cast<size_t>(i)]) &&
+                         detail::put<uint8_t>(
+                             fd, key.tLCW[static_cast<size_t>(i)]) &&
+                         detail::put<uint8_t>(
+                             fd, key.tRCW[static_cast<size_t>(i)]);
+                }
+                ok = ok && detail::put<uint64_t>(fd, key.finalCW);
             }
-            ok = ok && detail::put<uint64_t>(f, K.finalCW);
         }
+        return ok;
+    });
+}
+
+inline bool write(const std::string &path, int party, int log_domain,
+                  uint64_t modulus,
+                  const std::vector<uint64_t> &noise_binding,
+                  const std::vector<std::vector<spfss_host::DPFKey>> &groups) {
+    ringlpn_private_file::AtomicWriter writer;
+    if (!stage(writer, path, party, log_domain, modulus, noise_binding,
+               groups) ||
+        !writer.publish()) {
+        return false;
     }
-    if (std::fclose(f) != 0) ok = false;
-    return ok;
+    writer.commit();
+    return true;
 }
 
 inline bool read(const std::string &path, int &party, int &log_domain,
@@ -397,35 +466,50 @@ inline std::vector<uint64_t> noise_binding(const NoiseRecord &r) {
     return out;
 }
 
-inline bool write_noise(const std::string &path, const NoiseRecord &r) {
-    if ((r.party != 0 && r.party != 1) || r.c <= 0 || r.t <= 0 ||
-        r.log_domain < 2 || r.log_domain > 20 || r.modulus <= 1 ||
-        (r.regular ? r.bucket <= 0 : r.bucket != 0)) {
+inline bool stage_noise(ringlpn_private_file::AtomicWriter &writer,
+                        const std::string &path, const NoiseRecord &record) {
+    if ((record.party != 0 && record.party != 1) || record.c <= 0 ||
+        record.t <= 0 || record.log_domain < 2 ||
+        record.log_domain > 20 || record.modulus <= 1 ||
+        (record.regular ? record.bucket <= 0 : record.bucket != 0)) {
         return false;
     }
-    const size_t total = size_t(r.c) * size_t(r.t);
+    const size_t total = size_t(record.c) * size_t(record.t);
     constexpr size_t kMaxNoiseTerms = size_t(1) << 20;
-    if (total > kMaxNoiseTerms || r.positions.size() != total ||
-        r.values.size() != total) {
+    if (total > kMaxNoiseTerms || record.positions.size() != total ||
+        record.values.size() != total) {
         return false;
     }
-    std::FILE *f = std::fopen(path.c_str(), "wb");
-    if (!f) return false;
-    bool ok = std::fwrite("RLPNNOIS", 1, 8, f) == 8;
-    ok = ok && detail::put<uint8_t>(f, kVersion);
-    ok = ok && detail::put<uint8_t>(f, (uint8_t)r.party);
-    ok = ok && detail::put<int32_t>(f, (int32_t)r.c);
-    ok = ok && detail::put<int32_t>(f, (int32_t)r.t);
-    ok = ok && detail::put<int32_t>(f, (int32_t)r.log_domain);
-    ok = ok && detail::put<uint64_t>(f, r.modulus);
-    ok = ok && detail::put<uint8_t>(f, (uint8_t)(r.regular ? 1 : 0));
-    ok = ok && detail::put<int32_t>(f, (int32_t)r.bucket);
-    for (size_t i = 0; ok && i < total; ++i) {
-        ok = detail::put<uint64_t>(f, r.positions[i]) &&
-             detail::put<uint64_t>(f, r.values[i]);
-    }
-    if (std::fclose(f) != 0) ok = false;
-    return ok;
+    return writer.stage_stream(path, [&](int fd) {
+        bool ok = ringlpn_private_file::AtomicWriter::write_descriptor(
+            fd, "RLPNNOIS", 8);
+        ok = ok && detail::put<uint8_t>(fd, kVersion);
+        ok = ok &&
+             detail::put<uint8_t>(fd, static_cast<uint8_t>(record.party));
+        ok = ok &&
+             detail::put<int32_t>(fd, static_cast<int32_t>(record.c));
+        ok = ok &&
+             detail::put<int32_t>(fd, static_cast<int32_t>(record.t));
+        ok = ok && detail::put<int32_t>(
+                       fd, static_cast<int32_t>(record.log_domain));
+        ok = ok && detail::put<uint64_t>(fd, record.modulus);
+        ok = ok && detail::put<uint8_t>(
+                       fd, static_cast<uint8_t>(record.regular ? 1 : 0));
+        ok = ok &&
+             detail::put<int32_t>(fd, static_cast<int32_t>(record.bucket));
+        for (size_t i = 0; i < total && ok; ++i) {
+            ok = detail::put<uint64_t>(fd, record.positions[i]) &&
+                 detail::put<uint64_t>(fd, record.values[i]);
+        }
+        return ok;
+    });
+}
+
+inline bool write_noise(const std::string &path, const NoiseRecord &record) {
+    ringlpn_private_file::AtomicWriter writer;
+    if (!stage_noise(writer, path, record) || !writer.publish()) return false;
+    writer.commit();
+    return true;
 }
 
 inline bool read_noise(const std::string &path, NoiseRecord &r) {

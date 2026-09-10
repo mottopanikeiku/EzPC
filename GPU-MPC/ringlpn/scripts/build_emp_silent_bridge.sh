@@ -35,9 +35,29 @@ cmake --build "$BUILD_ROOT/bridge" --parallel "$JOBS"
 cmake --install "$BUILD_ROOT/bridge"
 
 BRIDGE="$PREFIX/lib/libringlpn_emp_silent_bridge.so"
-if [[ ! -f "$BRIDGE" ]]; then
-  echo "bridge build did not produce $BRIDGE" >&2
+if [[ ! -f "$BRIDGE" || -L "$BRIDGE" ]]; then
+  echo "bridge build did not produce a regular non-symlink $BRIDGE" >&2
   exit 1
 fi
-printf 'Built pinned unreviewed EMP SilentFerret bridge: %s\n' "$BRIDGE"
+chmod a-w "$BRIDGE"
+AUTHORIZED_SHA256="$(python3 - "$ROOT/src/emp_silent_bridge_authorization.h" <<'PY'
+import re
+import sys
+
+text = open(sys.argv[1], encoding="utf-8").read()
+match = re.search(r'RINGLPN_EMP_SILENT_BRIDGE_SHA256\s*\\\s*"([0-9a-f]{64})"', text)
+if match is None:
+    raise SystemExit("invalid EMP bridge authorization header")
+print(match.group(1))
+PY
+)"
+MEASURED_SHA256="$(sha256sum "$BRIDGE" | cut -d' ' -f1)"
+if [[ "$MEASURED_SHA256" != "$AUTHORIZED_SHA256" ]]; then
+  echo "built EMP bridge SHA-256 is not source-authorized" >&2
+  echo "expected: $AUTHORIZED_SHA256" >&2
+  echo "measured: $MEASURED_SHA256" >&2
+  exit 1
+fi
+printf 'Built source-authorized unreviewed EMP SilentFerret bridge: %s\n' "$BRIDGE"
+printf 'Authorized bridge SHA-256: %s\n' "$MEASURED_SHA256"
 printf 'Set RINGLPN_EMP_SILENT_BRIDGE=%s only with --ot-backend emp-silent.\n' "$BRIDGE"

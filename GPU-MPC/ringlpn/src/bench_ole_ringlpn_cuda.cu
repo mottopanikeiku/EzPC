@@ -1,5 +1,5 @@
 #ifndef RINGLPN_DEVICE_LABEL
-#define RINGLPN_DEVICE_LABEL "cuda_ringlpn_ole"
+#define RINGLPN_DEVICE_LABEL "cuda_ringlpn_ole_BENCHMARK_ONLY"
 #endif
 #include "ringlpn_ole_party.cuh"
 
@@ -462,8 +462,9 @@ static void build_inputs(OleState &state, bool allocate_omniscient_device_work =
     std::mt19937_64 rng(state.args.seed);
 
     state.a =
-        ringlpn_ole_party::make_public_polynomials(
-            party_public_params(state), rng);
+        ringlpn_ole_party::
+            make_BENCHMARK_ONLY_mt19937_64_public_polynomials(
+                party_public_params(state), rng);
 
     if (const char *prefix = std::getenv("RINGLPN_OLE_NOISE")) {
         load_two_party_noise(state, prefix);
@@ -770,7 +771,6 @@ static ringlpn_ole_party::RingOlePublicParams party_public_params(
     params.limb = state.limb_index;
     params.slot_batch = 0;
     params.modulus = state.modulus;
-    params.public_a_seed = state.args.seed;
     params.regular = use_regular_noise(state.args);
     return params;
 }
@@ -890,10 +890,10 @@ static bool initialize_party_contexts(OleState &state) {
         std::make_unique<ringlpn_ole_party::RingOlePartyContext>();
     state.party_context1 =
         std::make_unique<ringlpn_ole_party::RingOlePartyContext>();
-    if (!state.party_context0->initialize(
-            params, 0, noise0, std::move(keys0)) ||
-        !state.party_context1->initialize(
-            params, 1, noise1, std::move(keys1))) {
+    if (!state.party_context0->initialize_BENCHMARK_ONLY_mt19937_64(
+            params, 0, noise0, std::move(keys0), state.args.seed) ||
+        !state.party_context1->initialize_BENCHMARK_ONLY_mt19937_64(
+            params, 1, noise1, std::move(keys1), state.args.seed)) {
         return false;
     }
     const size_t bytes0 = state.party_context0->counters().key_bytes;
@@ -1008,7 +1008,8 @@ static OleLimbResult run_initial_ole_limb(OleState &state, AESGlobalContext *gae
 }
 
 static int run_benchmark(const OleArgs &args) {
-    initGPUMemPool();
+    // Allocate only the benchmark's real buffers. Orca's eager 25-GiB pool
+    // reserve is not a correctness prerequisite and breaks shared-GPU smokes.
     AESGlobalContext gaes;
     initAESContext(&gaes);
 
@@ -1072,8 +1073,9 @@ static int run_benchmark(const OleArgs &args) {
         std::getenv("RINGLPN_OLE_NOISE") ? "party_records" : "benchmark_generated";
     const char *key_source =
         std::getenv("RINGLPN_OLE_SPFSS_KEYS") ? "two_party_files" : "centralized";
-    std::cout << RINGLPN_DEVICE_LABEL << ",figure2_spfss_" << args.noise << ","
-              << args.n << "," << log2i(args.n) << ","
+    std::cout << RINGLPN_DEVICE_LABEL
+              << ",BENCHMARK_ONLY_mt19937_64_figure2_spfss_" << args.noise
+              << "," << args.n << "," << log2i(args.n) << ","
               << log2i(spfss_domain_size(args)) << "," << args.qbits << ","
               << ole_actual_qbits(configs) << "," << args.noise << ","
               << noise_source << "," << key_source << ","

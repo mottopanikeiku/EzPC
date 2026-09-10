@@ -6,8 +6,9 @@
 #
 # Two stages:
 #   1. for each CRT limb, each keygen process samples only its own NoiseRecord
-#      with its OS-backed private DRBG, persists that record as evidence, and
-#      writes only its own SPFSS key file after the two-party protocol;
+#      with its OS-backed private DRBG and writes that record only to private
+#      validation scratch; each process writes only its own SPFSS key file after
+#      the two-party protocol;
 #   2. run the OLE bench once with both records and both key files, and require
 #      the engine's own validation to pass.
 #
@@ -15,9 +16,9 @@
 #   results/ole/ole_two_party_keys_<tag>.csv        (engine validation evidence)
 #   results/ole/ole_two_party_keygen_<tag>.csv      (per-party transcript rows)
 #   results/ole/ole_two_party_keys_<tag>.log
-#   $WORKDIR/noise_limb*_p*.noise                   (per-party noise evidence)
-#   $WORKDIR/keys_limb*_p*.spfss                    (matching per-party keys)
+#   caller-supplied $WORKDIR only: private noise/key validation scratch
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_ROOT="$(cd "$ROOT/.." && pwd)"
@@ -32,10 +33,22 @@ NOISE="${NOISE:-uniform}"
 SEED="${SEED:-1}"
 ITERS="${ITERS:-1}"
 WARMUP="${WARMUP:-0}"
-BASE_PORT="${BASE_PORT:-45600}"
+BASE_PORT="${BASE_PORT:-22600}"
 SID="${SID:-$(date +%s%N)}"
 TAG="q${QBITS}_${NOISE}_c${C}_t${T}_n${N}"
-WORKDIR="${WORKDIR:-$OUTDIR/two_party_keys/$TAG}"
+WORKDIR="${WORKDIR:-}"
+PRIVATE_WORKDIR=0
+if [[ -z "$WORKDIR" ]]; then
+  WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ringlpn-ole-two-party.XXXXXX")"
+  PRIVATE_WORKDIR=1
+fi
+cleanup_private_workdir() {
+  local rc=$?
+  if declare -F terminate_active >/dev/null; then terminate_active; fi
+  if (( PRIVATE_WORKDIR )); then rm -rf -- "$WORKDIR"; fi
+  exit "$rc"
+}
+trap cleanup_private_workdir EXIT
 CSV="$OUTDIR/ole_two_party_keys_${TAG}.csv"
 KCSV="$OUTDIR/ole_two_party_keygen_${TAG}.csv"
 LOG="$OUTDIR/ole_two_party_keys_${TAG}.log"
@@ -128,7 +141,8 @@ terminate_active() {
     if [[ -n "$pid" ]]; then wait "$pid" 2>/dev/null || true; fi
   done
 }
-trap terminate_active EXIT INT TERM
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 wait_keygen_pair() {
   local p0="$1" p1="$2" finished first_rc remaining second_rc
@@ -227,21 +241,19 @@ for sid, pair in by_sid.items():
 print("[ole-two-party] provenance binds each independent-noise/key pair")
 PY
 
-# Bilateral rename-failure control: make party 0's final key path a non-empty
-# directory so its rename fails after both parties stage successfully. Both
-# processes must report failure, and party 1 must remove its already-renamed
-# key/noise files after receiving party 0's result. This does not cover crashes
-# after rename and is not a transaction control.
+# Bilateral destination-preflight control: make party 0's final key path a
+# non-empty directory. Party 0 must reject it before OT setup; party 1 must
+# learn the bilateral validation failure, reject at the same boundary, and
+# remove its staged noise. The existing blocker must remain untouched.
 rename_port=$((BASE_PORT + 4 * limbs))
 rename_dir="$WORKDIR/rename_failure_p0.spfss"
 rename_p1="$WORKDIR/rename_failure_p1.spfss"
 rename_noise0="$WORKDIR/rename_failure_p0.noise"
 rename_noise1="$WORKDIR/rename_failure_p1.noise"
 rm -rf "$rename_dir"
-rm -f "$rename_p1" "$rename_noise0" "$rename_noise1" \
-      "$rename_dir.tmp" "$rename_p1.tmp" "$rename_noise0.tmp" "$rename_noise1.tmp"
+rm -f "$rename_p1" "$rename_noise0" "$rename_noise1"
 mkdir -p "$rename_dir"
-printf 'force rename failure\n' >"$rename_dir/blocker"
+printf 'force destination preflight failure\n' >"$rename_dir/blocker"
 "$KEYGEN" --party 0 --port "$rename_port" --sample-independent \
           --sid "$((SID + limbs + 1000))" --c 1 --t 1 --log-domain 14 \
           --modulus "${moduli[0]}" --noise-mode uniform \
@@ -259,15 +271,18 @@ set +e
 wait "$rename_p0"; rename_rc0=$?
 wait "$rename_p1_pid"; rename_rc1=$?
 set -e
-if [[ $rename_rc0 -ne 1 || $rename_rc1 -ne 1 || -e "$rename_p1" ||
+shopt -s nullglob
+rename_temps=("$WORKDIR"/.ringlpn-private-*)
+shopt -u nullglob
+if [[ $rename_rc0 -ne 2 || $rename_rc1 -ne 2 || -e "$rename_p1" ||
       -e "$rename_noise0" || -e "$rename_noise1" ||
-      -e "$rename_dir.tmp" || -e "$rename_p1.tmp" ||
-      -e "$rename_noise0.tmp" || -e "$rename_noise1.tmp" ]]; then
-  echo "[ole-two-party] bilateral rename-failure control FAILED (p0=$rename_rc0 p1=$rename_rc1)" | tee -a "$LOG"
+      ! -d "$rename_dir" || ! -f "$rename_dir/blocker" ||
+      ${#rename_temps[@]} -ne 0 ]]; then
+  echo "[ole-two-party] bilateral destination-preflight control FAILED (p0=$rename_rc0 p1=$rename_rc1 temps=${#rename_temps[@]})" | tee -a "$LOG"
   exit 1
 fi
 rm -rf "$rename_dir"
-echo "[ole-two-party] bilateral rename failure removed both parties' staged/final records" >>"$LOG"
+echo "[ole-two-party] bilateral destination preflight rejected before OT and removed staged records" >>"$LOG"
 
 echo "[ole-two-party] stage 2: OLE engine consumes independently sampled noise and matching keys" | tee -a "$LOG"
 if ! RINGLPN_OLE_NOISE="$WORKDIR/noise" \
@@ -281,7 +296,11 @@ cat "$CSV" >> "$LOG"
 echo "wrote $CSV"
 echo "wrote $KCSV"
 echo "wrote $LOG"
-echo "kept independently sampled per-party noise and matching keys in $WORKDIR"
+if (( PRIVATE_WORKDIR )); then
+  echo "private per-party noise and keys will be removed at exit"
+else
+  echo "private per-party noise and keys retained in caller-supplied $WORKDIR"
+fi
 if [[ $status -ne 0 ]] || grep -qi "fail" "$CSV" || grep -qi "FAIL" "$KCSV"; then
   echo "[ole-two-party] FAILURES present"
   exit 1

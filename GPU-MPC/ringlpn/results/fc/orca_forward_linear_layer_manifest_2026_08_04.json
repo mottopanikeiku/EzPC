@@ -32,6 +32,14 @@
       "sha256": "f4c950ee845f97eb144670162b94a556aeea53250f5235123561160192646788"
     },
     {
+      "path": "GPU-MPC/nn/orca_opt.h",
+      "sha256": "6cf0ddeea38da262679fc05cc2ea61a2bb9915f8b675cdf6d15cadb3a9977ab3"
+    },
+    {
+      "path": "GPU-MPC/ext/sytorch/include/sytorch/layers/layers.h",
+      "sha256": "7cbf3379ed4cfecea94bb1f7deafa4c31071e942f86c06c4b173d6fb6a2ed126"
+    },
+    {
       "path": "GPU-MPC/fss/gpu_matmul.h",
       "sha256": "9811d0a1cca0f461753a5c21629f05165e477bb6c2feba59af10a183ba1a8077"
     },
@@ -2260,16 +2268,16 @@
       "ole_t": 8,
       "bias": true,
       "is_classifier": true,
-      "truncation_state": "StochasticTR(scale);G->T",
-      "truncation_status": "unsupported",
-      "configured_profile_gap": "F64|F_R18;exact_bw32_triple_validated;scale10_trunc_and_full_model_missing",
+      "truncation_state": "FinalOutputLocalARS(scale);G->ClearOutput",
+      "truncation_status": "stock_terminal_local_ars",
+      "configured_profile_gap": "F64|F_R18;exact_bw32_triple_validated;terminal_mask_handoff_and_full_model_missing",
       "operator": "fc",
       "layout": "row-major A[MxK]/B[KxN]/C[MxN]",
       "stock_key_abi": "GPUMatmulKey:A/B/C",
       "keygen_api": "gpuKeygenMatmul",
       "online_consumer": "gpuMatmulBeaver",
       "ringlpn_status": "supported_untruncated",
-      "gap": "scale truncation and graph-state handoff are not part of the live Ring-LPN artifact"
+      "gap": "terminal stock output unmask/local ARS and graph-state handoff are not part of the live Ring-LPN artifact"
     },
     {
       "model": "ResNet50",

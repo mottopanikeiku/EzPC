@@ -7,8 +7,10 @@
 //     no party reading the other party's state.
 //   * Default real 1-of-2 OT: the IKNP extension over Naor-Pinkas base OTs,
 //     used from this repository's SCI stack. Explicit `emp-silent` selection
-//     instead loads the separately compiled C++20 opaque bridge pinned by
-//     RINGLPN_EMP_SILENT_REVISION; EMP templates never enter this C++17 header.
+//     instead loads the separately compiled C++20 opaque bridge only after its
+//     exact sealed bytes match RINGLPN_EMP_SILENT_BRIDGE_SHA256. ABI/revision
+//     self-reports remain compatibility checks; EMP templates never enter this
+//     C++17 header.
 //   * Boolean AND triples: two 1-bit OTs per triple (Gilboa cross terms).
 //   * Z_p scalar OLE: Gilboa multiplication, ceil(log2(p-1)) OTs of field
 //     elements per OLE.
@@ -27,29 +29,44 @@
 //     domain-separated AES calls with full 128-bit seeds. Device parity is
 //     gated, but P-RNG/P-DIST/P-KEY and the DPF reduction remain open; see
 //     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md.
-//   * SCI NetIO remains plain TCP. Live FC deployment therefore admits only
-//     loopback endpoints and relies on the authenticated SSH launcher to carry
-//     both sockets between hosts. Loopback without that launcher is explicitly
-//     local-only evidence. Active attacks by either endpoint, denial of service,
-//     and side channels are out of scope.
+//   * SCI NetIO remains plain TCP, so live deployment admits only loopback
+//     endpoints carried by the authenticated SSH launcher. Before NetIO,
+//     preflight, or OT bytes, each socket mutually authenticates the party
+//     process with a versioned per-run HMAC transcript bound to the invocation,
+//     complete claim digest, stream direction, roles, and fresh nonces. Active
+//     protocol attacks after that boundary, denial of service, and side channels
+//     remain out of scope.
 
 #pragma once
 
 #include "OT/split-iknp.h"
 #include "emp_silent_adapter.h"
+#include <openssl/crypto.h>
+#include <openssl/hmac.h>
 #include <openssl/rand.h>
 
 #include "utils/net_io_channel.h"
+#include <cerrno>
+#include <chrono>
 
 #include <array>
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <fcntl.h>
 #include <memory>
+#include <exception>
 #include <limits>
 #include <random>
+#include <mutex>
 #include <stdexcept>
+#include <sys/time.h>
 #include <string>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <thread>
 #include <vector>
+#include <unistd.h>
 
 namespace ringlpn_2pc {
 
@@ -128,10 +145,16 @@ struct Counters {
 // Party 0 is the TCP server and SCI's ALICE; party 1 connects and is BOB.
 // Two sockets are used exactly as SCI's OTPack does: the "straight" channel
 // carries OTs where party 0 is the sender, the "reversed" channel carries OTs
-// where party 1 is the sender. A party therefore always sends on
-// `sender_ot()` and receives on `receiver_ot()`, and the two directions must be
-// scheduled in a fixed global order (party-0-sender first) to stay
-// deadlock-free.
+// where party 1 is the sender. Independent SCI send/receive batches may run
+// concurrently on those disjoint contexts and sockets. Other operations retain
+// a fixed global order (party-0-sender first) to stay deadlock-free.
+
+struct ChannelAuthContext {
+    static constexpr uint32_t kVersion = 1;
+    std::string secret_file;
+    std::array<uint8_t, 16> invocation_id{};
+    std::array<uint8_t, 32> claim_digest{};
+};
 
 class PartyChannel {
   public:
@@ -139,32 +162,35 @@ class PartyChannel {
                  bool defer_ot_setup = false,
                  bool require_loopback_endpoints = false,
                  OtBackend ot_backend = OtBackend::SciIknp,
-                 const EmpSilentPlan *emp_plan = nullptr)
+                 const EmpSilentPlan *emp_plan = nullptr,
+                 const ChannelAuthContext *auth_context = nullptr)
         : party_(party), ot_backend_(ot_backend) {
+        if (party != 0 && party != 1)
+            throw std::invalid_argument("party channel role must be 0 or 1");
         if (ot_backend_ == OtBackend::EmpSilent) {
-            if (emp_plan == nullptr) {
+            if (emp_plan == nullptr || emp_plan->api == nullptr) {
                 throw std::invalid_argument(
-                    "emp-silent requires an explicit public inventory plan");
+                    "emp-silent requires a pre-authorized bridge and public "
+                    "inventory plan");
             }
             emp_plan_ = *emp_plan;
+            emp_api_ = emp_plan_.api;
         }
         if (require_loopback_endpoints && party != 0 &&
             peer_host != "127.0.0.1") {
             throw std::runtime_error(
                 "authenticated/local-only channels must target 127.0.0.1");
         }
+        Secret secret;
+        if (auth_context != nullptr)
+            load_and_unlink_secret(*auth_context, secret.bytes);
         const char *addr = (party == 0) ? nullptr : peer_host.c_str();
-        std::unique_ptr<sci::NetIO> straight(
-            new sci::NetIO(addr, base_port, /*full_buffer=*/false,
-                           /*quiet=*/true));
-        std::unique_ptr<sci::NetIO> reversed(
-            new sci::NetIO(addr, base_port + 1, false, true));
-        if (require_loopback_endpoints &&
-            (!socket_is_loopback(straight->consocket) ||
-             !socket_is_loopback(reversed->consocket))) {
-            throw std::runtime_error(
-                "SCI channel rejected a non-loopback socket endpoint");
-        }
+        std::unique_ptr<sci::NetIO> straight = open_authenticated_io(
+            addr, base_port, /*direction=*/0, require_loopback_endpoints,
+            auth_context, secret.bytes);
+        std::unique_ptr<sci::NetIO> reversed = open_authenticated_io(
+            addr, base_port + 1, /*direction=*/1, require_loopback_endpoints,
+            auth_context, secret.bytes);
         io_ = straight.release();
         io_rev_ = reversed.release();
         if (ot_backend_ == OtBackend::SciIknp) {
@@ -194,8 +220,9 @@ class PartyChannel {
             io_rev_->flush();
             costs.base_ots += 2 * 128;
         } else {
-            emp_api_ =
-                std::make_shared<EmpSilentApi>(emp_plan_.bridge_library);
+            if (emp_api_ == nullptr)
+                throw std::runtime_error(
+                    "authorized EMP bridge unavailable during OT setup");
             emp_straight_.reset(new EmpSilentDirectionalOt(
                 emp_api_, io_, party_, RINGLPN_EMP_STRAIGHT,
                 emp_plan_.straight_count, emp_plan_.threads,
@@ -307,6 +334,35 @@ class PartyChannel {
     uint64_t setup_direction_switches() const {
         return setup_direction_switches_;
     }
+    // Raw authentication I/O bypasses NetIO so protocol application counters
+    // remain unchanged. These totals include rejected connector attempts.
+    uint64_t auth_bytes_sent() const {
+        if (auth_straight_bytes_sent_ >
+            std::numeric_limits<uint64_t>::max() -
+                auth_reversed_bytes_sent_)
+            throw std::overflow_error("channel auth send total overflow");
+        return auth_straight_bytes_sent_ + auth_reversed_bytes_sent_;
+    }
+    uint64_t auth_bytes_received() const {
+        if (auth_straight_bytes_received_ >
+            std::numeric_limits<uint64_t>::max() -
+                auth_reversed_bytes_received_)
+            throw std::overflow_error("channel auth receive total overflow");
+        return auth_straight_bytes_received_ + auth_reversed_bytes_received_;
+    }
+    uint64_t auth_straight_bytes_sent() const {
+        return auth_straight_bytes_sent_;
+    }
+    uint64_t auth_straight_bytes_received() const {
+        return auth_straight_bytes_received_;
+    }
+    uint64_t auth_reversed_bytes_sent() const {
+        return auth_reversed_bytes_sent_;
+    }
+    uint64_t auth_reversed_bytes_received() const {
+        return auth_reversed_bytes_received_;
+    }
+
 
     void sync() {
         io_->sync();
@@ -384,7 +440,10 @@ class PartyChannel {
             sender_ot()->send(b0.get(), b1.get(), n);
             sender_io()->flush();
         }
-        costs.string_ots_128 += (uint64_t)n;
+        {
+            std::lock_guard<std::mutex> lock(costs_mutex_);
+            costs.string_ots_128 += (uint64_t)n;
+        }
     }
 
     std::vector<U128> ot_recv_128(const std::vector<uint8_t> &choices) {
@@ -401,8 +460,51 @@ class PartyChannel {
             receiver_io()->flush();
             for (int i = 0; i < n; ++i) res[(size_t)i] = from_block(out[i]);
         }
-        costs.string_ots_128 += (uint64_t)n;
+        {
+            std::lock_guard<std::mutex> lock(costs_mutex_);
+            costs.string_ots_128 += (uint64_t)n;
+        }
         return res;
+    }
+
+    // Consume the two independent OT directions concurrently on SCI's
+    // disjoint straight/reversed contexts. This preserves both chosen-message
+    // transcripts and their counters while removing the artificial
+    // party-0-sender-then-party-1-sender serialization from each DPF level.
+    std::vector<U128> ot_duplex_128(const std::vector<U128> &m0,
+                                    const std::vector<U128> &m1,
+                                    const std::vector<uint8_t> &choices) {
+        if (m0.size() != m1.size() || m0.size() != choices.size()) {
+            throw std::invalid_argument("duplex 128-bit OT vector size mismatch");
+        }
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            if (is_p0()) {
+                ot_send_128(m0, m1);
+                return ot_recv_128(choices);
+            }
+            std::vector<U128> out = ot_recv_128(choices);
+            ot_send_128(m0, m1);
+            return out;
+        }
+        std::exception_ptr send_failure;
+        std::thread sender([&]() {
+            try {
+                ot_send_128(m0, m1);
+            } catch (...) {
+                send_failure = std::current_exception();
+            }
+        });
+        std::vector<U128> out;
+        std::exception_ptr recv_failure;
+        try {
+            out = ot_recv_128(choices);
+        } catch (...) {
+            recv_failure = std::current_exception();
+        }
+        sender.join();
+        if (send_failure) std::rethrow_exception(send_failure);
+        if (recv_failure) std::rethrow_exception(recv_failure);
+        return out;
     }
 
     // ---- 1-bit OT (AND-triple cross terms) ---------------------------------
@@ -428,7 +530,10 @@ class PartyChannel {
             sender_ot()->send(rows.data(), n, 1);
             sender_io()->flush();
         }
-        costs.triple_ots += (uint64_t)n;
+        {
+            std::lock_guard<std::mutex> lock(costs_mutex_);
+            costs.triple_ots += (uint64_t)n;
+        }
     }
 
     std::vector<uint8_t> ot_recv_bits(const std::vector<uint8_t> &choices) {
@@ -441,8 +546,47 @@ class PartyChannel {
             receiver_ot()->recv(out.data(), sel.data(), n, 1);
             receiver_io()->flush();
         }
-        costs.triple_ots += (uint64_t)n;
+        {
+            std::lock_guard<std::mutex> lock(costs_mutex_);
+            costs.triple_ots += (uint64_t)n;
+        }
         for (int i = 0; i < n; ++i) out[(size_t)i] &= 1;
+        return out;
+    }
+
+    std::vector<uint8_t> ot_duplex_bits(
+        const std::vector<uint8_t> &m0, const std::vector<uint8_t> &m1,
+        const std::vector<uint8_t> &choices) {
+        if (m0.size() != m1.size() || m0.size() != choices.size()) {
+            throw std::invalid_argument("duplex bit OT vector size mismatch");
+        }
+        if (ot_backend_ == OtBackend::EmpSilent) {
+            if (is_p0()) {
+                ot_send_bits(m0, m1);
+                return ot_recv_bits(choices);
+            }
+            std::vector<uint8_t> out = ot_recv_bits(choices);
+            ot_send_bits(m0, m1);
+            return out;
+        }
+        std::exception_ptr send_failure;
+        std::thread sender([&]() {
+            try {
+                ot_send_bits(m0, m1);
+            } catch (...) {
+                send_failure = std::current_exception();
+            }
+        });
+        std::vector<uint8_t> out;
+        std::exception_ptr recv_failure;
+        try {
+            out = ot_recv_bits(choices);
+        } catch (...) {
+            recv_failure = std::current_exception();
+        }
+        sender.join();
+        if (send_failure) std::rethrow_exception(send_failure);
+        if (recv_failure) std::rethrow_exception(recv_failure);
         return out;
     }
 
@@ -492,6 +636,280 @@ class PartyChannel {
     Counters costs;
 
   private:
+    static constexpr size_t kAuthChallengeBytes = 96;
+    static constexpr size_t kAuthTagBytes = 32;
+    struct Secret {
+        std::array<uint8_t, 32> bytes{};
+        ~Secret() { OPENSSL_cleanse(bytes.data(), bytes.size()); }
+    };
+
+    static void load_and_unlink_secret(
+        const ChannelAuthContext &context, std::array<uint8_t, 32> &secret) {
+        const size_t slash = context.secret_file.find_last_of('/');
+        if (context.secret_file.empty() || context.secret_file.front() != '/' ||
+            slash == std::string::npos ||
+            slash + 1 == context.secret_file.size()) {
+            throw std::runtime_error("channel authenticator path is not absolute");
+        }
+        const std::string parent =
+            slash == 0 ? "/" : context.secret_file.substr(0, slash);
+        const std::string name = context.secret_file.substr(slash + 1);
+        if (name == "." || name == ".." || name.find('/') != std::string::npos)
+            throw std::runtime_error("invalid channel authenticator filename");
+        const int parent_fd =
+            ::open(parent.c_str(),
+                   O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+        struct stat parent_info {};
+        if (parent_fd < 0 || ::fstat(parent_fd, &parent_info) != 0 ||
+            !S_ISDIR(parent_info.st_mode) ||
+            parent_info.st_uid != ::geteuid() ||
+            (parent_info.st_mode & 07777) != 0700) {
+            if (parent_fd >= 0) ::close(parent_fd);
+            throw std::runtime_error(
+                "channel authenticator parent is not owner-private");
+        }
+        struct stat path_info {};
+        int fd = -1;
+        bool ok =
+            ::fstatat(parent_fd, name.c_str(), &path_info,
+                      AT_SYMLINK_NOFOLLOW) == 0 &&
+            S_ISREG(path_info.st_mode) && path_info.st_uid == ::geteuid() &&
+            (path_info.st_mode & 07777) == 0600 && path_info.st_nlink == 1 &&
+            path_info.st_size == static_cast<off_t>(secret.size());
+        if (ok)
+            fd = ::openat(parent_fd, name.c_str(),
+                          O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+        struct stat fd_info {};
+        ok = ok && fd >= 0 && ::fstat(fd, &fd_info) == 0 &&
+             fd_info.st_dev == path_info.st_dev &&
+             fd_info.st_ino == path_info.st_ino &&
+             S_ISREG(fd_info.st_mode) && fd_info.st_uid == ::geteuid() &&
+             (fd_info.st_mode & 07777) == 0600 && fd_info.st_nlink == 1 &&
+             fd_info.st_size == static_cast<off_t>(secret.size());
+        size_t cursor = 0;
+        while (ok && cursor < secret.size()) {
+            const ssize_t got =
+                ::read(fd, secret.data() + cursor, secret.size() - cursor);
+            if (got < 0 && errno == EINTR) continue;
+            if (got <= 0) {
+                ok = false;
+                break;
+            }
+            cursor += static_cast<size_t>(got);
+        }
+        struct stat current_info {};
+        ok = ok &&
+             ::fstatat(parent_fd, name.c_str(), &current_info,
+                       AT_SYMLINK_NOFOLLOW) == 0 &&
+             current_info.st_dev == fd_info.st_dev &&
+             current_info.st_ino == fd_info.st_ino &&
+             ::unlinkat(parent_fd, name.c_str(), 0) == 0 &&
+             ::fsync(parent_fd) == 0;
+        if (fd >= 0 && ::close(fd) != 0) ok = false;
+        if (::close(parent_fd) != 0) ok = false;
+        if (!ok) {
+            OPENSSL_cleanse(secret.data(), secret.size());
+            throw std::runtime_error(
+                "channel authenticator must be a fresh 0600 owner-only "
+                "32-byte regular file");
+        }
+    }
+
+    static bool socket_write_all(int fd, const uint8_t *data, size_t size,
+                                 uint64_t &counter) {
+        size_t cursor = 0;
+        while (cursor < size) {
+            const ssize_t wrote =
+                ::send(fd, data + cursor, size - cursor, MSG_NOSIGNAL);
+            if (wrote < 0 && errno == EINTR) continue;
+            if (wrote <= 0) return false;
+            const uint64_t amount = static_cast<uint64_t>(wrote);
+            if (counter > std::numeric_limits<uint64_t>::max() - amount)
+                throw std::overflow_error("channel auth send counter overflow");
+            counter += amount;
+            cursor += static_cast<size_t>(wrote);
+        }
+        return true;
+    }
+
+    static bool socket_read_all(int fd, uint8_t *data, size_t size,
+                                uint64_t &counter) {
+        size_t cursor = 0;
+        while (cursor < size) {
+            const ssize_t got = ::recv(fd, data + cursor, size - cursor, 0);
+            if (got < 0 && errno == EINTR) continue;
+            if (got <= 0) return false;
+            const uint64_t amount = static_cast<uint64_t>(got);
+            if (counter > std::numeric_limits<uint64_t>::max() - amount)
+                throw std::overflow_error("channel auth receive counter overflow");
+            counter += amount;
+            cursor += static_cast<size_t>(got);
+        }
+        return true;
+    }
+
+    static void set_auth_socket_timeout(int fd, long seconds) {
+        timeval timeout{};
+        timeout.tv_sec = seconds;
+        if (::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                         sizeof(timeout)) != 0 ||
+            ::setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+                         sizeof(timeout)) != 0) {
+            throw std::runtime_error("failed to set channel auth timeout");
+        }
+    }
+
+    static std::array<uint8_t, kAuthTagBytes> make_auth_tag(
+        const std::array<uint8_t, 32> &secret,
+        const std::array<uint8_t, kAuthChallengeBytes> &p0,
+        const std::array<uint8_t, kAuthChallengeBytes> &p1,
+        uint8_t sender_role) {
+        static constexpr std::array<uint8_t, 16> domain = {
+            'R','L','P','N','-','A','U','T','H','-','T','A','G','-','V','1'};
+        std::array<uint8_t, domain.size() + 2 * kAuthChallengeBytes + 2> input{};
+        size_t cursor = 0;
+        std::copy(domain.begin(), domain.end(), input.begin() + cursor);
+        cursor += domain.size();
+        std::copy(p0.begin(), p0.end(), input.begin() + cursor);
+        cursor += p0.size();
+        std::copy(p1.begin(), p1.end(), input.begin() + cursor);
+        cursor += p1.size();
+        input[cursor++] = sender_role;
+        input[cursor] = static_cast<uint8_t>(1 - sender_role);
+        std::array<uint8_t, kAuthTagBytes> tag{};
+        unsigned int tag_size = 0;
+        if (::HMAC(EVP_sha256(), secret.data(), static_cast<int>(secret.size()),
+                   input.data(), input.size(), tag.data(), &tag_size) == nullptr ||
+            tag_size != tag.size()) {
+            throw std::runtime_error("channel authenticator HMAC failed");
+        }
+        return tag;
+    }
+
+    bool authenticate_io(
+        sci::NetIO &io, uint8_t direction,
+        const ChannelAuthContext &context,
+        const std::array<uint8_t, 32> &secret,
+        bool &peer_identity_valid, bool &peer_context_valid) {
+        peer_identity_valid = false;
+        peer_context_valid = false;
+        uint64_t &bytes_sent =
+            direction == 0 ? auth_straight_bytes_sent_
+                           : auth_reversed_bytes_sent_;
+        uint64_t &bytes_received =
+            direction == 0 ? auth_straight_bytes_received_
+                           : auth_reversed_bytes_received_;
+        std::array<uint8_t, kAuthChallengeBytes> local{};
+        std::array<uint8_t, kAuthChallengeBytes> peer{};
+        static constexpr std::array<uint8_t, 8> magic =
+            {'R','L','P','N','A','U','T','H'};
+        std::copy(magic.begin(), magic.end(), local.begin());
+        local[8] = static_cast<uint8_t>(ChannelAuthContext::kVersion >> 24);
+        local[9] = static_cast<uint8_t>(ChannelAuthContext::kVersion >> 16);
+        local[10] = static_cast<uint8_t>(ChannelAuthContext::kVersion >> 8);
+        local[11] = static_cast<uint8_t>(ChannelAuthContext::kVersion);
+        local[12] = direction;
+        local[13] = static_cast<uint8_t>(party_);
+        local[14] = static_cast<uint8_t>(1 - party_);
+        std::copy(context.invocation_id.begin(), context.invocation_id.end(),
+                  local.begin() + 16);
+        std::copy(context.claim_digest.begin(), context.claim_digest.end(),
+                  local.begin() + 32);
+        if (RAND_bytes(local.data() + 64, 32) != 1)
+            throw std::runtime_error("channel authenticator nonce generation failed");
+        set_auth_socket_timeout(io.consocket, 5);
+        const bool challenge_io =
+            party_ == 0
+                ? socket_read_all(io.consocket, peer.data(), peer.size(),
+                                  bytes_received) &&
+                      socket_write_all(io.consocket, local.data(), local.size(),
+                                       bytes_sent)
+                : socket_write_all(io.consocket, local.data(), local.size(),
+                                   bytes_sent) &&
+                      socket_read_all(io.consocket, peer.data(), peer.size(),
+                                      bytes_received);
+        if (!challenge_io ||
+            CRYPTO_memcmp(peer.data(), magic.data(), magic.size()) != 0 ||
+            peer[8] != local[8] || peer[9] != local[9] ||
+            peer[10] != local[10] || peer[11] != local[11] ||
+            peer[12] != direction ||
+            peer[13] != static_cast<uint8_t>(1 - party_) ||
+            peer[14] != static_cast<uint8_t>(party_) || peer[15] != 0 ||
+            CRYPTO_memcmp(peer.data() + 16, context.invocation_id.data(),
+                          context.invocation_id.size()) != 0) {
+            return false;
+        }
+        peer_identity_valid = true;
+        if (CRYPTO_memcmp(peer.data() + 32, context.claim_digest.data(),
+                          context.claim_digest.size()) != 0) {
+            return false;
+        }
+        peer_context_valid = true;
+        const auto &p0 = party_ == 0 ? local : peer;
+        const auto &p1 = party_ == 0 ? peer : local;
+        std::array<uint8_t, kAuthTagBytes> local_tag =
+            make_auth_tag(secret, p0, p1, static_cast<uint8_t>(party_));
+        std::array<uint8_t, kAuthTagBytes> peer_tag{};
+        bool tag_io = false;
+        if (party_ == 0) {
+            tag_io = socket_read_all(io.consocket, peer_tag.data(),
+                                     peer_tag.size(), bytes_received);
+        } else {
+            tag_io =
+                socket_write_all(io.consocket, local_tag.data(),
+                                 local_tag.size(), bytes_sent) &&
+                socket_read_all(io.consocket, peer_tag.data(), peer_tag.size(),
+                                bytes_received);
+        }
+        auto expected =
+            make_auth_tag(secret, p0, p1, static_cast<uint8_t>(1 - party_));
+        const bool verified =
+            tag_io && CRYPTO_memcmp(peer_tag.data(), expected.data(),
+                                    expected.size()) == 0;
+        bool finish_io = verified;
+        if (party_ == 0 && verified)
+            finish_io = socket_write_all(io.consocket, local_tag.data(),
+                                         local_tag.size(), bytes_sent);
+        OPENSSL_cleanse(local_tag.data(), local_tag.size());
+        OPENSSL_cleanse(peer_tag.data(), peer_tag.size());
+        OPENSSL_cleanse(expected.data(), expected.size());
+        if (!finish_io) return false;
+        set_auth_socket_timeout(io.consocket, 0);
+        return true;
+    }
+
+    std::unique_ptr<sci::NetIO> open_authenticated_io(
+        const char *address, int port, uint8_t direction,
+        bool require_loopback_endpoints, const ChannelAuthContext *context,
+        const std::array<uint8_t, 32> &secret) {
+        const auto deadline =
+            std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        for (;;) {
+            std::unique_ptr<sci::NetIO> io(
+                new sci::NetIO(address, port, /*full_buffer=*/false,
+                               /*quiet=*/true));
+            if (require_loopback_endpoints &&
+                !socket_is_loopback(io->consocket)) {
+                throw std::runtime_error(
+                    "SCI channel rejected a non-loopback socket endpoint");
+            }
+            if (context == nullptr) return io;
+            bool peer_identity_valid = false;
+            bool peer_context_valid = false;
+            if (authenticate_io(*io, direction, *context, secret,
+                                peer_identity_valid, peer_context_valid)) {
+                return io;
+            }
+            io.reset();
+            if ((party_ == 0 && peer_identity_valid && !peer_context_valid) ||
+                (party_ != 0 && peer_identity_valid) ||
+                std::chrono::steady_clock::now() >= deadline)
+                throw std::runtime_error(
+                    "channel peer authentication failed before preflight");
+        }
+    }
+
+    std::mutex costs_mutex_;
     static int checked_ot_count(size_t count) {
         if (count > (size_t)std::numeric_limits<int>::max())
             throw std::overflow_error("OT batch exceeds SCI-compatible count ABI");
@@ -540,6 +958,10 @@ class PartyChannel {
     uint64_t setup_straight_bytes_sent_ = 0;
     uint64_t setup_reversed_bytes_sent_ = 0;
     uint64_t setup_direction_switches_ = 0;
+    uint64_t auth_straight_bytes_sent_ = 0;
+    uint64_t auth_straight_bytes_received_ = 0;
+    uint64_t auth_reversed_bytes_sent_ = 0;
+    uint64_t auth_reversed_bytes_received_ = 0;
     bool ots_ready_ = false;
     bool ots_finished_ = false;
 };
@@ -632,14 +1054,7 @@ inline void generate_bit_triples(PartyChannel &ch, int n, PartyRandom &rng,
         m1[i] = (uint8_t)(mask[i] ^ b[i]);
         choice[i] = a[i];
     }
-    std::vector<uint8_t> received;
-    if (ch.is_p0()) {
-        ch.ot_send_bits(m0, m1);
-        received = ch.ot_recv_bits(choice);
-    } else {
-        received = ch.ot_recv_bits(choice);
-        ch.ot_send_bits(m0, m1);
-    }
+    std::vector<uint8_t> received = ch.ot_duplex_bits(m0, m1, choice);
     for (int i = 0; i < n; ++i) {
         out[i].a = a[i];
         out[i].b = b[i];

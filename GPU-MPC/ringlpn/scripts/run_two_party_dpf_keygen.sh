@@ -13,16 +13,28 @@
 #   results/dpf/two_party_dpf_validate_2026_07_29.csv (per-config validation)
 #   results/dpf/two_party_dpf_keygen_2026_07_29.log   (raw stdout + stderr)
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/host_bin/test_two_party_dpf_keygen"
 VALIDATE="$ROOT/host_bin/test_two_party_dpf_validate"
 OUTDIR="$ROOT/results/dpf"
-WORKDIR="${WORKDIR:-$ROOT/results/dpf/two_party_keys}"
+WORKDIR="${WORKDIR:-}"
+PRIVATE_WORKDIR=0
+if [[ -z "$WORKDIR" ]]; then
+  WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/ringlpn-two-party-dpf.XXXXXX")"
+  PRIVATE_WORKDIR=1
+fi
+cleanup_private_workdir() {
+  local rc=$?
+  if (( PRIVATE_WORKDIR )); then rm -rf -- "$WORKDIR"; fi
+  exit "$rc"
+}
+trap cleanup_private_workdir EXIT
 CSV="$OUTDIR/two_party_dpf_keygen_2026_07_29.csv"
 VCSV="$OUTDIR/two_party_dpf_validate_2026_07_29.csv"
 LOG="$OUTDIR/two_party_dpf_keygen_2026_07_29.log"
-BASE_PORT="${BASE_PORT:-42400}"
+BASE_PORT="${BASE_PORT:-20400}"
 SELFTEST="${SELFTEST:-16}"
 
 if [[ ! -x "$BIN" || ! -x "$VALIDATE" ]]; then

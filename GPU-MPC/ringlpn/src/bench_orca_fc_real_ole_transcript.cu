@@ -560,7 +560,7 @@ static RealOleArgs parse_real_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     RealOleArgs args = parse_real_args(argc, argv);
-    initGPUMemPool();
+    ;
     AESGlobalContext gaes;
     initAESContext(&gaes);
 

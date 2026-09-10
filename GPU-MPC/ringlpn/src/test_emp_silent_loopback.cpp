@@ -7,6 +7,7 @@
 #include <cstring>
 #include <deque>
 #include <exception>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -176,7 +177,8 @@ SuiteResult run_suite(OtBackend backend, const std::string &bridge, int port) {
     parties[party] = std::thread([&, party] {
       try {
         EmpSilentPlan plan;
-        plan.bridge_library = bridge;
+        if (backend == OtBackend::EmpSilent)
+          plan.api = std::make_shared<EmpSilentApi>(bridge);
         plan.straight_count = 9;
         plan.reversed_count = 9;
         plan.threads = 1;

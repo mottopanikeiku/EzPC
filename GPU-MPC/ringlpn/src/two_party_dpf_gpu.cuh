@@ -190,9 +190,11 @@ inline bool cuda_success(cudaError_t status) { return status == cudaSuccess; }
 }  // namespace gpu_detail
 
 // One consume-once, party-owned GPU frontier. The object allocates a fixed pair
-// of batch buffers; it never allocates per tree or per level. One CUDA block
-// owns each tree's XOR/modular reductions, avoiding same-address atomics. Only
-// OT aggregates and final party-local sums cross back to the host.
+// of batch buffers from CUDA's retained default asynchronous pool; it never
+// allocates per tree or per level, and repeated Ring-OLE instances reuse those
+// released blocks. One CUDA block owns each tree's XOR/modular reductions,
+// avoiding same-address atomics. Only OT aggregates and final party-local sums
+// cross back to the host.
 class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
   public:
     explicit GpuBatchedPartyTreeBatchState(AESGlobalContext *gaes)
@@ -407,7 +409,8 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
 
   private:
     bool allocate(void **address, size_t bytes) {
-        if (bytes == 0 || !gpu_detail::cuda_success(cudaMalloc(address, bytes))) {
+        if (bytes == 0 ||
+            !gpu_detail::cuda_success(cudaMallocAsync(address, bytes, 0))) {
             return false;
         }
         allocated_bytes_ += bytes;
@@ -415,20 +418,24 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
         return true;
     }
 
+    static void release_async(void *address) {
+        if (address != nullptr) cudaFreeAsync(address, 0);
+    }
+
     void release() {
-        cudaFree(current_seeds_);
-        cudaFree(next_seeds_);
-        cudaFree(current_control_);
-        cudaFree(next_control_);
-        cudaFree(aggregate_left_);
-        cudaFree(aggregate_right_);
-        cudaFree(aggregate_t_left_);
-        cudaFree(aggregate_t_right_);
-        cudaFree(seed_cw_);
-        cudaFree(t_left_cw_);
-        cudaFree(t_right_cw_);
-        cudaFree(seed_sum_);
-        cudaFree(control_sum_);
+        release_async(current_seeds_);
+        release_async(next_seeds_);
+        release_async(current_control_);
+        release_async(next_control_);
+        release_async(aggregate_left_);
+        release_async(aggregate_right_);
+        release_async(aggregate_t_left_);
+        release_async(aggregate_t_right_);
+        release_async(seed_cw_);
+        release_async(t_left_cw_);
+        release_async(t_right_cw_);
+        release_async(seed_sum_);
+        release_async(control_sum_);
     }
 
     AESGlobalContext *gaes_ = nullptr;

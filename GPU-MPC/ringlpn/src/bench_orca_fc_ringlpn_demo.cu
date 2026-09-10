@@ -614,7 +614,7 @@ static Args parse_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     Args args = parse_args(argc, argv);
-    initGPUMemPool();
+    ;
 
     DemoResult first = run_demo_case(args, args.seed);
     DemoResult replay = run_demo_case(args, args.seed);
