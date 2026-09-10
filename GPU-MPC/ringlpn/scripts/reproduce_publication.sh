@@ -425,12 +425,17 @@ verify_authorized_worktree
 python3 "$ROOT/scripts/retained_public_evidence.py" \
   --repo "$REPO" --manifest "$STATIC_MANIFEST"
 python3 - "$REPO" "$STATIC_MANIFEST" "$MODE" <<'PY'
-import hashlib, json, os, pathlib, stat, subprocess, sys
+import datetime, hashlib, json, os, pathlib, stat, subprocess, sys
 repo, manifest_path, mode = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3]
 m = json.loads(manifest_path.read_text())
-if m.get("schema") != "ringlpn-publication-environment/v4" or \
-        m.get("date") != "2026-08-14":
-    raise SystemExit("unexpected static publication manifest schema or date")
+if m.get("schema") != "ringlpn-publication-environment/v4":
+    raise SystemExit("unexpected static publication manifest schema")
+try:
+    manifest_date = m["date"]
+    if datetime.date.fromisoformat(manifest_date).isoformat() != manifest_date:
+        raise ValueError("noncanonical date")
+except (KeyError, TypeError, ValueError):
+    raise SystemExit("invalid static publication manifest date")
 manifest_digest = m.get("manifest_digest")
 unsigned_manifest = dict(m)
 unsigned_manifest.pop("manifest_digest", None)
@@ -928,7 +933,7 @@ fi
 
 PHASE="publication-pdf"
 REPORT_DIR="$ROOT/results/reports"
-TEX="dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex"
+TEX="dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex"
 (
   cd "$REPORT_DIR"
   pdflatex -interaction=nonstopmode -halt-on-error "$TEX"

@@ -5,6 +5,7 @@
 // Conv2D, RINGLPN_LIVE_CONV. Public callers include linear_preprocess.h only.
 
 #include "linear_preprocess.h"
+#include "graph_mask_state.h"
 #include "two_party_linear_preprocess.cuh"
 
 #include <cerrno>
@@ -280,7 +281,7 @@ class ScopedFd {
 
 class ScopedBytes {
   public:
-    explicit ScopedBytes(size_t size) : value(size) {}
+    explicit ScopedBytes(size_t size = 0) : value(size) {}
     ~ScopedBytes() {
         volatile uint8_t *bytes =
             reinterpret_cast<volatile uint8_t *>(value.data());
@@ -289,28 +290,29 @@ class ScopedBytes {
     std::vector<uint8_t> value;
 };
 
-inline Status read_private_record(const std::string &path,
-                                  impl::Record &record) {
-    if (path.empty()) return Status::InvalidConfiguration;
+inline Status read_private_bytes(const std::string &path, size_t minimum,
+                                 size_t maximum, ScopedBytes &bytes) {
     const int raw_fd =
-        ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+        ::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
     if (raw_fd < 0) return Status::IoError;
     ScopedFd fd(raw_fd);
     struct stat before {};
     if (::fstat(fd.get(), &before) != 0 || !S_ISREG(before.st_mode) ||
         before.st_uid != ::geteuid() || before.st_nlink != 1 ||
-        (before.st_mode & 07777) != 0600 || before.st_size < 0 ||
-        static_cast<uint64_t>(before.st_size) <
-            impl::kRecordHeaderBytes + impl::kDigestBytes ||
-        static_cast<uint64_t>(before.st_size) > impl::kMaxRecordBytes) {
+        (before.st_mode & 07777) != 0600 || before.st_size < 0) {
         return Status::IoError;
     }
-    ScopedBytes private_bytes(static_cast<size_t>(before.st_size));
+    const uint64_t file_size = static_cast<uint64_t>(before.st_size);
+    if (file_size < minimum || file_size > maximum ||
+        file_size > std::numeric_limits<size_t>::max()) {
+        return Status::CorruptRecord;
+    }
+    bytes.value.assign(static_cast<size_t>(file_size), 0);
     size_t cursor = 0;
-    while (cursor < private_bytes.value.size()) {
+    while (cursor < bytes.value.size()) {
         const ssize_t got =
-            ::read(fd.get(), private_bytes.value.data() + cursor,
-                   private_bytes.value.size() - cursor);
+            ::read(fd.get(), bytes.value.data() + cursor,
+                   bytes.value.size() - cursor);
         if (got < 0 && errno == EINTR) continue;
         if (got <= 0) return Status::IoError;
         cursor += static_cast<size_t>(got);
@@ -324,8 +326,35 @@ inline Status read_private_record(const std::string &path,
     if (trailing != 0 || ::fstat(fd.get(), &after) != 0 ||
         before.st_dev != after.st_dev || before.st_ino != after.st_ino ||
         before.st_size != after.st_size || before.st_uid != after.st_uid ||
-        before.st_mode != after.st_mode || before.st_nlink != after.st_nlink) {
+        before.st_mode != after.st_mode || before.st_nlink != after.st_nlink ||
+        before.st_mtim.tv_sec != after.st_mtim.tv_sec ||
+        before.st_mtim.tv_nsec != after.st_mtim.tv_nsec ||
+        before.st_ctim.tv_sec != after.st_ctim.tv_sec ||
+        before.st_ctim.tv_nsec != after.st_ctim.tv_nsec) {
         return Status::IoError;
+    }
+    return Status::Ok;
+}
+
+inline Status read_private_record(const std::string &path,
+                                  impl::Record &record) {
+    if (path.empty()) return Status::InvalidConfiguration;
+    ScopedBytes private_bytes;
+    Status status = read_private_bytes(
+        path, impl::kRecordHeaderBytes + impl::kDigestBytes,
+        impl::kMaxRecordBytes, private_bytes);
+    if (status != Status::Ok) return status;
+
+#ifdef RINGLPN_LIVE_CONV
+    constexpr std::array<uint8_t, 8> kOtherKindMagic = {
+        'R', 'L', 'P', 'N', 'F', 'C', '2', 'P'};
+#else
+    constexpr std::array<uint8_t, 8> kOtherKindMagic = {
+        'R', 'L', 'P', 'N', 'C', 'V', '2', 'P'};
+#endif
+    if (std::equal(kOtherKindMagic.begin(), kOtherKindMagic.end(),
+                   private_bytes.value.begin())) {
+        return Status::RecordMismatch;
     }
 
     impl::RecordHeader header;
@@ -360,6 +389,18 @@ inline Status read_private_record(const std::string &path,
             private_bytes.value.data(),
             impl::kRecordHeaderBytes + i * sizeof(uint64_t)));
     }
+    const uint64_t limit = uint64_t{1} << header.bw;
+    if (!std::all_of(parsed.payload.begin(), parsed.payload.end(),
+                     [limit](uint64_t word) { return word < limit; })) {
+        volatile unsigned char *bytes =
+            reinterpret_cast<volatile unsigned char *>(
+                parsed.payload.data());
+        for (size_t i = 0;
+             i < parsed.payload.size() * sizeof(uint64_t); ++i) {
+            bytes[i] = 0;
+        }
+        return Status::CorruptRecord;
+    }
     record = std::move(parsed);
     return Status::Ok;
 }
@@ -385,6 +426,148 @@ class ScopedPrivateRecord {
         }
     }
 };
+
+inline void scrub_words(std::vector<uint64_t> &words) noexcept {
+    volatile unsigned char *bytes =
+        reinterpret_cast<volatile unsigned char *>(words.data());
+    for (size_t i = 0; i < words.size() * sizeof(uint64_t); ++i) {
+        bytes[i] = 0;
+    }
+    words.clear();
+}
+
+class ScopedPrivateState {
+  public:
+    ringlpn_graph::MaskStateRecord<uint64_t> record;
+
+    ScopedPrivateState() = default;
+    ScopedPrivateState(const ScopedPrivateState &) = delete;
+    ScopedPrivateState &operator=(const ScopedPrivateState &) = delete;
+
+    ~ScopedPrivateState() {
+        scrub_words(record.input_mask_share);
+        scrub_words(record.output_mask_share);
+    }
+};
+
+inline Status read_private_state(
+    const std::string &path,
+    ringlpn_graph::MaskStateRecord<uint64_t> &record) {
+    if (path.empty()) return Status::IoError;
+    ScopedBytes private_bytes;
+    Status status = read_private_bytes(
+        path,
+        ringlpn_graph::kMaskStateHeaderBytes +
+            ringlpn_graph::kMaskStateDigestBytes,
+        ringlpn_graph::kMaxMaskStateBytes, private_bytes);
+    if (status != Status::Ok) return status;
+    ringlpn_graph::MaskStateHeader header;
+    if (!ringlpn_graph::decode_mask_state_header(
+            private_bytes.value.data(), private_bytes.value.size(), header) ||
+        header.input_words > std::numeric_limits<size_t>::max() ||
+        header.output_words > std::numeric_limits<size_t>::max()) {
+        return Status::CorruptRecord;
+    }
+    const size_t input_words = static_cast<size_t>(header.input_words);
+    const size_t output_words = static_cast<size_t>(header.output_words);
+    if (input_words >
+            (ringlpn_graph::kMaxMaskStateBytes -
+             ringlpn_graph::kMaskStateHeaderBytes -
+             ringlpn_graph::kMaskStateDigestBytes) /
+                sizeof(uint64_t) ||
+        output_words >
+            (ringlpn_graph::kMaxMaskStateBytes -
+             ringlpn_graph::kMaskStateHeaderBytes -
+             ringlpn_graph::kMaskStateDigestBytes -
+             input_words * sizeof(uint64_t)) /
+                sizeof(uint64_t) ||
+        ringlpn_graph::kMaskStateHeaderBytes +
+                (input_words + output_words) * sizeof(uint64_t) +
+                ringlpn_graph::kMaskStateDigestBytes !=
+            private_bytes.value.size()) {
+        return Status::CorruptRecord;
+    }
+    size_t cursor = ringlpn_graph::kMaskStateHeaderBytes;
+    const uint64_t input_limit = uint64_t{1} << header.input_bw;
+    for (size_t i = 0; i < input_words; ++i, cursor += sizeof(uint64_t)) {
+        if (ringlpn_graph::get_u64(private_bytes.value.data(), cursor) >=
+            input_limit) {
+            return Status::CorruptRecord;
+        }
+    }
+    const uint64_t output_limit = uint64_t{1} << header.output_bw;
+    for (size_t i = 0; i < output_words; ++i, cursor += sizeof(uint64_t)) {
+        if (ringlpn_graph::get_u64(private_bytes.value.data(), cursor) >=
+            output_limit) {
+            return Status::CorruptRecord;
+        }
+    }
+    ringlpn_graph::MaskStateRecord<uint64_t> parsed;
+    if (!ringlpn_graph::parse_mask_state_bytes(private_bytes.value, parsed)) {
+        scrub_words(parsed.input_mask_share);
+        scrub_words(parsed.output_mask_share);
+        return Status::CorruptRecord;
+    }
+    record = std::move(parsed);
+    scrub_words(parsed.input_mask_share);
+    scrub_words(parsed.output_mask_share);
+    return Status::Ok;
+}
+
+inline bool derive_layer_identity(const LinearPlan &plan,
+                                  uint64_t layer_ordinal,
+                                  Digest &identity) {
+    std::vector<uint8_t> layer;
+    static constexpr uint8_t kLayerDomain[] =
+        "RINGLPN-FC-CONV-LAYER-IDENTITY-v1";
+    layer.insert(layer.end(), kLayerDomain,
+                 kLayerDomain + sizeof(kLayerDomain) - 1);
+    ringlpn_freshness::put_u32_be(
+        layer, ringlpn_freshness::kProtocolVersion);
+    ringlpn_freshness::put_u32_be(
+        layer, plan.kind == LinearKind::Fc ? 1U : 2U);
+    ringlpn_freshness::put_u64_be(layer, layer_ordinal);
+    ringlpn_freshness::put_u64_be(
+        layer, static_cast<uint64_t>(plan.protocol.qbits));
+    ringlpn_freshness::put_u64_be(
+        layer, static_cast<uint64_t>(plan.protocol.bw));
+    if (plan.kind == LinearKind::Fc) {
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.fc.rows));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.fc.inner));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.fc.cols));
+    } else {
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.n));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.h));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.w));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.ci));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.fh));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.fw));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.co));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.padding));
+        ringlpn_freshness::put_u64_be(
+            layer, static_cast<uint64_t>(plan.conv.stride));
+    }
+    ringlpn_freshness::put_u64_be(
+        layer, static_cast<uint64_t>(plan.protocol.ole_n));
+    ringlpn_freshness::put_u64_be(
+        layer, static_cast<uint64_t>(plan.protocol.ole_c));
+    ringlpn_freshness::put_u64_be(
+        layer, static_cast<uint64_t>(plan.protocol.ole_t));
+    ringlpn_freshness::put_u64_be(
+        layer, plan.protocol.regular_noise ? 1U : 0U);
+    return ringlpn_freshness::digest(layer.data(), layer.size(), identity);
+}
 
 
 }  // namespace RINGLPN_LINEAR_DETAIL_NAMESPACE
@@ -520,6 +703,80 @@ Status RINGLPN_LINEAR_BACKEND_CLASS::open_and_validate_record(
                   std::move(record.payload));
         return Status::Ok;
     } catch (...) {
+        return Status::IoError;
+    }
+}
+
+Status RINGLPN_LINEAR_BACKEND_CLASS::open_and_validate_layer_material(
+    const std::string &record_path, const std::string &state_path,
+    const LayerExpectation &expected, OwnedLayerMaterial &out) noexcept {
+    out.reset();
+    try {
+        using namespace RINGLPN_LINEAR_DETAIL_NAMESPACE;
+        if (record_path.empty() || state_path.empty()) {
+            return Status::IoError;
+        }
+
+        ScopedPrivateRecord private_record;
+        impl::Record &record = private_record.record;
+        Status status = read_private_record(record_path, record);
+        if (status != Status::Ok) return status;
+
+        LinearPlan actual;
+        status = plan_from_record(record, actual);
+        if (status != Status::Ok) return Status::CorruptRecord;
+        if (expected.plan.kind != kKind ||
+            !same_record_plan(actual, expected.plan) ||
+            record.header.party != expected.party ||
+            record.header.sid != expected.sid ||
+            (expected.require_invocation &&
+             record.header.invocation_id != expected.invocation_id) ||
+            (expected.require_digests &&
+             record.digest != expected.record_digest)) {
+            return Status::RecordMismatch;
+        }
+
+        ScopedPrivateState private_state;
+        auto &state = private_state.record;
+        status = read_private_state(state_path, state);
+        if (status != Status::Ok) return status;
+
+        Digest derived_identity{};
+        const size_t input_words = static_cast<size_t>(actual.input_words);
+        const size_t output_words = static_cast<size_t>(actual.output_words);
+        if (state.header.party != record.header.party ||
+            state.header.sid != record.header.sid ||
+            state.header.layer_ordinal != expected.layer_ordinal ||
+            state.header.input_bw != actual.protocol.bw ||
+            state.header.output_bw != actual.protocol.bw ||
+            state.header.input_words != actual.input_words ||
+            state.header.output_words != actual.output_words ||
+            state.header.invocation_id != record.header.invocation_id ||
+            state.header.linear_record_digest != record.digest ||
+            (expected.require_digests &&
+             state.digest != expected.state_digest) ||
+            record.payload.size() !=
+                input_words + static_cast<size_t>(actual.weight_words) +
+                    output_words ||
+            state.input_mask_share.size() != input_words ||
+            state.output_mask_share.size() != output_words ||
+            !derive_layer_identity(actual, state.header.layer_ordinal,
+                                   derived_identity) ||
+            state.header.layer_identity != derived_identity ||
+            !std::equal(state.input_mask_share.begin(),
+                        state.input_mask_share.end(),
+                        record.payload.begin())) {
+            return Status::RecordMismatch;
+        }
+
+        out.adopt(export_metadata(record), std::move(actual),
+                  state.header.layer_ordinal, state.header.layer_identity,
+                  state.digest, std::move(record.payload),
+                  std::move(state.input_mask_share),
+                  std::move(state.output_mask_share));
+        return Status::Ok;
+    } catch (...) {
+        out.reset();
         return Status::IoError;
     }
 }

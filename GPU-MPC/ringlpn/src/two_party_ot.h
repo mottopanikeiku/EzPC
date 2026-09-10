@@ -21,21 +21,25 @@
 //
 // WHAT IS NOT CLAIMED
 //   * The opt-in EMP SilentFerret source path and exact 1/62/128-bit packed
-//     chosen-message adapter are unreviewed and unmeasured. They are never the
-//     default and support no security or bandwidth claim until focused evidence
-//     and independent review pass. SCI/IKNP remains the default evidence path.
+//     chosen-message adapter remain unreviewed. A 2026-08-14 focused FC
+//     correctness suite measures their exact inventories and transport bytes,
+//     but uncontrolled occupancy and missing independent review permit no
+//     performance, bandwidth-improvement, or security claim. SCI/IKNP remains
+//     the default publication-evidence path.
 //   * DPF expansion is outside this transport wrapper. The host-reference mode
 //     uses non-cryptographic splitmix64; the GPU-consumable mode uses four
 //     domain-separated AES calls with full 128-bit seeds. Device parity is
 //     gated, but P-RNG/P-DIST/P-KEY and the DPF reduction remain open; see
 //     results/reports/dealerless_orca_fc_security_contract_2026_07_29.md.
-//   * SCI NetIO remains plain TCP, so live deployment admits only loopback
-//     endpoints carried by the authenticated SSH launcher. Before NetIO,
-//     preflight, or OT bytes, each socket mutually authenticates the party
-//     process with a versioned per-run HMAC transcript bound to the invocation,
-//     complete claim digest, stream direction, roles, and fresh nonces. Active
-//     protocol attacks after that boundary, denial of service, and side channels
-//     remain out of scope.
+//   * SCI NetIO itself remains plain TCP. Local evidence binds it to mutually
+//     authenticated loopback sockets. The distinct-host launcher carries both
+//     complete post-handshake streams inside one pinned-host-key, AEAD-only
+//     OpenSSH tunnel and rekeys it at a bounded byte/time interval. The HMAC
+//     preflight still authenticates the exact party process, invocation, claim
+//     digest, stream direction, roles, and fresh nonces end to end through that
+//     tunnel. This protects protocol confidentiality and integrity from network
+//     attackers; malicious authenticated endpoints, denial of service, and side
+//     channels remain out of scope.
 
 #pragma once
 
@@ -52,6 +56,7 @@
 #include <array>
 #include <algorithm>
 #include <cstdint>
+#include <condition_variable>
 #include <cstring>
 #include <fcntl.h>
 #include <memory>
@@ -282,6 +287,14 @@ class PartyChannel {
     OtBackend ot_backend() const { return ot_backend_; }
 
     ~PartyChannel() {
+        if (sender_thread_.joinable()) {
+            {
+                std::lock_guard<std::mutex> lock(sender_mutex_);
+                sender_stopping_ = true;
+            }
+            sender_ready_.notify_one();
+            sender_thread_.join();
+        }
         emp_reversed_.reset();
         emp_straight_.reset();
         emp_api_.reset();
@@ -428,6 +441,7 @@ class PartyChannel {
         if (m0.size() != m1.size())
             throw std::invalid_argument("128-bit OT sender vector size mismatch");
         const int n = checked_ot_count(m0.size());
+        if (n == 0) return;
         if (ot_backend_ == OtBackend::EmpSilent) {
             sender_emp()->send(128, m0.data(), m1.data(), (uint64_t)n);
         } else {
@@ -448,6 +462,7 @@ class PartyChannel {
 
     std::vector<U128> ot_recv_128(const std::vector<uint8_t> &choices) {
         const int n = checked_ot_count(choices.size());
+        if (n == 0) return {};
         std::vector<U128> res((size_t)n);
         if (ot_backend_ == OtBackend::EmpSilent) {
             receiver_emp()->recv(128, choices.data(), res.data(), (uint64_t)n);
@@ -469,14 +484,15 @@ class PartyChannel {
 
     // Consume the two independent OT directions concurrently on SCI's
     // disjoint straight/reversed contexts. This preserves both chosen-message
-    // transcripts and their counters while removing the artificial
-    // party-0-sender-then-party-1-sender serialization from each DPF level.
+    // transcripts and their counters. One lazy sender worker is reused across
+    // levels; each call waits for both directions before releasing its inputs.
     std::vector<U128> ot_duplex_128(const std::vector<U128> &m0,
                                     const std::vector<U128> &m1,
                                     const std::vector<uint8_t> &choices) {
         if (m0.size() != m1.size() || m0.size() != choices.size()) {
             throw std::invalid_argument("duplex 128-bit OT vector size mismatch");
         }
+        if (m0.empty()) return {};
         if (ot_backend_ == OtBackend::EmpSilent) {
             if (is_p0()) {
                 ot_send_128(m0, m1);
@@ -486,25 +502,8 @@ class PartyChannel {
             ot_send_128(m0, m1);
             return out;
         }
-        std::exception_ptr send_failure;
-        std::thread sender([&]() {
-            try {
-                ot_send_128(m0, m1);
-            } catch (...) {
-                send_failure = std::current_exception();
-            }
-        });
-        std::vector<U128> out;
-        std::exception_ptr recv_failure;
-        try {
-            out = ot_recv_128(choices);
-        } catch (...) {
-            recv_failure = std::current_exception();
-        }
-        sender.join();
-        if (send_failure) std::rethrow_exception(send_failure);
-        if (recv_failure) std::rethrow_exception(recv_failure);
-        return out;
+        return sci_duplex([&]() { ot_send_128(m0, m1); },
+                          [&]() { return ot_recv_128(choices); });
     }
 
     // ---- 1-bit OT (AND-triple cross terms) ---------------------------------
@@ -569,25 +568,8 @@ class PartyChannel {
             ot_send_bits(m0, m1);
             return out;
         }
-        std::exception_ptr send_failure;
-        std::thread sender([&]() {
-            try {
-                ot_send_bits(m0, m1);
-            } catch (...) {
-                send_failure = std::current_exception();
-            }
-        });
-        std::vector<uint8_t> out;
-        std::exception_ptr recv_failure;
-        try {
-            out = ot_recv_bits(choices);
-        } catch (...) {
-            recv_failure = std::current_exception();
-        }
-        sender.join();
-        if (send_failure) std::rethrow_exception(send_failure);
-        if (recv_failure) std::rethrow_exception(recv_failure);
-        return out;
+        return sci_duplex([&]() { ot_send_bits(m0, m1); },
+                          [&]() { return ot_recv_bits(choices); });
     }
 
     // ---- field-element OT (Gilboa OLE) ------------------------------------
@@ -636,6 +618,66 @@ class PartyChannel {
     Counters costs;
 
   private:
+    // PartyChannel has one public caller. Only its disjoint SCI sender context
+    // runs on this worker; EMP retains its serial inventory-consumption order.
+    // The mailbox borrows a stack callable until completion: no task allocation,
+    // queue, copied messages, or worker surviving the channel's OT/socket state.
+    template <typename Send, typename Receive>
+    auto sci_duplex(Send send, Receive receive) -> decltype(receive()) {
+        {
+            std::lock_guard<std::mutex> lock(sender_mutex_);
+            if (!sender_thread_.joinable()) {
+                sender_thread_ = std::thread([this]() {
+                    std::unique_lock<std::mutex> lock(sender_mutex_);
+                    for (;;) {
+                        sender_ready_.wait(lock, [this]() {
+                            return sender_task_ != nullptr || sender_stopping_;
+                        });
+                        if (sender_stopping_) return;
+                        const auto task = sender_task_;
+                        void *context = sender_context_;
+                        lock.unlock();
+                        std::exception_ptr failure;
+                        try {
+                            task(context);
+                        } catch (...) {
+                            failure = std::current_exception();
+                        }
+                        lock.lock();
+                        sender_failure_ = failure;
+                        sender_task_ = nullptr;
+                        sender_context_ = nullptr;
+                        sender_ready_.notify_all();
+                    }
+                });
+            }
+            sender_failure_ = nullptr;
+            sender_context_ = &send;
+            sender_task_ = [](void *context) {
+                (*static_cast<Send *>(context))();
+            };
+        }
+        sender_ready_.notify_one();
+        decltype(receive()) out;
+        std::exception_ptr recv_failure;
+        try {
+            out = receive();
+        } catch (...) {
+            recv_failure = std::current_exception();
+        }
+        std::exception_ptr send_failure;
+        {
+            std::unique_lock<std::mutex> lock(sender_mutex_);
+            sender_ready_.wait(lock, [this]() {
+                return sender_task_ == nullptr;
+            });
+            send_failure = sender_failure_;
+        }
+        if (send_failure) std::rethrow_exception(send_failure);
+        if (recv_failure) std::rethrow_exception(recv_failure);
+        return out;
+    }
+
     static constexpr size_t kAuthChallengeBytes = 96;
     static constexpr size_t kAuthTagBytes = 32;
     struct Secret {
@@ -944,6 +986,13 @@ class PartyChannel {
                ipv4_is_loopback(local) && ipv4_is_loopback(peer);
     }
 
+    std::thread sender_thread_;
+    std::mutex sender_mutex_;
+    std::condition_variable sender_ready_;
+    void (*sender_task_)(void *) = nullptr;
+    void *sender_context_ = nullptr;
+    std::exception_ptr sender_failure_;
+    bool sender_stopping_ = false;
     int party_;
     sci::NetIO *io_ = nullptr;
     sci::NetIO *io_rev_ = nullptr;

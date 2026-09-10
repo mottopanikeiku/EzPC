@@ -2,7 +2,7 @@
   "claim_scope": "internal/advisor source-bound forward-linear record plan; graph state nodes are unexecuted; qbits is not a security level",
   "generator": {
     "path": "GPU-MPC/ringlpn/scripts/build_full_linear_model_manifest.py",
-    "sha256": "389f719f603045e08f0842bc6ec89203fe5af952768ebf8346954a3a2e8e7bab"
+    "sha256": "f59dc9f54af43233c072ef8fdd0203738076f38ad3e107863de4319366c5bdbd"
   },
   "layers": [
     {
@@ -1694,7 +1694,7 @@
     }
   ],
   "model": "ResNet18",
-  "plan_digest": "ffcbecdc08b25917b6a9a20990f0a229bb294faf3e584ef794ed387d1842ab41",
+  "plan_digest": "36d559014f7ca9f8a0c6b5e854e2fcc8947ba43a7bb286d75e4a292450e0a1a4",
   "profile": {
     "bw": 32,
     "noise": "regular",
@@ -1825,7 +1825,7 @@
   "source_layer_manifest": {
     "path": "GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json",
     "schema": "ringlpn.orca-forward-linear-layers.v1",
-    "sha256": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984"
+    "sha256": "3e209a319c6d5092f52d8bbe21f26ddd1315a6fcaecab2a76499718ead437ac5"
   },
   "source_registry": [
     {
@@ -1834,7 +1834,7 @@
     },
     {
       "path": "GPU-MPC/experiments/orca/orca_inference.cu",
-      "sha256": "9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986"
+      "sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483"
     },
     {
       "path": "GPU-MPC/experiments/orca/piranha.cu",
@@ -1846,7 +1846,7 @@
     },
     {
       "path": "GPU-MPC/backend/orca_base.h",
-      "sha256": "6672c368a4008bbf88f2fe754c7a87d3b7803367bc761620e378af68a64f6413"
+      "sha256": "e17b88d85ab849c029beeb08a043719a6e5c198966a403caf4f3335f36f9238b"
     },
     {
       "path": "GPU-MPC/backend/orca.h",
@@ -2556,7 +2556,7 @@
     {
       "execution": "not_executed_by_linear_record_artifact",
       "forward_call": {
-        "source_anchor": "GPU-MPC/backend/orca_base.h:175",
+        "source_anchor": "GPU-MPC/backend/orca_base.h:231",
         "source_text_sha256": "470049560338be6c97671d6234e6011a9b2c00058821cea547d545acd8732ac4"
       },
       "key_kind": "raw_mask[1000_words]",
@@ -2637,7 +2637,7 @@
       "state_input_kind": "MaskedOutput",
       "state_output_kind": "ClearOutput",
       "stock_output_call": {
-        "source_anchor": "GPU-MPC/backend/orca_base.h:175",
+        "source_anchor": "GPU-MPC/backend/orca_base.h:231",
         "source_text_sha256": "470049560338be6c97671d6234e6011a9b2c00058821cea547d545acd8732ac4"
       },
       "truncation": {

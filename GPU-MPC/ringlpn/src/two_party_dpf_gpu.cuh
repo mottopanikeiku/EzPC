@@ -268,10 +268,9 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
             return false;
         }
         counters_.gpu_h2d_bytes += block_batch_bytes;
-        host_aggregate_left_.resize(batch_);
-        host_aggregate_right_.resize(batch_);
         host_aggregate_t_left_.resize(batch_);
         host_aggregate_t_right_.resize(batch_);
+        initialized_ = true;
         return true;
     }
     bool consumed() const override { return consumed_; }
@@ -280,10 +279,13 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
                       std::vector<U128> &aggregate_right,
                       std::vector<uint8_t> &aggregate_t_left,
                       std::vector<uint8_t> &aggregate_t_right) override {
-        if (level != level_ || level_ >= log_domain_ || width_ == 0 ||
-            batch_ > capacity_ / width_) {
+        if (!initialized_ || level != level_ || level_ >= log_domain_ ||
+            width_ == 0 || batch_ > capacity_ / width_) {
             return false;
         }
+        expanded_ = false;
+        aggregate_left.resize(batch_);
+        aggregate_right.resize(batch_);
         const size_t block_bytes = batch_ * sizeof(AESBlock);
         const size_t uint_bytes = batch_ * sizeof(unsigned int);
         if (batch_ > std::numeric_limits<unsigned int>::max()) return false;
@@ -297,10 +299,10 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
         if (!gpu_detail::cuda_success(cudaGetLastError())) return false;
 
         if (!gpu_detail::cuda_success(cudaMemcpy(
-                host_aggregate_left_.data(), aggregate_left_, block_bytes,
+                aggregate_left.data(), aggregate_left_, block_bytes,
                 cudaMemcpyDeviceToHost)) ||
             !gpu_detail::cuda_success(cudaMemcpy(
-                host_aggregate_right_.data(), aggregate_right_, block_bytes,
+                aggregate_right.data(), aggregate_right_, block_bytes,
                 cudaMemcpyDeviceToHost)) ||
             !gpu_detail::cuda_success(cudaMemcpy(
                 host_aggregate_t_left_.data(), aggregate_t_left_, uint_bytes,
@@ -311,10 +313,6 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
             return false;
         }
         counters_.gpu_d2h_bytes += 2 * block_bytes + 2 * uint_bytes;
-        aggregate_left.assign(host_aggregate_left_.begin(),
-                              host_aggregate_left_.end());
-        aggregate_right.assign(host_aggregate_right_.begin(),
-                               host_aggregate_right_.end());
         aggregate_t_left.resize(batch_);
         aggregate_t_right.resize(batch_);
         for (size_t tree = 0; tree < batch_; ++tree) {
@@ -323,6 +321,7 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
             aggregate_t_right[tree] =
                 static_cast<uint8_t>(host_aggregate_t_right_[tree] & 1);
         }
+        expanded_ = true;
         return true;
     }
 
@@ -330,7 +329,8 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
         int level, const std::vector<U128> &seed_cw,
         const std::vector<uint8_t> &t_left_cw,
         const std::vector<uint8_t> &t_right_cw) override {
-        if (level != level_ || seed_cw.size() != batch_ ||
+        if (!initialized_ || !expanded_ || level != level_ ||
+            level_ >= log_domain_ || seed_cw.size() != batch_ ||
             t_left_cw.size() != batch_ || t_right_cw.size() != batch_ ||
             width_ > capacity_ / (2 * batch_)) {
             return false;
@@ -366,12 +366,14 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
         std::swap(current_control_, next_control_);
         width_ *= 2;
         ++level_;
+        expanded_ = false;
         return true;
     }
 
     bool final_sums(std::vector<Word> &seed_sum,
                     std::vector<Word> &control_sum) override {
-        if (level_ != log_domain_ || width_ != (size_t{1} << log_domain_)) {
+        if (!initialized_ || level_ != log_domain_ ||
+            width_ != (size_t{1} << log_domain_)) {
             return false;
         }
         const size_t sum_bytes = batch_ * sizeof(Word);
@@ -440,6 +442,8 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
 
     AESGlobalContext *gaes_ = nullptr;
     bool consumed_ = false;
+    bool initialized_ = false;
+    bool expanded_ = false;
     int party_ = -1;
     int log_domain_ = 0;
     int level_ = 0;
@@ -461,8 +465,6 @@ class GpuBatchedPartyTreeBatchState final : public PartyTreeBatchState {
     uint8_t *t_right_cw_ = nullptr;
     Word *seed_sum_ = nullptr;
     Word *control_sum_ = nullptr;
-    std::vector<AESBlock> host_aggregate_left_;
-    std::vector<AESBlock> host_aggregate_right_;
     std::vector<unsigned int> host_aggregate_t_left_;
     std::vector<unsigned int> host_aggregate_t_right_;
     DpfStageCounters counters_;

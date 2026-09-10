@@ -193,6 +193,8 @@ def sha256(path: pathlib.Path) -> str:
 
 
 def request_termination(signum: int, _frame: Any) -> NoReturn:
+    for termination_signal in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(termination_signal, signal.SIG_IGN)
     TERMINATION_REQUESTED.set()
     raise SystemExit(128 + signum)
 
@@ -789,7 +791,13 @@ def terminate_and_reap(process: subprocess.Popen[Any] | None) -> None:
     try:
         process_group = os.getpgid(process.pid)
     except ProcessLookupError:
-        process_group = None
+        # All children in standalone mode start a session whose group survives
+        # its leader. poll()/communicate() may already have reaped that leader.
+        process_group = (
+            process.pid
+            if os.environ.get("RINGLPN_COOPERATIVE_PROCESS_GROUP", "0") != "1"
+            else None
+        )
     shared_group = process_group == os.getpgrp()
     try:
         if shared_group:
@@ -831,12 +839,18 @@ def run_bounded_capture(
         )
         stdout, stderr = process.communicate(timeout=timeout_seconds)
     except subprocess.TimeoutExpired:
-        terminate_and_reap(process)
-        if process is not None:
-            process.communicate()
         fail(f"{label} timed out after {timeout_seconds} seconds")
     except OSError as error:
         fail(f"{label} failed to execute: {error}")
+    finally:
+        terminate_and_reap(process)
+        if process is not None:
+            # A cooperative descendant may still own a pipe; never perform an
+            # unbounded second communicate() while aborting a failed probe.
+            if process.stdout is not None:
+                process.stdout.close()
+            if process.stderr is not None:
+                process.stderr.close()
     assert process is not None
     return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
@@ -1862,11 +1876,9 @@ def run_layer_job(
             rc0, rc1 = wait_pair(
                 p0_process, p1_process, deadline, cancelled
             )
-    except BaseException:
+    finally:
         terminate_and_reap(p1_process)
         terminate_and_reap(p0_process)
-        raise
-    finally:
         p0_auth.unlink(missing_ok=True)
         p1_auth.unlink(missing_ok=True)
         fsync_directory(p0_dir)
@@ -1939,9 +1951,8 @@ def run_layer_job(
             checker_rc = wait_process(
                 checker_process, deadline, cancelled
             )
-    except BaseException:
+    finally:
         terminate_and_reap(checker_process)
-        raise
     if checker_rc == 124:
         fail(f"checker timed out for layer {order}; no record set published")
     if checker_rc != 0:
@@ -2139,6 +2150,7 @@ def main() -> None:
         fail("--verify-record-set-root requires --verify-record-set")
     signal.signal(signal.SIGINT, request_termination)
     signal.signal(signal.SIGTERM, request_termination)
+    signal.signal(signal.SIGHUP, request_termination)
     if args.manifest is None or args.bin_dir is None or args.output_root is None:
         fail("--manifest, --bin-dir, and --output-root are required for plan/run mode")
     stateful = args.emit_mask_states
@@ -2155,8 +2167,9 @@ def main() -> None:
     repo_root = args.repo_root.resolve(strict=True)
     manifest_path = args.manifest.absolute()
     bin_dir = args.bin_dir.resolve(strict=True)
-    output_root = args.output_root.resolve(strict=False)
+    output_root = args.output_root.absolute()
     reject_symlink_components(output_root, "output root")
+    output_root = output_root.resolve(strict=False)
     if output_root.exists():
         fail(f"output root already exists: {output_root}")
     explicit_lanes = bool(args.lane)

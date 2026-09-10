@@ -104,6 +104,7 @@ required=(peer identity known_hosts local_executor remote_executor container_ima
 for name in "${required[@]}"; do
   [[ -n "${!name}" ]] || fail "missing required --${name//_/-}"
 done
+command -v setsid >/dev/null || fail "setsid is required for bounded launcher cleanup"
 [[ -n "$invocation_id" ]] || invocation_id="$(openssl rand -hex 16)"
 [[ "$invocation_id" =~ ^[0-9a-f]{32}$ ]] ||
   fail "invocation ID must be 32 lowercase hexadecimal characters"
@@ -221,7 +222,10 @@ snapshot_bootstrap_cleanup() {
   rm -rf -- "$control_dir"
   exit "$rc"
 }
-trap snapshot_bootstrap_cleanup EXIT INT TERM HUP
+trap snapshot_bootstrap_cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 python3 - "$identity" "$known_hosts" "$control_dir" <<'PY'
 import os, stat, sys
 
@@ -301,6 +305,12 @@ ssh_common=(-F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes
   -o KbdInteractiveAuthentication=no -o HostbasedAuthentication=no
   -o GSSAPIAuthentication=no -o ExitOnForwardFailure=yes
   -o PermitLocalCommand=no -o RequestTTY=no -o ControlMaster=no
+  -o ForwardAgent=no -o ForwardX11=no -o ProxyCommand=none
+  -o Compression=no
+  -o Ciphers=chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+  -o KexAlgorithms=sntrup761x25519-sha512@openssh.com,curve25519-sha256,diffie-hellman-group16-sha512
+  -o HostKeyAlgorithms=ssh-ed25519,ecdsa-sha2-nistp256,rsa-sha2-512,rsa-sha2-256
+  -o "RekeyLimit=1G 1h"
   -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -i "$identity")
 ssh "${ssh_common[@]}" "$peer" test -x "$remote_executor" ||
   fail "remote executor is not executable"
@@ -550,9 +560,10 @@ status=$status
 classification=internal-advisor
 security_claim=none
 channel=authenticated-ssh-plus-mutual-hmac-sha256-v1
+transport_protection=openssh-aead-only-chacha20-poly1305-or-aes-gcm-rekey-1GiB-or-1h
 source_channel_label=external-loopback-tunnel
 loopback_mode=process-authenticated-before-public-preflight
-boundary=OpenSSH-carries-both-loopback-streams-and-per-run-mutual-HMAC-authenticates-each-party-process
+boundary=AEAD-only-OpenSSH-carries-both-complete-post-handshake-streams-and-per-run-mutual-HMAC-authenticates-each-party-process
 trusted_endpoints=coordinator-and-peer-kernels-sshd-rootless-podman-and-pinned-container-image
 peer=$peer
 known_hosts_sha256=$known_hash
@@ -619,6 +630,20 @@ remote_call() {
 direct_remote_call() {
   ssh "${ssh_common[@]}" "$peer" "$@"
 }
+stop_launcher() {
+  local pid="$1" attempt
+  [[ -n "$pid" ]] || return 0
+  # Launchers own sessions; a reaped leader can leave live descendants.
+  kill -TERM -- "-$pid" 2>/dev/null || true
+  for ((attempt = 0; attempt < 50; ++attempt)); do
+    kill -0 "$pid" 2>/dev/null || break
+    sleep 0.1
+  done
+  kill -KILL -- "-$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  ! kill -0 "$pid" 2>/dev/null
+}
+
 
 
 abort_parties() {
@@ -631,14 +656,7 @@ abort_parties() {
   for worker in local remote; do
     if [[ "$worker" == local ]]; then pid="$local_pid"; else pid="$remote_pid"; fi
     [[ -n "$pid" ]] || continue
-    if kill -0 "$pid" >/dev/null 2>&1; then
-      kill -TERM "$pid" >/dev/null 2>&1 || cleanup_failed=1
-    fi
-    wait "$pid" >/dev/null 2>&1 || true
-    if kill -0 "$pid" >/dev/null 2>&1; then
-      echo "[two-host-auth] $worker launcher worker survived kill/wait" >&2
-      cleanup_failed=1
-    fi
+    stop_launcher "$pid" || cleanup_failed=1
   done
   local_pid=
   remote_pid=
@@ -827,7 +845,8 @@ abort_parties() {
 
 cleanup() {
   local rc=$? cleanup_failed=0
-  trap - EXIT INT TERM HUP
+  trap - EXIT
+  trap '' INT TERM HUP
   rm -f -- "$channel_auth_secret" || cleanup_failed=1
   if [[ -e "$channel_auth_secret" || -L "$channel_auth_secret" ]]; then
     echo "[two-host-auth] coordinator channel-auth staging secret survived failure cleanup" >&2
@@ -842,7 +861,7 @@ cleanup() {
   if (( master_ready )); then
     ssh "${control_opts[@]}" "$peer" -O exit >/dev/null 2>&1 || true
   fi
-  [[ -z "$master_pid" ]] || wait "$master_pid" >/dev/null 2>&1 || true
+  stop_launcher "$master_pid" || cleanup_failed=1
   rm -rf -- "$control_dir" || cleanup_failed=1
   if (( cleanup_failed )); then
     echo "[two-host-auth] cleanup failed closed" >&2
@@ -850,10 +869,13 @@ cleanup() {
   fi
   exit "$rc"
 }
-trap cleanup EXIT INT TERM HUP
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
 write_evidence STARTING
-ssh "${ssh_common[@]}" -M -S "$control_socket" -o ControlMaster=yes \
+setsid ssh "${ssh_common[@]}" -M -S "$control_socket" -o ControlMaster=yes \
   -o ControlPersist=no -o GatewayPorts=no -N \
   -R "127.0.0.1:$base_port:127.0.0.1:$base_port" \
   -R "127.0.0.1:$((base_port + 1)):127.0.0.1:$((base_port + 1))" \
@@ -925,10 +947,10 @@ remote_command=("$remote_executor" run-party --party 1 --session-id "$session_id
   "${public_args[@]}" --out-prefix "$party_prefix")
 
 local_started=1
-"${local_command[@]}" >"$output_dir/local-executor.log" 2>&1 &
+setsid "${local_command[@]}" >"$output_dir/local-executor.log" 2>&1 &
 local_pid=$!
 remote_started=1
-remote_call "${remote_command[@]}" >"$output_dir/remote-executor.log" 2>&1 &
+setsid ssh "${control_opts[@]}" "$peer" "${remote_command[@]}" >"$output_dir/remote-executor.log" 2>&1 &
 remote_pid=$!
 
 set +e
@@ -945,6 +967,9 @@ set -e
 [[ "$second_finished" != "$master_pid" ]] || fail "authenticated tunnel died before bilateral exit"
 if [[ "$second_finished" == "$local_pid" ]]; then p0_rc=$second_rc; else p1_rc=$second_rc; fi
 (( second_rc == 0 )) || fail "second party exit was nonzero"
+stop_launcher "$local_pid" || fail "local launcher survived bilateral exit"
+stop_launcher "$remote_pid" || fail "remote launcher survived bilateral exit"
+local_pid= remote_pid=
 
 # No peer record is read or transferred before both party PIDs exit zero.
 "$local_executor" seal-party --party 0 --private-root "$local_private_root" \

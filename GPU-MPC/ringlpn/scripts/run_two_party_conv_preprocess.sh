@@ -16,6 +16,14 @@ CHANNEL_AUTH_FILES=()
 cleanup_private_workdir() {
   local rc=$?
   local auth_file
+  trap - EXIT
+  trap '' INT TERM HUP
+  local pid
+  # GNU timeout owns each background party's process group.
+  for pid in $(jobs -pr); do
+    kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  done
   for auth_file in "${CHANNEL_AUTH_FILES[@]}"; do
     rm -f -- "$auth_file"
   done
@@ -23,6 +31,9 @@ cleanup_private_workdir() {
   exit "$rc"
 }
 trap cleanup_private_workdir EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 P0_GPU="${P0_GPU:-1}"
 P1_GPU="${P1_GPU:-3}"
 CHECK_GPU="${CHECK_GPU:-$P0_GPU}"
@@ -30,27 +41,44 @@ PORT="${BASE_PORT:-24680}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-600}"
 
 [[ "$P0_GPU" != "$P1_GPU" ]] || { echo "P0_GPU and P1_GPU must differ." >&2; exit 2; }
-(( PORT > 0 && PORT < 65530 )) || { echo "BASE_PORT out of range" >&2; exit 2; }
-[[ -x "$BIN" ]] || "$ROOT/scripts/build_two_party_conv_preprocess.sh"
+if ! [[ "$PORT" =~ ^[0-9]+$ && "$TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] ||
+   (( PORT < 1 || PORT > 65529 || TIMEOUT_SECONDS < 1 )); then
+  echo "invalid BASE_PORT or TIMEOUT_SECONDS; timeout must be positive." >&2
+  exit 2
+fi
 mkdir -p "$OUTDIR"
 outdir_real="$(realpath "$OUTDIR")"
 if (( PRIVATE_WORKDIR )); then
   workdir_real="$(realpath -e "$WORKDIR")"
 else
+  if [[ -e "$WORKDIR" || -L "$WORKDIR" ]]; then
+    echo "caller-supplied WORKDIR must be fresh; refusing to erase records or ledger" >&2
+    exit 2
+  fi
   workdir_real="$(realpath -m "$WORKDIR")"
   if [[ "$workdir_real" != "$outdir_real/"* ]]; then
     echo "caller-supplied WORKDIR must be a child of $OUTDIR" >&2
     exit 2
   fi
-  rm -rf -- "$workdir_real"
-  mkdir -p "$workdir_real"
+  mkdir -m 700 -- "$workdir_real"
 fi
 WORKDIR="$workdir_real"
 mkdir -p "$WORKDIR/party0" "$WORKDIR/party1" "$WORKDIR/controls"
 LEDGER_ROOT="${LEDGER_ROOT:-$WORKDIR/ledger}"
-LEDGER_ROOT="$(realpath -m "$LEDGER_ROOT")"
-mkdir -p "$LEDGER_ROOT"
-chmod 700 "$LEDGER_ROOT"
+ledger_real="$(realpath -m "$LEDGER_ROOT")"
+if [[ "$ledger_real" != "$(realpath -ms "$LEDGER_ROOT")" ]]; then
+  echo "LEDGER_ROOT must not contain symlink components" >&2
+  exit 2
+fi
+LEDGER_ROOT="$ledger_real"
+mkdir -p -m 700 -- "$LEDGER_ROOT"
+ledger_mode="$(stat -c %a "$LEDGER_ROOT")"
+if [[ ! -d "$LEDGER_ROOT" || -L "$LEDGER_ROOT" || ! -O "$LEDGER_ROOT" ]] ||
+   (( (8#$ledger_mode & 077) != 0 )); then
+  echo "LEDGER_ROOT must be an existing owner-only directory or a fresh path" >&2
+  exit 2
+fi
+[[ -x "$BIN" ]] || "$ROOT/scripts/build_two_party_conv_preprocess.sh"
 
 SID=""
 INVOCATION_ID=""
@@ -84,12 +112,12 @@ P1_PREFIX="$WORKDIR/party1/key"
 
 make_channel_auth_pair "$WORKDIR/party0" "$WORKDIR/party1"
 set +e
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
   --party 0 --port "$PORT" --out-prefix "$P0_PREFIX" "${COMMON[@]}" \
   --channel-auth-file "$AUTH_P0" \
   >"$WORKDIR/party0.log" 2>&1 &
 p0_pid=$!
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
   --party 1 --host 127.0.0.1 --port "$PORT" --out-prefix "$P1_PREFIX" \
   --channel-auth-file "$AUTH_P1" \
   "${COMMON[@]}" >"$WORKDIR/party1.log" 2>&1 &
@@ -146,11 +174,11 @@ reuse_control() {
     --fh 3 --fw 3 --co "$co" --padding 1 --stride 1 --ole-n 8192 --ole-c 2
     --ole-t 8 --noise regular)
   set +e
-  timeout 30 env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" --party 0 --port "$port" \
+  timeout --kill-after=5 30 env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" --party 0 --port "$port" \
     --channel-auth-file "$AUTH_P0" \
     --out-prefix "$dir/p0/key" "${reuse[@]}" >"$dir/p0.log" 2>&1 &
   local pid0=$!
-  timeout 30 env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" --party 1 \
+  timeout --kill-after=5 30 env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" --party 1 \
     --channel-auth-file "$AUTH_P1" \
     --host 127.0.0.1 --port "$port" --out-prefix "$dir/p1/key" \
     "${reuse[@]}" >"$dir/p1.log" 2>&1 &
@@ -183,12 +211,12 @@ mkdir -p "$WORKDIR/stale0" "$WORKDIR/stale1"
 printf stale >"$WORKDIR/stale0/key_p0.conv"
 make_channel_auth_pair "$WORKDIR/stale0" "$WORKDIR/stale1"
 set +e
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
   --party 0 --port "$((PORT + 1))" --out-prefix "$WORKDIR/stale0/key" \
   --channel-auth-file "$AUTH_P0" \
   "${COMMON[@]}" >"$WORKDIR/controls/stale0.log" 2>&1 &
 s0=$!
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
   --party 1 --host 127.0.0.1 --port "$((PORT + 1))" \
   --channel-auth-file "$AUTH_P1" \
   --out-prefix "$WORKDIR/stale1/key" "${COMMON[@]}" \
@@ -206,13 +234,13 @@ fresh_common
 mkdir -p "$WORKDIR/rename0" "$WORKDIR/rename1"
 make_channel_auth_pair "$WORKDIR/rename0" "$WORKDIR/rename1"
 set +e
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
   --party 0 --port "$((PORT + 2))" --out-prefix "$WORKDIR/rename0/key" \
   --channel-auth-file "$AUTH_P0" \
   --force-rename-failure "${COMMON[@]}" \
   >"$WORKDIR/controls/rename0.log" 2>&1 &
 r0=$!
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
   --party 1 --host 127.0.0.1 --port "$((PORT + 2))" \
   --channel-auth-file "$AUTH_P1" \
   --out-prefix "$WORKDIR/rename1/key" "${COMMON[@]}" \
@@ -233,12 +261,12 @@ fresh_common
 mkdir -p "$WORKDIR/mismatch0" "$WORKDIR/mismatch1"
 make_channel_auth_pair "$WORKDIR/mismatch0" "$WORKDIR/mismatch1"
 set +e
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P0_GPU" "$BIN" \
   --party 0 --port "$((PORT + 3))" --out-prefix "$WORKDIR/mismatch0/key" \
   --channel-auth-file "$AUTH_P0" \
   "${COMMON[@]}" >"$WORKDIR/controls/mismatch0.log" 2>&1 &
 m0=$!
-timeout "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
+timeout --kill-after=5 "$TIMEOUT_SECONDS" env CUDA_VISIBLE_DEVICES="$P1_GPU" "$BIN" \
   --party 1 --host 127.0.0.1 --port "$((PORT + 3))" \
   --channel-auth-file "$AUTH_P1" \
   --out-prefix "$WORKDIR/mismatch1/key" "${COMMON[@]}" --co 3 \

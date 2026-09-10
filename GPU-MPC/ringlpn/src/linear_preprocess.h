@@ -229,6 +229,134 @@ struct RecordExpectation {
     bool require_invocation = false;
 };
 
+struct LayerExpectation {
+    LinearPlan plan;
+    int party = -1;
+    uint64_t sid = 0;
+    uint64_t layer_ordinal = 0;
+    InvocationId invocation_id{};
+    Digest record_digest{};
+    Digest state_digest{};
+    bool require_invocation = false;
+    bool require_digests = false;
+};
+
+class OwnedLayerMaterial {
+  public:
+    OwnedLayerMaterial() = default;
+    ~OwnedLayerMaterial() { reset(); }
+    OwnedLayerMaterial(const OwnedLayerMaterial &) = delete;
+    OwnedLayerMaterial &operator=(const OwnedLayerMaterial &) = delete;
+
+    OwnedLayerMaterial(OwnedLayerMaterial &&other) noexcept {
+        move_from(std::move(other));
+    }
+    OwnedLayerMaterial &operator=(OwnedLayerMaterial &&other) noexcept {
+        if (this != &other) {
+            reset();
+            move_from(std::move(other));
+        }
+        return *this;
+    }
+
+    const LinearPlan &plan() const noexcept { return plan_; }
+    const RecordMetadata &record_metadata() const noexcept {
+        return record_metadata_;
+    }
+    uint64_t layer_ordinal() const noexcept { return layer_ordinal_; }
+    const Digest &layer_identity() const noexcept { return layer_identity_; }
+    const Digest &state_digest() const noexcept { return state_digest_; }
+    WordView input_mask_share() const noexcept {
+        return {state_input_mask_share_.empty()
+                    ? nullptr
+                    : state_input_mask_share_.data(),
+                state_input_mask_share_.size()};
+    }
+    WordView weight_mask_share() const noexcept {
+        return {record_payload_.empty()
+                    ? nullptr
+                    : record_payload_.data() + plan_.input_words,
+                static_cast<size_t>(plan_.weight_words)};
+    }
+    WordView output_correction_share() const noexcept {
+        return {record_payload_.empty()
+                    ? nullptr
+                    : record_payload_.data() + plan_.input_words +
+                          plan_.weight_words,
+                static_cast<size_t>(plan_.output_words)};
+    }
+    WordView output_mask_share() const noexcept {
+        return {state_output_mask_share_.empty()
+                    ? nullptr
+                    : state_output_mask_share_.data(),
+                state_output_mask_share_.size()};
+    }
+    bool empty() const noexcept { return record_payload_.empty(); }
+
+    void reset() noexcept {
+        scrub(record_payload_);
+        scrub(state_input_mask_share_);
+        scrub(state_output_mask_share_);
+        record_metadata_ = RecordMetadata{};
+        plan_ = LinearPlan{};
+        layer_ordinal_ = 0;
+        layer_identity_.fill(0);
+        state_digest_.fill(0);
+    }
+
+  private:
+    friend class FcPreprocessor;
+    friend class Conv2dPreprocessor;
+
+    static void scrub(std::vector<uint64_t> &words) noexcept {
+        volatile unsigned char *bytes =
+            reinterpret_cast<volatile unsigned char *>(words.data());
+        for (size_t i = 0; i < words.size() * sizeof(uint64_t); ++i) {
+            bytes[i] = 0;
+        }
+        words.clear();
+    }
+
+    void adopt(RecordMetadata metadata, LinearPlan plan,
+               uint64_t layer_ordinal, Digest layer_identity,
+               Digest state_digest, std::vector<uint64_t> record_payload,
+               std::vector<uint64_t> state_input_mask_share,
+               std::vector<uint64_t> state_output_mask_share) noexcept {
+        reset();
+        record_metadata_ = std::move(metadata);
+        plan_ = std::move(plan);
+        layer_ordinal_ = layer_ordinal;
+        layer_identity_ = std::move(layer_identity);
+        state_digest_ = std::move(state_digest);
+        record_payload_ = std::move(record_payload);
+        state_input_mask_share_ = std::move(state_input_mask_share);
+        state_output_mask_share_ = std::move(state_output_mask_share);
+    }
+
+    void move_from(OwnedLayerMaterial &&other) noexcept {
+        record_metadata_ = std::move(other.record_metadata_);
+        plan_ = std::move(other.plan_);
+        layer_ordinal_ = other.layer_ordinal_;
+        layer_identity_ = std::move(other.layer_identity_);
+        state_digest_ = std::move(other.state_digest_);
+        record_payload_ = std::move(other.record_payload_);
+        state_input_mask_share_ =
+            std::move(other.state_input_mask_share_);
+        state_output_mask_share_ =
+            std::move(other.state_output_mask_share_);
+        other.reset();
+    }
+
+    RecordMetadata record_metadata_{};
+    LinearPlan plan_{};
+    uint64_t layer_ordinal_ = 0;
+    Digest layer_identity_{};
+    Digest state_digest_{};
+    std::vector<uint64_t> record_payload_;
+    std::vector<uint64_t> state_input_mask_share_;
+    std::vector<uint64_t> state_output_mask_share_;
+};
+
 
 class RINGLPN_LINEAR_PUBLIC FcPreprocessor {
   public:
@@ -248,6 +376,9 @@ class RINGLPN_LINEAR_PUBLIC FcPreprocessor {
     static Status open_and_validate_record(const std::string &path,
                                            const RecordExpectation &expected,
                                            OwnedRecord &out) noexcept;
+    static Status open_and_validate_layer_material(
+        const std::string &record_path, const std::string &state_path,
+        const LayerExpectation &expected, OwnedLayerMaterial &out) noexcept;
 
     // Compatibility entrypoint for the canonical executable. Reusable callers
     // should use the typed methods above.
@@ -272,6 +403,9 @@ class RINGLPN_LINEAR_PUBLIC Conv2dPreprocessor {
     static Status open_and_validate_record(const std::string &path,
                                            const RecordExpectation &expected,
                                            OwnedRecord &out) noexcept;
+    static Status open_and_validate_layer_material(
+        const std::string &record_path, const std::string &state_path,
+        const LayerExpectation &expected, OwnedLayerMaterial &out) noexcept;
     static int run_cli(int argc, char **argv);
 };
 

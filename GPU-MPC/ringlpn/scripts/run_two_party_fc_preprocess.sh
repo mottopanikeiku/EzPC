@@ -20,6 +20,14 @@ fi
 CHANNEL_AUTH_FILES=()
 cleanup_private_workdir() {
   local rc=$?
+  trap - EXIT
+  trap '' INT TERM HUP
+  local pid
+  # GNU timeout owns each background party's process group.
+  for pid in $(jobs -pr); do
+    kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  done
   local auth_file
   for auth_file in "${CHANNEL_AUTH_FILES[@]}"; do
     rm -f -- "$auth_file"
@@ -28,9 +36,12 @@ cleanup_private_workdir() {
   exit "$rc"
 }
 trap cleanup_private_workdir EXIT
-CSV="$OUTDIR/two_party_fc_preprocess_2026_08_04.csv"
-CONTROLS="$OUTDIR/two_party_fc_preprocess_controls_2026_08_04.csv"
-LOG="$OUTDIR/two_party_fc_preprocess_2026_08_04.log"
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+CSV="${CSV:-$OUTDIR/two_party_fc_preprocess_2026_08_04.csv}"
+CONTROLS="${CONTROLS:-$OUTDIR/two_party_fc_preprocess_controls_2026_08_04.csv}"
+LOG="${LOG:-$OUTDIR/two_party_fc_preprocess_2026_08_04.log}"
 METRICS_SCHEMA="$ROOT/scripts/two_party_fc_metrics_schema_2026_08_04.csv"
 P0_GPU="${P0_GPU:-1}"
 P1_GPU="${P1_GPU:-3}"
@@ -65,29 +76,56 @@ if [[ "$P0_GPU" == "$P1_GPU" ]]; then
   echo "P0_GPU and P1_GPU must name distinct GPUs." >&2
   exit 2
 fi
-if (( BASE_PORT < 1 || BASE_PORT > 65490 )); then
-  echo "BASE_PORT must leave room for every two-socket case/control." >&2
+if ! [[ "$BASE_PORT" =~ ^[0-9]+$ && "$TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] ||
+   (( BASE_PORT < 1 || BASE_PORT > 65490 || TIMEOUT_SECONDS < 1 )); then
+  echo "invalid BASE_PORT or TIMEOUT_SECONDS; timeout must be positive." >&2
   exit 2
 fi
 
 mkdir -p "$OUTDIR"
 outdir_real="$(realpath "$OUTDIR")"
+declare -A seen_output_paths=()
+for output_path in "$CSV" "$CONTROLS" "$LOG"; do
+  output_real="$(realpath -m "$output_path")"
+  if [[ "$output_real" != "$outdir_real/"* ]]; then
+    echo "result outputs must remain children of $OUTDIR: $output_path" >&2
+    exit 2
+  fi
+  if [[ -n "${seen_output_paths[$output_real]+present}" ]]; then
+    echo "result output paths must be distinct: $output_path" >&2
+    exit 2
+  fi
+  seen_output_paths["$output_real"]=1
+done
 if (( PRIVATE_WORKDIR )); then
   workdir_real="$(realpath -e "$WORKDIR")"
 else
+  if [[ -e "$WORKDIR" || -L "$WORKDIR" ]]; then
+    echo "caller-supplied WORKDIR must be fresh; refusing to erase records or ledger" >&2
+    exit 2
+  fi
   workdir_real="$(realpath -m "$WORKDIR")"
   if [[ "$workdir_real" != "$outdir_real/"* ]]; then
     echo "caller-supplied WORKDIR must be a child of $OUTDIR" >&2
     exit 2
   fi
-  rm -rf -- "$workdir_real"
-  mkdir -p "$workdir_real"
+  mkdir -m 700 -- "$workdir_real"
 fi
 WORKDIR="$workdir_real"
 LEDGER_ROOT="${LEDGER_ROOT:-$WORKDIR/ledger}"
-LEDGER_ROOT="$(realpath -m "$LEDGER_ROOT")"
-mkdir -p "$LEDGER_ROOT"
-chmod 700 "$LEDGER_ROOT"
+ledger_real="$(realpath -m "$LEDGER_ROOT")"
+if [[ "$ledger_real" != "$(realpath -ms "$LEDGER_ROOT")" ]]; then
+  echo "LEDGER_ROOT must not contain symlink components" >&2
+  exit 2
+fi
+LEDGER_ROOT="$ledger_real"
+mkdir -p -m 700 -- "$LEDGER_ROOT"
+ledger_mode="$(stat -c %a "$LEDGER_ROOT")"
+if [[ ! -d "$LEDGER_ROOT" || -L "$LEDGER_ROOT" || ! -O "$LEDGER_ROOT" ]] ||
+   (( (8#$ledger_mode & 077) != 0 )); then
+  echo "LEDGER_ROOT must be an existing owner-only directory or a fresh path" >&2
+  exit 2
+fi
 : > "$LOG"
 printf '%s' \
   'case,qbits,bw,rows,inner,cols,noise,ring_batches,ring_application_slots,ring_bootstrap_slots,p0_ring_oles,p1_ring_oles,p0_dpf_trees,p1_dpf_trees,p0_dpf_scalar_oles,p1_dpf_scalar_oles,p0_dpf_epoch_zero_scalar_oles,p1_dpf_epoch_zero_scalar_oles,p0_dpf_pcg_scalar_oles,p1_dpf_pcg_scalar_oles,p0_dpf_pcg_oles_reserved,p1_dpf_pcg_oles_reserved,p0_dpf_pcg_oles_discarded,p1_dpf_pcg_oles_discarded,p0_dpf_pcg_opening_words_sent,p1_dpf_pcg_opening_words_sent,p0_public_a_seed_words,p1_public_a_seed_words,p0_protocol_bytes,p1_protocol_bytes,p0_total_us,p1_total_us,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online,status,p0_protocol_dependency_rounds,p1_protocol_dependency_rounds,p0_preflight_us,p1_preflight_us,p0_ot_setup_us,p1_ot_setup_us,p0_dpf_phase_a_us,p1_dpf_phase_a_us,p0_dpf_phase_b_us,p1_dpf_phase_b_us,p0_dpf_phase_c_us,p1_dpf_phase_c_us,p0_spfss_grouping_us,p1_spfss_grouping_us,p0_public_polynomial_exchange_us,p1_public_polynomial_exchange_us,p0_gpu_ringlpn_expansion_us,p1_gpu_ringlpn_expansion_us,p0_derandomization_openings_us,p1_derandomization_openings_us,p0_conversion_us,p1_conversion_us,p0_serialization_us,p1_serialization_us,p0_commit_us,p1_commit_us,p0_peak_host_rss_bytes,p1_peak_host_rss_bytes,p0_peak_gpu_bytes,p1_peak_gpu_bytes,p0_min_gpu_free_bytes,p1_min_gpu_free_bytes,p0_transport_straight_bytes_sent,p1_transport_straight_bytes_sent,p0_transport_straight_bytes_received,p1_transport_straight_bytes_received,p0_transport_reversed_bytes_sent,p1_transport_reversed_bytes_sent,p0_transport_reversed_bytes_received,p1_transport_reversed_bytes_received,p0_base_ots,p1_base_ots,p0_base_ot_setup_bytes_sent,p1_base_ot_setup_bytes_sent,p0_base_ot_setup_bytes_received,p1_base_ot_setup_bytes_received,p0_transport_bytes_include_base_ot,p1_transport_bytes_include_base_ot,p0_base_ot_setup_dependency_rounds,p1_base_ot_setup_dependency_rounds,checker_us,checker_peak_host_rss_bytes,checker_peak_gpu_bytes,checker_min_gpu_free_bytes,invocation_id,ledger_digest' \
@@ -175,23 +213,23 @@ run_case() {
 
   set +e
   local rogue_rc=NA replay_rc=NA reflection_rc=NA
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" \
     --party 0 --channel-auth-file "$AUTH_P0" "${common[@]}" \
     --out-prefix "$p0_prefix" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   if (( case_index == 0 )); then
-    timeout 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
+    timeout --kill-after=5 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
       --invocation-id "$invocation_id" \
       --claim-file "$LEDGER_ROOT/${invocation_id}.p0.claim" \
       --frame-direction 0
     rogue_rc=$?
-    timeout 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
+    timeout --kill-after=5 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
       --invocation-id "$invocation_id" \
       --claim-file "$LEDGER_ROOT/${invocation_id}.p0.claim" \
       --frame-direction 0 \
       --valid-replay-secret-file "$replay_auth"
     replay_rc=$?
-    timeout 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
+    timeout --kill-after=5 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
       --invocation-id "$invocation_id" \
       --claim-file "$LEDGER_ROOT/${invocation_id}.p0.claim" \
       --frame-direction 1
@@ -199,7 +237,7 @@ run_case() {
   else
     sleep 1
   fi
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" \
     --party 1 --channel-auth-file "$AUTH_P1" "${common[@]}" \
     --out-prefix "$p1_prefix" > "$dir/p1.out" 2>&1 &
   local pid1=$!
@@ -233,7 +271,7 @@ run_case() {
   fi
 
   set +e
-  CUDA_VISIBLE_DEVICES="$CHECK_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --check \
+  CUDA_VISIBLE_DEVICES="$CHECK_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --check \
     --p0-record "$p0_record" --p1-record "$p1_record" > "$dir/check.out" 2>&1
   local check_rc=$?
   set -e
@@ -257,6 +295,19 @@ run_case() {
   local expected_application_discarded=$((f0[10] * 2 * limbs * f0[11] -
                                            2 * limbs * rows * inner * cols))
   if [[ "${#f0[@]}" -ne 86 || "${#f1[@]}" -ne 86 || "${#fc[@]}" -ne 19 ||
+        "${f0[0]}" != 0 || "${f1[0]}" != 1 ||
+        "${f0[1]}" != "$qbits" || "${f1[1]}" != "$qbits" ||
+        "${f0[2]}" != "$bw" || "${f1[2]}" != "$bw" ||
+        "${f0[3]}" != "$rows" || "${f1[3]}" != "$rows" ||
+        "${f0[4]}" != "$inner" || "${f1[4]}" != "$inner" ||
+        "${f0[5]}" != "$cols" || "${f1[5]}" != "$cols" ||
+        "${f0[6]}" != 8192 || "${f1[6]}" != 8192 ||
+        "${f0[7]}" != 2 || "${f1[7]}" != 2 ||
+        "${f0[8]}" != 8 || "${f1[8]}" != 8 ||
+        "${f0[9]}" != "$noise" || "${f1[9]}" != "$noise" ||
+        "${fc[0]}" != "$qbits" || "${fc[1]}" != "$bw" ||
+        "${fc[2]}" != "$rows" || "${fc[3]}" != "$inner" ||
+        "${fc[4]}" != "$cols" ||
         "${f0[35]}" != pass || "${f1[35]}" != pass || "${fc[9]}" != pass ||
         "${fc[10]}" != pass || "${fc[11]}" != pass || "${fc[12]}" != pass ||
         "${f0[64]}" != NA || "${f1[64]}" != NA ||
@@ -348,7 +399,7 @@ run_preflight_mismatch_control() {
   mkdir -p "$dir/party0" "$dir/party1"
   make_channel_auth_pair "$dir"
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 30 "$BIN" --party 0 --host 127.0.0.1 \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 30 "$BIN" --party 0 --host 127.0.0.1 \
     --channel-auth-file "$AUTH_P0" \
     --port "$port" --sid "$sid" --invocation-id "$invocation_id" \
     --ledger "$LEDGER_ROOT" --qbits 64 --bw 16 --rows 2 --inner 2 \
@@ -356,7 +407,7 @@ run_preflight_mismatch_control() {
     "${OT_ARGS[@]}" --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 30 "$BIN" --party 1 --host 127.0.0.1 \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 30 "$BIN" --party 1 --host 127.0.0.1 \
     --channel-auth-file "$AUTH_P1" \
     --port "$port" --sid "$sid" --invocation-id "$invocation_id" \
     --ledger "$LEDGER_ROOT" --qbits 64 --bw 16 --rows 3 --inner 2 \
@@ -390,12 +441,12 @@ run_bootstrap_capacity_control() {
     --qbits 64 --bw 16 --rows 2 --inner 2 --cols 2
     --ole-n 8192 --ole-c 2 --ole-t 64 --noise regular "${OT_ARGS[@]}")
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 30 "$BIN" --party 0 "${common[@]}" \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 30 "$BIN" --party 0 "${common[@]}" \
     --channel-auth-file "$AUTH_P0" \
     --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 30 "$BIN" --party 1 "${common[@]}" \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 30 "$BIN" --party 1 "${common[@]}" \
     --channel-auth-file "$AUTH_P1" \
     --out-prefix "$dir/party1/key" > "$dir/p1.out" 2>&1 &
   local pid1=$!
@@ -423,14 +474,14 @@ run_stale_output_control() {
   local sid="$FRESH_SID" invocation_id="$FRESH_INVOCATION"
   make_channel_auth_pair "$dir"
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 30 "$BIN" --party 0 --host 127.0.0.1 \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 30 "$BIN" --party 0 --host 127.0.0.1 \
     --channel-auth-file "$AUTH_P0" \
     --port "$port" --sid "$sid" --invocation-id "$invocation_id" \
     --ledger "$LEDGER_ROOT" "${OT_ARGS[@]}" \
     --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 30 "$BIN" --party 1 --host 127.0.0.1 \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 30 "$BIN" --party 1 --host 127.0.0.1 \
     --channel-auth-file "$AUTH_P1" \
     --port "$port" --sid "$sid" --invocation-id "$invocation_id" \
     --ledger "$LEDGER_ROOT" "${OT_ARGS[@]}" \
@@ -465,12 +516,12 @@ run_rename_failure_control() {
                 --ole-c 2 --ole-t 8 --noise regular --force-rename-failure
                 "${OT_ARGS[@]}")
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 0 \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --party 0 \
     --channel-auth-file "$AUTH_P0" \
     "${common[@]}" --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout "$TIMEOUT_SECONDS" "$BIN" --party 1 \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 "$TIMEOUT_SECONDS" "$BIN" --party 1 \
     --channel-auth-file "$AUTH_P1" \
     "${common[@]}" --out-prefix "$dir/party1/key" > "$dir/p1.out" 2>&1 &
   local pid1=$!
@@ -503,12 +554,12 @@ run_freshness_reject_control() {
                 --ole-n 8192 --ole-c 2 --ole-t 8 --noise regular
                 "${OT_ARGS[@]}")
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 30 "$BIN" --party 0 "${common[@]}" \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 30 "$BIN" --party 0 "${common[@]}" \
     --channel-auth-file "$AUTH_P0" \
     --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 1
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 30 "$BIN" --party 1 "${common[@]}" \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 30 "$BIN" --party 1 "${common[@]}" \
     --channel-auth-file "$AUTH_P1" \
     --out-prefix "$dir/party1/key" > "$dir/p1.out" 2>&1 &
   local pid1=$!
@@ -545,18 +596,18 @@ run_wrong_secret_control() {
     --qbits 64 --bw 16 --rows 2 --inner 2 --cols 2
     --ole-n 8192 --ole-c 2 --ole-t 8 --noise regular "${OT_ARGS[@]}")
   set +e
-  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout 15 "$BIN" --party 0 \
+  CUDA_VISIBLE_DEVICES="$P0_GPU" timeout --kill-after=5 15 "$BIN" --party 0 \
     --channel-auth-file "$p0_auth" "${common[@]}" \
     --out-prefix "$dir/party0/key" > "$dir/p0.out" 2>&1 &
   local pid0=$!
   sleep 0.2
-  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout 15 "$BIN" --party 1 \
+  CUDA_VISIBLE_DEVICES="$P1_GPU" timeout --kill-after=5 15 "$BIN" --party 1 \
     --channel-auth-file "$p1_auth" "${common[@]}" \
     --out-prefix "$dir/party1/key" > "$dir/p1.out" 2>&1 &
   local pid1=$!
   wait "$pid1"; local rc1=$?
   sleep 6
-  timeout 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
+  timeout --kill-after=5 10 "$ROOT/scripts/channel_auth_decoy.py" --port "$port" \
     --invocation-id "$invocation_id" \
     --claim-file "$LEDGER_ROOT/${invocation_id}.p0.claim" \
     --frame-direction 0 >/dev/null 2>&1
@@ -669,6 +720,12 @@ run_checker_controls
 # ledger are also removed by the EXIT trap.
 rm -f "$WORKDIR"/*/party0/key_p0.fc "$WORKDIR"/*/party1/key_p1.fc \
       "$WORKDIR/control_checker/corrupt_p0.fc"
+if [[ "$OT_BACKEND" == emp-silent ]]; then
+  python3 "$ROOT/scripts/verify_emp_silent_fc_evidence.py" \
+    --csv "$CSV" --controls "$CONTROLS" \
+    --bridge "$RINGLPN_EMP_SILENT_BRIDGE" | tee -a "$LOG"
+fi
+
 
 echo "[two-party-fc] all live cases and controls pass"
 echo "[two-party-fc] results: $CSV"

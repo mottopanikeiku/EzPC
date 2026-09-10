@@ -33,17 +33,17 @@
 #ifndef InfType
 #define InfType u64
 #endif
-
+#if defined(ORCA_RINGLPN_LINEAR_INTEGRATION) && ORCA_RINGLPN_LINEAR_INTEGRATION
+#include "ringlpn/src/orca_linear_application_entry.cuh"
+#endif
 int main(int argc, char *argv[])
 {
     sytorch_init();
-    auto modelName = std::string(argv[1]);
-    auto model = getCNN<InfType>(modelName);
-    int bw = atoi(argv[2]);
-    u64 scale = strtoul(argv[3], 0, 10);
-    assert(bw <= 8 * sizeof(InfType));
-    assert(scale < bw);
-    std::vector<u64> inpShape;
+#if defined(ORCA_RINGLPN_LINEAR_INTEGRATION) && ORCA_RINGLPN_LINEAR_INTEGRATION
+    if (argc > 4 && std::strcmp(argv[4], "2") == 0) return ringlpn_role2_main(argc, argv);
+#endif
+    auto modelName = std::string(argv[1]); auto model = getCNN<InfType>(modelName); int bw = atoi(argv[2]); u64 scale = strtoul(argv[3], 0, 10);
+    assert(bw <= 8 * sizeof(InfType)); assert(scale < bw); std::vector<u64> inpShape;
     if (modelName.compare("VGG16") == 0 || modelName.compare("ResNet50") == 0 || modelName.compare("ResNet18") == 0)
     {
         u64 shape[4] = {1, 224, 224, 3};

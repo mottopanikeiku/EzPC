@@ -646,7 +646,7 @@ def build_document(
             "ringlpn_scope": "terminal_mask_share_required_but_not_recorded",
             "execution": "not_executed_by_linear_record_artifact",
             "stock_output_call": bound_source_line(
-                "GPU-MPC/backend/orca_base.h", 175, registry
+                "GPU-MPC/backend/orca_base.h", 231, registry
             ),
         },
     ]
@@ -741,7 +741,7 @@ def build_document(
         "key_kind": "raw_mask[1000_words]",
         "ringlpn": False,
         "forward_call": bound_source_line(
-            "GPU-MPC/backend/orca_base.h", 175, registry
+            "GPU-MPC/backend/orca_base.h", 231, registry
         ),
         "execution": "not_executed_by_linear_record_artifact",
     })

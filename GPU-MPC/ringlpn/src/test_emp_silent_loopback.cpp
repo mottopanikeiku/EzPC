@@ -264,8 +264,10 @@ int main(int argc, char **argv) {
     } else if (mode != "--controls-only") {
       throw std::invalid_argument("unknown loopback mode");
     }
-    std::printf("emp-silent loopback %s: PASS (unreviewed/unmeasured)\n",
-                mode.c_str());
+    std::printf(
+        "emp-silent loopback %s: PASS (unreviewed correctness controls; "
+        "no performance or security claim)\n",
+        mode.c_str());
     return 0;
   } catch (const std::exception &e) {
     std::fprintf(stderr, "emp-silent loopback: FAIL: %s\n", e.what());

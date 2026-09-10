@@ -66,6 +66,17 @@ bool selftest_primitives(Word p, int rounds, PartyChannel &ch, PartyRandom &rng,
                          int &triple_fail, int &ole_fail) {
     triple_fail = 0;
     ole_fail = 0;
+    const uint64_t empty_bytes = ch.bytes_sent();
+    const uint64_t empty_switches = ch.direction_switches();
+    const uint64_t empty_ots = ch.costs.string_ots_128;
+    ch.ot_send_128({}, {});
+    if (!ch.ot_recv_128({}).empty() ||
+        !ch.ot_duplex_128({}, {}, {}).empty() ||
+        ch.bytes_sent() != empty_bytes ||
+        ch.direction_switches() != empty_switches ||
+        ch.costs.string_ots_128 != empty_ots) {
+        return false;
+    }
     std::vector<BitTriple> triples;
     ringlpn_2pc::generate_bit_triples(ch, rounds, rng, triples);
     std::vector<uint8_t> mine(3 * (size_t)rounds), theirs(3 * (size_t)rounds);

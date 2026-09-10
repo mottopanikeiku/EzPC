@@ -22,6 +22,7 @@ Approved linear adapters (fixed canonical source path):
 
 Graph executable pair:
   resnet18-full-graph         graph-libraries + linear-library + full graph/key adapter
+  orca-linear-application     Graph/linear libraries, adapters, source-native Orca gate
 
 Focused executable components:
   ole-host                    host Figure-2/OLE trio
@@ -132,6 +133,13 @@ case "$component" in
     build_graph_libraries
     run_wrapper build_linear_library.sh
     run_wrapper build_resnet18_full_graph.sh
+    ;;
+  orca-linear-application)
+    build_graph_libraries
+    run_wrapper build_linear_library.sh
+    run_wrapper build_two_party_fc_preprocess.sh
+    run_wrapper build_two_party_conv_preprocess.sh
+    run_wrapper build_orca_linear_application.sh
     ;;
   ole-host) run_wrapper build_ole_host.sh ;;
   orca-zp-bridge) run_wrapper build_orca_zp_bridge_test.sh ;;

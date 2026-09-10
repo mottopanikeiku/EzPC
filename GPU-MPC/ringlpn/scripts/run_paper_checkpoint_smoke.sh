@@ -32,7 +32,9 @@ trap cleanup EXIT
 
 echo "[paper-smoke] root: $ROOT"
 echo "[paper-smoke] checking shell script syntax"
-bash -n "$ROOT"/scripts/*.sh
+for script in "$ROOT"/scripts/*.sh; do
+  bash -n "$script"
+done
 if [[ "$RUN_GPU_SMOKE" == "1" ]]; then
   if ! command -v nvcc >/dev/null 2>&1; then
     echo "[paper-smoke] nvcc not found; cannot run required GPU smoke" >&2
@@ -66,6 +68,10 @@ fi
 echo "[paper-smoke] running owner-only atomic private-file control"
 "$ROOT/scripts/build_private_file_test.sh"
 "$ROOT/host_bin/test_private_file"
+
+echo "[paper-smoke] running concurrent consume-once ledger controls"
+"$ROOT/scripts/build_correlation_freshness_test.sh"
+"$ROOT/host_bin/test_correlation_freshness"
 
 echo "[paper-smoke] running host public Ring-vector SHAKE/rejection control"
 "$ROOT/scripts/build_public_ring_vector_xof_test.sh"
@@ -157,6 +163,11 @@ echo "[paper-smoke] building and running ideal-OLE FC transcript reference (orac
 echo "[paper-smoke] building and running real-OLE slot-packed FC transcript"
 "$ROOT/scripts/build_orca_fc_real_ole_transcript.sh"
 "$ROOT/scripts/run_orca_fc_real_ole_transcript.sh"
+
+echo "[paper-smoke] running source-native terminal Orca linear application gate"
+P0_GPU="${ORCA_LINEAR_P0_GPU:-0}" \
+P1_GPU="${ORCA_LINEAR_P1_GPU:-1}" \
+  "$ROOT/scripts/run_orca_linear_application.sh"
 
 if [[ "$RUN_FULL_GRAPH_SMOKE" != "1" ]]; then
   echo "[paper-smoke] full ResNet18 graph skipped; GPU component gates pass"

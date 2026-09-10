@@ -20,6 +20,7 @@ import signal
 import sys
 import time
 from typing import Any, NoReturn
+import check_resnet18_graph_contract
 import graph_build_provenance
 
 
@@ -47,7 +48,6 @@ CONTROL_HEADER = ("control", "expected_rejection", "no_partial_output", "status"
 SCHEMA = "ringlpn-known-zero-full-resnet18-graph-v4"
 EXPECTED_LINEAR_SCHEMA = "ringlpn-forward-linear-record-set-v4"
 EXPECTED_SOURCE_SCHEMA = "ringlpn-full-linear-execution-v1"
-EXPECTED_MANIFEST_SHA256 = "f5f17ee9be08a7d94f89927b0314a95dec59104f73d0c645f9acdd421555a986"
 GRAPH_APPROVAL_SCHEMA = graph_build_provenance.APPROVAL_SCHEMA
 GRAPH_APPROVAL_SCOPE = graph_build_provenance.APPROVAL_SCOPE
 GRAPH_BINARY_FILES = {
@@ -776,6 +776,7 @@ def ledger_snapshot(root: pathlib.Path) -> tuple[tuple[str, int, str], ...]:
 def cancel_active_children(signum: int, _frame: Any) -> NoReturn:
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
     children = tuple(ACTIVE_CHILDREN.values())
     for process in children:
         try:
@@ -1079,6 +1080,7 @@ def main() -> None:
     graph_last_port = args.graph_base_port + 3
     signal.signal(signal.SIGINT, cancel_active_children)
     signal.signal(signal.SIGTERM, cancel_active_children)
+    signal.signal(signal.SIGHUP, cancel_active_children)
     if args.graph_base_port <= 0 or graph_last_port > 65535:
         fail("graph base port leaves insufficient room")
     if args.record_set_root is None:
@@ -1214,7 +1216,7 @@ def main() -> None:
     source_document, manifest_sha, _ = load_json_once(
         manifest, "source execution manifest"
     )
-    if manifest_sha != EXPECTED_MANIFEST_SHA256:
+    if manifest_sha != check_resnet18_graph_contract.EXPECTED_MANIFEST_SHA256:
         fail("source execution manifest hash differs from the approved checkpoint")
     if source_document.get("schema") != EXPECTED_SOURCE_SCHEMA:
         fail("source execution manifest schema differs from the approved checkpoint")
