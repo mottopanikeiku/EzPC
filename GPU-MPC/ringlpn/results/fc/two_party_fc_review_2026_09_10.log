@@ -1,0 +1,537 @@
+[two-party-fc] build
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/prg.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_convert.h:3,
+                 from src/two_party_linear_preprocess.cuh:16,
+                 from src/linear_preprocess_backend.cuh:9,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h:43: warning: "BLOCK_SIZE" redefined
+   43 | #define BLOCK_SIZE 16
+      | 
+In file included from src/private_file.h:12,
+                 from src/graph_mask_state.h:4,
+                 from src/linear_preprocess_backend.cuh:8:
+/usr/include/linux/fs.h:37: note: this is the location of the previous definition
+   37 | #define BLOCK_SIZE (1<<BLOCK_SIZE_BITS)
+      | 
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(536): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(631): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(723): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(756): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(799): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(885): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, bool)"
+      }
+      ^
+
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/prg.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_convert.h:3,
+                 from src/two_party_linear_preprocess.cuh:16,
+                 from src/linear_preprocess_backend.cuh:9,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h:43: warning: "BLOCK_SIZE" redefined
+   43 | #define BLOCK_SIZE 16
+      | 
+In file included from src/private_file.h:12,
+                 from src/graph_mask_state.h:4,
+                 from src/linear_preprocess_backend.cuh:8:
+/usr/include/linux/fs.h:37: note: this is the location of the previous definition
+   37 | #define BLOCK_SIZE (1<<BLOCK_SIZE_BITS)
+      | 
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, __nv_bool)"
+      }
+      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~  ~~~~~~~~~
+      |                                     |
+      |                                     uint64_t {aka long unsigned int}
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~             ~~~~~~~~~
+      |                                                |
+      |                                                uint64_t {aka long unsigned int}
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:25: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/openssl/ec.h:883:52: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:21: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |          ~~~~~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:13: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:52: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                                                    ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:12: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:448:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  448 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:448:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  448 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                               ^
+src/two_party_ot.h:449:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  449 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:449:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  449 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                               ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:473:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  473 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:473:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  473 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                               ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   73 |     extern const std::array<block, 2> zeroAndAllOne;
+      |                                      ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                      ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                                                  ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   56 |         void ecbEncCounterMode(u64 baseIdx, span<block> ciphertext) const
+      |                                                  ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   81 |         MultiKeyAES(span<block> keys) { setKeys(keys); }
+      |                        ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   84 |         void setKeys(span<block> keys)
+      |                         ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+  140 |                 std::vector<block> mBuffer;
+      |                                   ^
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_convert.h:3,
+                 from src/secure_convert.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:448:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  448 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h:449:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  449 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:473:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  473 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_truncate.h:3,
+                 from src/secure_truncate.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:448:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  448 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h:449:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  449 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:473:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  473 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
+Built /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+
+===== q64_regular_small / party 0 =====
+0,64,16,2,2,2,8192,2,8,regular,1,7424,768,2,16,512,11264,5120,1536,768,768,1536,768,768,869376,1643520,116544,4,16,4,1248,2496,1225312,425,396948,pass,213,45.377,29323.3,1716.13,19603.9,4363.29,13.192,948.61,9208.31,59.157,4006.76,560.964,147.574,123486208,431095808,33395441664,1054081,NA,193221,NA,256,21829,NA,416,480,128,128,yes,NA,cbc20825867e2716f698ed783a836246,d2771c44f91ab730cf6057be1a67198a5ad2bc72b65fdd8ee7608f5e6b763702,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+===== q64_regular_small / party 1 =====
+1,64,16,2,2,2,8192,2,8,regular,1,7424,768,2,16,512,11264,5120,1536,768,768,1536,768,768,869376,1643520,116544,4,16,4,1248,2496,1265504,425,396948,pass,213,370.407,29328.1,1716.69,19603.3,4361.48,12.549,483.091,9024.84,59.641,4004.84,513.882,216.226,123142144,431095808,33395441664,1097034,NA,190460,NA,256,21829,NA,128,128,128,128,yes,NA,cbc20825867e2716f698ed783a836246,d2771c44f91ab730cf6057be1a67198a5ad2bc72b65fdd8ee7608f5e6b763702,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+===== q64_regular_small / offline checker =====
+64,16,2,2,2,1,96,14116.3,96.024,pass,pass,pass,pass,177736,128708608,433192960,33393344512,cbc20825867e2716f698ed783a836246,d2771c44f91ab730cf6057be1a67198a5ad2bc72b65fdd8ee7608f5e6b763702
+
+===== q64_uniform_small / party 0 =====
+0,64,16,2,2,2,8192,2,8,uniform,1,7424,768,2,16,512,14336,6656,1536,768,768,1536,768,768,1072128,2049024,141504,4,16,4,1248,2496,1353184,461,391607,pass,231,32.933,24220,2787.05,26678.1,4069.44,9.229,653.627,17427.9,39.475,4022.29,306.914,102.499,124608512,565313536,33261223936,1132801,NA,242373,NA,256,21829,NA,128,128,128,128,yes,NA,5d0efbd79b31055aece8910b497fd8d8,80a921cec505050c287de2ca27bfc794032e41e8c66593d0064c96951f871e4c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+===== q64_uniform_small / party 1 =====
+1,64,16,2,2,2,8192,2,8,uniform,1,7424,768,2,16,512,14336,6656,1536,768,768,1536,768,768,1072128,2049024,141504,4,16,4,1248,2496,1393376,461,391624,pass,231,26.052,24203.4,2776.47,26686.2,4062.55,8.031,459.258,16055.3,46.333,4018.97,311.526,98.942,123490304,565313536,33261223936,1175370,NA,239996,NA,256,21829,NA,128,128,128,128,yes,NA,5d0efbd79b31055aece8910b497fd8d8,80a921cec505050c287de2ca27bfc794032e41e8c66593d0064c96951f871e4c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+===== q64_uniform_small / offline checker =====
+64,16,2,2,2,1,96,15328,99.28,pass,pass,pass,pass,175387,128241664,433192960,33393344512,5d0efbd79b31055aece8910b497fd8d8,80a921cec505050c287de2ca27bfc794032e41e8c66593d0064c96951f871e4c
+
+===== q128_regular_small / party 0 =====
+0,128,32,2,2,2,8192,2,8,regular,1,7424,768,4,32,1024,22528,10240,3072,1536,1536,3072,1536,1536,1738752,3287040,233088,4,32,4,2488,4976,2450208,831,421707,pass,415,30.6,20349.7,3357.52,32830.2,8813.37,32.255,889.213,17523.9,91.831,7256.78,390.841,115.51,124358656,431095808,33395441664,2098753,NA,373445,NA,256,21829,NA,128,128,128,128,yes,NA,3f51acd2d91719320388d3c570739091,df07053529d86aafe2610080e11e86af6d752e0a5190c922db4fa1e8ab45055b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,29664,NA,16,0
+===== q128_regular_small / party 1 =====
+1,128,32,2,2,2,8192,2,8,regular,1,7424,768,4,32,1024,22528,10240,3072,1536,1536,3072,1536,1536,1738752,3287040,233088,4,32,4,2488,4976,2526752,831,421253,pass,415,137.453,20803.8,3358.72,32791.5,8850.2,23.947,1282.59,17284.9,95.802,7258.45,381.725,114.527,123686912,431095808,33395441664,2176654,NA,372088,NA,256,21829,NA,128,128,128,128,yes,NA,3f51acd2d91719320388d3c570739091,df07053529d86aafe2610080e11e86af6d752e0a5190c922db4fa1e8ab45055b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,29664,NA,16,0
+===== q128_regular_small / offline checker =====
+128,32,2,2,2,1,96,15361.5,209.772,pass,pass,pass,pass,176069,128335872,433192960,33393344512,3f51acd2d91719320388d3c570739091,df07053529d86aafe2610080e11e86af6d752e0a5190c922db4fa1e8ab45055b
+
+===== q128_uniform_small / party 0 =====
+0,128,32,2,2,2,8192,2,8,uniform,1,7424,768,4,32,1024,28672,13312,3072,1536,1536,3072,1536,1536,2144256,4098048,283008,4,32,4,2488,4976,2705952,903,416257,pass,451,69.604,20613.9,3984.46,42625.8,8327.07,16.766,825.376,32217.5,99.245,8557.51,460.761,178.268,124715008,565313536,33261223936,2256193,NA,471749,NA,256,21829,NA,128,128,128,128,yes,NA,9ed9649a0c0935a746e3c585fc17ba77,2001535f3d04bf66829cb836407ec034722a5574edba16d9565057b889c507ca,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,29664,NA,16,0
+===== q128_uniform_small / party 1 =====
+1,128,32,2,2,2,8192,2,8,uniform,1,7424,768,4,32,1024,28672,13312,3072,1536,1536,3072,1536,1536,2144256,4098048,283008,4,32,4,2488,4976,2782496,903,416267,pass,451,62.871,20600.5,3991.31,42621.1,8325.22,19.543,3117.09,32183,106.323,8556.44,477.642,172.032,122753024,565313536,33261223936,2333326,NA,471160,NA,256,21829,NA,128,128,128,128,yes,NA,9ed9649a0c0935a746e3c585fc17ba77,2001535f3d04bf66829cb836407ec034722a5574edba16d9565057b889c507ca,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,29664,NA,16,0
+===== q128_uniform_small / offline checker =====
+128,32,2,2,2,1,96,14512,98.985,pass,pass,pass,pass,153094,128344064,433192960,33393344512,9ed9649a0c0935a746e3c585fc17ba77,2001535f3d04bf66829cb836407ec034722a5574edba16d9565057b889c507ca
+
+===== q64_regular_multibatch / party 0 =====
+0,64,16,8,65,16,8192,2,8,regular,2,7424,768,4,16640,1024,22528,10240,3072,768,2304,3072,768,2304,1833984,3382272,233088,4,16640,128,39936,79872,2355460,585,348434,pass,291,26.551,19689.6,4406.15,32811.1,4563.18,23.939,1125.52,17515.3,1129.38,6306.53,428.532,119.736,124993536,431095808,33395441664,1766437,NA,611013,NA,256,21829,NA,128,128,128,128,yes,NA,772770bc2fb4115d86e0777487330d70,08ebeb397a4bf7fb92bcc4eb18e6fc84fa856db12eaa150eb101d1e8ac8967c6,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,13056,NA,16,0
+===== q64_regular_multibatch / party 1 =====
+1,64,16,8,65,16,8192,2,8,regular,2,7424,768,4,16640,1024,22528,10240,3072,768,2304,3072,768,2304,1833984,3382272,233088,4,16640,128,39936,79872,2268676,585,348427,pass,291,254.447,19696.7,4394.36,32809.4,4564.03,25.693,820.534,19240.5,724.091,6308.75,400.372,160.473,123752448,431095808,33395441664,1914858,NA,375808,NA,256,21829,NA,128,128,128,128,yes,NA,772770bc2fb4115d86e0777487330d70,08ebeb397a4bf7fb92bcc4eb18e6fc84fa856db12eaa150eb101d1e8ac8967c6,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,13056,NA,16,0
+===== q64_regular_multibatch / offline checker =====
+64,16,8,65,16,2,13504,15370.8,230.336,pass,pass,pass,pass,154414,128806912,433192960,33393344512,772770bc2fb4115d86e0777487330d70,08ebeb397a4bf7fb92bcc4eb18e6fc84fa856db12eaa150eb101d1e8ac8967c6
+
+===== control_duplicate_id / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_duplicate_id / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_restart_retry / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_restart_retry / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_tail_slot_reuse / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_tail_slot_reuse / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_invocation_collision / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_invocation_collision / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_ledger_truncation / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_ledger_truncation / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_ledger_payload_corruption / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_ledger_payload_corruption / party 1 =====
+[two-party-fc] local preflight failed: work=1 output-absent=1 state-absent=1 paths-disjoint=1 plan=1 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_preflight_mismatch / party 0 =====
+[two-party-linear] authenticated execution rejected
+===== control_preflight_mismatch / party 1 =====
+[two-party-linear] authenticated execution rejected
+
+===== control_stale_output / party 0 =====
+[two-party-fc] local preflight failed: work=1 output-absent=0 state-absent=1 paths-disjoint=1 plan=0 claim=0
+[two-party-linear] authenticated execution rejected
+===== control_stale_output / party 1 =====
+[two-party-linear] authenticated execution rejected
+
+===== control_bootstrap_capacity / party 0 =====
+[two-party-fc] local preflight failed: work=0 output-absent=1 state-absent=1 paths-disjoint=1 plan=0 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+===== control_bootstrap_capacity / party 1 =====
+[two-party-fc] local preflight failed: work=0 output-absent=1 state-absent=1 paths-disjoint=1 plan=0 claim=0
+[two-party-fc] public/local preflight rejected before OT/output
+
+===== control_rename_failure / party 0 =====
+0,64,16,2,2,2,8192,2,8,regular,1,7424,768,2,16,512,11264,5120,1536,768,768,1536,768,768,869376,1643520,116544,4,16,4,1248,2496,1225312,425,394315,FAIL,213,27.999,20629.7,2195.83,23573.9,4466.54,20.064,478.979,8846.88,47.006,4119.82,340.176,98.544,124129280,431095808,33395441664,1054081,NA,193221,NA,256,21829,NA,128,128,128,128,yes,NA,c7b1d2c159498827fc51131438ee0961,2e8d3049c30857080f0ae2f12a4a9a717fac709ecc30608965b80b74aa85aecf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+===== control_rename_failure / party 1 =====
+1,64,16,2,2,2,8192,2,8,regular,1,7424,768,2,16,512,11264,5120,1536,768,768,1536,768,768,869376,1643520,116544,4,16,4,1248,2496,1265504,425,394318,FAIL,213,253.598,20631.9,2188.99,23577.8,4466.93,12.708,3844.57,8751.45,47.887,4119.33,344.076,93.369,123113472,431095808,33395441664,1097034,NA,190460,NA,256,21829,NA,128,128,128,128,yes,NA,c7b1d2c159498827fc51131438ee0961,2e8d3049c30857080f0ae2f12a4a9a717fac709ecc30608965b80b74aa85aecf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,14832,NA,8,0
+
+===== control_checker / corrupt digest =====
+[two-party-fc-check] record validation failed
+===== control_checker / swapped party records =====
+[two-party-fc-check] record validation failed

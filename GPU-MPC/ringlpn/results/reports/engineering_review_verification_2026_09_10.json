@@ -1,0 +1,1489 @@
+{
+  "schema": "ringlpn-engineering-review-v1",
+  "review_date": "2026-09-10",
+  "classification": "internal engineering correctness evidence; not publication authorization or a concrete-security claim",
+  "execution_scope": {
+    "party_gpus": [
+      1,
+      2
+    ],
+    "checker_gpu": 3,
+    "gpu_zero_used": false,
+    "deployment": "separate processes on one shared host; not authenticated two-host deployment"
+  },
+  "functional_observations": {
+    "runner_safety": {
+      "before": {
+        "application-reaped-group": false,
+        "linear-reaped-group": false,
+        "application-single-descendant": false,
+        "run_two_party_fc_preprocess.sh:preserves-ledger": false,
+        "run_two_party_fc_preprocess.sh:rejects-ledger-symlink": false,
+        "run_two_party_fc_model_scale.sh:preserves-ledger": false,
+        "run_two_party_fc_model_scale.sh:rejects-ledger-symlink": false,
+        "nan-timeout": false,
+        "infinite-timeout": false,
+        "gpu-alias": false,
+        "cooperative-capture-bounded": false,
+        "two-host-signal-nonzero": false
+      },
+      "after": {
+        "application-reaped-group": true,
+        "linear-reaped-group": true,
+        "application-single-descendant": true,
+        "run_two_party_fc_preprocess.sh:preserves-ledger": true,
+        "run_two_party_fc_preprocess.sh:rejects-ledger-symlink": true,
+        "run_two_party_fc_model_scale.sh:preserves-ledger": true,
+        "run_two_party_fc_model_scale.sh:rejects-ledger-symlink": true,
+        "nan-timeout": true,
+        "infinite-timeout": true,
+        "gpu-alias": true,
+        "cooperative-capture-bounded": true,
+        "two-host-signal-nonzero": true
+      }
+    },
+    "terminal_boundaries": [
+      {
+        "side": "before",
+        "scenario": "normal",
+        "returncodes": [
+          0,
+          0
+        ],
+        "expected": [
+          0,
+          0
+        ]
+      },
+      {
+        "side": "before",
+        "scenario": "substitute",
+        "returncodes": [
+          0,
+          0
+        ],
+        "expected": [
+          0,
+          0
+        ]
+      },
+      {
+        "side": "before",
+        "scenario": "addbias",
+        "returncodes": [
+          0,
+          0
+        ],
+        "expected": [
+          0,
+          0
+        ]
+      },
+      {
+        "side": "after",
+        "scenario": "normal",
+        "returncodes": [
+          0,
+          0
+        ],
+        "expected": [
+          0,
+          0
+        ]
+      },
+      {
+        "side": "after",
+        "scenario": "substitute",
+        "returncodes": [
+          1,
+          1
+        ],
+        "expected": [
+          1,
+          1
+        ]
+      },
+      {
+        "side": "after",
+        "scenario": "addbias",
+        "returncodes": [
+          1,
+          1
+        ],
+        "expected": [
+          1,
+          1
+        ]
+      },
+      {
+        "scenario": "actual-application-input-fifo",
+        "returncodes": [
+          1,
+          1
+        ],
+        "no_output": true
+      }
+    ],
+    "latest_operation_receipts": [
+      {
+        "label": "runner-safety-before",
+        "returncode": 0,
+        "seconds": 3.021,
+        "log_filename": "runner-safety-before.log",
+        "log_sha256": "c3882f56155ea9dedcf3d813aed219f3981aa2e60eb2ad041b604dd112ee4b4a",
+        "observed_output_root_normalized": "{\n  \"expect\": \"before\",\n  \"safe_behavior\": {\n    \"application-reaped-group\": false,\n    \"linear-reaped-group\": false,\n    \"application-single-descendant\": false,\n    \"run_two_party_fc_preprocess.sh:preserves-ledger\": false,\n    \"run_two_party_fc_preprocess.sh:rejects-ledger-symlink\": false,\n    \"run_two_party_fc_model_scale.sh:preserves-ledger\": false,\n    \"run_two_party_fc_model_scale.sh:rejects-ledger-symlink\": false,\n    \"nan-timeout\": false,\n    \"infinite-timeout\": false,\n    \"gpu-alias\": false,\n    \"cooperative-capture-bounded\": false,\n    \"two-host-signal-nonzero\": false\n  }\n}\n"
+      },
+      {
+        "label": "runner-safety-after",
+        "returncode": 0,
+        "seconds": 1.255,
+        "log_filename": "runner-safety-after.log",
+        "log_sha256": "2f8df04778b8da30114a44aee058b862ae6871f3ef105ad01c0de9bef863b4dc",
+        "observed_output_root_normalized": "{\n  \"expect\": \"after\",\n  \"safe_behavior\": {\n    \"application-reaped-group\": true,\n    \"linear-reaped-group\": true,\n    \"application-single-descendant\": true,\n    \"run_two_party_fc_preprocess.sh:preserves-ledger\": true,\n    \"run_two_party_fc_preprocess.sh:rejects-ledger-symlink\": true,\n    \"run_two_party_fc_model_scale.sh:preserves-ledger\": true,\n    \"run_two_party_fc_model_scale.sh:rejects-ledger-symlink\": true,\n    \"nan-timeout\": true,\n    \"infinite-timeout\": true,\n    \"gpu-alias\": true,\n    \"cooperative-capture-bounded\": true,\n    \"two-host-signal-nonzero\": true\n  }\n}\n"
+      },
+      {
+        "label": "ledger-build-before",
+        "returncode": 0,
+        "seconds": 0.67,
+        "log_filename": "ledger-build-before.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "label": "ledger-before",
+        "returncode": 1,
+        "seconds": 2.009,
+        "log_filename": "ledger-before.log",
+        "log_sha256": "8afcebc747fb48018c70139e488e5a444f344684c39e291b844649df6fbbd953",
+        "observed_output_root_normalized": "concurrent_claims=FAIL\ncorrelation_freshness_control=FAIL\n"
+      },
+      {
+        "label": "ledger-after",
+        "returncode": 0,
+        "seconds": 0.013,
+        "log_filename": "ledger-after.log",
+        "log_sha256": "d921c21ece299ad2fca3143c099c16ea5e99579e2ba80e83edd4da306ad06097",
+        "observed_output_root_normalized": "concurrent_claims=pass\ncorrelation_freshness_control=pass\n"
+      },
+      {
+        "label": "bound-before-valid",
+        "returncode": 1,
+        "seconds": 0.009,
+        "log_filename": "bound-before-valid.log",
+        "log_sha256": "f76c2001d87d55b4c2c444fdff89c90fe5124b9dbaf072438829084038641ade",
+        "observed_output_root_normalized": "[two-party-linear-plan] invalid public work\n"
+      },
+      {
+        "label": "conv-int-before-invalid",
+        "returncode": 0,
+        "seconds": 0.005,
+        "log_filename": "conv-int-before-invalid.log",
+        "log_sha256": "33817ad37ff7ddc8ee8801458748f426def345590b06baa381b97040ff1defbc",
+        "observed_output_root_normalized": "conv,128,32,1,1,9,1,1,7424,768,3,3\n"
+      },
+      {
+        "label": "gpu-uninitialized-before",
+        "returncode": -8,
+        "seconds": 0.096,
+        "log_filename": "gpu-uninitialized-before.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "observed_output_root_normalized": ""
+      },
+      {
+        "label": "gpu-uninitialized-after",
+        "returncode": 0,
+        "seconds": 0.005,
+        "log_filename": "gpu-uninitialized-after.log",
+        "log_sha256": "40a17930417e6f40ccee95b7a9b2fbf4e11950f25f67a21597a46981efc850d7",
+        "observed_output_root_normalized": "uninitialized_rejected=1\n"
+      },
+      {
+        "label": "gpu-build-after",
+        "returncode": 0,
+        "seconds": 24.061,
+        "log_filename": "gpu-build-after.log",
+        "log_sha256": "937600cb1f1dff1e70fe2ce7004d4fb0c178ec4b0ec51565834458329be66202"
+      },
+      {
+        "label": "gpu-unexpanded-before",
+        "returncode": 1,
+        "seconds": 0.253,
+        "log_filename": "gpu-unexpanded-before.log",
+        "log_sha256": "a725902f3d3d84821ad4017fae844946b651d8f3dd84c50c97a0fc0fb2eed811",
+        "observed_output_root_normalized": "unexpanded_pass=0\n"
+      },
+      {
+        "label": "gpu-unexpanded-after",
+        "returncode": 0,
+        "seconds": 0.215,
+        "log_filename": "gpu-unexpanded-after.log",
+        "log_sha256": "038c3a71d09e88a5bfdcb944af8f3e8064e01e7bda49b91ccd817f439407a1e9",
+        "observed_output_root_normalized": "unexpanded_pass=1\n"
+      },
+      {
+        "label": "gpu-ole-unexpanded-before",
+        "returncode": 1,
+        "seconds": 0.216,
+        "log_filename": "gpu-ole-unexpanded-before.log",
+        "log_sha256": "068ba7494f5e6fa3b619bb675483b52b3bdf93a551937cea513a132fc55ccea8",
+        "observed_output_root_normalized": "unexpanded_ole_rejected=0\n"
+      },
+      {
+        "label": "gpu-ole-unexpanded-after",
+        "returncode": 0,
+        "seconds": 0.216,
+        "log_filename": "gpu-ole-unexpanded-after.log",
+        "log_sha256": "87688b7e053553b6eb234bc8217d51cf09406446bc4c5401776e2a765faf6f72",
+        "observed_output_root_normalized": "unexpanded_ole_rejected=1\n"
+      },
+      {
+        "label": "gpu-parity-before",
+        "returncode": 0,
+        "seconds": 0.272,
+        "log_filename": "gpu-parity-before.log",
+        "log_sha256": "686e329d21e41ca1931c6aa641211106de0c80e17889167fe773e6bb51a4733e",
+        "observed_output_root_normalized": "parity_pass=1\n"
+      },
+      {
+        "label": "gpu-parity-after",
+        "returncode": 0,
+        "seconds": 0.273,
+        "log_filename": "gpu-parity-after.log",
+        "log_sha256": "686e329d21e41ca1931c6aa641211106de0c80e17889167fe773e6bb51a4733e",
+        "observed_output_root_normalized": "parity_pass=1\n"
+      },
+      {
+        "label": "empty-ot-build-before",
+        "returncode": 0,
+        "seconds": 1.89,
+        "log_filename": "empty-ot-build-before.log",
+        "log_sha256": "ee79e135d9d18bfb38e176b50653c5f28bd0b3fd90bacd85abf1e71f521a4a36"
+      },
+      {
+        "label": "empty-ot-build-after",
+        "returncode": 0,
+        "seconds": 1.908,
+        "log_filename": "empty-ot-build-after.log",
+        "log_sha256": "360b7f4a1c57a5b19a9c5bd524d488745be7bbdacee77e60d4e68b914ff2fc61"
+      },
+      {
+        "label": "empty-ot-before",
+        "returncodes": [
+          -8,
+          -8
+        ],
+        "log_filename": "empty-ot-before.log",
+        "log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "observed_output_root_normalized": "\n"
+      },
+      {
+        "label": "empty-ot-after",
+        "returncodes": [
+          0,
+          0
+        ],
+        "log_filename": "empty-ot-after.log",
+        "log_sha256": "9b1ee43b4a4442a1d05b27e98df8ccbb6cece608c98a1bdf2057aabfc3d5823b",
+        "observed_output_root_normalized": "empty_OT_then_nonempty_duplex=pass\n\nempty_OT_then_nonempty_duplex=pass\n"
+      },
+      {
+        "label": "evidence-valid-before",
+        "returncode": 0,
+        "seconds": 0.034,
+        "log_filename": "evidence-valid-before.log",
+        "log_sha256": "168990d079656ef854936476fef4cd2152088d35538314e73879f19cc8d7c9ca",
+        "observed_output_root_normalized": "controlled-fc-ab: PASS (30 measured, 3 warmup; critical-party dealer baseline on the same quiescent GPU)\n"
+      },
+      {
+        "label": "evidence-failed-dealer-before",
+        "returncode": 0,
+        "seconds": 0.036,
+        "log_filename": "evidence-failed-dealer-before.log",
+        "log_sha256": "168990d079656ef854936476fef4cd2152088d35538314e73879f19cc8d7c9ca",
+        "observed_output_root_normalized": "controlled-fc-ab: PASS (30 measured, 3 warmup; critical-party dealer baseline on the same quiescent GPU)\n"
+      },
+      {
+        "label": "evidence-zero-dealer-time-before",
+        "returncode": 0,
+        "seconds": 0.037,
+        "log_filename": "evidence-zero-dealer-time-before.log",
+        "log_sha256": "168990d079656ef854936476fef4cd2152088d35538314e73879f19cc8d7c9ca",
+        "observed_output_root_normalized": "controlled-fc-ab: PASS (30 measured, 3 warmup; critical-party dealer baseline on the same quiescent GPU)\n"
+      },
+      {
+        "label": "evidence-duplicate-raw-header-before",
+        "returncode": 0,
+        "seconds": 0.036,
+        "log_filename": "evidence-duplicate-raw-header-before.log",
+        "log_sha256": "168990d079656ef854936476fef4cd2152088d35538314e73879f19cc8d7c9ca",
+        "observed_output_root_normalized": "controlled-fc-ab: PASS (30 measured, 3 warmup; critical-party dealer baseline on the same quiescent GPU)\n"
+      },
+      {
+        "label": "evidence-valid-after",
+        "returncode": 0,
+        "seconds": 0.036,
+        "log_filename": "evidence-valid-after.log",
+        "log_sha256": "168990d079656ef854936476fef4cd2152088d35538314e73879f19cc8d7c9ca",
+        "observed_output_root_normalized": "controlled-fc-ab: PASS (30 measured, 3 warmup; critical-party dealer baseline on the same quiescent GPU)\n"
+      },
+      {
+        "label": "evidence-failed-dealer-after",
+        "returncode": 2,
+        "seconds": 0.036,
+        "log_filename": "evidence-failed-dealer-after.log",
+        "log_sha256": "0837769fb12f79898cc5f7c2e7905c23f79ebd21f12d8531c7a3eb8bc2d1c876",
+        "observed_output_root_normalized": "controlled-fc-ab: bb27eaa366df9670023dd1d0eb9fcd04: matched dealer keygen contract did not pass\n"
+      },
+      {
+        "label": "evidence-zero-dealer-time-after",
+        "returncode": 2,
+        "seconds": 0.034,
+        "log_filename": "evidence-zero-dealer-time-after.log",
+        "log_sha256": "9f866f00a63b67cbdafba789be59c7e988ce6670c620064f94da9fe39698fdf9",
+        "observed_output_root_normalized": "controlled-fc-ab: bb27eaa366df9670023dd1d0eb9fcd04: matched dealer keygen timing must be positive\n"
+      },
+      {
+        "label": "evidence-duplicate-raw-header-after",
+        "returncode": 2,
+        "seconds": 0.034,
+        "log_filename": "evidence-duplicate-raw-header-after.log",
+        "log_sha256": "11ff6d35cad1566eba6c4c2e96d4bbf31dc4cfd7ca2024feed38ca8c93509ed5",
+        "observed_output_root_normalized": "controlled-fc-ab: duplicate CSV header fields: ${REVIEW_WORK}/duplicate-raw-header.csv\n"
+      },
+      {
+        "label": "emp-controls-valid-before",
+        "returncode": 0,
+        "seconds": 0.033,
+        "log_filename": "emp-controls-valid-before.log",
+        "log_sha256": "c9ffd996258e8516e1cde3dbda380d0ee7a9f755ea5528d3d7ebe37379a951bc",
+        "observed_output_root_normalized": "controls accepted\n"
+      },
+      {
+        "label": "emp-controls-duplicate-before",
+        "returncode": 0,
+        "seconds": 0.031,
+        "log_filename": "emp-controls-duplicate-before.log",
+        "log_sha256": "c9ffd996258e8516e1cde3dbda380d0ee7a9f755ea5528d3d7ebe37379a951bc",
+        "observed_output_root_normalized": "controls accepted\n"
+      },
+      {
+        "label": "emp-controls-valid-after",
+        "returncode": 0,
+        "seconds": 0.033,
+        "log_filename": "emp-controls-valid-after.log",
+        "log_sha256": "c9ffd996258e8516e1cde3dbda380d0ee7a9f755ea5528d3d7ebe37379a951bc",
+        "observed_output_root_normalized": "controls accepted\n"
+      },
+      {
+        "label": "emp-controls-duplicate-after",
+        "returncode": 1,
+        "seconds": 0.035,
+        "log_filename": "emp-controls-duplicate-after.log",
+        "log_sha256": "4b4fd7185486dc72d73497a0e00b1097fc47c9c954f478d4d2f3ad6b7b726d81",
+        "observed_output_root_normalized": "emp-silent-fc-evidence: FAIL: duplicate control rogue_first_connector\n"
+      },
+      {
+        "label": "shell-gate-before",
+        "returncode": 91,
+        "seconds": 0.009,
+        "log_filename": "shell-gate-before.log",
+        "log_sha256": "9f290e9291304b90ea8e6f522da83a011c8478b92f7b46f97c5f1a30111a4f24",
+        "observed_output_root_normalized": "[paper-smoke] root: ${REVIEW_WORK}/syntax-before\n[paper-smoke] checking shell script syntax\n[paper-smoke] checking the pinned ResNet18 forward-linear execution manifest\n"
+      },
+      {
+        "label": "shell-gate-after",
+        "returncode": 2,
+        "seconds": 0.01,
+        "log_filename": "shell-gate-after.log",
+        "log_sha256": "eb311addca9ca59070b20c3ef15d1b5e0e6f2155d052002011e56114dc9203f5",
+        "observed_output_root_normalized": "[paper-smoke] root: ${REVIEW_WORK}/syntax-after\n[paper-smoke] checking shell script syntax\n${REVIEW_WORK}/syntax-after/scripts/zzz-broken.sh: line 3: syntax error: unexpected end of file\n"
+      },
+      {
+        "label": "manifest-date-current-before",
+        "returncode": 1,
+        "seconds": 0.028,
+        "log_filename": "manifest-date-current-before.log",
+        "log_sha256": "f2dd69dc039056b432b21b9973670bc38f0ff06eef165fc38d43235acf071c25",
+        "observed_output_root_normalized": "unexpected static publication manifest schema or date\n"
+      },
+      {
+        "label": "manifest-date-invalid-before",
+        "returncode": 1,
+        "seconds": 0.03,
+        "log_filename": "manifest-date-invalid-before.log",
+        "log_sha256": "f2dd69dc039056b432b21b9973670bc38f0ff06eef165fc38d43235acf071c25",
+        "observed_output_root_normalized": "unexpected static publication manifest schema or date\n"
+      },
+      {
+        "label": "manifest-date-current-after",
+        "returncode": 0,
+        "seconds": 0.03,
+        "log_filename": "manifest-date-current-after.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "observed_output_root_normalized": ""
+      },
+      {
+        "label": "manifest-date-invalid-after",
+        "returncode": 1,
+        "seconds": 0.031,
+        "log_filename": "manifest-date-invalid-after.log",
+        "log_sha256": "bcc4d212686d6e6552bed78ef52d90e084b92efd84be88ba2ad6985a2fd082e8",
+        "observed_output_root_normalized": "invalid static publication manifest date\n"
+      },
+      {
+        "label": "linear-api-plan-boundaries",
+        "returncode": 0,
+        "seconds": 0.004,
+        "log_filename": "linear-api-plan-boundaries.log",
+        "log_sha256": "5970a1517bb87055f4d8c7785ac713bdc64714e39f3f4a3d322b4f1a4f5f64b3",
+        "observed_output_root_normalized": "linear-library-api,ok\n"
+      }
+    ],
+    "focused_fc": {
+      "live_cases": 5,
+      "controls": 16,
+      "all_statuses": "pass",
+      "classification": "functional and exact-accounting check, not benchmark cohort",
+      "artifact_identities": [
+        {
+          "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_review_2026_09_10.csv",
+          "sha256": "5205a09eed7e3be0eae2df79f672b93b137d0c842aedf730ade9c6a0f140e413"
+        },
+        {
+          "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_review_controls_2026_09_10.csv",
+          "sha256": "0f83965c0f56c3126ce187719cae4171d9ef5c48bad676ef19aa5828eae622ef"
+        },
+        {
+          "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_review_2026_09_10.log",
+          "sha256": "92f59f4ea441c24ec81cb95c48abe2360a8f417d1287ab1e3c20ea4b046f027b"
+        }
+      ]
+    }
+  },
+  "relocation_reproducibility": {
+    "schema": "ringlpn-application-relocation-review-v1",
+    "classification": "source-only build correctness",
+    "source_recipe": "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh",
+    "source_recipe_sha256": "de55b224bb38ff9d5a4aede8358bf557042d3994912bdb97a2006662b7361ac6",
+    "before": {
+      "equivalent_normalized_inputs": true,
+      "binary_hashes": {
+        "checkout_a": {
+          "orca_inference_ringlpn": "4f4c4daa34d1215a112b9ba63785d3c6e85539baba1c9a23d1f2580276cf6db6",
+          "test_orca_linear_helpers": "2a0e24a18322e4c7b0f4b01bc9dfbbd9458254e04d2d60c4396f6a0ca09a18cb"
+        },
+        "checkout_b": {
+          "orca_inference_ringlpn": "e6e920ab239424aaed07a3b7d02be766db4a28a9509ba3ebb43c7394d772e8f8",
+          "test_orca_linear_helpers": "1b043294fb55d99ae3d53898a2b801e5ce233de58a210c2cd978afce38ed6f34"
+        }
+      }
+    },
+    "after": {
+      "binary_hashes": {
+        "orca_inference_ringlpn": "f00f7b89db5156426eca1df28629a0572addf552339ae83c0648701e538f7885",
+        "test_orca_linear_helpers": "5f702062a3b999451abdff39d3e90a3db6a0769a20aecb924e68f9b4ef5e52b3"
+      },
+      "identical_binaries_and_complete_provenance": true,
+      "provenance_digest": "f2d16c7578f1ca6fd697c69b7702ffa49ab7327c3502b0d6d7dfe9b2c089ff0b",
+      "checkout_build_returncodes": [
+        0,
+        0
+      ],
+      "api_returncodes": [
+        0,
+        0
+      ],
+      "provenance_verification": "both checkouts pass after canonical path removal",
+      "compiler_dependency_groups_unchanged": 10,
+      "environment_and_linked_archives_unchanged": true,
+      "only_changed_input": "application build recipe",
+      "canonical_directory_removed": true
+    },
+    "scope": "Root-distinct host build and API/provenance correctness; not a publication clean-clone gate or runtime performance comparison.",
+    "post_checkpoint_public_build_provenance_unchanged": true
+  },
+  "macro_off_stock_build": {
+    "schema": "ringlpn-macro-off-build-review-v1",
+    "command": "make GPU_ARCH=89 orca_inference",
+    "returncode": 0,
+    "seconds": 31.05,
+    "cuda_architecture": "sm_89",
+    "no_gpu_runtime_used": true,
+    "ringlpn_integration_macro": "not enabled",
+    "ringlpn_archive_link": "absent from observed link command",
+    "artifact": "GPU-MPC/experiments/orca/orca_inference",
+    "artifact_sha256": "89c0e4710533efd90e759b63385e4c366b432bd33829b747ff045f713749eabd",
+    "scope": "stock macro-off application compilation; not a full stock inference run",
+    "warnings": "existing upstream NVCC/C++ warnings emitted"
+  },
+  "performance_evidence": {
+    "path": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_review_2026_09_10.json",
+    "sha256": "79014b3b329551b38c8deee39971267d7bd00a58d9688440618ed2db3c112e0b",
+    "scope": "one FC shape, shared unpinned host, counterbalanced scheduling comparison; not a full-model, GPU, or matched-dealerless speedup"
+  },
+  "paper_evidence": {
+    "path": "GPU-MPC/ringlpn/results/reports/paper_review_verification_2026_09_10.json",
+    "sha256": "2f313e1a2d53a8d153e356ed7291c4675ab1a8d366ace81bd764ec058a32d8bc",
+    "submission_ready": false
+  },
+  "retained_august_artifacts": [
+    {
+      "path": "GPU-MPC/ringlpn/results/application/orca_linear_application_2026_08_24.csv",
+      "sha256": "d9cd4bb8f00e2f927c3856b9cd51fee9f1c37467c6a99977f3fd7712204c11c9",
+      "bytes": 527,
+      "unchanged_from_pre_review": true,
+      "declared_manifest_binding": true
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/application/orca_linear_application_2026_08_24.log",
+      "sha256": "c088cb2b9e8b5db2e892f7f44f5263cde190f69cb91708a38be44ef8eb69fe52",
+      "bytes": 531,
+      "unchanged_from_pre_review": true,
+      "declared_manifest_binding": true
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/application/orca_linear_application_build_provenance_2026_08_24.json",
+      "sha256": "fe193a66cca4c7c119b531b2bebaeb3eb210a877c2da83f7a1274fc26c042301",
+      "bytes": 220791,
+      "unchanged_from_pre_review": true,
+      "declared_manifest_binding": true
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_emp_silent_correctness_2026_08_14.log",
+      "sha256": "72db278850d72adbe684923e8a935d8201f5e7d49e5b6fb0e9884edd0c0980f8",
+      "bytes": 45842,
+      "unchanged_from_pre_review": true,
+      "declared_manifest_binding": false
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.log",
+      "sha256": "32f190d8580b0b92c58efee6967d8253493bf1af256b9a51328f7dbc9ffa0ca2",
+      "bytes": 82763,
+      "unchanged_from_pre_review": true,
+      "declared_manifest_binding": true
+    }
+  ],
+  "public_source_branch": {
+    "name": "ringlpn/clinical-review-2026-09-10",
+    "base": "1433e0a81cc73a23909726092804c3eb33148e02",
+    "head": "a1f006af7357d9a0bc937d26da6c83be0a6793c6",
+    "remote_push": "not authenticated; no successful push",
+    "excludes": "internal master/checkpoint/manuscript ancestry and private records/state/auth material"
+  },
+  "canonical_checkpoint": {
+    "command": "bash ringlpn/scripts/run_paper_checkpoint_smoke.sh",
+    "cwd": "GPU-MPC",
+    "environment": {
+      "PATH_prefix": "/usr/local/cuda/bin",
+      "GPU_ARCH": "89",
+      "RINGLPN_BUILD_JOBS": "4",
+      "RUN_GPU_SMOKE": "1",
+      "REQUIRE_GPU_SMOKE": "1",
+      "CUDA_VISIBLE_DEVICES": "1",
+      "P0_GPU": "1",
+      "P1_GPU": "2",
+      "CHECK_GPU": "3",
+      "ORCA_LINEAR_P0_GPU": "1",
+      "ORCA_LINEAR_P1_GPU": "2",
+      "FULL_GRAPH_P0_GPU": "1",
+      "FULL_GRAPH_P1_GPU": "2",
+      "FULL_GRAPH_CHECK_GPU": "3",
+      "FULL_GRAPH_TRUSTED_GPU": "2",
+      "FULL_GRAPH_SUMMARY_ROOT": "fresh private summary directory"
+    },
+    "returncode": 0,
+    "seconds": 5228.406,
+    "markers": [
+      "[paper-smoke] root: ${REPO}/GPU-MPC/ringlpn",
+      "[paper-smoke] checking shell script syntax",
+      "[paper-smoke] rebuilding reproducible shared linear adapters",
+      "[paper-smoke] building source-bound full ResNet18 graph artifacts",
+      "[paper-smoke] checking the pinned ResNet18 forward-linear execution manifest",
+      "[paper-smoke] checking the compiled full ResNet18 graph contract",
+      "[paper-smoke] running owner-only atomic private-file control",
+      "[paper-smoke] running concurrent consume-once ledger controls",
+      "[paper-smoke] running host public Ring-vector SHAKE/rejection control",
+      "[paper-smoke] building and running host Figure 2 OLE trio",
+      "[paper-smoke] running host Orca Zp-to-Z2k bridge smoke",
+      "[paper-smoke] running host OT-backed Zm-to-Z2k share-conversion component",
+      "[paper-smoke] running host OT-backed stochastic-truncation state handoff",
+      "[paper-smoke] running host distributed DPF keygen prototype (M1 host slice)",
+      "[paper-smoke] running two-process distributed DPF keygen over real OT/TCP",
+      "[paper-smoke] validating approved shared linear adapters and all ResNet18 shapes",
+      "[paper-smoke] building and running Figure 2 OLE GPU smoke",
+      "[paper-smoke] running two-process keygen with the GPU PRG + unmodified GPU evaluator",
+      "[paper-smoke] running the real OLE engine on independently sampled per-party noise and two-party SPFSS keys",
+      "[paper-smoke] building and running linear OLE-to-Beaver GPU smoke",
+      "[paper-smoke] building and running Orca FC Ring-LPN key-writer demo",
+      "[paper-smoke] building and running ideal-OLE FC transcript reference (oracle-backed; not dealerless)",
+      "[paper-smoke] building and running real-OLE slot-packed FC transcript",
+      "[paper-smoke] running source-native terminal Orca linear application gate",
+      "[paper-smoke] building and running the source-bound full ResNet18 graph",
+      "full-graph-runner: FULL GRAPH PASS ccd598f84ec17b0cea3017c4fa2726181172ea6a4f9203f658b503a1e17e89de",
+      "[paper-smoke] complete",
+      "[paper-smoke] ALL GATES PASS"
+    ],
+    "log_sha256": "aec445dc16a6a98ba8e45e6316f694d2c46e86ffb6798c3e9c7dbaef7b95a46c",
+    "scope": "all runtime source corrections; root-stable application build recipe was verified separately after the checkpoint application stage, with no runtime source change",
+    "private_graph_root_removed": true,
+    "marker_display_repository_root_normalized": true
+  },
+  "fresh_graph": {
+    "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_review_2026_09_10",
+    "full_graph_digest": "ccd598f84ec17b0cea3017c4fa2726181172ea6a4f9203f658b503a1e17e89de",
+    "index_sha256": "97028008866d1f0705ce19d251bf80e79955c4b9e0360cea8184b19a8a190d27",
+    "all_indexed_file_hashes_verified": true,
+    "internal_only": true,
+    "contains_private_ledger_path_metadata": true,
+    "contains_raw_records_or_state_or_auth_or_ledger_files": false,
+    "scope": "known-zero full ResNet18, dealerless linear preprocessing and TEST-ONLY trusted nonlinear compatibility material; not trained/private inference or a performance distribution",
+    "checker": {
+      "source_bindings": "pass",
+      "linear_inputs": "pass",
+      "linear_outputs": "pass",
+      "secure_stochastic_truncations": "pass",
+      "stock_key_stream": "pass",
+      "residual_merges": "pass",
+      "global_average_pool": "pass",
+      "state_links": "pass",
+      "terminal_output": "pass",
+      "trace_contract": "pass",
+      "counter_contract": "pass",
+      "stock_nonlinear_key_source": "stock_trusted_dealer_test_only",
+      "scope": "known-zero-full-resnet18",
+      "status": "pass"
+    },
+    "controls": [
+      {
+        "control": "forced_second_rename",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "reused_invocation",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "stale_output",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "party_record_swap",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "truncated_nonlinear_graph_record",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "nonlinear_graph_payload_corruption",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      },
+      {
+        "control": "digest_valid_trace_corruption",
+        "expected_rejection": "pass",
+        "no_partial_output": "pass",
+        "status": "pass"
+      }
+    ]
+  },
+  "focused_runtime_commands": [
+    {
+      "label": "focused-fc-final",
+      "argv": [
+        "bash",
+        "ringlpn/scripts/run_two_party_fc_preprocess.sh"
+      ],
+      "returncode": 0,
+      "seconds": 69.216
+    },
+    {
+      "label": "focused-conv-final",
+      "argv": [
+        "bash",
+        "ringlpn/scripts/run_two_party_conv_preprocess.sh"
+      ],
+      "returncode": 0,
+      "seconds": 1.618
+    }
+  ],
+  "source_commits": {
+    "local_source": "051e7f0e48f4901b6c12911a583eaf015b2da20b",
+    "local_build_relocation": "1f42430d2b8b1aa89d0bf3983ae6abf69fae109b",
+    "public_source": "a1f006af7357d9a0bc937d26da6c83be0a6793c6"
+  },
+  "post_checkpoint_checks": [
+    {
+      "label": "public-application-build",
+      "returncode": 0,
+      "seconds": 221.491,
+      "argv": [
+        "bash",
+        "ringlpn/scripts/build_component.sh",
+        "orca-linear-application"
+      ],
+      "log_sha256": "f1112ec2834d68e552ba9166b1fbeeb643b738e123f29de38bc951176e7b2c40"
+    },
+    {
+      "label": "public-application-runtime",
+      "returncode": 0,
+      "seconds": 17.562,
+      "argv": [
+        "bash",
+        "ringlpn/scripts/run_orca_linear_application.sh"
+      ],
+      "log_sha256": "c088cb2b9e8b5db2e892f7f44f5263cde190f69cb91708a38be44ef8eb69fe52",
+      "observed_output": "linear-library-api,ok\nringlpn-orca-linear-application,fc,pass\nringlpn-orca-linear-application,conv2d,pass\nringlpn-orca-linear-control,wrong-kind,pass\nringlpn-orca-linear-control,wrong-shape,pass\nringlpn-orca-linear-control,wrong-ordinal,pass\nringlpn-orca-linear-control,swapped-state,pass\nringlpn-orca-linear-control,corrupt-state,pass\nringlpn-orca-linear-control,permissive-share-file,pass\nringlpn-orca-linear-control,duplicate-output,pass\nringlpn-orca-linear-control,one-sided-metadata-mismatch,pass\nORCA LINEAR APPLICATION PASS\n"
+    },
+    {
+      "label": "boundary-fc-q64-bw29-inner3",
+      "returncode": 0,
+      "seconds": 0.263,
+      "argv": [
+        "${REPO}/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess",
+        "--check",
+        "--csv-header",
+        "--p0-record",
+        "${REVIEW_WORK}/arithmetic-boundary-runtime/fc/p0/key_p0.fc",
+        "--p1-record",
+        "${REVIEW_WORK}/arithmetic-boundary-runtime/fc/p1/key_p1.fc"
+      ],
+      "log_sha256": "23b050b130aaff747ed83232030905fb04badde5ed919b6f673bc8a2c11252ed",
+      "observed_output": "qbits,bw,rows,inner,cols,ring_batches,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,online_contract,status,checker_us,peak_host_rss_bytes,peak_gpu_bytes,min_gpu_free_bytes,invocation_id,ledger_digest\n64,29,2,3,2,1,128,14980.7,97.92,pass,pass,pass,pass,183137,128253952,433192960,33393344512,7394b4f4f03c2805e2265fb0ed0972aa,e065927220007e048f552f72bf70729a470be0a4da63c9277891087da08ce73e\n"
+    },
+    {
+      "label": "boundary-conv-q64-bw29-inner3",
+      "returncode": 0,
+      "seconds": 0.227,
+      "argv": [
+        "${REPO}/GPU-MPC/ringlpn/bin/test_two_party_conv_preprocess",
+        "--check",
+        "--csv-header",
+        "--p0-record",
+        "${REVIEW_WORK}/arithmetic-boundary-runtime/conv/p0/key_p0.conv",
+        "--p1-record",
+        "${REVIEW_WORK}/arithmetic-boundary-runtime/conv/p1/key_p1.conv"
+      ],
+      "log_sha256": "96cdfe3836832c9d58ee7b5ef7a7015b4f4ac3ae9da7b5faf35647b45c0d4150",
+      "observed_output": "qbits,bw,n,h,w,ci,fh,fw,co,padding,stride,oh,ow,ring_batches,final_payload_bytes_per_party,matched_dealer_keygen_us,checker_two_share_online_us,matched_dealer_keygen_contract,key_order,unchanged_online_contract,status,checker_us,peak_host_rss_bytes,peak_gpu_bytes,min_gpu_free_bytes,invocation_id,ledger_digest\n64,29,1,2,2,3,1,1,2,0,1,2,2,1,208,14775.2,116.154,pass,pass,pass,pass,148248,127565824,433192960,33393344512,8ba2dc67d24993e47cf5ad3bd50b5720,612b0eaacaa4695c6ff60ec2b3b0eb30ba62c4d7a3261eeb020839fcafbfd3c1\n"
+    }
+  ],
+  "arithmetic_boundary": {
+    "qbits": 64,
+    "bw": 29,
+    "inner": 3,
+    "producer_rows": {
+      "fc": [
+        {
+          "party": "0",
+          "qbits": "64",
+          "bw": "29",
+          "rows": "2",
+          "inner": "3",
+          "cols": "2",
+          "ole_n": "8192",
+          "ole_c": "2",
+          "ole_t": "8",
+          "noise": "regular",
+          "ring_batches": "1",
+          "ring_application_slots": "7424",
+          "ring_bootstrap_slots": "768",
+          "ring_ole_instances": "2",
+          "slots_used": "24",
+          "dpf_trees": "512",
+          "dpf_string_ots": "11264",
+          "dpf_bit_triples": "5120",
+          "dpf_scalar_oles": "1536",
+          "dpf_epoch_zero_scalar_oles": "768",
+          "dpf_pcg_scalar_oles": "768",
+          "dpf_pcg_oles_reserved": "1536",
+          "dpf_pcg_oles_discarded": "768",
+          "dpf_pcg_opening_words_sent": "768",
+          "dpf_logical_opened_bits": "869376",
+          "dpf_meaningful_share_bits": "1643520",
+          "spfss_key_bytes": "116544",
+          "public_a_seed_words_sent": "4",
+          "derandomization_words_sent": "24",
+          "conversions": "4",
+          "conversion_logical_opened_bits": "1248",
+          "conversion_meaningful_share_bits": "2496",
+          "protocol_bytes_sent": "1225376",
+          "protocol_direction_switches": "425",
+          "total_us": "323656",
+          "status": "pass",
+          "protocol_dependency_rounds": "213",
+          "preflight_us": "20.948",
+          "ot_setup_us": "21730.2",
+          "dpf_phase_a_us": "1542.91",
+          "dpf_phase_b_us": "20095.6",
+          "dpf_phase_c_us": "4358.83",
+          "spfss_grouping_us": "14.179",
+          "public_polynomial_exchange_us": "491.883",
+          "gpu_ringlpn_expansion_us": "9001.49",
+          "derandomization_openings_us": "48.955",
+          "conversion_us": "4207.55",
+          "serialization_us": "287.897",
+          "commit_us": "102.183",
+          "peak_host_rss_bytes": "123723776",
+          "peak_gpu_bytes": "431095808",
+          "min_gpu_free_bytes": "33395441664",
+          "transport_straight_bytes_sent": "1054145",
+          "transport_straight_bytes_received": "NA",
+          "transport_reversed_bytes_sent": "193221",
+          "transport_reversed_bytes_received": "NA",
+          "base_ots": "256",
+          "base_ot_setup_bytes_sent": "21829",
+          "base_ot_setup_bytes_received": "NA",
+          "channel_auth_straight_bytes_sent": "128",
+          "channel_auth_straight_bytes_received": "128",
+          "channel_auth_reversed_bytes_sent": "128",
+          "channel_auth_reversed_bytes_received": "128",
+          "transport_bytes_include_base_ot": "yes",
+          "base_ot_setup_dependency_rounds": "NA",
+          "invocation_id": "7394b4f4f03c2805e2265fb0ed0972aa",
+          "ledger_digest": "e065927220007e048f552f72bf70729a470be0a4da63c9277891087da08ce73e",
+          "ot_backend": "sci-iknp",
+          "ot_backend_revision": "SCI-IKNP-IN-TREE",
+          "ot_correlation_straight_bytes_sent": "NA",
+          "ot_correlation_straight_bytes_received": "NA",
+          "ot_correlation_reversed_bytes_sent": "NA",
+          "ot_correlation_reversed_bytes_received": "NA",
+          "ot_adjustment_bytes_sent": "NA",
+          "ot_adjustment_bytes_received": "NA",
+          "ot_ciphertext_bytes_sent": "NA",
+          "ot_ciphertext_bytes_received": "NA",
+          "ot_inventory_straight_declared": "NA",
+          "ot_inventory_straight_consumed": "NA",
+          "ot_inventory_reversed_declared": "NA",
+          "ot_inventory_reversed_consumed": "NA",
+          "ot_backend_review_status": "existing-default",
+          "ring_application_slots_discarded": "14824",
+          "ot_backend_bridge_sha256": "NA",
+          "dpf_breadth_evaluator_calls": "8",
+          "dpf_root_to_leaf_evaluator_calls": "0"
+        },
+        {
+          "party": "1",
+          "qbits": "64",
+          "bw": "29",
+          "rows": "2",
+          "inner": "3",
+          "cols": "2",
+          "ole_n": "8192",
+          "ole_c": "2",
+          "ole_t": "8",
+          "noise": "regular",
+          "ring_batches": "1",
+          "ring_application_slots": "7424",
+          "ring_bootstrap_slots": "768",
+          "ring_ole_instances": "2",
+          "slots_used": "24",
+          "dpf_trees": "512",
+          "dpf_string_ots": "11264",
+          "dpf_bit_triples": "5120",
+          "dpf_scalar_oles": "1536",
+          "dpf_epoch_zero_scalar_oles": "768",
+          "dpf_pcg_scalar_oles": "768",
+          "dpf_pcg_oles_reserved": "1536",
+          "dpf_pcg_oles_discarded": "768",
+          "dpf_pcg_opening_words_sent": "768",
+          "dpf_logical_opened_bits": "869376",
+          "dpf_meaningful_share_bits": "1643520",
+          "spfss_key_bytes": "116544",
+          "public_a_seed_words_sent": "4",
+          "derandomization_words_sent": "24",
+          "conversions": "4",
+          "conversion_logical_opened_bits": "1248",
+          "conversion_meaningful_share_bits": "2496",
+          "protocol_bytes_sent": "1265568",
+          "protocol_direction_switches": "425",
+          "total_us": "323660",
+          "status": "pass",
+          "protocol_dependency_rounds": "213",
+          "preflight_us": "10.036",
+          "ot_setup_us": "21728.5",
+          "dpf_phase_a_us": "1540.7",
+          "dpf_phase_b_us": "20093.9",
+          "dpf_phase_c_us": "4356.38",
+          "spfss_grouping_us": "12.131",
+          "public_polynomial_exchange_us": "1961.78",
+          "gpu_ringlpn_expansion_us": "9025.34",
+          "derandomization_openings_us": "50.727",
+          "conversion_us": "4207.46",
+          "serialization_us": "255.174",
+          "commit_us": "133.046",
+          "peak_host_rss_bytes": "123371520",
+          "peak_gpu_bytes": "431095808",
+          "min_gpu_free_bytes": "33395441664",
+          "transport_straight_bytes_sent": "1097098",
+          "transport_straight_bytes_received": "NA",
+          "transport_reversed_bytes_sent": "190460",
+          "transport_reversed_bytes_received": "NA",
+          "base_ots": "256",
+          "base_ot_setup_bytes_sent": "21829",
+          "base_ot_setup_bytes_received": "NA",
+          "channel_auth_straight_bytes_sent": "128",
+          "channel_auth_straight_bytes_received": "128",
+          "channel_auth_reversed_bytes_sent": "128",
+          "channel_auth_reversed_bytes_received": "128",
+          "transport_bytes_include_base_ot": "yes",
+          "base_ot_setup_dependency_rounds": "NA",
+          "invocation_id": "7394b4f4f03c2805e2265fb0ed0972aa",
+          "ledger_digest": "e065927220007e048f552f72bf70729a470be0a4da63c9277891087da08ce73e",
+          "ot_backend": "sci-iknp",
+          "ot_backend_revision": "SCI-IKNP-IN-TREE",
+          "ot_correlation_straight_bytes_sent": "NA",
+          "ot_correlation_straight_bytes_received": "NA",
+          "ot_correlation_reversed_bytes_sent": "NA",
+          "ot_correlation_reversed_bytes_received": "NA",
+          "ot_adjustment_bytes_sent": "NA",
+          "ot_adjustment_bytes_received": "NA",
+          "ot_ciphertext_bytes_sent": "NA",
+          "ot_ciphertext_bytes_received": "NA",
+          "ot_inventory_straight_declared": "NA",
+          "ot_inventory_straight_consumed": "NA",
+          "ot_inventory_reversed_declared": "NA",
+          "ot_inventory_reversed_consumed": "NA",
+          "ot_backend_review_status": "existing-default",
+          "ring_application_slots_discarded": "14824",
+          "ot_backend_bridge_sha256": "NA",
+          "dpf_breadth_evaluator_calls": "8",
+          "dpf_root_to_leaf_evaluator_calls": "0"
+        }
+      ],
+      "conv": [
+        {
+          "party": "0",
+          "qbits": "64",
+          "bw": "29",
+          "n": "1",
+          "h": "2",
+          "w": "2",
+          "ci": "3",
+          "fh": "1",
+          "fw": "1",
+          "co": "2",
+          "padding": "0",
+          "stride": "1",
+          "oh": "2",
+          "ow": "2",
+          "ole_n": "8192",
+          "ole_c": "2",
+          "ole_t": "8",
+          "noise": "regular",
+          "ring_batches": "1",
+          "ring_application_slots": "7424",
+          "ring_bootstrap_slots": "768",
+          "ring_ole_instances": "2",
+          "slots_used": "48",
+          "dpf_trees": "512",
+          "dpf_string_ots": "11264",
+          "dpf_bit_triples": "5120",
+          "dpf_scalar_oles": "1536",
+          "dpf_epoch_zero_scalar_oles": "768",
+          "dpf_pcg_scalar_oles": "768",
+          "dpf_pcg_oles_reserved": "1536",
+          "dpf_pcg_oles_discarded": "768",
+          "dpf_pcg_opening_words_sent": "768",
+          "dpf_logical_opened_bits": "869376",
+          "dpf_meaningful_share_bits": "1643520",
+          "spfss_key_bytes": "116544",
+          "public_a_seed_words_sent": "4",
+          "derandomization_words_sent": "48",
+          "conversions": "8",
+          "conversion_logical_opened_bits": "2496",
+          "conversion_meaningful_share_bits": "4992",
+          "protocol_bytes_sent": "1242640",
+          "protocol_direction_switches": "425",
+          "total_us": "321240",
+          "status": "pass",
+          "protocol_dependency_rounds": "213",
+          "preflight_us": "25.773",
+          "ot_setup_us": "23093.5",
+          "dpf_phase_a_us": "2171.66",
+          "dpf_phase_b_us": "22685.9",
+          "dpf_phase_c_us": "4186.41",
+          "spfss_grouping_us": "12.317",
+          "public_polynomial_exchange_us": "481.907",
+          "gpu_ringlpn_expansion_us": "8671.53",
+          "derandomization_openings_us": "43.714",
+          "conversion_us": "4047",
+          "serialization_us": "323.419",
+          "commit_us": "102.689",
+          "peak_host_rss_bytes": "123482112",
+          "peak_gpu_bytes": "431095808",
+          "min_gpu_free_bytes": "33395441664",
+          "transport_straight_bytes_sent": "1063249",
+          "transport_straight_bytes_received": "NA",
+          "transport_reversed_bytes_sent": "201413",
+          "transport_reversed_bytes_received": "NA",
+          "base_ots": "256",
+          "base_ot_setup_bytes_sent": "21829",
+          "base_ot_setup_bytes_received": "NA",
+          "channel_auth_straight_bytes_sent": "128",
+          "channel_auth_straight_bytes_received": "128",
+          "channel_auth_reversed_bytes_sent": "128",
+          "channel_auth_reversed_bytes_received": "128",
+          "transport_bytes_include_base_ot": "yes",
+          "base_ot_setup_dependency_rounds": "NA",
+          "invocation_id": "8ba2dc67d24993e47cf5ad3bd50b5720",
+          "ledger_digest": "612b0eaacaa4695c6ff60ec2b3b0eb30ba62c4d7a3261eeb020839fcafbfd3c1",
+          "ot_backend": "sci-iknp",
+          "ot_backend_revision": "SCI-IKNP-IN-TREE",
+          "ot_correlation_straight_bytes_sent": "NA",
+          "ot_correlation_straight_bytes_received": "NA",
+          "ot_correlation_reversed_bytes_sent": "NA",
+          "ot_correlation_reversed_bytes_received": "NA",
+          "ot_adjustment_bytes_sent": "NA",
+          "ot_adjustment_bytes_received": "NA",
+          "ot_ciphertext_bytes_sent": "NA",
+          "ot_ciphertext_bytes_received": "NA",
+          "ot_inventory_straight_declared": "NA",
+          "ot_inventory_straight_consumed": "NA",
+          "ot_inventory_reversed_declared": "NA",
+          "ot_inventory_reversed_consumed": "NA",
+          "ot_backend_review_status": "existing-default",
+          "ring_application_slots_discarded": "14800",
+          "ot_backend_bridge_sha256": "NA",
+          "dpf_breadth_evaluator_calls": "8",
+          "dpf_root_to_leaf_evaluator_calls": "0"
+        },
+        {
+          "party": "1",
+          "qbits": "64",
+          "bw": "29",
+          "n": "1",
+          "h": "2",
+          "w": "2",
+          "ci": "3",
+          "fh": "1",
+          "fw": "1",
+          "co": "2",
+          "padding": "0",
+          "stride": "1",
+          "oh": "2",
+          "ow": "2",
+          "ole_n": "8192",
+          "ole_c": "2",
+          "ole_t": "8",
+          "noise": "regular",
+          "ring_batches": "1",
+          "ring_application_slots": "7424",
+          "ring_bootstrap_slots": "768",
+          "ring_ole_instances": "2",
+          "slots_used": "48",
+          "dpf_trees": "512",
+          "dpf_string_ots": "11264",
+          "dpf_bit_triples": "5120",
+          "dpf_scalar_oles": "1536",
+          "dpf_epoch_zero_scalar_oles": "768",
+          "dpf_pcg_scalar_oles": "768",
+          "dpf_pcg_oles_reserved": "1536",
+          "dpf_pcg_oles_discarded": "768",
+          "dpf_pcg_opening_words_sent": "768",
+          "dpf_logical_opened_bits": "869376",
+          "dpf_meaningful_share_bits": "1643520",
+          "spfss_key_bytes": "116544",
+          "public_a_seed_words_sent": "4",
+          "derandomization_words_sent": "48",
+          "conversions": "8",
+          "conversion_logical_opened_bits": "2496",
+          "conversion_meaningful_share_bits": "4992",
+          "protocol_bytes_sent": "1278736",
+          "protocol_direction_switches": "425",
+          "total_us": "320438",
+          "status": "pass",
+          "protocol_dependency_rounds": "213",
+          "preflight_us": "30.017",
+          "ot_setup_us": "23897.8",
+          "dpf_phase_a_us": "2170.46",
+          "dpf_phase_b_us": "22695.2",
+          "dpf_phase_c_us": "4181.76",
+          "spfss_grouping_us": "18.883",
+          "public_polynomial_exchange_us": "3011.61",
+          "gpu_ringlpn_expansion_us": "8564.6",
+          "derandomization_openings_us": "45.737",
+          "conversion_us": "4046.44",
+          "serialization_us": "324.534",
+          "commit_us": "103.059",
+          "peak_host_rss_bytes": "122355712",
+          "peak_gpu_bytes": "431095808",
+          "min_gpu_free_bytes": "33395441664",
+          "transport_straight_bytes_sent": "1110174",
+          "transport_straight_bytes_received": "NA",
+          "transport_reversed_bytes_sent": "190584",
+          "transport_reversed_bytes_received": "NA",
+          "base_ots": "256",
+          "base_ot_setup_bytes_sent": "21829",
+          "base_ot_setup_bytes_received": "NA",
+          "channel_auth_straight_bytes_sent": "128",
+          "channel_auth_straight_bytes_received": "128",
+          "channel_auth_reversed_bytes_sent": "128",
+          "channel_auth_reversed_bytes_received": "128",
+          "transport_bytes_include_base_ot": "yes",
+          "base_ot_setup_dependency_rounds": "NA",
+          "invocation_id": "8ba2dc67d24993e47cf5ad3bd50b5720",
+          "ledger_digest": "612b0eaacaa4695c6ff60ec2b3b0eb30ba62c4d7a3261eeb020839fcafbfd3c1",
+          "ot_backend": "sci-iknp",
+          "ot_backend_revision": "SCI-IKNP-IN-TREE",
+          "ot_correlation_straight_bytes_sent": "NA",
+          "ot_correlation_straight_bytes_received": "NA",
+          "ot_correlation_reversed_bytes_sent": "NA",
+          "ot_correlation_reversed_bytes_received": "NA",
+          "ot_adjustment_bytes_sent": "NA",
+          "ot_adjustment_bytes_received": "NA",
+          "ot_ciphertext_bytes_sent": "NA",
+          "ot_ciphertext_bytes_received": "NA",
+          "ot_inventory_straight_declared": "NA",
+          "ot_inventory_straight_consumed": "NA",
+          "ot_inventory_reversed_declared": "NA",
+          "ot_inventory_reversed_consumed": "NA",
+          "ot_backend_review_status": "existing-default",
+          "ring_application_slots_discarded": "14800",
+          "ot_backend_bridge_sha256": "NA",
+          "dpf_breadth_evaluator_calls": "8",
+          "dpf_root_to_leaf_evaluator_calls": "0"
+        }
+      ]
+    },
+    "case_parameters": {
+      "fc": {
+        "rows": 2,
+        "inner": 3,
+        "cols": 2
+      },
+      "conv": {
+        "n": 1,
+        "h": 2,
+        "w": 2,
+        "ci": 3,
+        "fh": 1,
+        "fw": 1,
+        "co": 2,
+        "padding": 0,
+        "stride": 1
+      }
+    },
+    "scope": "fresh actual two-party preprocessing and stock online checker; single functional run per kind, not a performance comparison"
+  },
+  "historical_preservation": {
+    "reference": "pre-review byte snapshot, not Git HEAD",
+    "previously_changed_artifacts_verified": 50,
+    "all_match_initial_bytes": true,
+    "additional_restorations_required_at_final_step": 0,
+    "fresh_smoke_outputs_retained_as": "complete canonical command log and dated FC/full-graph summaries; no separate fresh-smoke-outputs directory was created",
+    "current_contracts_and_approvals_restored": false,
+    "original_august_graph_byte_unchanged": true,
+    "artifacts": [
+      {
+        "path": "conv/two_party_conv_preprocess_2026_08_04.csv",
+        "historical_sha256": "13b552996ffbd4b90bec7f221421a457bbf3299cab176d4ae7eab94a67652dd3"
+      },
+      {
+        "path": "dpf/distributed_dpf_keygen_prototype.csv",
+        "historical_sha256": "4b8c3208a4e12b483c27347d55289b510746617b3a66fc6ca954a07cee908971"
+      },
+      {
+        "path": "dpf/distributed_dpf_keygen_prototype.log",
+        "historical_sha256": "03ded562dc427cea03e279feb0703b955b3218b40e550d0b3ae0292e69a311fc"
+      },
+      {
+        "path": "dpf/two_party_dpf_keygen_2026_07_29.csv",
+        "historical_sha256": "2369b9fc2a85c6bf6a69ffecbea22d12198d726f380241dee45336822c6d26b2"
+      },
+      {
+        "path": "dpf/two_party_dpf_keygen_2026_07_29.log",
+        "historical_sha256": "2216a2c528cc7ae37d41edeb4df906c1ea858fef95452d5d185647358d0bf664"
+      },
+      {
+        "path": "dpf/two_party_dpf_validate_2026_07_29.csv",
+        "historical_sha256": "1d9183c21ba2169cddcd5d59e221dfd1b2524ad69f9ffb7ffdd02545acc19b41"
+      },
+      {
+        "path": "dpf/two_party_gpu_dpf_2026_07_29.csv",
+        "historical_sha256": "ed9ca9bb256b0c795e7a395327c8fd4d43494da6a7104df509229fe2a47f746c"
+      },
+      {
+        "path": "dpf/two_party_gpu_dpf_2026_07_29.log",
+        "historical_sha256": "394453c1718d7c1e435d7baf7ea126ebf0503d49e42a09d378c73a34d277d551"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_regular_r2_k2_c2_n8192_t8.csv",
+        "historical_sha256": "61994e2ba17aacb0a2dd78f522d54a20b2337a3c2d936cbef6213abfc0e5995a"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_regular_r2_k2_c2_n8192_t8.log",
+        "historical_sha256": "61994e2ba17aacb0a2dd78f522d54a20b2337a3c2d936cbef6213abfc0e5995a"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_regular_r2_k2_c2_n8192_t8.md",
+        "historical_sha256": "c0742f0733f19511a2252d0ca842a762ba4c4430b47fb511e247da1edc1f3de8"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_uniform_r2_k2_c2_n8192_t8.csv",
+        "historical_sha256": "d513298aef1f7e34b96a6934902689b4d88c1c7436bfb857f51cf3f911f9d602"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_uniform_r2_k2_c2_n8192_t8.log",
+        "historical_sha256": "d513298aef1f7e34b96a6934902689b4d88c1c7436bfb857f51cf3f911f9d602"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q128_uniform_r2_k2_c2_n8192_t8.md",
+        "historical_sha256": "fb2811386c91109a0c1605c58e4d2a2e55d4382d58bcf84564735085811a78a7"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.csv",
+        "historical_sha256": "a77d156af5dc93dc884c1244c1e0d73fd97e1e9ee219fe618bc6c48025277c1a"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.log",
+        "historical_sha256": "a77d156af5dc93dc884c1244c1e0d73fd97e1e9ee219fe618bc6c48025277c1a"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_regular_r2_k2_c2_n8192_t8.md",
+        "historical_sha256": "24d9dd5e3ca833ce2a9b591bc3e6a55798e394dce5a44d6de48428fc28173899"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.csv",
+        "historical_sha256": "dd253fe4b27010c246cb5cb5bb0889ebf7d6d036e25338eb6dfc2959e0e508e8"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.log",
+        "historical_sha256": "dd253fe4b27010c246cb5cb5bb0889ebf7d6d036e25338eb6dfc2959e0e508e8"
+      },
+      {
+        "path": "linear_ole/linear_ole_gpu_q64_uniform_r2_k2_c2_n8192_t8.md",
+        "historical_sha256": "90f3a1a5d0acec9f9f481397748dbe8ad7fb465804b6e615e6b464e995766860"
+      },
+      {
+        "path": "ole/ole_gpu_q128_regular_c2_t8_smoke.csv",
+        "historical_sha256": "bbf95c7ec9797a2f19bf53234bf0c88c6c9625a446ebc99da31d2fcff201e552"
+      },
+      {
+        "path": "ole/ole_gpu_q128_regular_c2_t8_smoke.log",
+        "historical_sha256": "c2d82d1497f8874065a79b90ad87b62b6e7f2b2e1377aba7910c9ce898c524dd"
+      },
+      {
+        "path": "ole/ole_gpu_q128_regular_c2_t8_smoke.md",
+        "historical_sha256": "91596c318bf510bc0f1ffef55d7fe3019bc82ea3c01cf5af43c1aab1e184dd6f"
+      },
+      {
+        "path": "ole/ole_gpu_q128_uniform_c2_t8_smoke.csv",
+        "historical_sha256": "adaec5b3b627e60d773c26a5875d16819e32b7e4137b5f5bc0594c1304ee87e9"
+      },
+      {
+        "path": "ole/ole_gpu_q128_uniform_c2_t8_smoke.log",
+        "historical_sha256": "eed65ba00f314c00892ebd607494058c474b3d23a52497551fdae94ba6d36235"
+      },
+      {
+        "path": "ole/ole_gpu_q128_uniform_c2_t8_smoke.md",
+        "historical_sha256": "bd38b18bab1e9779a5e5fb96f53d2355810c5dc242df836098e03a3cb88542d8"
+      },
+      {
+        "path": "ole/ole_gpu_q64_regular_c2_t8_smoke.csv",
+        "historical_sha256": "24d2ffbbac24a88a102fc525af35853ac26246b0d0bf3fea3a3215d8c53cf0f2"
+      },
+      {
+        "path": "ole/ole_gpu_q64_regular_c2_t8_smoke.log",
+        "historical_sha256": "a6d18a3ffcb332d58e4ee1e6814a6ac3c417acc6929ab2016fd69f7da9814a26"
+      },
+      {
+        "path": "ole/ole_gpu_q64_regular_c2_t8_smoke.md",
+        "historical_sha256": "f7a23abbf03e8bc7d7cf585cd6d05ea517ebcf71417a00476d5588135ee3dff6"
+      },
+      {
+        "path": "ole/ole_gpu_q64_uniform_c2_t8_smoke.csv",
+        "historical_sha256": "79189c9cb4758ffa85b9bf4a701c02885aa296ba0cc5e3c7733955e27f9dc1db"
+      },
+      {
+        "path": "ole/ole_gpu_q64_uniform_c2_t8_smoke.log",
+        "historical_sha256": "8a7f2ac6668258b7c389025b926c966127b4ff2828510119e71ed71168e8f0ec"
+      },
+      {
+        "path": "ole/ole_gpu_q64_uniform_c2_t8_smoke.md",
+        "historical_sha256": "d2b3564505e2267d84417f3544123a7221d5844d09f15bd23a6562e47a6d0779"
+      },
+      {
+        "path": "ole/ole_two_party_keygen_q128_regular_c2_t8_n8192.csv",
+        "historical_sha256": "3d8dec515aaadd1450481fa6c9f0d43582d1254b5600ee2c4939c2c7d8e398cd"
+      },
+      {
+        "path": "ole/ole_two_party_keygen_q128_uniform_c2_t8_n8192.csv",
+        "historical_sha256": "0b33d8e095f28fefbb7ec7cba5247bd70f848952a931bf0ae86f9f770c10f61f"
+      },
+      {
+        "path": "ole/ole_two_party_keygen_q64_regular_c2_t8_n8192.csv",
+        "historical_sha256": "09db3c4691e14d81d40431dbae1b57ab4fa3f11ee1360014f66dc14fb0f74633"
+      },
+      {
+        "path": "ole/ole_two_party_keygen_q64_uniform_c2_t8_n8192.csv",
+        "historical_sha256": "6f157cf899e49d22aeda2c1ae1381fb324610e36125b0ab3c043f483b066bd24"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q128_regular_c2_t8_n8192.csv",
+        "historical_sha256": "20852b96e6b914c00495c19a3db36600e334791701c7ec7db727712e3928adbe"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q128_regular_c2_t8_n8192.log",
+        "historical_sha256": "4bea3ee9786ebc55cc42adf0be52f79fdc148d81ccf4f040041a819ec7f891d1"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q128_uniform_c2_t8_n8192.csv",
+        "historical_sha256": "0c30b2a5ccd7588961f54f4b6167d5927aa84687e28c41668d32ec143dc63baa"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q128_uniform_c2_t8_n8192.log",
+        "historical_sha256": "429c1867c02ed557a56e1e669ce9997bd2e2e7d36bb182748624e0080e6d0fae"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q64_regular_c2_t8_n8192.csv",
+        "historical_sha256": "30393eea82d519af4e856034260ddf3956d9863f97f6a2356d72c4c21c3031da"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q64_regular_c2_t8_n8192.log",
+        "historical_sha256": "71c0369cadbaf470a77ed0d6b89998c43dcb3070c13064d3ac8c75f6bd4f4db5"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q64_uniform_c2_t8_n8192.csv",
+        "historical_sha256": "56c6738af1cfcc4d6150a5e3597c6ee83f6303e4b4958820606eb1d6f7ba7d2c"
+      },
+      {
+        "path": "ole/ole_two_party_keys_q64_uniform_c2_t8_n8192.log",
+        "historical_sha256": "50d0f0c41505249092b10efbd97dcefdb7729be83439e43b72121e41c1670769"
+      },
+      {
+        "path": "orca_fc/orca_fc_real_ole_transcript_transcript_suite.csv",
+        "historical_sha256": "1fe2140eb3a9346ca33fb5f34968dcdd83fb7c1b18bace84ec2c80f0ddd3977d"
+      },
+      {
+        "path": "orca_fc/orca_fc_real_ole_transcript_transcript_suite.log",
+        "historical_sha256": "1826acf9684a2e1fd8ac39696cc8f63c2bc83ee4d1bc21bdeaaa618d8c513e30"
+      },
+      {
+        "path": "secure_convert/secure_convert_two_party_2026_08_03.csv",
+        "historical_sha256": "35fc37464c53b3c3ddeef9b7055dfa699f3ad766cfabf5827d54456a8f768de1"
+      },
+      {
+        "path": "secure_convert/secure_convert_two_party_2026_08_03.log",
+        "historical_sha256": "716fb0fae4521798f6f518314ab01d7ec5a38be6b708d04430314ae46dc12109"
+      },
+      {
+        "path": "secure_truncate/secure_truncate_2026_08_06.log",
+        "historical_sha256": "8cbff7265f6a22784425bda34826398339f9c933fbc7d06d41a1ba17ebf3fe90"
+      },
+      {
+        "path": "secure_truncate/secure_truncate_check_2026_08_06.csv",
+        "historical_sha256": "f1fe8704608c64a2b74ad917c28baf9503aeb52b3aa2f421aa15495d0c805a5c"
+      }
+    ]
+  },
+  "private_fixture_cleanup": {
+    "completed_probe_directories": [
+      "fc-worker-experiment",
+      "fc-worker-polled-experiment",
+      "fc-worker-aborted-warmup",
+      "terminal-boundary",
+      "application",
+      "conv-runner-before",
+      "conv-runner-after",
+      "syntax-before",
+      "syntax-after"
+    ],
+    "arithmetic_boundary_runtime_removed": true,
+    "full_graph_runtime_removed": true,
+    "retained": "observations, logs, metadata, source snapshots, and public source worktree; no raw record/state/auth/ledger fixtures",
+    "completed_throwaway_scaffolds_removed": [
+      {
+        "filename": "validate_application_relocation.py",
+        "sha256": "95adcde21d5fb69259b30afed5e2258d5f0fecb1eb10225fdc1848f9c1dea2dd"
+      },
+      {
+        "filename": "verify_final_pdf_stage.py",
+        "sha256": "b5fe0ba536f7a7c6180e587b06608406a0be5e99c2258a54237fa00d299d23c0"
+      },
+      {
+        "filename": "post_checkpoint_verification.py",
+        "sha256": "793172e8d5586f54391aea722a8359ac32ea3b5d675cd9dc3594f1059413f168"
+      },
+      {
+        "filename": "checkpoint_approved.py",
+        "sha256": "73f3ba24fc4b5faffa79e0a7fdab01334ea51dbd3d89f1c4eff545f442361eca"
+      },
+      {
+        "filename": "build_review_paper.py",
+        "sha256": "e5c0f3f0af3f17de3588f52afb2e8e16a59d217873cf9e1e3d744b80b0ded1c4"
+      },
+      {
+        "filename": "retry_checkpoint.py",
+        "sha256": "3666bfe5beac002ac70070e70e59625f95fad1cd48e3dcdcfef26f5583ddde54"
+      },
+      {
+        "filename": "run_final_validation.py",
+        "sha256": "f897286562701388a762de60ad100fa1dc10dc54acae401f31d24e9d058c3bdf"
+      },
+      {
+        "filename": "terminal-probe-after",
+        "sha256": "a2a89b1f5a9970cde7557e6d8e178fd94cb15e0dd3c7de371e6c613ccd35b43c"
+      },
+      {
+        "filename": "terminal-probe-before",
+        "sha256": "4e41ed9e0c80db58eea6e45f8b619d05f3d73420392bc741b3b6ed4be123733a"
+      },
+      {
+        "filename": "benchmark_fc_worker.py",
+        "sha256": "f7a9cd1f4add5bc227817d59da4d78f767a0b5950e6ce3f54fbce71b1ed7330d"
+      },
+      {
+        "filename": "terminal_probe.cu",
+        "sha256": "4dd36738731613c85f988bbc3945c5a01a65bc2491e77494d471f102110bce3e"
+      },
+      {
+        "filename": "confirm_graph_rebuild.py",
+        "sha256": "b8cd8c3fd487487a7e3724373bfe89bc8f8998ba90a310795e37ade100658151"
+      },
+      {
+        "filename": "duplex-ot-after",
+        "sha256": "6fa3f4db77de598c1ecf86491da0e12d224e553ff47f7b2da89be742d777c70f"
+      },
+      {
+        "filename": "duplex-ot-before",
+        "sha256": "d0073c9576b3c16a607802fc683d903799bf8f95a9d564dd266c19b9fbd1ae06"
+      },
+      {
+        "filename": "duplex_ot.cpp",
+        "sha256": "69b12b146ef1a918e02a59caec6f5af3b95fc5d922975fb160e70b4e473b6c8d"
+      },
+      {
+        "filename": "empty-ot-after",
+        "sha256": "7550faf1ef5a421ca7b351dfb56368bce25a96762da3c91d81ff9544052ed08c"
+      },
+      {
+        "filename": "empty-ot-before",
+        "sha256": "f6e5df7f322799e21016b3da90c083ba1dd072ad399103ed7a54338da4144469"
+      },
+      {
+        "filename": "empty_ot.cpp",
+        "sha256": "f37b741426b7cf187c64f32e0e92ea3ea5a212d52124c47448cbc49521f6f684"
+      },
+      {
+        "filename": "build_graph_twice.py",
+        "sha256": "82e9213dfdcf8814ff436fd551e795e11ff93840b2704eac55312d1528503d87"
+      },
+      {
+        "filename": "ledger-before",
+        "sha256": "44e15d16aebd017078b2a82b75447dbf76e275cd1adedd6d1df5c796acd99e8f"
+      }
+    ]
+  },
+  "verdict": "All completed engineering verification passes within the recorded scopes. Not a concrete-security, fully dealerless nonlinear, private/trained-inference, authenticated-deployment, performance-generalization, or conference-readiness result."
+}
