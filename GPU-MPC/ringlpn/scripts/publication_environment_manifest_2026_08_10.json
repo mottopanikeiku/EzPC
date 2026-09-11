@@ -243,7 +243,7 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/orca_linear_application_integration_2026_08_24.md",
-      "sha256": "1891f4af5cd2e354f98cca0e71b980623a3752fd4da947dd9a81aa4543305737"
+      "sha256": "068dff4bf353bade83e49dd897d773b168d77f29b76ce3b1fc7654e3583b0327"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.csv",
@@ -291,15 +291,15 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/linear_adapter_build_provenance_2026_08_10.json",
-      "sha256": "526f0c95a8c95fbc87235d2c2a9b18f201cd3bc2b591e8135c957f85f39f64ba"
+      "sha256": "7e4870bcff375b495cbca43696338967719a2fa1323c77ce8049305d69717aa9"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/linear_adapter_binary_approval_2026_08_07.json",
-      "sha256": "aadb25ba2a5c9ffdd3a0d80a0796ac3dfe86c0b54cabe5297dc97d38a2e408ba"
+      "sha256": "0d868032d79f0f63b92580e67f118c2c107b08b7a14e33a2cad61bed485aa3a9"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/resnet18_full_graph_binary_approval_2026_08_10.json",
-      "sha256": "b72e4ef68faa1861c0a586ee5b4645c3584d9a8abe5f9280bd099b824dd8d6fa"
+      "sha256": "446579ec37888ae72d458fa97289e541bfdd429330caf16216e2eb8fde480b73"
     },
     {
       "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json",
@@ -315,11 +315,11 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json",
-      "sha256": "16e4f4b981684cd844b5b14de1c6ebc39ce1dfe363c935d29a708a524c0dcdbf"
+      "sha256": "3e209a319c6d5092f52d8bbe21f26ddd1315a6fcaecab2a76499718ead437ac5"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/orca_model_scale_workload_manifest_2026_08_04.json",
-      "sha256": "718570af4bf7afa523d029dfddcf0f3dae9e554c9c6e26b744999df193956f72"
+      "sha256": "3391a57d0745af91f3419aa422e89437671b18445df8acdd95289c8668fa0961"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.csv",
@@ -356,8 +356,12 @@
     {
       "path": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_review_2026_09_10.json",
       "sha256": "79014b3b329551b38c8deee39971267d7bd00a58d9688440618ed2db3c112e0b"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/engineering_review_verification_2026_09_10.json",
+      "sha256": "c3fe5c91f6da24d4ad787ddb33524834dcc00d4cc5aa765ced6886e8480fdc91"
     }
   ],
   "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "43231b24cda3147285918f9c5b7cfd93a0c41abd299c062e7698debbf819cb43"
+  "manifest_digest": "c8059d1c8b42c51f179dfe05f5175303c2317bf60086af8b2cccacc370a23122"
 }

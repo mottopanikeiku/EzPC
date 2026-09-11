@@ -24,6 +24,29 @@ records output-substitution, unsupported-callback, FIFO, signed/wrapping,
 and stock-timer coverage, while preserving the caller-owned application
 freshness and terminal-only boundaries.
 
+`reports/engineering_review_verification_2026_09_10.json` records the
+before/after defects, actual command outcomes, application relocation proof,
+macro-off stock build, and final required-GPU checkpoint: `ALL GATES PASS`
+in 5,228.406 s. The subsequent source-only worktree rebuild/application gate
+and fresh q64/bw29/inner-3 FC/Conv online checks also pass. The focused
+`fc/two_party_fc_review_2026_09_10.{csv,log}` and
+`fc/two_party_fc_review_controls_2026_09_10.csv` retain five live cases and
+sixteen controls; their timings are not a benchmark cohort.
+
+`graph/resnet18_full_graph_review_2026_09_10/` retains the fresh 18-file
+known-zero graph summary: full-graph digest `ccd598f8...`, all checker fields
+and seven rejection controls pass. Both self-digests and all indexed file
+hashes verify. It uses P0/P1/checker GPUs 1/2/3, with TEST-ONLY trusted
+nonlinear material. This new bundle remains internal-only and contains
+non-secret private-ledger path metadata; it does not replace the original
+immutable August checkpoint or authorize external release.
+
+`reports/paper_review_verification_2026_09_10.json` records two independent
+byte-identical two-pass PDF builds, font/reference checks, and visual review
+of all 34 pages. Fifty previously changed historical smoke artifacts match
+their pre-review bytes; current approvals/contracts and new review evidence
+are kept separate.
+
 ## Current checkpoint (2026-08-24)
 
 The live forward-FC/Conv artifact composes party-local SPFSS, distributed DPF,

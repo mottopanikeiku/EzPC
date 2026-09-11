@@ -78,6 +78,18 @@ view, preserving strict rejection of symlinked source inputs. All ten compiler
 dependency groups, environment inputs, and linked archives match the pre-fix
 build; only the application build recipe changed.
 
+The final required-GPU checkpoint prints `ALL GATES PASS` (5,228.406 s),
+including the full source-bound known-zero ResNet18 graph and seven graph
+rejection controls. Afterward, the source-only worktree rebuild passes the
+actual terminal FC/Conv gate and all eight controls; fresh q64/bw29/inner-3
+FC and Conv records pass their stock online checkers. Exact observations are
+in `results/reports/engineering_review_verification_2026_09_10.json`.
+The new `results/graph/resnet18_full_graph_review_2026_09_10/` summary is
+internal-only, retains non-secret private-ledger path metadata, and does not
+replace the immutable August publication-bound checkpoint. Its nonlinear
+material remains TEST-ONLY trusted. These checks do not close security,
+authenticated deployment, release authorization, or conference research gates.
+
 The current live composition uses thin
 `src/test_two_party_{fc,conv}_preprocess.cu` entrypoints over
 `src/two_party_linear_preprocess.cuh`, plus:

@@ -49,6 +49,15 @@ All ten compiler dependency groups, environment inputs, and linked archives
 match the pre-fix build; only the build recipe changed. The August bindings
 below remain historical and are not silently rebound to these executables.
 
+The final source-only worktree component rebuild exits zero (221.491 s);
+its actual application gate then exits zero (17.562 s), with terminal FC,
+Conv2D, and all eight rejection controls passing. Its complete provenance
+still equals the root-distinct build proof above. Fresh actual two-party
+q64/bw29/inner-3 FC and Conv preprocessing also passes both stock online
+checkers. These are functional checks, not benchmark cohorts. Exact commands,
+producer/checker rows, and the successful enclosing required-GPU checkpoint
+are in `engineering_review_verification_2026_09_10.json`.
+
 The producer's consume-once ledger is **not** persistent application-consumer
 replay prevention. The terminal API still requires fresh, single-use material
 from its caller; reloading a record in a later process is not prevented by

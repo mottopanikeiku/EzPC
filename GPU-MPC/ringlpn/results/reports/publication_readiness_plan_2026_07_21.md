@@ -30,6 +30,16 @@ clean-clone release claim. Raw samples, scope, variability, binary/source
 identities, and calculation rules are in
 `../fc/sci_duplex_worker_review_2026_09_10.json`.
 
+The completed engineering review separately passes the required-GPU
+checkpoint, including the source-bound known-zero full graph, and then the
+rebuilt source-only worktree terminal application and q64/bw29 arithmetic
+boundary checks. `engineering_review_verification_2026_09_10.json` records
+the exact scopes and observations. A fresh internal graph summary is retained
+without modifying the August checkpoint. These results establish corrected
+implementation behavior; they do not supply the missing concrete-security
+pin, independent review, matched dealerless evaluation, or external release
+authorization.
+
 **Next decisive research gate:** establish the exact security/assumption
 contract with qualified independent human review, then evaluate the composed
 system and matched dealerless baseline at that reviewed point. In parallel,

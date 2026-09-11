@@ -73,6 +73,20 @@ not a request to repeat completed work without a relevant change.
   `engineering_review_verification_2026_09_10.json`; deterministic paper
   builds and all-page visual inspection are recorded in
   `paper_review_verification_2026_09_10.json`.
+- The final required-GPU checkpoint completes with `ALL GATES PASS` in
+  5,228.406 s, including the source-bound known-zero full graph and seven
+  graph controls. The subsequent public-worktree component rebuild,
+  terminal FC/Conv gate with eight controls, and actual q64/bw29/inner-3
+  FC/Conv online checks all pass. The application build-only relocation
+  correction is committed locally as `1f42430d2b8b1aa89d0bf3983ae6abf69fae109b`
+  and publicly as `a1f006af7357d9a0bc937d26da6c83be0a6793c6`; complete
+  provenance remains identical across checkout roots.
+- The fresh `../graph/resnet18_full_graph_review_2026_09_10/` bundle is
+  separate internal evidence, not a replacement publication pin. Its
+  nonlinear material is still TEST-ONLY trusted, and its linear manifest
+  retains non-secret private-ledger path metadata. Original August evidence
+  remains byte-immutable. Completed private fixtures and throwaway probes
+  were removed after verification.
 - `../fc/sci_duplex_worker_review_2026_09_10.json` retains the counterbalanced
   one-shape SCI experiment: twenty measured invocations pass, all 68
   per-party contract/accounting fields agree, and process-latency median
