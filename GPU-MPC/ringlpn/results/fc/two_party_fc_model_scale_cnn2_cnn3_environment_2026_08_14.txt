@@ -1,0 +1,61 @@
+measurement_timestamp=2026-08-16T08:16:15+00:00
+publication_date=2026-08-10
+schema_version=ringlpn.two-party-fc-model-scale.v6
+claim_scope=internal/advisor feasibility matrix; qbits is a CRT construction label, not a security level
+provenance_sanitization=public derivative; hostname, GPU UUIDs, and absolute workstation paths are intentionally omitted
+host=withheld_for_publication
+kernel=Linux 6.8.0-78-generic #78-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 11:34:18 UTC 2025 x86_64 GNU/Linux
+cpu_count=32
+process_gpu_map=party0:1,party1:3,checker:per-sample-critical-party
+controlled_same_gpu=1
+critical_party_rule=max(total_us+preflight_us+ot_setup_us); ties select party0
+comparison_order=dealer baseline after both preprocessing parties exit
+gpu_quiescence_contract=selected GPUs empty before protocol and after both parties exit; selected critical-party GPU empty after checker; advisory per-GPU locks held for full run
+network=single-host IPv4 loopback
+counters=legacy protocol bytes exclude preflight/OT setup; transport stream bytes include selected-backend setup, exclude TCP framing, and add no metrics message
+ot_backend=sci-iknp
+emp_silent_bridge=NA
+warmups=1
+measured_trials=10
+models=CNN2,CNN3
+workload=all-fc
+fail_layer_control=none
+swap_layer_control=none
+aggregate_rule=complete retained layer groups only; statistics are per model over measured aggregate rows
+0, NVIDIA RTX 5000 Ada Generation, 560.35.03, 32760 MiB
+1, NVIDIA RTX 5000 Ada Generation, 560.35.03, 32760 MiB
+2, NVIDIA RTX 5000 Ada Generation, 560.35.03, 32760 MiB
+3, NVIDIA RTX 5000 Ada Generation, 560.35.03, 32760 MiB
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2024 NVIDIA Corporation
+Built on Tue_Oct_29_23:50:19_PDT_2024
+Cuda compilation tools, release 12.6, V12.6.85
+Build cuda_12.6.r12.6/compiler.35059454_0
+bf4e4f9052b7575dcb6bb506d73d9786f2906881a8a74425242aca11489a18dd  GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984  GPU-MPC/ringlpn/results/fc/orca_forward_linear_layer_manifest_2026_08_04.json
+718570af4bf7afa523d029dfddcf0f3dae9e554c9c6e26b744999df193956f72  GPU-MPC/ringlpn/results/fc/orca_model_scale_workload_manifest_2026_08_04.json
+fb519e51c5e427da315ba5660588f239fd9381a3a6ce299464a50a042d7b9e43  GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_result_schemas_2026_08_04.json
+e26d40aea900b21bc5c6163cf47131885da95c9e6585235faf86ab1e62c3365f  GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py
+799025c9915514ab26129839e863aa937286e23e2789118f29433e921f53a6ef  GPU-MPC/ringlpn/scripts/verify_controlled_fc_ab.py
+4ead0d24a8f9fe24ff7bf7d58bd1ef0c87d0e51b644db8893a27de9b8569ae26  GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv
+8eb3466915b36eb0799d06e883fb0f7c2aeba70b4e0f023193b2a7f18874b2d8  GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh
+ab01a9264ddd3484b347dab976ac1a62f97c48ec843d4de7433ada00d82d470b  GPU-MPC/ringlpn/src/test_two_party_fc_preprocess.cu
+fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461  GPU-MPC/ringlpn/src/two_party_spfss.h
+acc44343348644b72721493559aced1dee9ff365244fc55aac71848ae4af06c1  GPU-MPC/ringlpn/src/linear_preprocess.h
+cbe47067e1847d54e99fbf3bb975e8d3891a76e6a80b120a71f47ee6784faf1d  GPU-MPC/ringlpn/src/linear_preprocess_backend.cuh
+248c312294d93ed8f43c70a67d826d715615efae5e345a0e3e4e9eff1fc0f577  GPU-MPC/ringlpn/src/linear_preprocess_fc.cu
+6876a71a2cedbba48891678810bd936dce8648bd35c4f2412354feec25a58e4a  GPU-MPC/ringlpn/src/two_party_linear_preprocess.cuh
+4d56a7a2beca4b27cd616ca7bea83d8c3939cbaf945ee0de1a20132d8634199f  GPU-MPC/ringlpn/src/two_party_spfss_gpu.cuh
+352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c  GPU-MPC/ringlpn/src/two_party_dpf_protocol.h
+c05a953f8453355c94c9b0890590318057648a5a70fda90a90832b906065ea8f  GPU-MPC/ringlpn/src/two_party_dpf_gpu.cuh
+1f3039c62cd3a6d83b4b2ab5db72d972983a2cb415ad87e3f89b66a8fced1845  GPU-MPC/ringlpn/src/two_party_ot.h
+5a0c9ed9932752e5aa7497d09f67bbd0acd7df2bca89ab592b69cbbc761a43a1  GPU-MPC/ringlpn/src/emp_silent_adapter.h
+6c58c107da10638957dc5be1163e991f37ba107768c1c5af889009fe2ac840de  GPU-MPC/ringlpn/src/emp_silent_bridge.h
+de6ccadefa2d685448bd868efe0ebdc7440373bba284398845d477cbd1932d00  GPU-MPC/ringlpn/src/emp_silent_bridge_authorization.h
+0c5f518ed52f14fad6e58e0ca61f13bb301fb626f803645e2210808fcad8882b  GPU-MPC/ringlpn/src/emp_silent_bridge.cpp
+4299d093fecf33596900a852ecfae26b2c9ced519b6e8171e938e2db0abf9461  GPU-MPC/ringlpn/src/ringlpn_ole_party.cuh
+311428e4fb64bb2e9149554faee2ed0c833b4a3688179d6bcb016080bba52247  GPU-MPC/ringlpn/src/secure_convert.h
+2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd  GPU-MPC/experiments/orca/cnn.h
+9d3bbabd9baf1b15838e6b6b6c30b365cc504f766f94d1f2301047c45e623986  GPU-MPC/experiments/orca/orca_inference.cu
+8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d  GPU-MPC/experiments/orca/piranha.cu
+3b06ebf08ef8e7efec685454cb046f8b4a78650859556874f00a22653f737fc8  GPU-MPC/nn/orca/fc_layer.cu
