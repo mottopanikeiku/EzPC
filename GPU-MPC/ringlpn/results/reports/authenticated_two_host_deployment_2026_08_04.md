@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-04
 **Status:** internal/advisor deployment contract; not a concrete-security or publication claim
-**Launcher binding:** updated 2026-08-10 for `ringlpn-authenticated-launch-result-v2` and `ringlpn-two-host-final-commit-v2`
+**Launcher binding:** updated 2026-08-14 for AEAD-only OpenSSH transport, `ringlpn-authenticated-launch-result-v2`, and `ringlpn-two-host-final-commit-v2`
 
 ## Boundary
 
@@ -25,8 +25,11 @@ master creates two independent remote forwards:
 These streams carry the complete SCI `PartyChannel`: the mutual HMAC
 authentication exchange, IKNP base/extended OT, Gilboa OLE and Boolean-triple
 traffic, preflight, public-polynomial exchange, openings, conversion,
-publication agreement, and application messages. There is
-no application-only MAC or uncovered raw traffic path. The FC source rejects
+publication agreement, and application messages. The OpenSSH transport is
+restricted to ChaCha20-Poly1305 or AES-GCM and rekeys after at most 1 GiB or
+one hour, so all post-handshake bytes receive tunnel confidentiality and
+integrity against a network attacker. There is no application-only MAC or
+uncovered raw inter-host traffic path. The FC source rejects
 either stream unless both socket endpoints are IPv4 loopback. Its server socket
 still originates in unmodified SCI and wildcard-listens until accept; a
 non-loopback connection is rejected before preflight or OT. This leaves a
@@ -35,13 +38,15 @@ denial-of-service surface, not an unauthenticated protocol fallback.
 OpenSSH uses no user config (`-F /dev/null`), `BatchMode=yes`,
 `IdentitiesOnly=yes`, an explicit private identity, an explicit
 `UserKnownHostsFile`, `StrictHostKeyChecking=yes`, no global known-hosts file,
-no password/keyboard-interactive/hostbased/GSSAPI authentication,
+no password/keyboard-interactive/hostbased/GSSAPI authentication, no agent or
+X11 forwarding, no proxy command, no compression, AEAD-only ciphers, pinned
+modern KEX/host-key algorithm sets, a 1-GiB/one-hour rekey bound,
 `ExitOnForwardFailure=yes`, loopback-only remote-forward binds, and server-alive
-failure detection. Neither party starts until the authenticated master is usable
-and both forward requests succeed. The trusted boundary is the two host kernels
-and SSH endpoints, rootless Podman, the pinned container image, and the
-peer-private executor. Endpoint compromise, malicious-party security, denial of
-service, and side channels remain out of scope.
+failure detection. Neither party starts until the authenticated master is
+usable and both forward requests succeed. The trusted boundary is the two host
+kernels and SSH endpoints, rootless Podman, the pinned container image, and the
+peer-private executor. Endpoint compromise, malicious-party security, denial
+of service, and side channels remain out of scope.
 
 The existing `run_two_party_fc_preprocess.sh` and
 `run_two_party_fc_model_scale.sh` use `local-loopback`; they are local-only

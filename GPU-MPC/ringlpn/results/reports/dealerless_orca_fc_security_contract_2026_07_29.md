@@ -1,7 +1,7 @@
 # Dealerless Orca forward-FC preprocessing — security contract and proof boundary
 
 **Original freeze:** 2026-07-29
-**Updated:** 2026-08-10
+**Updated:** 2026-09-10
 **Status:** exact forward-FC coupling, role-specific batch simulators,
 conversion simulator, source map, and conditional theorem are complete for the
 current live artifact. The live path self-bootstraps DPF Phase C through a
@@ -27,14 +27,34 @@ SHAKE256 public-polynomial derivation, GPU Ring-LPN expansion,
 self-bootstrapped Phase-C OLE correlations, exact conversion, and party-local
 Orca key records.
 
+The 2026-09-10 implementation review adds fail-closed enforcement, not a
+stronger theorem: cooperating freshness writers are serialized by a directory
+lock; private-file admission rejects FIFOs and other nonregular files;
+uninitialized GPU state and unsupported terminal-layer operations are rejected;
+and the exact no-wrap and stock Conv integer-ABI bounds are checked before
+execution. These guards do not defend against a malicious owner of the ledger
+or replace the authenticated-channel assumption.
+
+The SCI duplex sender now uses one channel-owned worker. Calls remain
+synchronous and single-caller; the logical OT widths, ordering, payloads, and
+accounting are unchanged in the exercised mixed-width and FC runs. The
+[counterbalanced scheduling experiment](../fc/sci_duplex_worker_review_2026_09_10.json)
+is a one-host, one-shape feasibility measurement, not a new cryptographic
+construction, parameter pin, or matched-security dealerless comparison.
+
 An explicit `--ot-backend emp-silent` source path pins EMP SilentFerret behind
 a separately compiled opaque C ABI and preserves the same logical OT widths and
-Gilboa schedule. Historical focused full-loopback and representative FC/Conv
-gates passed for this path, but the canonical suites and retained older-binary
-classifier artifact use SCI/IKNP. The revision remains **opt-in and independently unreviewed**;
-it has no current headline performance claim and still requires authenticated
-two-host, failure-control, and independent-review gates. The default theorem-aligned backend remains
-`sci-iknp`.
+Gilboa schedule. A retained 2026-08-14 focused rerun under binary `bf4e4f90...`,
+authorized bridge `435f3be6...`, and pinned EMP-OT `2fca139f...` passes the same five
+q64/q128 FC cases and all sixteen rejection controls. It exhausts each declared
+straight/reversed 128-bit-OT inventory exactly and separates correlation,
+chosen-message adjustment, and ciphertext bytes. The canonical suites, retained
+classifier artifact, and controlled CNN2/CNN3 model-FC matrix use SCI/IKNP.
+The EMP revision remains **opt-in and independently unreviewed**; one
+occupied-GPU trial per case supports correctness/accounting only, not
+performance, bandwidth-improvement, security, or headline claims.
+Authenticated two-host execution and independent backend review remain open.
+The default theorem-aligned backend is `sci-iknp`.
 
 The 2026-08-04 exact primary-source parameter audit is complete: it invalidated
 several out-of-domain estimator rows and found no reviewed mapping from the
@@ -788,7 +808,7 @@ adversary, or the open Ring-LPN parameter/reduction obligation.
 | `establish_public_ring_xof()` | one four-word seed share from each party, once per layer; the XOR seed is public | `F_PUBA^(p,H)`, step 2 | at least one honest semi-honest contribution makes the joint 256-bit seed uniform; separately counted as four words per party |
 | `PublicRingVectorXof::generate()` / `validate_public_polynomials()` | no cross-party value; SHAKE256 derives a fresh vector from the joint seed and per-instance scope | `F_PUBA^(p,H)`, step 2 | domain-separated rejection sampling gives independent exact-uniform tails in the random-oracle model; validation fails closed on wrong length, non-identity first polynomial, or noncanonical tail |
 | `sample_party_noise()` | no cross-party value; one party's sparse noise only | step 4 | party-local independent draw |
-| `PartyChannel` socket establishment | versioned mutual HMAC-SHA256 challenge/response over roles, direction, invocation, claim digest, and fresh nonces | endpoint/context establishment before preflight | rejects rogue connector, replay, reflection, and wrong secret; later protocol bytes have no per-message integrity |
+| `PartyChannel` socket establishment | versioned mutual HMAC-SHA256 challenge/response over roles, direction, invocation, claim digest, and fresh nonces | endpoint/context establishment before preflight | rejects rogue connector, replay, reflection, and wrong secret; local evidence then uses plain loopback without application-layer per-message integrity; the unexecuted distinct-host launcher carries both full streams through pinned-host-key AEAD-only OpenSSH |
 | `agree_spfss_public_manifest()` | public SPFSS dimensions, full Ring-OLE correlation-scope ID, compatibility SID, local-validity bit | step 4, §2.1 | common agreement before DPF output |
 | `two_party_dpf_gen_batch()` Phase A | bit-triple shares and transmitted `delta,epsilon` shares | §4.1 | mapped real SCI/IKNP triples and openings |
 | Phase-B directional OTs and CW exchange | selected 128-bit OT outputs; opened seed/flag CW shares | §4.3 | mapped; exact-CW coupling proved in §4.5 |
@@ -812,13 +832,17 @@ party reads its peer's file or private arrays. Each party writes its own final
 key record, and the post-exit checker intentionally reads both. The current
 single-UID loopback runner does not enforce OS-level peer file isolation; that
 requires distinct UIDs/containers and inaccessible mounts. Before preflight,
-each plain-TCP socket mutually authenticates endpoint roles and the
-invocation/claim/direction context with HMAC-SHA256 and fresh nonces. Subsequent
-protocol bytes have no per-message MAC/TLS, so this does not realize the
-theorem's authenticated-channel integrity assumption. Raw private key records
-are deleted after the checker. Per-record SHA-256 detects accidental corruption,
-not authentication; `COMMITTED` is supervisor evidence, not a cryptographic
-commit protocol.
+each socket mutually authenticates endpoint roles and the
+invocation/claim/direction context with HMAC-SHA256 and fresh nonces. Current
+measurements then use plain loopback with no application-layer per-message
+integrity, so they do not realize the theorem's authenticated-channel
+assumption. The unexecuted two-host launcher now binds pinned SSH host/user
+identity and carries both complete streams inside one AEAD-only OpenSSH tunnel
+with a 1-GiB/1-hour rekey limit; this protects against network attackers but
+still trusts the authenticated endpoints and has no execution evidence. Raw
+private key records are deleted after the checker. Per-record SHA-256 detects
+accidental corruption, not authentication; `COMMITTED` is supervisor evidence,
+not a cryptographic commit protocol.
 
 ## 6. Leakage contract
 
@@ -849,8 +873,9 @@ In addition to common leakage, `P_b` sees only:
   frontiers, noise shares, fresh output-mask shares, and correlation IDs;
 - its output DPF keys, emitted Orca key fields, and next-state mask shares;
 - messages it sends or receives (authenticated in the target functionality;
-  the current artifact mutually authenticates endpoint/context before preflight,
-  but later plain-TCP messages have no per-message integrity).
+  local evidence authenticates endpoint/context before preflight and then uses
+  plain loopback without application-layer integrity; the unexecuted two-host
+  route supplies AEAD-only OpenSSH transport).
 
 ### 6.3 Prohibited leakage
 
@@ -1112,7 +1137,7 @@ composition review extending this forward-only theorem.
 | `P-PCG` | Role-indexed Figure-2 output is pseudorandom OLE at the exact `a=(1,a_1,...,a_(c-1))`, noise, structured-code, and multi-instance distribution | Figure-2 correctness and leakage-conditioned simulator only. The exact orbit and source-pinned 2024 regular-ISD calculator remain model diagnostics. The self-tested hybrid-RSD script/CSV are freshly paired at `cbcedaf6...`/`1f671d94...`. No reviewed structured-code, resource/success, modern-attack, two-limb, or advantage-composition bridge exists | open/blocking; no parameter pin |
 | `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Exact-conversion lemma above plus two-process SCI/IKNP boundary/control runs | closed in daBit/edaBit/triple hybrid; real transport conditional on semi-honest OT and authenticated channels |
 | `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Live artifact covers one complete forward matmul only | forward closed; training-state extension open |
-| `P-PROC` | Two-process implementation matches the corrected forward transcript | The current focused SCI/IKNP suite passes all five q64/q128 cases; every row records positive P0/P1 breadth-call counts and zero root-to-leaf calls, and all 21 shape plans pass. Current FC/Conv binaries begin `02eaaac9`/`975ac726`; focused approval digest begins `ce3cc3a5`. The current SCI/IKNP classifier artifact (FC binary `02eaaac9`) passes 10/10 after one warmup with 1,536 epoch-zero and 210,432 PCG-supplied Phase-C products per party, exact 211,968 reserved = 210,432 consumed + 1,536 terminal-discarded slots, and unchanged Orca consumption. EMP-Silent remains historical opt-in evidence only | corrected SCI/IKNP functional reruns, endpoint/context-auth controls, breadth-path controls, and current classifier evidence pass; no true end-to-end, current Conv0, breadth-speedup, same-hardware A/B, or secure-channel claim |
+| `P-PROC` | Two-process implementation matches the corrected forward transcript | The reviewed SCI/IKNP five-case suite and all 21 shape plans pass. The September worker experiment passes 20 measured invocations with unchanged contract/accounting fields. Retained August evidence comprises 30 controlled model-FC trials, 10 classifier trials, and five EMP-Silent cases with sixteen controls; those binary identities and timings are historical, not reruns of the September source | Feasibility functionality/accounting only. Historical stock-dealer comparisons are strongly negative; no full-model, authenticated-deployment, EMP-performance, matched-dealerless speedup, or concrete-security claim |
 | `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps epoch-zero OLE, bootstrapped masked differences, the corrected public-polynomial tail, DPF/OT/conversion messages, malformed-vector rejection, records, and post-exit checker | source map current; independent human audit open |
 
 ## 9. Review boundary and current disposition
@@ -1147,7 +1172,7 @@ conditions were:
 audit found no remaining S1 freeze/commit blocker and approved only the label
 “contract frozen for advisor review.”
 
-**Current disposition (2026-08-10).** The exact DPF coupling, both joint batch
+**Historical disposition (2026-08-24).** The exact DPF coupling, both joint batch
 simulators, ideal-OT wrappers, conversion simulator, role-indexed
 leakage-conditioned Figure-2 simulator, sequential bootstrap lemma, and
 source-to-transcript map state the corrected
@@ -1156,16 +1181,27 @@ preserved and its `X_b` is derived deterministically; only the honest
 expansion/correlation is replaced. The current focused SCI/IKNP suite passes
 all five q64/q128 cases; every row records positive P0/P1 breadth-call counts
 and zero root-to-leaf calls, and all 21 shape plans pass. Current FC/Conv
-binaries begin `02eaaac9`/`975ac726`, and the focused approval digest begins
-`ce3cc3a5`. This is correctness/path-counter evidence, not current Conv0 timing
-or a breadth-first speedup. The regenerated 2026-08-10 SCI/IKNP classifier
-artifact uses the same current FC binary and passes 10/10 after one warmup:
+binaries begin `ab282ab6`/`6a9ae142`, and the focused approval digest begins
+`2764ac2a`. This is correctness/path-counter evidence, not current Conv0 timing
+or a breadth-first speedup. The retained 2026-08-10 SCI/IKNP classifier
+artifact uses focused binary `02eaaac9...` and passes 10/10 after one warmup:
 mean setup-included preprocessing 4.011203588 s, median 4.0193924415 s,
 stock-dealer median 14.73535 ms, unchanged-online median 1.14969 ms,
 descriptive per-trial ratio median 268.6769431352700, Phase B median
 1.955515 s, and Phase C median 0.041723 s. It is not true end-to-end timing, a
 same-physical-GPU/occupancy-controlled A/B result, current Conv0 timing, or a
 breadth-first speedup. Independent human cryptographic review remains open.
+
+The retained 2026-08-14 EMP-Silent rerun uses binary `bf4e4f90...`,
+authorized bridge `435f3be6...`, and pinned EMP-OT revision `2fca139f...`.
+All five focused live cases and all sixteen controls pass; every declared
+directional inventory is consumed, breadth/root-path counters retain their
+expected shape, and backend correlation/adjustment/ciphertext bytes are
+peer-consistent. Every GPU was concurrently occupied and there is one trial per
+case. These rows close only the focused optional-backend correctness and
+accounting check; independent cryptographic review, exposed base-OT
+subaccounting, controlled performance, two-host execution, and any
+bandwidth/security inference remain open.
 
 The source-bound known-zero full-graph control now composes all 21 fresh linear
 record pairs through the exact 62-item ResNet18 stream, including every secure
@@ -1182,6 +1218,21 @@ digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`.
 Private records and ledgers are not retained; manifest-bound host/build-root
 provenance blocks external circulation until a fresh normalized run replaces it.
 
+The retained controlled 2026-08-14 model-FC matrix uses SCI/IKNP binary
+`bf4e4f90...` for source-manifest-selected CNN2 FC4/FC5 and CNN3 FC5. All 30
+measured layer trials pass after one warmup per layer. Party GPUs 1 and 3 are
+quiescence-checked and locked; each post-party stock `gpuKeygenMatmul`
+comparator runs on the same quiescent physical GPU as that sample's slower
+setup-included party. CNN2's two-layer aggregate records
+1,302,752,736 application bytes, 1,302,840,696 total transport bytes, and
+72,278 semantic dependency layers; CNN3 FC5 records 39,432,504,
+39,476,484, and 1,663 respectively. Dependency layers are implementation
+schedule depth, not network rounds. The median paired preprocessing/dealer
+ratios are `879.2970985824659x` and `60.3181599795375x`: a controlled,
+strongly negative performance result. It changes no proof boundary. The runs
+remain same-host loopback with endpoint/context-only HMAC establishment and
+later plain protocol traffic, not authenticated two-host evidence.
+
 `P-POS` and `P-PCG` remain hard theorem blockers. The exact regular-projection
 and coefficient-cancellation law is freshly rebound to the current sampler,
 and the self-tested hybrid-RSD script/CSV are freshly paired. These close
@@ -1194,14 +1245,19 @@ closed only under the explicit SHA-256, one deployment-wide private persistent
 ledger, OS exclusive-create, fsync/atomic-rename, and no
 deletion/cloning/storage-rollback assumptions. Each live loopback socket
 performs mutual HMAC-SHA256 endpoint/context establishment before preflight,
-but subsequent protocol traffic has no per-message integrity. The theorem's
-authenticated-channel assumption therefore remains unrealized. The honest
-claim is a *conditionally specified forward-FC theorem and current
-source-aligned functional artifact*, not “security proved,” “128-bit secure,”
-authenticated deployment, or publication readiness. Beyond the closed
-known-zero graph/state seam, the remaining systems gates are dealerless
-nonlinear setup, repeated private-input/trained-model evidence, an authenticated
-two-host run, and independent review.
+but subsequent local protocol traffic has no application-layer integrity. The
+unexecuted distinct-host launcher carries both streams through pinned-host-key
+AEAD-only OpenSSH with bounded rekeying, but no authenticated two-host result
+exists. The theorem's authenticated-channel assumption therefore remains
+unrealized by current evidence. The honest claim is a *conditionally specified
+forward-FC theorem and current source-aligned functional artifact*, not
+“security proved,” “128-bit secure,” authenticated deployment, or publication
+readiness. A linear-only systems paper still needs reviewed assumptions,
+generalizable systems insight, causal ablations, a compatible dealerless
+baseline, authenticated distinct-host evidence, and independent review.
+Dealerless nonlinear setup and repeated private/trained-model evaluation are
+additional requirements for broader full-inference claims. A rigorous negative
+result needs new explanatory insight, not necessarily a performance win.
 
 **Next security checkpoint:** independent human review of the structured-code
 reduction, two-limb advantage composition, and current transcript theorem.

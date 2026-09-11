@@ -59,8 +59,8 @@ graph TD
   H[Complete: breadth-first DPF caller and focused path counters] --> I[Algorithmic Phase B, Ring expansion, and conversion work]
   J[Complete: 21 forward-linear/state records and known-zero full graph] --> I
   I --> K[Compatible dealerless baseline]
-  K --> P[Dealerless nonlinear setup and repeated private/trained-model evaluation]
-  P --> L[Authenticated distinct-host LAN/WAN evaluation]
+  K --> L[Authenticated distinct-host LAN/WAN evaluation]
+  K -. Full-inference claims only .-> P[Dealerless nonlinear setup and private/trained-model evaluation]
   L --> M[Clean-clone reproduction]
   G --> N[Systems submission]
   M --> N
@@ -71,7 +71,7 @@ graph TD
 
 ### Thesis
 
-A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG output into Orca's exact forward-linear key ABI and validates it through Orca's unchanged online consumer. The contribution is the composition, GPU/system design, deployment boundary, and evaluation—not Ring-LPN, DPF, OT/OLE, conversion, Beaver multiplication, or Orca.
+A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG output into Orca's exact forward-linear key ABI and validates it through Orca's unchanged online consumer. This composition is an engineering baseline. A publishable systems contribution still needs a generalizable explanation or design result, causal ablations, held-out predictions, and matched-assumption evaluation—not a new claim to Ring-LPN, DPF, OT/OLE, conversion, Beaver multiplication, or Orca.
 
 ### Current evidence
 
@@ -79,23 +79,48 @@ A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG ou
   roots and full-width GPU-AES expansion. The integrated breadth-first FC caller
   passes all five current q64/q128 cases/controls with positive P0/P1 breadth
   calls and zero root-to-leaf calls in every row; all 21 shape plans pass.
-  This is correctness/path-counter evidence, not current Conv0/model-scale
-  timing or a breadth-first speedup claim.
+  This is correctness/path-counter evidence, not current Conv0 timing or a
+  breadth-first speedup claim.
 - Party-local GPU Ring-LPN expansion on distinct GPUs.
 - Exact two-party `Z_Q -> Z_(2^bw)` conversion.
 - Persistent consume-once correlation claims, current versioned party records,
   and sixteen focused endpoint/context-authentication, freshness, ledger,
   capacity, and record controls.
-- Current ResNet18 classifier shape `1x512x1000`, q128/bw32 feasibility
+- The September review adds scoped SCI scheduling evidence: one counterbalanced
+  `100x64x10` experiment, 20 measured invocations, matching contract/accounting
+  fields, and process-latency median 1.0413 s versus 0.9652 s. This does not
+  establish an architectural contribution or change the security boundary;
+  the raw samples and limits are in
+  `../fc/sci_duplex_worker_review_2026_09_10.json`.
+- Retained 2026-08-14 controlled source-manifest-selected CNN2 FC4/FC5 and
+  CNN3 FC5 evidence under binary `bf4e4f90...`, q128/bw32 regular noise, and
+  `(n,c,t)=(8192,2,8)`: all 30 measured layer trials pass after one warmup per
+  layer. Party GPUs 1 and 3 are quiescence-checked and locked, and each
+  post-party stock `gpuKeygenMatmul` comparator runs on the same quiescent
+  physical GPU as that sample's slower setup-included party. CNN2 FC4+FC5 has
+  26.8818423365-s mean, 26.89771076-s median, 30.5729-ms dealer median, and
+  `879.2970985824659x` paired-ratio median. CNN3 FC5 has 0.903894393-s mean,
+  0.904909782-s median, 14.96295-ms dealer median, and
+  `60.3181599795375x` paired-ratio median. Fixed protocol-then-dealer order can
+  retain order bias. This is controlled, strongly negative local feasibility
+  evidence—not a speedup, full-model, network, or security claim.
+- Retained ResNet18 classifier shape `1x512x1000`, q128/bw32 feasibility
   evidence (binary `02eaaac9...`): 10/10 measured trials after one warmup,
   4.011203588-s mean and 4.0193924415-s median setup-included preprocessing,
   182,372,344 application bytes, 14.73535-ms shape/contract-matched stock dealer
-  median, 1.14969-ms unchanged-online median, descriptive per-trial ratio median
-  268.6769431352700, Phase B median 1.955515 s, and Phase C median 0.041723 s.
-  Physical-GPU/occupancy state was not controlled; this is current descriptive
-  classifier evidence, not true end-to-end, same-hardware A/B, current Conv0,
-  or breadth-first speedup evidence. SCI/IKNP supplies the headline row;
-  EMP-Silent remains historical opt-in and unreviewed.
+  median, 1.14969-ms unchanged-online median, and descriptive per-trial ratio
+  median 268.6769431352700. Physical-GPU/occupancy state was not controlled;
+  this is descriptive classifier evidence, not true end-to-end, same-hardware
+  A/B, current Conv0, or breadth-first speedup evidence. SCI/IKNP supplies the
+  row.
+- Retained 2026-08-14 opt-in EMP-Silent correctness/accounting evidence passes
+  the same five q64/q128 FC cases and all sixteen controls under binary
+  `bf4e4f90...`, authorized bridge `435f3be6...`, and pinned EMP-OT
+  `2fca139f...`. Every directional inventory is exhausted and backend
+  correlation/adjustment/ciphertext bytes are retained. One trial per case ran
+  while every GPU was occupied by unrelated work; the custom backend remains
+  independently unreviewed. These are not performance, bandwidth-improvement,
+  security, or headline rows.
 - Fresh source-bound known-zero ResNet18 systems composition: all 21 isolated
   linear records feed the exact 21-linear/21-truncation/19-stock-key graph
   (one MaxPool, 17 ReLUs, and classifier sign extension), including three
@@ -105,15 +130,21 @@ A live, party-separated GPU preprocessing system maps dealerless Ring-LPN PCG ou
   generates stock nonlinear keys. This is graph/ABI evidence—not dealerless
   nonlinear preprocessing, private inference, or a new security claim.
 
-These are current feasibility and composition measurements, not a performance
-win, private/trained full-model result, authenticated deployment, or
-security-level result.
+The implementation and each dated evidence cohort have separate identities;
+the August measurements are not silently rebound to September source.
+These results do not establish a matched-dealerless performance win,
+private/trained full-model result, authenticated deployment, or security level.
 q64/q128 denote one/two approximately 62-bit limbs, not security levels.
 
 ### Submission gates
 
 1. Consume a reviewed concrete parameter manifest from Paper B; rerun every headline row at that exact tuple.
-2. Protect both SCI streams with authenticated-channel integrity and bind peer identity, both ports, SID, manifest, and executable digest. The current mutual HMAC-SHA256 handshake authenticates endpoints/context before preflight but does not MAC later protocol bytes; raw WAN TCP is prohibited.
+2. **Source closed, execution open:** the distinct-host launcher binds peer
+   identity, both ports, invocation/claim context, executable/container
+   identity, and carries both complete post-handshake streams through
+   pinned-host-key AEAD-only OpenSSH with bounded rekeying. No configured peer
+   or authenticated two-host result exists; current measurements remain local
+   loopback and raw WAN TCP is prohibited.
 3. Enforce separate OS/container/host identities and party-private roots; checker access begins only after both parties exit.
 4. The 2026-08-06 specialized regular-DMPF audit is a design NO-GO: no
    source-reviewed candidate preserves the fixed transcript, current plain
@@ -121,27 +152,45 @@ q64/q128 denote one/two approximately 62-bit limbs, not security levels.
    shape cost. Keep the measured tree path for the approved full-linear
    integration; reopen this optimization only for a candidate meeting the
    exact gate in `regular_dmpf_design_no_go_2026_08_06.md`.
-5. Measure and independently review the existing EMP-Silent route; either
-   establish its exact security/setup/bandwidth boundary or retain SCI/IKNP as
-   the explicit negative result.
+5. **Retained measurement closed, review open:** the 2026-08-14 EMP-Silent
+   five-case and sixteen-control rerun establishes inventory exhaustion and split
+   component bytes. Independent cryptographic review, base-OT/setup boundary
+   review, controlled performance, and two-host evidence remain mandatory
+   before selecting it or making a security/bandwidth claim.
 6. **Closed 2026-08-10:** a fresh, source-manifest-bound run covers all 20
    ResNet18 convolutions and its classifier, exact masks and layouts, all
    truncation/state handoffs and residual branches, the exact stock nonlinear
    stream, global pool, sign extension, terminal reconstruction, and unchanged
    linear consumers. Its nonlinear adapter remains trusted/test-only.
-7. Recheck dependency-stage counts as actual authenticated-network rounds;
-   retain stages, base setup, bytes by stream, peak host RSS, peak GPU memory,
-   aborts, and dispersion.
-8. Complete a functionality-compatible dealerless PCG/DMPF comparison under
+7. **Retained controlled local model-FC measurement closed, generalizable
+   systems insight open:** the 2026-08-14 CNN2 FC4/FC5 and CNN3 FC5 matrix has source-bound raw
+   repetitions, dispersion/confidence intervals, controlled same-physical-GPU
+   stock-dealer comparisons, and exact bytes/dependency counters. All 30
+   measured layer trials pass, but the paired-ratio medians are
+   `879.2970985824659x` and `60.3181599795375x`; fixed
+   protocol-then-dealer order may retain bias. This is a strong negative result.
+8. Semantic dependency-stage counts are retained but are not packet/network
+   rounds. Measure authenticated per-stream network rounds, base setup, bytes
+   by stream, peak host RSS, peak GPU memory, aborts, and dispersion.
+9. Complete a functionality-compatible dealerless PCG/DMPF comparison under
    the [closest-baseline audit](closest_dmpf_baseline_audit_2026_08_04.md).
    The stock and exact-`p0` native-folded Reverse-Cuckoo rows are measured but
    remain mismatched; never ratio them against the raw 31-diagonal GPU path.
-9. Run authenticated repeated LAN and controlled-WAN trials on two real hosts. The workstation currently has no configured second SSH host, so this experiment is externally blocked.
-10. Reproduce from a clean clone/container with pinned dependency, compiler, CUDA, image, dataset/weight, source, and binary digests; renew human source/proof review after final code changes.
+10. Run authenticated repeated LAN and controlled-WAN trials on two real hosts.
+    The workstation currently has no configured second SSH host, so this
+    experiment is externally blocked.
+11. Reproduce from a clean clone/container with pinned dependency, compiler,
+    CUDA, image, dataset/weight, source, and binary digests; renew human
+    source/proof review after final code changes.
+12. Establish the causal systems contribution and held-out cost-model accuracy
+    required by the September ASPLOS contract in
+    `publication_readiness_plan_2026_07_21.md`. Dealerless nonlinear setup and
+    private/trained-model evidence are additional gates only for broader
+    full-inference claims.
 
 ### Venue disposition
 
-Top systems/security venue only after all gates above. Before then, the honest target is an artifact/measurement venue with a negative performance conclusion, not a claimed practical secure-ML speedup.
+A top systems venue remains a NO-GO until the research, evaluation, and release gates close. ASPLOS can accommodate a rigorous negative result with new generalizable insight; working integration or a benchmark slowdown alone is insufficient. No practical secure-ML speedup is claimed.
 
 ## Paper B — cryptography and concrete parameters
 
