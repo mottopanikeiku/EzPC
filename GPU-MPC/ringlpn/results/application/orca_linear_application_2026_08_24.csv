@@ -1,0 +1,14 @@
+component,case,status
+linear-library,api,pass
+orca-linear-helpers,matmul-and-conv2d,pass
+orca-linear-application,fc,pass
+orca-linear-application,conv2d,pass
+orca-linear-control,wrong-kind,pass
+orca-linear-control,wrong-shape,pass
+orca-linear-control,wrong-ordinal,pass
+orca-linear-control,swapped-state,pass
+orca-linear-control,corrupt-state,pass
+orca-linear-control,permissive-share-file,pass
+orca-linear-control,duplicate-output,pass
+orca-linear-control,one-sided-metadata-mismatch,pass
+paper-checkpoint-smoke,all-gates,pass

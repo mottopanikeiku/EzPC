@@ -1,0 +1,590 @@
+[two-party-fc-model] build
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28,
+                 from src/linear_preprocess_backend.cuh:8,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(536): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(631): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t modulo_mask = (l == 64 ? -1 : ((1ULL << l) - 1));
+                                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(723): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(756): warning #68-D: integer conversion resulted in a change of sign
+        modulo_mask = -1;
+                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(799): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h(885): warning #68-D: integer conversion resulted in a change of sign
+            (msg_len[bit_idx] == 64 ? -1 : ((1ULL << msg_len[bit_idx]) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, bool)"
+      }
+      ^
+
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_linear_helper.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.cu:27,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_select.h:62,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_relu.h:26,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_truncate.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/fss/gpu_matmul.h:25,
+                 from src/orca_fc_ringlpn_keywriter.cuh:13,
+                 from src/two_party_linear_preprocess.cuh:28,
+                 from src/linear_preprocess_backend.cuh:8,
+                 from src/linear_preprocess_fc.cu:2:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file
+   34 | #define CUTLASS_CHECK(status)                                                                      \
+      |                                                                                                     
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/aes-ni.h(296): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(250): warning #68-D: integer conversion resulted in a change of sign
+      if (x==64) return -1;
+                        ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp(436): warning #68-D: integer conversion resulted in a change of sign
+      uint64_t mask_x = (bw_x == 64 ? -1: ((1ULL << bw_x) - 1));
+                                      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/crh.h(49): warning #1675-D: unrecognized GCC pragma
+  #pragma GCC optimize("unroll-loops")
+              ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(162): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot-utils.h(195): warning #68-D: integer conversion resulted in a change of sign
+      mask = -1;
+             ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h(39): warning #815-D: type qualifier on return type is meaningless
+          const block getSeed() const;
+          ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/utils/gpu_comms.h(315): warning #940-D: missing return statement at end of non-void function "GpuPeer::addAndReconstruct(int, u64, u32 *, u32 *, Stats *, __nv_bool)"
+      }
+      ^
+
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~  ~~~~~~~~~
+      |                                     |
+      |                                     uint64_t {aka long unsigned int}
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:8: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |        ^~~~~~~~~~~~~~~~~~~             ~~~~~~~~~
+      |                                                |
+      |                                                uint64_t {aka long unsigned int}
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:25: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/usr/include/openssl/ec.h:883:52: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:21: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |          ~~~~~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:14: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:52: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                                                    ^~~          
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:13: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:52: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                                                    ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:12: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~^~~~~~~~~
+/usr/include/openssl/sha.h:73:52: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                                                    ^~         
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:438:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  438 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:438:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  438 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                                               ^
+src/two_party_ot.h:439:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  439 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:439:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  439 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                                               ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:462:61: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  462 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                             ^
+src/two_party_ot.h:462:63: warning: ignoring attributes on template argument ‘__m128i []’ [-Wignored-attributes]
+  462 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                                               ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h: At global scope:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Common/Defines.h:73:38: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   73 |     extern const std::array<block, 2> zeroAndAllOne;
+      |                                      ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:38: warning: ignoring attributes on template argument ‘const __m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                      ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:35:66: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   35 |         void ecbEncBlocks(span<const block> plaintexts, span<block> ciphertext) const
+      |                                                                  ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:56:50: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+   56 |         void ecbEncCounterMode(u64 baseIdx, span<block> ciphertext) const
+      |                                                  ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:81:24: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   81 |         MultiKeyAES(span<block> keys) { setKeys(keys); }
+      |                        ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/AES.h:84:25: warning: ignoring attributes on template argument ‘osuCrypto::block’ {aka ‘__m128i’} [-Wignored-attributes]
+   84 |         void setKeys(span<block> keys)
+      |                         ^
+/tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ext/sytorch/ext/cryptoTools/cryptoTools/Crypto/PRNG.h:140:35: warning: ignoring attributes on template argument ‘__m128i’ [-Wignored-attributes]
+  140 |                 std::vector<block> mBuffer;
+      |                                   ^
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_convert.h:3,
+                 from src/secure_convert.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:438:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  438 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h:439:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  439 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:462:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  462 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.h:87,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:28,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/io_channel.h:31,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:1,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/ot.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/np.h:30,
+                 from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/OT/split-iknp.h:28,
+                 from src/two_party_ot.h:46,
+                 from src/secure_truncate.h:3,
+                 from src/secure_truncate.cpp:1:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp: In function ‘void sci::print128_num(__m128i)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:19: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |             ~~~~~~^             ~~~~~~~~~
+      |                   |                     |
+      |                   |                     uint64_t {aka long unsigned int}
+      |                   long long unsigned int
+      |             %.16lx
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/utils.hpp:287:27: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  287 |     printf("%.16llx %.16llx\n", v64val[1], v64val[0]);
+      |                     ~~~~~~^                ~~~~~~~~~
+      |                           |                        |
+      |                           long long unsigned int   uint64_t {aka long unsigned int}
+      |                     %.16lx
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:97:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h: In constructor ‘emp::Group::Group()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group_openssl.h:174:27: warning: ‘int EC_GROUP_precompute_mult(EC_GROUP*, BN_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  174 |   EC_GROUP_precompute_mult(ec_group, bn_ctx);
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/group.h:31:
+/usr/include/openssl/ec.h:883:27: note: declared here
+  883 | OSSL_DEPRECATEDIN_3_0 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+      |                           ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/emp-tool.h:15:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In constructor ‘sci::Hash::Hash()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:46:23: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   46 |   Hash() { SHA256_Init(&hash); }
+      |            ~~~~~~~~~~~^~~~~~~
+In file included from /tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:33:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::put(const void*, int)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:50:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   50 |       SHA256_Update(&hash, data, nbyte);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:55:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   55 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::digest(char*)’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:65:20: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   65 |       SHA256_Update(&hash, (char *)buffer, size);
+      |       ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:68:17: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   68 |     SHA256_Final((unsigned char *)a, &hash);
+      |     ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h: In member function ‘void sci::Hash::reset()’:
+/tmp/ringlpn-linear-adapter-reproducible-build/source/SCI/src/utils/hash.h:71:16: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   71 |     SHA256_Init(&hash);
+      |     ~~~~~~~~~~~^~~~~~~
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+src/two_party_ot.h: In member function ‘void ringlpn_2pc::PartyChannel::ot_send_128(const std::vector<__int128 unsigned>&, const std::vector<__int128 unsigned>&)’:
+src/two_party_ot.h:438:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  438 |             std::unique_ptr<sci::block128[]> b0(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h:439:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  439 |             std::unique_ptr<sci::block128[]> b1(new sci::block128[(size_t)n]);
+      |                                            ^
+src/two_party_ot.h: In member function ‘std::vector<__int128 unsigned> ringlpn_2pc::PartyChannel::ot_recv_128(const std::vector<unsigned char>&)’:
+src/two_party_ot.h:462:44: warning: ignoring attributes on template argument ‘sci::block128 []’ {aka ‘__m128i []’} [-Wignored-attributes]
+  462 |             std::unique_ptr<sci::block128[]> out(new sci::block128[(size_t)n]);
+      |                                            ^
+Built /tmp/ringlpn-linear-adapter-reproducible-build/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess
+===== CNN2 fc4 / warmup 0 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54608e+07,pass,69211,43.028,25680.9,1.67639e+06,1.3512e+07,223417,13057.8,309718,7.76567e+06,579138,471768,1548.06,136.048,304590848,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,15ce06232727429b4b6e673e408da1de,c2746cff7fda7d01653e180262e4aa67623655225ed6569b07998b2c9ed7f721,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / warmup 0 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54608e+07,pass,69211,460.368,25690.3,1.67646e+06,1.3512e+07,223075,13162.4,308299,7.79955e+06,492742,471794,1499.38,185.089,299876352,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,15ce06232727429b4b6e673e408da1de,c2746cff7fda7d01653e180262e4aa67623655225ed6569b07998b2c9ed7f721,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / warmup 0 / post-exit checker =====
+128,32,100,256,128,442,569344,16033.8,641.137,pass,pass,pass,pass,173295,134610944,433192960,33393344512,15ce06232727429b4b6e673e408da1de,c2746cff7fda7d01653e180262e4aa67623655225ed6569b07998b2c9ed7f721
+===== CNN2 fc4 / measured 1 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54895e+07,pass,69211,212.681,20609.7,1.66649e+06,1.35461e+07,227336,13522.2,305981,7.77859e+06,584175,475083,1639.68,155.557,305848320,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,bb27eaa366df9670023dd1d0eb9fcd04,aadf9891592914acb4d990300f471e65c18503257872c157a031e781f60939bb,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 1 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54895e+07,pass,69211,86.142,20603.1,1.66664e+06,1.35478e+07,225264,13943.7,311864,7.83462e+06,496088,475104,1691.78,102.902,300081152,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,bb27eaa366df9670023dd1d0eb9fcd04,aadf9891592914acb4d990300f471e65c18503257872c157a031e781f60939bb,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 1 / post-exit checker =====
+128,32,100,256,128,442,569344,15788.1,632.648,pass,pass,pass,pass,178223,135483392,433192960,33393344512,bb27eaa366df9670023dd1d0eb9fcd04,aadf9891592914acb4d990300f471e65c18503257872c157a031e781f60939bb
+===== CNN2 fc4 / measured 2 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54923e+07,pass,69211,39.742,18302.7,1.67063e+06,1.3544e+07,225533,12989.3,309151,7.77125e+06,578016,481837,1722.73,181.295,304996352,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,0c38d084435e4fee6a5e9c5fc1fb9557,1ee9919c5f93f35764660b14baaec937f976b315fb1c2fe77085c7ef65cedad5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 2 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54922e+07,pass,69211,38.807,18324.4,1.67067e+06,1.35467e+07,222629,13694,312225,7.82987e+06,495935,481933,1579.14,316.812,298344448,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,0c38d084435e4fee6a5e9c5fc1fb9557,1ee9919c5f93f35764660b14baaec937f976b315fb1c2fe77085c7ef65cedad5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 2 / post-exit checker =====
+128,32,100,256,128,442,569344,15421.9,648.924,pass,pass,pass,pass,173953,134823936,433192960,33393344512,0c38d084435e4fee6a5e9c5fc1fb9557,1ee9919c5f93f35764660b14baaec937f976b315fb1c2fe77085c7ef65cedad5
+===== CNN2 fc4 / measured 3 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.53996e+07,pass,69211,40.156,19553.9,1.67299e+06,1.34521e+07,224329,13194.2,304801,7.75116e+06,573987,486239,1699.98,184.536,305975296,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,616f58cf898541545cdfa1b8730cfca4,af4195ab11fb309ae7a553cf811d2c513c9875b25cd008267d51ee041f3edb88,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 3 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.53996e+07,pass,69211,225.057,19562,1.67301e+06,1.3453e+07,223081,13505.5,310791,7.79957e+06,491586,486270,1702.25,180.091,299958272,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,616f58cf898541545cdfa1b8730cfca4,af4195ab11fb309ae7a553cf811d2c513c9875b25cd008267d51ee041f3edb88,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 3 / post-exit checker =====
+128,32,100,256,128,442,569344,15809.1,644.389,pass,pass,pass,pass,171603,134393856,433192960,33393344512,616f58cf898541545cdfa1b8730cfca4,af4195ab11fb309ae7a553cf811d2c513c9875b25cd008267d51ee041f3edb88
+===== CNN2 fc4 / measured 4 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54113e+07,pass,69211,119.942,20093.2,1.66985e+06,1.34383e+07,223694,12831.8,304606,7.8017e+06,578056,488224,1682.62,299.685,306573312,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,e4ab990d1492e69478270861d89c1207,cad2c090d4953ff6baaafce7958df7da84dc3bd3761c63d47c9ea172e10bccbf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 4 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54113e+07,pass,69211,50.458,20095.1,1.66986e+06,1.34388e+07,223665,13766.8,308093,7.82582e+06,495320,488197,1726.43,246.259,299069440,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,e4ab990d1492e69478270861d89c1207,cad2c090d4953ff6baaafce7958df7da84dc3bd3761c63d47c9ea172e10bccbf,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 4 / post-exit checker =====
+128,32,100,256,128,442,569344,15649.9,635.684,pass,pass,pass,pass,171464,135008256,433192960,33393344512,e4ab990d1492e69478270861d89c1207,cad2c090d4953ff6baaafce7958df7da84dc3bd3761c63d47c9ea172e10bccbf
+===== CNN2 fc4 / measured 5 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.55121e+07,pass,69211,39.829,19329.9,1.66995e+06,1.35614e+07,224428,12978.3,304252,7.77882e+06,575218,479940,1618.02,256.948,305610752,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,e6706875eb1e7563e4adc6cfc9ebe8de,ed7ef72f7198dc7d639f33ca284c200fc9580f4ef08e9fc95915a08193f72779,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 5 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.5512e+07,pass,69211,56.773,19338.9,1.67011e+06,1.35638e+07,221837,13853.6,310062,7.80594e+06,492124,480028,1521.63,340.13,298496000,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,e6706875eb1e7563e4adc6cfc9ebe8de,ed7ef72f7198dc7d639f33ca284c200fc9580f4ef08e9fc95915a08193f72779,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 5 / post-exit checker =====
+128,32,100,256,128,442,569344,15988.9,641.809,pass,pass,pass,pass,172913,135049216,433192960,33393344512,e6706875eb1e7563e4adc6cfc9ebe8de,ed7ef72f7198dc7d639f33ca284c200fc9580f4ef08e9fc95915a08193f72779
+===== CNN2 fc4 / measured 6 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.53523e+07,pass,69211,33.219,21424.6,1.67812e+06,1.34499e+07,225181,12703.2,303292,7.77308e+06,573887,478703,1706.09,156.36,304168960,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,ab6bd126b5100153e25ae36b7a54f20a,bccff68b8280ba3f3ee629b348d8602e2a44399ef00158d3a9460ae9f94580a3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 6 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.53523e+07,pass,69211,47.829,21429.5,1.67804e+06,1.34517e+07,223230,13250.5,309262,7.80892e+06,490890,478818,1702.45,153.14,298872832,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,ab6bd126b5100153e25ae36b7a54f20a,bccff68b8280ba3f3ee629b348d8602e2a44399ef00158d3a9460ae9f94580a3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 6 / post-exit checker =====
+128,32,100,256,128,442,569344,15359.4,637.057,pass,pass,pass,pass,173311,134545408,433192960,33393344512,ab6bd126b5100153e25ae36b7a54f20a,bccff68b8280ba3f3ee629b348d8602e2a44399ef00158d3a9460ae9f94580a3
+===== CNN2 fc4 / measured 7 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54638e+07,pass,69211,42.584,24994.7,1.68014e+06,1.34908e+07,224489,13053.3,305076,7.78247e+06,576241,465726,1920.03,193.443,306089984,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,2c114dd91789dce7639ca47c1e83db98,cc347140e200cb5c9435f19de6484244754e85f5b1f0b3718eaf89ee5861ae41,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 7 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54638e+07,pass,69211,152.949,24973,1.67998e+06,1.34928e+07,222290,13806.9,310394,7.82144e+06,493417,465748,1929.78,174.569,299028480,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,2c114dd91789dce7639ca47c1e83db98,cc347140e200cb5c9435f19de6484244754e85f5b1f0b3718eaf89ee5861ae41,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 7 / post-exit checker =====
+128,32,100,256,128,442,569344,15564.1,642.394,pass,pass,pass,pass,174909,134705152,433192960,33393344512,2c114dd91789dce7639ca47c1e83db98,cc347140e200cb5c9435f19de6484244754e85f5b1f0b3718eaf89ee5861ae41
+===== CNN2 fc4 / measured 8 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.5471e+07,pass,69211,31.251,26314.8,1.66972e+06,1.34666e+07,222625,13404.6,305465,7.78815e+06,576149,487843,1677.85,166.955,306180096,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,3b4569e16aca0b91d79bc7062c96750f,d28a3b45b1aa9e18e69c3bb6698845c749bb8bf1b1956f840b4120a92ded4320,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 8 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.5471e+07,pass,69211,59.053,26312.6,1.66979e+06,1.34678e+07,221205,13682.8,307170,7.82368e+06,493995,487921,1672.42,159.865,298373120,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,3b4569e16aca0b91d79bc7062c96750f,d28a3b45b1aa9e18e69c3bb6698845c749bb8bf1b1956f840b4120a92ded4320,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 8 / post-exit checker =====
+128,32,100,256,128,442,569344,15818.1,639.846,pass,pass,pass,pass,174041,135147520,433192960,33393344512,3b4569e16aca0b91d79bc7062c96750f,d28a3b45b1aa9e18e69c3bb6698845c749bb8bf1b1956f840b4120a92ded4320
+===== CNN2 fc4 / measured 9 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54124e+07,pass,69211,40.497,21583.5,1.66933e+06,1.34734e+07,228674,13205.4,305693,7.79337e+06,578596,471156,1706.43,172.807,306728960,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,ec93ca267075d7212a0f53dcfbcb17f3,39e21c3fca0631766e4cb7fb26533dfdd68194b22a0e22fe99731949ff14ae4b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 9 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54107e+07,pass,69211,234.566,23298.2,1.66946e+06,1.34741e+07,227806,13466.1,310014,7.8058e+06,494235,471169,1708.57,165.672,299782144,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,ec93ca267075d7212a0f53dcfbcb17f3,39e21c3fca0631766e4cb7fb26533dfdd68194b22a0e22fe99731949ff14ae4b,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 9 / post-exit checker =====
+128,32,100,256,128,442,569344,14547,643.653,pass,pass,pass,pass,174697,135032832,433192960,33393344512,ec93ca267075d7212a0f53dcfbcb17f3,39e21c3fca0631766e4cb7fb26533dfdd68194b22a0e22fe99731949ff14ae4b
+===== CNN2 fc4 / measured 10 / party 0 =====
+0,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,633859180,141951,2.54664e+07,pass,69211,40.327,23823,1.67931e+06,1.35128e+07,227315,13638.7,306943,7.77895e+06,577223,485157,1941.72,168.979,304795648,431095808,33395441664,430935949,NA,202945221,NA,256,21829,NA,128,128,128,128,yes,NA,2940b3148fff9d303e0d3c3fea7bd35d,451d5fa2a8875854e398a3c080f4d3ffc58ce0fa318db47221cf8d46ab2073c0,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 10 / party 1 =====
+1,128,32,100,256,128,8192,2,8,regular,442,7424,768,1768,13107200,452608,9957376,4526080,1357824,1536,1356288,1357824,1536,1356288,852523008,1536866304,103024896,4,13107200,12800,7961600,15923200,608224876,141951,2.54663e+07,pass,69211,172.404,23837.5,1.67925e+06,1.35156e+07,224489,14151.7,311576,7.80406e+06,492725,485145,1942.52,166.543,298196992,431095808,33395441664,446994898,NA,161251968,NA,256,21829,NA,128,128,128,128,yes,NA,2940b3148fff9d303e0d3c3fea7bd35d,451d5fa2a8875854e398a3c080f4d3ffc58ce0fa318db47221cf8d46ab2073c0,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,18432,NA,7072,0
+===== CNN2 fc4 / measured 10 / post-exit checker =====
+128,32,100,256,128,442,569344,15777.4,638.814,pass,pass,pass,pass,172235,134799360,433192960,33393344512,2940b3148fff9d303e0d3c3fea7bd35d,451d5fa2a8875854e398a3c080f4d3ffc58ce0fa318db47221cf8d46ab2073c0
+===== CNN2 fc5 / warmup 0 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.38046e+06,pass,3067,360.704,23714,69648.7,574154,16833.8,435.712,12528.4,316034,22059.1,41938.5,728.991,153.999,136744960,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,3b26ae6fb776e8c3007e943e6244ec82,6551cea79117936f175a0f9573e7b6eb6c1e966e300ca98fe08ac14653089921,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / warmup 0 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.38047e+06,pass,3067,35.433,23701.9,69647.3,574379,16614.5,534.639,13659.3,323374,18983.1,41957.7,724.412,148.402,137129984,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,3b26ae6fb776e8c3007e943e6244ec82,6551cea79117936f175a0f9573e7b6eb6c1e966e300ca98fe08ac14653089921,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / warmup 0 / post-exit checker =====
+128,32,100,128,10,18,120640,14642.5,345.598,pass,pass,pass,pass,160934,129564672,433192960,33393344512,3b26ae6fb776e8c3007e943e6244ec82,6551cea79117936f175a0f9573e7b6eb6c1e966e300ca98fe08ac14653089921
+===== CNN2 fc5 / measured 1 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.38125e+06,pass,3067,38.668,18879.9,69854.5,551152,18257.6,420.643,12339.7,314734,22141.1,40066.7,723.341,206.296,137043968,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,09e0ab6da7eb2afc53989081273a2617,65a411d23f675211724aaac764b7bc5e91ef054ce2c3099fdc8af119257fb671,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 1 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.38125e+06,pass,3067,196.971,18881.8,69862.4,551458,17939,460.751,16942.3,316863,19391,40023.5,730.093,200.076,137347072,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,09e0ab6da7eb2afc53989081273a2617,65a411d23f675211724aaac764b7bc5e91ef054ce2c3099fdc8af119257fb671,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 1 / post-exit checker =====
+128,32,100,128,10,18,120640,14781.5,345.947,pass,pass,pass,pass,162560,129687552,433192960,33393344512,09e0ab6da7eb2afc53989081273a2617,65a411d23f675211724aaac764b7bc5e91ef054ce2c3099fdc8af119257fb671
+===== CNN2 fc5 / measured 2 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.39439e+06,pass,3067,49.456,18971,68482.2,559750,18436,502.837,12926.7,320506,22619.4,43081.5,682.8,160.097,138219520,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,a626edba9708e3f373fdc73b6920e709,f5071f1d6851e4602732c747e6abe46da8dadb138d09e722d02d18f7c5f2a322,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 2 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.39439e+06,pass,3067,345.383,18977,68896.6,559319,18441.7,431.346,12617.4,316018,19667.7,43096.8,686.269,155.112,137064448,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,a626edba9708e3f373fdc73b6920e709,f5071f1d6851e4602732c747e6abe46da8dadb138d09e722d02d18f7c5f2a322,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 2 / post-exit checker =====
+128,32,100,128,10,18,120640,14868.7,344.326,pass,pass,pass,pass,165098,129794048,433192960,33393344512,a626edba9708e3f373fdc73b6920e709,f5071f1d6851e4602732c747e6abe46da8dadb138d09e722d02d18f7c5f2a322
+===== CNN2 fc5 / measured 3 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.40411e+06,pass,3067,36.987,19714.5,69548.8,554670,16882.1,439.807,16032.9,314699,23477.9,39495.1,887.543,190.523,136966144,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,e0329e8c24b8d6e153c870515f5c5dd7,3974d864cee577d7e70d87b42623a566f2ac023690587404acd6074ec7d21fc2,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 3 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.4041e+06,pass,3067,39.214,19726.9,69549.6,554802,16753.7,481.496,12758.3,325225,20272.1,39505.2,890.11,185.933,137314304,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,e0329e8c24b8d6e153c870515f5c5dd7,3974d864cee577d7e70d87b42623a566f2ac023690587404acd6074ec7d21fc2,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 3 / post-exit checker =====
+128,32,100,128,10,18,120640,15158.7,348.441,pass,pass,pass,pass,160590,129654784,433192960,33393344512,e0329e8c24b8d6e153c870515f5c5dd7,3974d864cee577d7e70d87b42623a566f2ac023690587404acd6074ec7d21fc2
+===== CNN2 fc5 / measured 4 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.40244e+06,pass,3067,33.888,19152.3,67351.8,565934,16724.2,450.819,17888,318343,22321.7,39078.8,781.495,155.333,137043968,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,7404c93474988d2823e84f0bc8b1cdfe,a7d3e76e170e6e4611a49d7c588e1052cd5f945503d901fcd27527c31514302a,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 4 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.40243e+06,pass,3067,53.748,19160.2,67338.3,565895,16752.8,446.437,13082.3,317223,19533.6,39088.6,778.796,149.077,137273344,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,7404c93474988d2823e84f0bc8b1cdfe,a7d3e76e170e6e4611a49d7c588e1052cd5f945503d901fcd27527c31514302a,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 4 / post-exit checker =====
+128,32,100,128,10,18,120640,14919.9,347.554,pass,pass,pass,pass,160101,130027520,433192960,33393344512,7404c93474988d2823e84f0bc8b1cdfe,a7d3e76e170e6e4611a49d7c588e1052cd5f945503d901fcd27527c31514302a
+===== CNN2 fc5 / measured 5 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.3828e+06,pass,3067,45.733,20338.5,69682.7,557601,17353.3,466.71,12551.6,316192,22652.4,38346.9,697.666,153.957,137502720,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,da851c0bd38f6d4b0b48b1e2699b28d2,57c30352bb39d23465d3c0a864c2bd1209c3f5906b469e6708926c591dd74e3e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 5 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.38281e+06,pass,3067,155.45,20339.3,69671.7,557523,17413.3,424.078,15341.1,320868,19436,38358.2,702.572,149.708,137412608,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,da851c0bd38f6d4b0b48b1e2699b28d2,57c30352bb39d23465d3c0a864c2bd1209c3f5906b469e6708926c591dd74e3e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 5 / post-exit checker =====
+128,32,100,128,10,18,120640,14828,345.402,pass,pass,pass,pass,160411,129925120,433192960,33393344512,da851c0bd38f6d4b0b48b1e2699b28d2,57c30352bb39d23465d3c0a864c2bd1209c3f5906b469e6708926c591dd74e3e
+===== CNN2 fc5 / measured 6 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.37613e+06,pass,3067,36.264,19771.2,69372.2,550475,16115.8,418.125,16427.4,315449,22494.5,40293.8,769.462,153.211,137633792,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,a7ada4288768c93df8e1bd562e0ea7e2,59edc370b79fc9a0efc552c6a23a8d2d8bd7dfa98a85ceca2d8a99424f64c77c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 6 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.37619e+06,pass,3067,29.152,19710.5,69379.3,550522,16076.5,442.877,13512,316294,20284.4,40308.5,769.175,151.713,136507392,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,a7ada4288768c93df8e1bd562e0ea7e2,59edc370b79fc9a0efc552c6a23a8d2d8bd7dfa98a85ceca2d8a99424f64c77c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 6 / post-exit checker =====
+128,32,100,128,10,18,120640,14769.9,343.597,pass,pass,pass,pass,161324,129916928,433192960,33393344512,a7ada4288768c93df8e1bd562e0ea7e2,59edc370b79fc9a0efc552c6a23a8d2d8bd7dfa98a85ceca2d8a99424f64c77c
+===== CNN2 fc5 / measured 7 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.41516e+06,pass,3067,35.508,21745.8,69859.4,572703,16290,426.736,12314,317423,23097.8,42222,699.297,170.959,137080832,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,90cda25157d6ea0840877eb1e32504b1,ac0ed01f62099a839bdbc21dff91dde6f53d158072e796bddc24b0e7d849e116,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 7 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.41519e+06,pass,3067,18.159,21709.3,69862.6,572929,16064.7,475.353,17238.7,320006,20561.2,42234.1,702.533,164.74,137261056,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,90cda25157d6ea0840877eb1e32504b1,ac0ed01f62099a839bdbc21dff91dde6f53d158072e796bddc24b0e7d849e116,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 7 / post-exit checker =====
+128,32,100,128,10,18,120640,15083,342.573,pass,pass,pass,pass,161887,129925120,433192960,33393344512,90cda25157d6ea0840877eb1e32504b1,ac0ed01f62099a839bdbc21dff91dde6f53d158072e796bddc24b0e7d849e116
+===== CNN2 fc5 / measured 8 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.3677e+06,pass,3067,51.994,22643.2,67028.7,553722,16053.1,417.439,12219.3,316379,21918.3,37459.8,670.184,161.26,137441280,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,e3fb3ba829ac95188d7471cd7b506042,804071ff10557694de4613c770633d72ba100bdbf9e6a90797d4e51ed112a1d4,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 8 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.36771e+06,pass,3067,319.957,22644.1,67022.6,553993,15793,461.942,12256.7,319763,18954.8,37470.1,673.756,155.066,137105408,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,e3fb3ba829ac95188d7471cd7b506042,804071ff10557694de4613c770633d72ba100bdbf9e6a90797d4e51ed112a1d4,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 8 / post-exit checker =====
+128,32,100,128,10,18,120640,14965.8,346.351,pass,pass,pass,pass,162817,129601536,433192960,33393344512,e3fb3ba829ac95188d7471cd7b506042,804071ff10557694de4613c770633d72ba100bdbf9e6a90797d4e51ed112a1d4
+===== CNN2 fc5 / measured 9 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.40722e+06,pass,3067,41.617,19686.8,69968,566942,17231.8,425.809,15077,316409,22361,43856.5,751.727,151.09,137773056,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,e2cda19199d1952c728f53a919593268,a239ec9bd5c18a574c4081b1a3c255a6c7536926cd16fb7b0bca67f3a1d77983,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 9 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.40722e+06,pass,3067,88.112,19688.2,69955,567202,16989.1,478.168,13327.5,322855,20008,43869.4,753.06,149.509,136466432,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,e2cda19199d1952c728f53a919593268,a239ec9bd5c18a574c4081b1a3c255a6c7536926cd16fb7b0bca67f3a1d77983,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 9 / post-exit checker =====
+128,32,100,128,10,18,120640,14771.7,344.272,pass,pass,pass,pass,160842,130064384,433192960,33393344512,e2cda19199d1952c728f53a919593268,a239ec9bd5c18a574c4081b1a3c255a6c7536926cd16fb7b0bca67f3a1d77983
+===== CNN2 fc5 / measured 10 / party 0 =====
+0,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,31253380,6271,1.38952e+06,pass,3067,19.906,27526,67756.4,553439,16432,434.837,15926.2,314764,22466.5,44233.1,683.93,139.602,137691136,431095808,33395441664,20874917,NA,10400453,NA,256,21829,NA,128,128,128,128,yes,NA,c2af90e9ee3d2976aa1b516bc967ede2,471c28d68c8b8e6c17cf8886807a756ad31c56fe51d5dc683ca2563c673fc8b9,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 10 / party 1 =====
+1,128,32,100,128,10,8192,2,8,regular,18,7424,768,72,512000,18432,405504,184320,55296,1536,53760,55296,1536,53760,34535424,62404608,4195584,4,512000,1000,622000,1244000,29415300,6271,1.38952e+06,pass,3067,16.139,27525.2,67756.5,553537,16314.8,471.863,13294.4,318540,19949.7,44241.5,685.957,139.19,136671232,431095808,33395441664,22832314,NA,6604976,NA,256,21829,NA,128,128,128,128,yes,NA,c2af90e9ee3d2976aa1b516bc967ede2,471c28d68c8b8e6c17cf8886807a756ad31c56fe51d5dc683ca2563c673fc8b9,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,22528,NA,288,0
+===== CNN2 fc5 / measured 10 / post-exit checker =====
+128,32,100,128,10,18,120640,14798.6,346.237,pass,pass,pass,pass,159519,129462272,433192960,33393344512,c2af90e9ee3d2976aa1b516bc967ede2,471c28d68c8b8e6c17cf8886807a756ad31c56fe51d5dc683ca2563c673fc8b9
+===== CNN3 fc5 / warmup 0 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,894544,pass,1663,109.422,23740.4,34072.2,282178,13908.4,192.919,6410.11,158646,11307.9,40160.2,614.395,152.495,137240576,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,c1a39973a43ca8730e810850067aac40,b4c29bfbef5315ffa5c2d1416dce85ba16ae72c414315cd0b6262a5f65482953,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / warmup 0 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,894524,pass,1663,191.694,23768.8,34070.9,282239,13842.1,220.355,10745.7,160908,10050.7,40186.4,616.682,145.596,136896512,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,c1a39973a43ca8730e810850067aac40,b4c29bfbef5315ffa5c2d1416dce85ba16ae72c414315cd0b6262a5f65482953,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / warmup 0 / post-exit checker =====
+128,32,100,64,10,9,64320,14914.1,212.912,pass,pass,pass,pass,159936,129077248,433192960,33393344512,c1a39973a43ca8730e810850067aac40,b4c29bfbef5315ffa5c2d1416dce85ba16ae72c414315cd0b6262a5f65482953
+===== CNN3 fc5 / measured 1 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,887278,pass,1663,38.977,20629.1,35348.9,294520,11950.9,223.559,9408.28,158764,11149,38080.1,722.028,162.176,137506816,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,f9dc168635e8073ae50c1aef154cc388,58baa4a8043fe9d9476db1cc570078a6b1a61cebaed76ecd64e2cdc09e0ee7a5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 1 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,887175,pass,1663,230.163,20739.8,35342,294503,11969.4,215.669,6162.73,157476,9376.3,38110.6,726.997,157.574,136654848,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,f9dc168635e8073ae50c1aef154cc388,58baa4a8043fe9d9476db1cc570078a6b1a61cebaed76ecd64e2cdc09e0ee7a5,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 1 / post-exit checker =====
+128,32,100,64,10,9,64320,14943.1,212.962,pass,pass,pass,pass,164168,128872448,433192960,33393344512,f9dc168635e8073ae50c1aef154cc388,58baa4a8043fe9d9476db1cc570078a6b1a61cebaed76ecd64e2cdc09e0ee7a5
+===== CNN3 fc5 / measured 2 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,889706,pass,1663,38.673,21812.2,36334.7,284649,13649.8,242.063,6480.04,159985,11513.9,41562.9,719.262,122.279,136519680,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,bc4b0b42cbcd0d25a81a0b17327c435b,a953e389615f3be0395bf834ec8bf9c7161b002ddc62f386efa1aba1c9e33a6c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 2 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,889733,pass,1663,18.319,21782.5,36328.9,284572,13716.1,220.86,6738.08,161307,10191,41587.8,720.065,116.401,137474048,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,bc4b0b42cbcd0d25a81a0b17327c435b,a953e389615f3be0395bf834ec8bf9c7161b002ddc62f386efa1aba1c9e33a6c,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 2 / post-exit checker =====
+128,32,100,64,10,9,64320,14515.6,213.323,pass,pass,pass,pass,163395,129208320,433192960,33393344512,bc4b0b42cbcd0d25a81a0b17327c435b,a953e389615f3be0395bf834ec8bf9c7161b002ddc62f386efa1aba1c9e33a6c
+===== CNN3 fc5 / measured 3 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,857459,pass,1663,30.028,22137.1,35284.6,294110,11668.9,208.282,9263.78,157773,11021.1,39540.3,751.603,435.579,137367552,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,78f2d2da6d9b71d2f5825c2c3839ea8b,7111a03fce2b101475afcf15873aa23ae2181016cc241eda6a08d1dcb460d78e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 3 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,855166,pass,1663,45.243,24430.6,35283,294131,11656.4,226.062,6301.8,158277,9472.7,39688.8,945.218,165.684,137240576,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,78f2d2da6d9b71d2f5825c2c3839ea8b,7111a03fce2b101475afcf15873aa23ae2181016cc241eda6a08d1dcb460d78e,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 3 / post-exit checker =====
+128,32,100,64,10,9,64320,15107,217.133,pass,pass,pass,pass,163905,129003520,433192960,33393344512,78f2d2da6d9b71d2f5825c2c3839ea8b,7111a03fce2b101475afcf15873aa23ae2181016cc241eda6a08d1dcb460d78e
+===== CNN3 fc5 / measured 4 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,902453,pass,1663,26.802,22715.4,35038.7,276825,12150.7,211.419,9133.7,157581,11027.6,37205.1,578.131,159.502,137306112,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,8f5405bc7186aad16d8dc8a46baae490,3b3e2ba1607b7b17af40376e17bd3c70c18fb545091f3417a2075cf4da4e76e3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 4 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,902453,pass,1663,14.851,22716.5,35042.9,276812,12162.8,227.319,6213.49,158940,9400.87,37229.6,583.686,149.796,137502720,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,8f5405bc7186aad16d8dc8a46baae490,3b3e2ba1607b7b17af40376e17bd3c70c18fb545091f3417a2075cf4da4e76e3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 4 / post-exit checker =====
+128,32,100,64,10,9,64320,14582.1,211.667,pass,pass,pass,pass,163483,129179648,433192960,33393344512,8f5405bc7186aad16d8dc8a46baae490,3b3e2ba1607b7b17af40376e17bd3c70c18fb545091f3417a2075cf4da4e76e3
+===== CNN3 fc5 / measured 5 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,860060,pass,1663,36.71,19993.1,35735.6,288620,12209.3,217.476,6539.62,159121,11150.4,37287.4,561.454,157.701,137277440,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,760260fe53f28efef6cdc4be2e36f6bb,2187c6788ba5b37ec88e61c2c9e244705960602d3f112f2745b3c54ed416a386,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 5 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,860066,pass,1663,45.865,19994.4,35727.2,288676,12155.4,213.544,6281.03,160179,9548.28,37318.3,560.365,153.308,137580544,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,760260fe53f28efef6cdc4be2e36f6bb,2187c6788ba5b37ec88e61c2c9e244705960602d3f112f2745b3c54ed416a386,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 5 / post-exit checker =====
+128,32,100,64,10,9,64320,14982.8,215.322,pass,pass,pass,pass,159882,128880640,433192960,33393344512,760260fe53f28efef6cdc4be2e36f6bb,2187c6788ba5b37ec88e61c2c9e244705960602d3f112f2745b3c54ed416a386
+===== CNN3 fc5 / measured 6 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,912662,pass,1663,46.545,21455.9,34305,281445,13837.2,229.387,6624.61,158647,11016.4,38468.3,485.812,110.263,137662464,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,f3afea605adf12698bddfbcbcb8f6f12,52653f42fc040b74b8d7bf9a3dae04440261c6003ef4b8c7a591ef4abb54090a,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 6 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,910085,pass,1663,294.731,24037.4,34310.3,281527,13742.1,227.923,6216.45,157633,9446.16,38496.5,491.36,101.735,137248768,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,f3afea605adf12698bddfbcbcb8f6f12,52653f42fc040b74b8d7bf9a3dae04440261c6003ef4b8c7a591ef4abb54090a,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 6 / post-exit checker =====
+128,32,100,64,10,9,64320,14694.6,214.87,pass,pass,pass,pass,158100,129191936,433192960,33393344512,f3afea605adf12698bddfbcbcb8f6f12,52653f42fc040b74b8d7bf9a3dae04440261c6003ef4b8c7a591ef4abb54090a
+===== CNN3 fc5 / measured 7 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,875352,pass,1663,53.65,19450.4,37691.1,288460,12061.4,229.23,6897.34,158713,11457.5,38951.2,429.525,434.027,137342976,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,509a3bc1b71289c825bf0ab718c81692,4877d27fd429456c84e077c8042f9519c3be5d7bc5698af11247bbd04e9e9d90,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 7 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,875345,pass,1663,18.54,19459.5,37695.5,288524,11998.1,229.261,7292.63,157898,9916.45,38980.7,458.623,397.667,136888320,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,509a3bc1b71289c825bf0ab718c81692,4877d27fd429456c84e077c8042f9519c3be5d7bc5698af11247bbd04e9e9d90,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 7 / post-exit checker =====
+128,32,100,64,10,9,64320,15226.1,216.106,pass,pass,pass,pass,162767,129171456,433192960,33393344512,509a3bc1b71289c825bf0ab718c81692,4877d27fd429456c84e077c8042f9519c3be5d7bc5698af11247bbd04e9e9d90
+===== CNN3 fc5 / measured 8 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,879508,pass,1663,41.169,22110.8,33639.4,279972,12750.3,232.062,9572.8,158245,11196.5,38566.1,624.079,119.563,137564160,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,372fd3f27ceb3eb5224dcc08c03ceb05,127a5b669cbb99a2864a99fcbb7c351efc60ffdb9318321a6e3beb7f2357d3f7,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 8 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,879505,pass,1663,54.501,22115.1,33654.6,279962,12760.2,215.554,6148.43,158761,9360.65,38590.7,627.241,114.642,137277440,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,372fd3f27ceb3eb5224dcc08c03ceb05,127a5b669cbb99a2864a99fcbb7c351efc60ffdb9318321a6e3beb7f2357d3f7,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 8 / post-exit checker =====
+128,32,100,64,10,9,64320,14573.7,212.302,pass,pass,pass,pass,161925,129110016,433192960,33393344512,372fd3f27ceb3eb5224dcc08c03ceb05,127a5b669cbb99a2864a99fcbb7c351efc60ffdb9318321a6e3beb7f2357d3f7
+===== CNN3 fc5 / measured 9 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,866088,pass,1663,42.326,19320.6,35811.9,283901,13485,200.19,6231.03,158830,11149.3,41813,491.982,108.639,136990720,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,9b932b075f08ccf49f385cd9c7f38779,cb6f051b6a26aeb0453fccd053b22ce4de2c6688f95613dfc76453d80f75e4ac,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 9 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,866083,pass,1663,34.745,19327.9,35823,283888,13477.9,200.464,7264.58,158104,9891.48,41839.9,497.07,100.656,136790016,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,9b932b075f08ccf49f385cd9c7f38779,cb6f051b6a26aeb0453fccd053b22ce4de2c6688f95613dfc76453d80f75e4ac,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 9 / post-exit checker =====
+128,32,100,64,10,9,64320,15256.2,213.57,pass,pass,pass,pass,164457,128831488,433192960,33393344512,9b932b075f08ccf49f385cd9c7f38779,cb6f051b6a26aeb0453fccd053b22ce4de2c6688f95613dfc76453d80f75e4ac
+===== CNN3 fc5 / measured 10 / party 0 =====
+0,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,20635292,3391,899351,pass,1663,25.176,18523.9,35387.5,295586,12019.3,211.946,9387.63,162062,11015.7,41104.5,509.275,261.38,137064448,431095808,33395441664,13353405,NA,7303877,NA,256,21829,NA,128,128,128,128,yes,NA,d03f44fa9c5ca2e9d04039cace9dbcd9,3ae70a39e25f8dfb914f8f3878f9e1041fe2c24bcfa84b523c7b85c56e5a6ba3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 10 / party 1 =====
+1,128,32,100,64,10,8192,2,8,regular,9,7424,768,36,256000,9216,202752,92160,27648,1536,26112,27648,1536,26112,17172480,31107072,2097792,4,256000,1000,622000,1244000,18797212,3391,899324,pass,1663,14.425,18537.8,35380.3,295463,12140.3,220.255,6144.9,157675,9334.53,41135.2,470.628,285.98,137662464,431095808,33395441664,15481298,NA,3337904,NA,256,21829,NA,128,128,128,128,yes,NA,d03f44fa9c5ca2e9d04039cace9dbcd9,3ae70a39e25f8dfb914f8f3878f9e1041fe2c24bcfa84b523c7b85c56e5a6ba3,sci-iknp,SCI-IKNP-IN-TREE,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,existing-default,11264,NA,144,0
+===== CNN3 fc5 / measured 10 / post-exit checker =====
+128,32,100,64,10,9,64320,15333.4,225.53,pass,pass,pass,pass,159059,129351680,433192960,33393344512,d03f44fa9c5ca2e9d04039cace9dbcd9,3ae70a39e25f8dfb914f8f3878f9e1041fe2c24bcfa84b523c7b85c56e5a6ba3

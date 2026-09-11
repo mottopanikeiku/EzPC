@@ -1,0 +1,12 @@
+linear-library-api,ok
+ringlpn-orca-linear-application,fc,pass
+ringlpn-orca-linear-application,conv2d,pass
+ringlpn-orca-linear-control,wrong-kind,pass
+ringlpn-orca-linear-control,wrong-shape,pass
+ringlpn-orca-linear-control,wrong-ordinal,pass
+ringlpn-orca-linear-control,swapped-state,pass
+ringlpn-orca-linear-control,corrupt-state,pass
+ringlpn-orca-linear-control,permissive-share-file,pass
+ringlpn-orca-linear-control,duplicate-output,pass
+ringlpn-orca-linear-control,one-sided-metadata-mismatch,pass
+ORCA LINEAR APPLICATION PASS
