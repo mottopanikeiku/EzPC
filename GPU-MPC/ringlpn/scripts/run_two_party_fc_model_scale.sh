@@ -44,6 +44,7 @@ CSV="${CSV:-$OUTDIR/two_party_fc_model_scale_2026_08_04.csv}"
 AGGREGATE="${AGGREGATE:-$OUTDIR/two_party_fc_model_scale_aggregate_2026_08_04.csv}"
 CONTROLS="${CONTROLS:-$OUTDIR/two_party_fc_model_scale_controls_2026_08_04.csv}"
 SUMMARY="${SUMMARY:-$OUTDIR/two_party_fc_model_scale_summary_2026_08_04.csv}"
+OUTPUT_SCHEMAS="${OUTPUT_SCHEMAS:-${SUMMARY%.csv}_output_schema.json}"
 ENVIRONMENT="${ENVIRONMENT:-$OUTDIR/two_party_fc_model_scale_environment_2026_08_04.txt}"
 LOG="${LOG:-$OUTDIR/two_party_fc_model_scale_2026_08_04.log}"
 AB_AUDIT="${AB_AUDIT:-$OUTDIR/two_party_fc_model_scale_ab_audit_2026_08_14.csv}"
@@ -511,7 +512,7 @@ BINARY_SHA256="$(file_sha256 "$BIN")"
   echo "workload=$WORKLOAD"
   echo "fail_layer_control=${FAIL_LAYER:-none}"
   echo "swap_layer_control=${SWAP_LAYER:-none}"
-  echo "aggregate_rule=complete retained layer groups only; statistics are per model over measured aggregate rows"
+  echo "aggregate_rule=individual layer invocations; model estimates sum independent layer means; fixed-seed stratified whole-row bootstrap; no joint model trials"
   nvidia-smi --query-gpu=index,name,driver_version,memory.total --format=csv,noheader
   /usr/local/cuda/bin/nvcc --version
   for artifact in \
@@ -944,7 +945,8 @@ python3 "$ROOT/scripts/aggregate_two_party_fc_model_scale.py" \
   --binary "$BIN" \
   --require-current-binary \
   --environment "$ENVIRONMENT" \
-  --result-schema "$RESULT_SCHEMAS"
+  --result-schema "$RESULT_SCHEMAS" \
+  --output-schema-json "$OUTPUT_SCHEMAS"
 if (( CONTROLLED_SAME_GPU )); then
   python3 "$ROOT/scripts/verify_controlled_fc_ab.py" \
     --raw "$CSV" --audit "$AB_AUDIT" --environment "$ENVIRONMENT"
@@ -958,9 +960,10 @@ fi
 
 echo "[two-party-fc-model] selected workload pass; full_model_status remains independently fail-closed"
 echo "[two-party-fc-model] per-layer results: $CSV"
-echo "[two-party-fc-model] aggregate results: $AGGREGATE"
+echo "[two-party-fc-model] derived per-layer observations: $AGGREGATE"
 echo "[two-party-fc-model] controls: $CONTROLS"
 echo "[two-party-fc-model] summary: $SUMMARY"
+echo "[two-party-fc-model] derived output schema: $OUTPUT_SCHEMAS"
 echo "[two-party-fc-model] environment: $ENVIRONMENT"
 if (( CONTROLLED_SAME_GPU )); then
   echo "[two-party-fc-model] controlled A/B audit: $AB_AUDIT"

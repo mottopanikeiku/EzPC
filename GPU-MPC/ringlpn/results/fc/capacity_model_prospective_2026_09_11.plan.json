@@ -1,0 +1,1579 @@
+{
+  "base_port": 29080,
+  "binary_sha256": {
+    "binary": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283"
+  },
+  "bootstrap": {
+    "assumption": "exchangeable shape-median residuals; no heteroskedastic or within-shape uncertainty model",
+    "coverage": "pointwise 95%, not simultaneous",
+    "quantile": "R-7",
+    "resamples": 10000,
+    "rule": "center residuals of eight medians; resample to fitted training values; refit NNLS; add one independent training residual at each heldout; no clipping",
+    "seed": 20260911
+  },
+  "command": "model",
+  "created_utc": "2026-09-11T02:17:23.537211+00:00",
+  "csv_fields": {
+    "checker": [
+      "qbits",
+      "bw",
+      "rows",
+      "inner",
+      "cols",
+      "ring_batches",
+      "final_payload_bytes_per_party",
+      "matched_dealer_keygen_us",
+      "checker_two_share_online_us",
+      "matched_dealer_keygen_contract",
+      "key_order",
+      "online_contract",
+      "status",
+      "checker_us",
+      "peak_host_rss_bytes",
+      "peak_gpu_bytes",
+      "min_gpu_free_bytes",
+      "invocation_id",
+      "ledger_digest"
+    ],
+    "party": [
+      "party",
+      "qbits",
+      "bw",
+      "rows",
+      "inner",
+      "cols",
+      "ole_n",
+      "ole_c",
+      "ole_t",
+      "noise",
+      "ring_batches",
+      "ring_application_slots",
+      "ring_bootstrap_slots",
+      "ring_ole_instances",
+      "slots_used",
+      "dpf_trees",
+      "dpf_string_ots",
+      "dpf_bit_triples",
+      "dpf_scalar_oles",
+      "dpf_epoch_zero_scalar_oles",
+      "dpf_pcg_scalar_oles",
+      "dpf_pcg_oles_reserved",
+      "dpf_pcg_oles_discarded",
+      "dpf_pcg_opening_words_sent",
+      "dpf_logical_opened_bits",
+      "dpf_meaningful_share_bits",
+      "spfss_key_bytes",
+      "public_a_seed_words_sent",
+      "derandomization_words_sent",
+      "conversions",
+      "conversion_logical_opened_bits",
+      "conversion_meaningful_share_bits",
+      "protocol_bytes_sent",
+      "protocol_direction_switches",
+      "total_us",
+      "status",
+      "protocol_dependency_rounds",
+      "preflight_us",
+      "ot_setup_us",
+      "dpf_phase_a_us",
+      "dpf_phase_b_us",
+      "dpf_phase_c_us",
+      "spfss_grouping_us",
+      "public_polynomial_exchange_us",
+      "gpu_ringlpn_expansion_us",
+      "derandomization_openings_us",
+      "conversion_us",
+      "serialization_us",
+      "commit_us",
+      "peak_host_rss_bytes",
+      "peak_gpu_bytes",
+      "min_gpu_free_bytes",
+      "transport_straight_bytes_sent",
+      "transport_straight_bytes_received",
+      "transport_reversed_bytes_sent",
+      "transport_reversed_bytes_received",
+      "base_ots",
+      "base_ot_setup_bytes_sent",
+      "base_ot_setup_bytes_received",
+      "channel_auth_straight_bytes_sent",
+      "channel_auth_straight_bytes_received",
+      "channel_auth_reversed_bytes_sent",
+      "channel_auth_reversed_bytes_received",
+      "transport_bytes_include_base_ot",
+      "base_ot_setup_dependency_rounds",
+      "invocation_id",
+      "ledger_digest",
+      "ot_backend",
+      "ot_backend_revision",
+      "ot_correlation_straight_bytes_sent",
+      "ot_correlation_straight_bytes_received",
+      "ot_correlation_reversed_bytes_sent",
+      "ot_correlation_reversed_bytes_received",
+      "ot_adjustment_bytes_sent",
+      "ot_adjustment_bytes_received",
+      "ot_ciphertext_bytes_sent",
+      "ot_ciphertext_bytes_received",
+      "ot_inventory_straight_declared",
+      "ot_inventory_straight_consumed",
+      "ot_inventory_reversed_declared",
+      "ot_inventory_reversed_consumed",
+      "ot_backend_review_status",
+      "ring_application_slots_discarded",
+      "ot_backend_bridge_sha256",
+      "dpf_breadth_evaluator_calls",
+      "dpf_root_to_leaf_evaluator_calls"
+    ]
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "cpu_logical_count": 32,
+    "cuda_device_order": "PCI_BUS_ID",
+    "gpu_locks": "existing advisory gpu-N.lock convention",
+    "gpu_mapping": [
+      1,
+      2,
+      3
+    ],
+    "gpus_initial": [
+      {
+        "clocks.mem": "405",
+        "clocks.sm": "210",
+        "driver_version": "560.35.03",
+        "index": "1",
+        "memory.total": "32760",
+        "memory.used": "16",
+        "name": "NVIDIA RTX 5000 Ada Generation",
+        "power.limit": "250.00",
+        "utilization.gpu": "0"
+      },
+      {
+        "clocks.mem": "405",
+        "clocks.sm": "210",
+        "driver_version": "560.35.03",
+        "index": "2",
+        "memory.total": "32760",
+        "memory.used": "16",
+        "name": "NVIDIA RTX 5000 Ada Generation",
+        "power.limit": "250.00",
+        "utilization.gpu": "0"
+      },
+      {
+        "clocks.mem": "405",
+        "clocks.sm": "210",
+        "driver_version": "560.35.03",
+        "index": "3",
+        "memory.total": "32760",
+        "memory.used": "16",
+        "name": "NVIDIA RTX 5000 Ada Generation",
+        "power.limit": "250.00",
+        "utilization.gpu": "0"
+      }
+    ],
+    "host_pinning": "none; no affinity/power/clock changes",
+    "kernel": "6.8.0-78-generic",
+    "ld_library_path_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "os": "Linux",
+    "python": "3.12.3",
+    "transport": "single-host IPv4 loopback; authenticated test channel"
+  },
+  "failure_criterion": "any child/checker/CSV/accounting/environment failure; worker any cross-version contract mismatch; model either heldout abs(observed_median-predicted)/observed_median > 0.15 OR observed_median outside sealed pointwise interval; no exclusions, retries, pooling old runs or retuning",
+  "feature_names": [
+    "intercept",
+    "ring_ole_instances",
+    "cross_terms",
+    "size_c",
+    "payload_words"
+  ],
+  "feature_rules": "[1,R=4*ceil(MKN/(8192-3*2^2*8^2)),X=MKN,C=MN,W=MK+KN+MN]",
+  "fit": "NNLS on the eight measured training shape medians only; exhaustive active subsets; unit-L2 column scaling; twice-reorthogonalized QR and precomputed R^-1 Q^T; deterministic smallest-mask tie order; no regularization or retuning",
+  "fit_controls": {
+    "kkt_relative_tolerance": 1e-07,
+    "normalized_coefficient_relative_tolerance": 1e-10,
+    "rank_tolerance": 1e-10,
+    "singular_policy": "report excluded subsets; fail failed KKT rather than invent coefficients"
+  },
+  "freeze_sequence": "exclusive fsynced plan before any producer; training including warmups; exclusive fsynced seal with sanitized training raw hashes, coefficients and intervals; only then heldout warmups and measurements",
+  "harness_sha256": "aa0c40ea898935d3e360a7184058096b20abf62d3e1bcc98269e73500611db0f",
+  "invocations_planned": 110,
+  "ordering": [
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 0,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 1,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 2,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 3,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 4,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 5,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 6,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 7,
+      "phase": "training",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 8,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 9,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 10,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 11,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 12,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 13,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 14,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 15,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 16,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 17,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 18,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 19,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 20,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 21,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 22,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 23,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 24,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 25,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 26,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 27,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 28,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 29,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 30,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 31,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 32,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 33,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 34,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 35,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 36,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 37,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 38,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 39,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 40,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 41,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 42,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 43,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 44,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 45,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 46,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 47,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 48,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 49,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 50,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 51,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 52,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 53,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 54,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 55,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 56,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 57,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 58,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 59,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 60,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 61,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 62,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 63,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 64,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 65,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 66,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 67,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 68,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 69,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 70,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 71,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 72,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 73,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 74,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 75,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 76,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 77,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 78,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 79,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "ModelB-fc5",
+      "ordinal": 80,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "CNN2-fc5",
+      "ordinal": 81,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "P-SecureML-fc3",
+      "ordinal": 82,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "AlexNet-gemm17",
+      "ordinal": 83,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "P-LeNet-fc5",
+      "ordinal": 84,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "ModelB-fc4",
+      "ordinal": 85,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "CNN2-fc4",
+      "ordinal": 86,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "CNN3-fc5",
+      "ordinal": 87,
+      "phase": "training",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 88,
+      "phase": "heldout",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 89,
+      "phase": "heldout",
+      "sample_role": "warmup",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 90,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 91,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 0
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 92,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 93,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 1
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 94,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 95,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 2
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 96,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 97,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 3
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 98,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 99,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 4
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 100,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 101,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 5
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 102,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 103,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 6
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 104,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 105,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 7
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 106,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 107,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 8
+    },
+    {
+      "label": "AlexNet-gemm13",
+      "ordinal": 108,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    },
+    {
+      "label": "P-SecureML-fc2",
+      "ordinal": 109,
+      "phase": "heldout",
+      "sample_role": "measured",
+      "side": "binary",
+      "trial": 9
+    }
+  ],
+  "plans": {
+    "AlexNet-gemm13": {
+      "cross_terms": 6553600,
+      "features": [
+        1,
+        3532,
+        6553600,
+        25600,
+        116736
+      ],
+      "final_payload_bytes_per_party": 933888,
+      "label": "AlexNet-gemm13",
+      "payload_words": 116736,
+      "ring_application_slots": 7424,
+      "ring_batches": 883,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 3532,
+      "shape": [
+        100,
+        256,
+        256
+      ],
+      "size_c": 25600,
+      "slot_utilization": 0.9997266372476276
+    },
+    "AlexNet-gemm17": {
+      "cross_terms": 256000,
+      "features": [
+        1,
+        140,
+        256000,
+        1000,
+        29160
+      ],
+      "final_payload_bytes_per_party": 233280,
+      "label": "AlexNet-gemm17",
+      "payload_words": 29160,
+      "ring_application_slots": 7424,
+      "ring_batches": 35,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 140,
+      "shape": [
+        100,
+        256,
+        10
+      ],
+      "size_c": 1000,
+      "slot_utilization": 0.9852216748768473
+    },
+    "CNN2-fc4": {
+      "cross_terms": 3276800,
+      "features": [
+        1,
+        1768,
+        3276800,
+        12800,
+        71168
+      ],
+      "final_payload_bytes_per_party": 569344,
+      "label": "CNN2-fc4",
+      "payload_words": 71168,
+      "ring_application_slots": 7424,
+      "ring_batches": 442,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 1768,
+      "shape": [
+        100,
+        256,
+        128
+      ],
+      "size_c": 12800,
+      "slot_utilization": 0.9985957247620534
+    },
+    "CNN2-fc5": {
+      "cross_terms": 128000,
+      "features": [
+        1,
+        72,
+        128000,
+        1000,
+        15080
+      ],
+      "final_payload_bytes_per_party": 120640,
+      "label": "CNN2-fc5",
+      "payload_words": 15080,
+      "ring_application_slots": 7424,
+      "ring_batches": 18,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 72,
+      "shape": [
+        100,
+        128,
+        10
+      ],
+      "size_c": 1000,
+      "slot_utilization": 0.9578544061302682
+    },
+    "CNN3-fc5": {
+      "cross_terms": 64000,
+      "features": [
+        1,
+        36,
+        64000,
+        1000,
+        8040
+      ],
+      "final_payload_bytes_per_party": 64320,
+      "label": "CNN3-fc5",
+      "payload_words": 8040,
+      "ring_application_slots": 7424,
+      "ring_batches": 9,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 36,
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "size_c": 1000,
+      "slot_utilization": 0.9578544061302682
+    },
+    "ModelB-fc4": {
+      "cross_terms": 2560000,
+      "features": [
+        1,
+        1380,
+        2560000,
+        10000,
+        61200
+      ],
+      "final_payload_bytes_per_party": 489600,
+      "label": "ModelB-fc4",
+      "payload_words": 61200,
+      "ring_application_slots": 7424,
+      "ring_batches": 345,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 1380,
+      "shape": [
+        100,
+        256,
+        100
+      ],
+      "size_c": 10000,
+      "slot_utilization": 0.9995002498750625
+    },
+    "ModelB-fc5": {
+      "cross_terms": 100000,
+      "features": [
+        1,
+        56,
+        100000,
+        1000,
+        12000
+      ],
+      "final_payload_bytes_per_party": 96000,
+      "label": "ModelB-fc5",
+      "payload_words": 12000,
+      "ring_application_slots": 7424,
+      "ring_batches": 14,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 56,
+      "shape": [
+        100,
+        100,
+        10
+      ],
+      "size_c": 1000,
+      "slot_utilization": 0.9621305418719212
+    },
+    "P-LeNet-fc5": {
+      "cross_terms": 640000,
+      "features": [
+        1,
+        348,
+        640000,
+        1280,
+        70280
+      ],
+      "final_payload_bytes_per_party": 562240,
+      "label": "P-LeNet-fc5",
+      "payload_words": 70280,
+      "ring_application_slots": 7424,
+      "ring_batches": 87,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 348,
+      "shape": [
+        128,
+        500,
+        10
+      ],
+      "size_c": 1280,
+      "slot_utilization": 0.9908838684106223
+    },
+    "P-SecureML-fc2": {
+      "cross_terms": 2097152,
+      "features": [
+        1,
+        1132,
+        2097152,
+        16384,
+        49152
+      ],
+      "final_payload_bytes_per_party": 393216,
+      "label": "P-SecureML-fc2",
+      "payload_words": 49152,
+      "ring_application_slots": 7424,
+      "ring_batches": 283,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 1132,
+      "shape": [
+        128,
+        128,
+        128
+      ],
+      "size_c": 16384,
+      "slot_utilization": 0.9981722919458998
+    },
+    "P-SecureML-fc3": {
+      "cross_terms": 163840,
+      "features": [
+        1,
+        92,
+        163840,
+        1280,
+        18944
+      ],
+      "final_payload_bytes_per_party": 151552,
+      "label": "P-SecureML-fc3",
+      "payload_words": 18944,
+      "ring_application_slots": 7424,
+      "ring_batches": 23,
+      "ring_bootstrap_slots": 768,
+      "ring_ole_instances": 92,
+      "shape": [
+        128,
+        128,
+        10
+      ],
+      "size_c": 1280,
+      "slot_utilization": 0.95952023988006
+    }
+  },
+  "port_rule": "base_port + 2*ordinal; adjacent port for reversed channel",
+  "schema": "ringlpn.fc-review-plan.v1",
+  "scope": "One host, fixed q128/bw32/n8192/c2/t8 regular SCI/IKNP feasibility tuple; wall-stage capacity prediction, not GPU attribution, network rounds, security, full-model inference or generalization to another GPU. Advisory GPU locks and compute-process admission are not exclusive host leases, pinned clocks or immunity to shared-host interference. GPU0 is never selected or queried. New experiment; no claims from the deleted historical worker harness.",
+  "source_bindings": {
+    "layers": [
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:52-55",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "418b44ca654eb3ad616154741cafd875216149be70925d72125267fc6f51170a"
+        },
+        "label": "CNN3-fc5",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:241",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "5db381dd82b09167d2b878f5217708f459f865706ea8cd6d356558100559d4e7"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:57-60",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "423f39a2a58871ce35b5da84978349a2740e96885634d10d70cc513d83d8bb88"
+        },
+        "label": "ModelB-fc5",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:161",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "eedf6e81c29173f35aaed6b7a4ccdc4ec9eacfbbe899e3eedd3f6f04c2e772b2"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:57-60",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "423f39a2a58871ce35b5da84978349a2740e96885634d10d70cc513d83d8bb88"
+        },
+        "label": "CNN2-fc5",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:68",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "f21bf8c43c1f0d552ce9e2a0165d617de8a8bcfd49fd3102c70f41818ede23a4"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/piranha.cu:40-57",
+          "file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "historical_manifest_file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "text_sha256": "80b4c4fe7389a6bf92cd388328276a52e10208843e55535c3514bea5192cea5f"
+        },
+        "label": "P-SecureML-fc3",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:196",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "6ab1f7886bac0223c2a0253429b17cab80c808fcaeaa02038ca47f14c265ab9a"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:52-55",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "418b44ca654eb3ad616154741cafd875216149be70925d72125267fc6f51170a"
+        },
+        "label": "AlexNet-gemm17",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:1136",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "a4e0d04de949d56c224514a2d590e2d6cdc6ebd5bf270c3982ee95aff44561c9"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/piranha.cu:40-52",
+          "file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "historical_manifest_file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "text_sha256": "061527cefe55dbfd40af7319178f5e48f7cdd4e5ff13395442e563d56056c8a3"
+        },
+        "label": "P-LeNet-fc5",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:113",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "3d3c302cef11565d4fbb94ee8f54404b7abda3b963617dd7152e8e64e796fc6c"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:57-60",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "423f39a2a58871ce35b5da84978349a2740e96885634d10d70cc513d83d8bb88"
+        },
+        "label": "ModelB-fc4",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:158",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "02dbd144d89fefb1ff9578b29f21456c895a3b5819f75eaea8dd25fd66358457"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:57-60",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "423f39a2a58871ce35b5da84978349a2740e96885634d10d70cc513d83d8bb88"
+        },
+        "label": "CNN2-fc4",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:65",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "061456a483da05722804f46a98f67fa30874bd0ee235044f45a535921e48f5c4"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/piranha.cu:40-57",
+          "file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "historical_manifest_file_sha256": "8d414aa6071a353bec0b61dae92c074862067ca9139c1de88fef9deb1502229d",
+          "text_sha256": "80b4c4fe7389a6bf92cd388328276a52e10208843e55535c3514bea5192cea5f"
+        },
+        "label": "P-SecureML-fc2",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:194",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "26dc3a19c1d14c155e18ac2b932c719a923fe00c6766f8d73e0009f29c2c5220"
+        }
+      },
+      {
+        "batch_source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/orca_inference.cu:52-55",
+          "file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "historical_manifest_file_sha256": "63c4cc6e5023e9875e70de7259c1e21deb5287d017412a56d2e8c7ddcfded483",
+          "text_sha256": "418b44ca654eb3ad616154741cafd875216149be70925d72125267fc6f51170a"
+        },
+        "label": "AlexNet-gemm13",
+        "source_anchor": {
+          "anchor": "GPU-MPC/experiments/orca/cnn.h:1132",
+          "file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "historical_manifest_file_sha256": "2a3720f1f5512d937e1e1dd7436945162a183c4ee5033d32e4be153de9005ebd",
+          "text_sha256": "7fb550be0a61d9357f395cc18cbd662fb56350e01e54cf8701519f6aceb056e5"
+        }
+      }
+    ],
+    "manifest_sha256": "3e209a319c6d5092f52d8bbe21f26ddd1315a6fcaecab2a76499718ead437ac5"
+  },
+  "timeout": {
+    "argv_template": [
+      "<GNU_TIMEOUT>",
+      "--kill-after=5",
+      "600.0",
+      "<BINARY>",
+      "<ARGS>"
+    ],
+    "kill_after_seconds": 5,
+    "seconds": 600.0,
+    "wrapper_sha256": "2ee918a5358c0388719e710134bc32cffb934f4bd2a8fb9beb86ef4d6ec8bd8a"
+  },
+  "timers": {
+    "Y_us": "max_party(total_us+preflight_us+ot_setup_us); excludes earlier PartyChannel construction, socket establishment, authentication, process launch and checker",
+    "controller_launch_to_party_exit_us": "monotonic_ns immediately before first producer Popen through blocking observation of both producer/timeout exits; includes second launch and controller observation/scheduling overhead; excludes fixtures, hash checks, GPU queries, CSV parsing and checker",
+    "public_polynomial_exchange_us": "joint seed setup plus local domain-separated SHAKE XOF generation; not communication-only time",
+    "stages": "raw per-party *_us retained; max_party stage summaries are separate extrema, not additive critical-path components"
+  },
+  "trials": 10,
+  "tuple": {
+    "bw": 32,
+    "c": 2,
+    "n": 8192,
+    "noise": "regular",
+    "ot_backend": "sci-iknp",
+    "qbits": 128,
+    "t": 8
+  },
+  "warmups": 1,
+  "worker_accounting_fields": [
+    "party",
+    "qbits",
+    "bw",
+    "rows",
+    "inner",
+    "cols",
+    "ole_n",
+    "ole_c",
+    "ole_t",
+    "noise",
+    "ring_batches",
+    "ring_application_slots",
+    "ring_bootstrap_slots",
+    "ring_ole_instances",
+    "slots_used",
+    "dpf_trees",
+    "dpf_string_ots",
+    "dpf_bit_triples",
+    "dpf_scalar_oles",
+    "dpf_epoch_zero_scalar_oles",
+    "dpf_pcg_scalar_oles",
+    "dpf_pcg_oles_reserved",
+    "dpf_pcg_oles_discarded",
+    "dpf_pcg_opening_words_sent",
+    "dpf_logical_opened_bits",
+    "dpf_meaningful_share_bits",
+    "spfss_key_bytes",
+    "public_a_seed_words_sent",
+    "derandomization_words_sent",
+    "conversions",
+    "conversion_logical_opened_bits",
+    "conversion_meaningful_share_bits",
+    "protocol_bytes_sent",
+    "protocol_direction_switches",
+    "status",
+    "protocol_dependency_rounds",
+    "transport_straight_bytes_sent",
+    "transport_straight_bytes_received",
+    "transport_reversed_bytes_sent",
+    "transport_reversed_bytes_received",
+    "base_ots",
+    "base_ot_setup_bytes_sent",
+    "base_ot_setup_bytes_received",
+    "channel_auth_straight_bytes_sent",
+    "channel_auth_straight_bytes_received",
+    "channel_auth_reversed_bytes_sent",
+    "channel_auth_reversed_bytes_received",
+    "transport_bytes_include_base_ot",
+    "base_ot_setup_dependency_rounds",
+    "ot_backend",
+    "ot_backend_revision",
+    "ot_correlation_straight_bytes_sent",
+    "ot_correlation_straight_bytes_received",
+    "ot_correlation_reversed_bytes_sent",
+    "ot_correlation_reversed_bytes_received",
+    "ot_adjustment_bytes_sent",
+    "ot_adjustment_bytes_received",
+    "ot_ciphertext_bytes_sent",
+    "ot_ciphertext_bytes_received",
+    "ot_inventory_straight_declared",
+    "ot_inventory_straight_consumed",
+    "ot_inventory_reversed_declared",
+    "ot_inventory_reversed_consumed",
+    "ot_backend_review_status",
+    "ring_application_slots_discarded",
+    "ot_backend_bridge_sha256",
+    "dpf_breadth_evaluator_calls",
+    "dpf_root_to_leaf_evaluator_calls"
+  ]
+}

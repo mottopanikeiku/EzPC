@@ -1,0 +1,23 @@
+{
+  "schema_version": "ringlpn.two-party-fc-model-scale.v6",
+  "publication_date": "2026-08-10",
+  "manifest_sha256": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984",
+  "workload_manifest_sha256": "718570af4bf7afa523d029dfddcf0f3dae9e554c9c6e26b744999df193956f72",
+  "workload": "all-fc",
+  "models": [
+    {
+      "model": "CNN2",
+      "model_order": 1,
+      "expected_executable_layers": 2,
+      "unsupported_convolution_layers": 2,
+      "unsupported_truncation_layers": 4
+    },
+    {
+      "model": "CNN3",
+      "model_order": 5,
+      "expected_executable_layers": 1,
+      "unsupported_convolution_layers": 3,
+      "unsupported_truncation_layers": 4
+    }
+  ]
+}
