@@ -14,6 +14,56 @@ a last linear node; the backend rejects truncation, nonlinear, residual,
 second-linear, and premature/duplicate-output callbacks. Arbitrary multi-layer
 mask-state chaining remains open.
 
+## Independent review follow-through — 2026-09-11
+
+The terminal peer's fixed 10 MiB communication buffers admitted a
+`1x2048x1024` FC plan whose weight reconstruction is 16 MiB. Both old
+application processes abort at the stock `memSz < commBufSize` assertion.
+The backend now derives a checked maximum from bound input, weight, output,
+and preflight sizes and provides **strict slack**, including byte counts
+divisible by five. It restores the stock `OneGB` global immediately after
+constructing its sole peer; no upstream communication code is changed.
+An initial ceiling-only fix exposed the exact-capacity `1x205x5` boundary;
+both processes also aborted there. The retained opt-in gate now exercises
+both shapes with fresh real preprocessing and independent clear output
+oracles. Both pass, as do normal terminal FC/Conv, the public material API,
+signed/wrapping helpers, and all eight bilateral rejection controls.
+
+```bash
+python3 ringlpn/scripts/run_orca_linear_application.py \
+  --p0-gpu 1 --p1-gpu 2 --timeout 600 --large-fc-only
+python3 ringlpn/scripts/run_orca_linear_application.py \
+  --p0-gpu 1 --p1-gpu 2 --timeout 600
+```
+
+Application provenance now holds the actual graph-library and linear-library
+producer locks from dependency capture through publication, seals build recipes
+before entering the canonical path, and compares source/tool/archive identities,
+hashes, environment, and all ten translation-unit dependency groups before and
+after compilation. This is checked live input, not an immutable snapshot or
+hostile same-UID ABA defense. Actual post-link source and archive mutations
+both reject without provenance; concurrent actual archive producers reject at
+their held locks. The unmodified locked build and verifier pass.
+
+Fresh main/source-only checkout builds produce byte-identical executables and
+complete provenance; both post-cleanup verifiers pass. Main build/verify takes
+81.921 s (reusing separately rebuilt prerequisites); source-only full component
+build/verify takes 238.825 s. The latter's actual FC/Conv/API/eight-control gate
+also passes. Current identities:
+
+- application: `d1f58928cf70628f0d80ffe6c9956cd7073e521aa031c46fa853ea53654bbde9`;
+- helper: `5f702062a3b999451abdff39d3e90a3db6a0769a20aecb924e68f9b4ef5e52b3`;
+- complete provenance file SHA-256:
+  `628e596dce9e55b5faff720d18a6e49d406d3df8e675c2c58ad8e746292a0119`;
+- provenance self-digest:
+  `5cdf43bff5b41cf68c00e7583a0156ee49c551546d60669503e3c667b4b45967`.
+
+Exact review observations are in
+`independent_review_verification_2026_09_11.json`. This is two-checkout
+functional/build evidence, not an independently authorized clean-clone release.
+All identities and measurements in the September 10/August sections below
+are historical and are not rewritten.
+
 ## Engineering review supplement — 2026-09-10
 
 The actual source-native FC/Conv gate passes again, including signed and

@@ -12,16 +12,29 @@ fi
 if [[ "${RINGLPN_CANONICAL_BUILD_ACTIVE:-0}" != "1" ]]; then
   ACTUAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
   ACTUAL_REPO_ROOT="$(cd "$ACTUAL_ROOT/../.." && pwd -P)"
+  PROVENANCE_OUTPUT="$ACTUAL_ROOT/bin/orca_linear_application_build_provenance.json"
+  if [[ -e "$PROVENANCE_OUTPUT" || -L "$PROVENANCE_OUTPUT" ]]; then
+    if [[ ! -f "$PROVENANCE_OUTPUT" || -L "$PROVENANCE_OUTPUT" ||
+          ! -O "$PROVENANCE_OUTPUT" ]]; then
+      printf 'refusing unsafe prior provenance output: %s\n' "$PROVENANCE_OUTPUT" >&2
+      exit 1
+    fi
+    rm -- "$PROVENANCE_OUTPUT"
+  fi
   CANONICAL_BUILD_PARENT="/tmp/ringlpn-orca-linear-application-reproducible-build"
   if ! mkdir -m 700 -- "$CANONICAL_BUILD_PARENT"; then
     echo "stale or concurrent canonical application build root: $CANONICAL_BUILD_PARENT" >&2
     exit 1
   fi
   cleanup_canonical_build_root() {
+    rm -f -- "$CANONICAL_BUILD_PARENT/recipes.json"
     rm -f -- "$CANONICAL_BUILD_PARENT/source"
     rmdir -- "$CANONICAL_BUILD_PARENT"
   }
   trap cleanup_canonical_build_root EXIT
+  "${PYTHON:-python3}" "$ACTUAL_ROOT/scripts/orca_linear_application_build_provenance.py" \
+    prepare --repo-root "$ACTUAL_REPO_ROOT" \
+    --output "$CANONICAL_BUILD_PARENT/recipes.json"
   ln -s -- "$ACTUAL_REPO_ROOT" "$CANONICAL_BUILD_PARENT/source"
   cd "$ACTUAL_ROOT"
   unset OLDPWD
@@ -75,21 +88,27 @@ done
 
 mkdir -p -- "$OUT_DIR" "$BUILD_DIR"
 KEEP_DIR="$BUILD_DIR/.nvcc"
-if ! mkdir -- "$KEEP_DIR"; then
+PRODUCER_LOCKS=()
+cleanup_application_build() {
+  local lock
+  rm -rf -- "$KEEP_DIR"
+  for lock in "${PRODUCER_LOCKS[@]}"; do
+    RINGLPN_ACTIVE_BUILD_LOCK="$lock"
+    ringlpn_release_build_lock
+  done
+}
+if ! mkdir -m 700 -- "$KEEP_DIR"; then
   printf 'stale or concurrent application build directory: %s\n' "$KEEP_DIR" >&2
   exit 1
 fi
-trap 'rm -rf -- "$KEEP_DIR"' EXIT
-
-if [[ -e "$PROVENANCE_OUTPUT" || -L "$PROVENANCE_OUTPUT" ]]; then
-  if [[ ! -f "$PROVENANCE_OUTPUT" || -L "$PROVENANCE_OUTPUT" ||
-        ! -O "$PROVENANCE_OUTPUT" ]]; then
-    printf 'refusing unsafe prior provenance output: %s\n' \
-      "$PROVENANCE_OUTPUT" >&2
-    exit 1
-  fi
-  rm -- "$PROVENANCE_OUTPUT"
-fi
+trap cleanup_application_build EXIT
+# Exclude the actual producers, including direct linear-library invocations.
+# These are the same mkdir locks used by their build recipes, not reader locks.
+for lock in "$RINGLPN_BUILD_DIR/.graph-libraries.lock" \
+    "$RINGLPN_BUILD_DIR/linear-library/.objects"; do
+  ringlpn_acquire_build_lock "$lock"
+  PRODUCER_LOCKS+=("$lock")
+done
 
 CUDA_TOOLKIT_ROOT="$(dirname "$NVCC")/.."
 CUDA_TARGET_TRIPLE="${CUDA_TARGET_TRIPLE:-x86_64-linux}"
@@ -191,31 +210,18 @@ done
 for index in "${!HELPER_SOURCES[@]}"; do
   generate_depfile "helper-$index" "${HELPER_SOURCES[$index]}" helper
 done
-(
-  cd "$ROOT"
-  "${APPLICATION_COMMAND[@]}"
-  "${HELPER_COMMAND[@]}"
-)
 record_command application-link "${APPLICATION_COMMAND[@]}"
 record_command helper-link "${HELPER_COMMAND[@]}"
 
-for binary in "$APPLICATION_OUTPUT" "$HELPER_OUTPUT"; do
-  symbol_file="$KEEP_DIR/$(basename "$binary")-nvcc-file.symbols"
-  "$NM" -a --format=posix "$binary" |
-    awk '$2 == "a" && $1 ~ /^tmpxft_[0-9a-f]+_.*[.]cudafe1[.]cpp$/ { print $1 }' \
-      >"$symbol_file"
-  OBJCOPY_COMMAND=("$OBJCOPY" --remove-section .comment)
-  if [[ -s "$symbol_file" ]]; then
-    OBJCOPY_COMMAND+=(--strip-symbols="$symbol_file")
-  fi
-  OBJCOPY_COMMAND+=("$binary")
-  "${OBJCOPY_COMMAND[@]}"
-  record_command "objcopy-$(basename "$binary")" "${OBJCOPY_COMMAND[@]}"
-  chmod 0755 "$binary"
-done
+# The live canonical source view is checked before/after compilation, not
+# immutable. Producer locks plus seals detect ordinary concurrent mutation;
+# a hostile same-user writer or adversarial ABA is outside this guarantee.
 
 PROVENANCE_COMMAND=(
   "$PYTHON" "$ROOT/scripts/orca_linear_application_build_provenance.py"
+  generate
+  --input-seal "$KEEP_DIR/inputs.json"
+  --recipe-seal /tmp/ringlpn-orca-linear-application-reproducible-build/recipes.json
   --repo-root "$RINGLPN_REPO_ROOT"
   --ringlpn-root "$ROOT"
   --cmake-build "$GRAPH_BUILD"
@@ -266,6 +272,36 @@ for label in application-link helper-link objcopy-orca_inference_ringlpn \
 done
 for index in "${!PROVENANCE_COMMAND[@]}"; do
   PROVENANCE_COMMAND[$index]="${PROVENANCE_COMMAND[$index]//"$RINGLPN_REPO_ROOT"/"$PHYSICAL_REPO_ROOT"}"
+done
+# Record the exact deterministic post-link command before sealing inputs.
+# objcopy accepts an empty strip-symbols file when NVCC emits no such symbols.
+for binary in "$APPLICATION_OUTPUT" "$HELPER_OUTPUT"; do
+  symbol_file="$KEEP_DIR/$(basename "$binary")-nvcc-file.symbols"
+  record_command "objcopy-$(basename "$binary")" "$OBJCOPY" \
+    --remove-section .comment --strip-symbols="$symbol_file" "$binary"
+done
+CAPTURE_COMMAND=("${PROVENANCE_COMMAND[@]}")
+CAPTURE_COMMAND[2]=capture
+"${CAPTURE_COMMAND[@]}"
+(
+  cd "$ROOT"
+  "${APPLICATION_COMMAND[@]}"
+  "${HELPER_COMMAND[@]}"
+)
+for binary in "$APPLICATION_OUTPUT" "$HELPER_OUTPUT"; do
+  symbol_file="$KEEP_DIR/$(basename "$binary")-nvcc-file.symbols"
+  "$NM" -a --format=posix "$binary" |
+    awk '$2 == "a" && $1 ~ /^tmpxft_[0-9a-f]+_.*[.]cudafe1[.]cpp$/ { print $1 }' \
+      >"$symbol_file"
+  "$OBJCOPY" --remove-section .comment --strip-symbols="$symbol_file" "$binary"
+  chmod 0755 "$binary"
+done
+# Re-discover every TU's closure to detect changed conditional includes too.
+for index in "${!APP_SOURCES[@]}"; do
+  generate_depfile "application-$index" "${APP_SOURCES[$index]}" app
+done
+for index in "${!HELPER_SOURCES[@]}"; do
+  generate_depfile "helper-$index" "${HELPER_SOURCES[$index]}" helper
 done
 "${PROVENANCE_COMMAND[@]}"
 

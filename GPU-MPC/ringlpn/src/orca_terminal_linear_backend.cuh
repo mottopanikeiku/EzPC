@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -204,8 +205,32 @@ class TerminalLinearBackend final : public Orca<T> {
         effective_valid = effective_valid &&
                           gpu_status == ringlpn_linear::Status::Ok;
 
-        OneGB = size_t{2} << 20;
-        this->peer = new GpuPeer(false);
+        size_t peer_bytes = terminal_detail::kPreflightBytes;
+        if (effective_valid) {
+            const uint64_t max_words = std::max(
+                {expected_.plan.input_words, expected_.plan.weight_words,
+                 expected_.plan.output_words});
+            if (max_words > (std::numeric_limits<size_t>::max() - 5) /
+                                sizeof(T)) {
+                effective_valid = false;
+            } else {
+                peer_bytes = std::max(
+                    peer_bytes, static_cast<size_t>(max_words) * sizeof(T));
+            }
+        }
+        // The unchanged SigmaPeer constructor allocates 5 * OneGB per buffer.
+        // Its transfer guard requires strict slack, including multiples of five.
+        // This terminal process constructs one peer; restore the stock global
+        // immediately afterward rather than imposing a fixed layer-size limit.
+        const size_t previous_peer_unit = OneGB;
+        OneGB = peer_bytes / 5 + 1;
+        try {
+            this->peer = new GpuPeer(false);
+        } catch (...) {
+            OneGB = previous_peer_unit;
+            throw;
+        }
+        OneGB = previous_peer_unit;
         this->peer->connect(party, peer_ip);
 
         const auto local = terminal_detail::encode_preflight(
