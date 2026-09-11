@@ -8,13 +8,26 @@ import json
 import math
 import os
 import pathlib
+import random
 import tempfile
 from decimal import Decimal, InvalidOperation, getcontext
 
 getcontext().prec = 50
 
-AGGREGATE_SCHEMA_VERSION = "ringlpn.two-party-fc-model-scale.aggregate.v3"
-STATISTICS_SCHEMA_VERSION = "ringlpn.two-party-fc-model-scale.statistics.v2"
+AGGREGATE_SCHEMA_VERSION = "ringlpn.two-party-fc-model-scale.aggregate.v4"
+STATISTICS_SCHEMA_VERSION = "ringlpn.two-party-fc-model-scale.statistics.v3"
+BOOTSTRAP_SEED = 20260911
+BOOTSTRAP_RESAMPLES = 10000
+BOOTSTRAP_METHOD = (
+    "independent-layer stratified whole-observation-row bootstrap; "
+    "10000 resamples; seed=20260911; percentile 95% CI; R-7 endpoints; "
+    "numeric rows sorted lexicographically without trial labels"
+)
+PUBLIC_VECTOR_TIMER_DEFINITION = (
+    "Legacy recorded key: joint public-seed setup once per layer (four seed-share "
+    "words sent per party), plus local domain-separated SHAKE256 public-vector "
+    "generation for every Ring-OLE; not coefficient-vector communication."
+)
 INTERVAL_METHOD = "two-sided Student t confidence interval for the arithmetic mean; confidence=0.95; df=n-1"
 QUARTILE_METHOD = "R-7 inclusive linear interpolation at probabilities 0.25 and 0.75"
 MISSING = {"", "NA"}
@@ -259,6 +272,8 @@ def main():
     parser.add_argument("--environment", required=True)
     parser.add_argument("--require-current-binary", action="store_true")
     parser.add_argument("--result-schema", required=True)
+    parser.add_argument("--output-schema-json",
+                        help="write the current derived-output contract separately from the immutable raw result schema")
     args = parser.parse_args()
     if args.trials < 1:
         raise SystemExit("--trials must be positive")
@@ -496,7 +511,8 @@ def main():
     party_min_fields = [f"p{party}_{name}_min" for name in PARTY_MIN_METRICS for party in (0, 1)]
     critical_fields = [f"critical_path_{name}_total" for name in CRITICAL_METRICS]
     aggregate_fields = [
-        "schema_version", *IDENTITY_FIELDS, "model", "model_order", "trial", "sample_role",
+        "schema_version", *IDENTITY_FIELDS, "model", "model_order", "source_layer",
+        "trial", "sample_role", "observation_scope",
         "workload", "expected_executable_layers", "retained_layer_rows", "failed_layer_rows",
         "unsupported_convolution_layers", "unsupported_truncation_layers",
         *[name + "_total" for name in INTEGER_TOTALS + DECIMAL_TOTALS],
@@ -508,20 +524,29 @@ def main():
     aggregates = []
     for model, model_meta in sorted(model_metadata.items(), key=lambda item: int(item[1]["model_order"])):
         expected = int(model_meta["expected_executable_layers"])
-        for trial in range(args.trials + 1):
-            role = "warmup" if trial == 0 else "measured"
-            retained = [
-                row for row in rows
-                if row["model"] == model and row["trial"] == str(trial)
-                and row["sample_role"] == role and row["operator"] == "fc"
-            ]
-            if len(retained) != expected:
-                raise SystemExit(f"incomplete manifest for {model} trial {trial}: expected {expected}, found {len(retained)}")
+        model_layers = sorted(
+            layer for (entry_model, layer), entry in expected_layers.items()
+            if entry_model == model and entry["operator"] == "fc"
+            and (metadata["workload"] != "classifier" or entry["is_classifier"])
+        )
+        for layer in model_layers:
+            for trial in range(args.trials + 1):
+                if (model, trial, layer) not in seen_groups:
+                    raise SystemExit(f"incomplete manifest for {model}/{layer} trial {trial}")
+        for raw in sorted(
+                (row for row in rows if row["model"] == model
+                 and row["sample_role"] in {"warmup", "measured"}),
+                key=lambda row: (row["source_layer"], int(row["trial"]))):
+            trial, role = raw["trial"], raw["sample_role"]
+            # Exactly one actually measured layer invocation, never a model trial.
+            retained = [raw]
             result = {
                 "schema_version": AGGREGATE_SCHEMA_VERSION, **identity,
-                "model": model, "model_order": model_meta["model_order"], "trial": trial,
-                "sample_role": role, "workload": metadata["workload"],
-                "expected_executable_layers": expected, "retained_layer_rows": len(retained),
+                "model": model, "model_order": model_meta["model_order"],
+                "source_layer": raw["source_layer"], "trial": trial,
+                "sample_role": role, "observation_scope": "layer_invocation",
+                "workload": metadata["workload"],
+                "expected_executable_layers": expected, "retained_layer_rows": 1,
                 "failed_layer_rows": 0,
                 "unsupported_convolution_layers": model_meta["unsupported_convolution_layers"],
                 "unsupported_truncation_layers": model_meta["unsupported_truncation_layers"],
@@ -606,10 +631,6 @@ def main():
             result["status"] = result["workload_status"]
             aggregates.append(result)
 
-    measured_by_model = {
-        model: [row for row in aggregates if row["model"] == model and row["sample_role"] == "measured"]
-        for model in model_metadata
-    }
 
     def required_values(measured, field):
         return [parse_decimal(str(row[field]), f"aggregate/{row['model']}/{row['trial']}/{field}") for row in measured]
@@ -621,7 +642,7 @@ def main():
             raise SystemExit(f"partially available measured metric {field}")
         return [] if not any(available) else [parse_decimal(str(value), f"statistics/{field}") for value in values]
 
-    def model_metrics(measured):
+    def layer_metrics(measured):
         metrics = {
             "party0_preprocess_us": required_values(measured, "p0_total_us_total"),
             "party1_preprocess_us": required_values(measured, "p1_total_us_total"),
@@ -694,31 +715,162 @@ def main():
         "checker_min_gpu_free_bytes": "bytes",
     }
     statistics_fields = [
-        "schema_version", *IDENTITY_FIELDS, "model", "workload", "population",
-        "metric", "n", "mean", "sample_stdev", "median", "q1", "q3", "iqr",
+        "schema_version", *IDENTITY_FIELDS, "model", "source_layer", "scope",
+        "workload", "population", "metric", "estimand", "layer_count",
+        "observations_per_layer", "n", "availability", "estimate",
+        "mean", "sample_stdev", "median", "q1", "q3", "iqr",
         "mean_ci95_low", "mean_ci95_high", "mean_ci95_method", "quartile_method",
-        "min", "max", "unit",
+        "min", "max", "unit", "metric_definition",
     ]
     statistics_rows = []
+    ratio_numerators = {
+        "preprocess_over_matched_dealer_ratio": "critical_path_preprocess_us",
+        "setup_included_preprocess_over_matched_dealer_ratio": "critical_path_setup_included_us",
+    }
+    nonadditive = {
+        "peak_host_rss_bytes", "peak_gpu_bytes", "minimum_observed_gpu_free_bytes",
+        "checker_peak_host_rss_bytes", "checker_peak_gpu_bytes",
+        "checker_min_gpu_free_bytes",
+    }
     for model, model_meta in sorted(model_metadata.items(), key=lambda item: int(item[1]["model_order"])):
-        measured = measured_by_model[model]
-        if len(measured) != args.trials:
-            raise SystemExit(f"incomplete measured aggregate population for {model}")
-        for name, values in model_metrics(measured).items():
-            if values and len(values) != args.trials:
-                raise SystemExit(f"incomplete measured statistic {model}/{name}")
+        layer_names = sorted({
+            row["source_layer"] for row in aggregates if row["model"] == model
+        })
+        strata = []
+        for layer in layer_names:
+            measured = [
+                row for row in aggregates if row["model"] == model
+                and row["source_layer"] == layer and row["sample_role"] == "measured"
+            ]
+            metrics = layer_metrics(measured)
+            strata.append(metrics)
+            for name, values in metrics.items():
+                if values and len(values) != args.trials:
+                    raise SystemExit(f"incomplete measured statistic {model}/{layer}/{name}")
+                summary = summarize(values)
+                statistics_rows.append({
+                    "schema_version": STATISTICS_SCHEMA_VERSION, **identity,
+                    "model": model, "source_layer": layer, "scope": "layer",
+                    "workload": metadata["workload"],
+                    "population": "passing measured layer invocations; warmups excluded",
+                    "metric": name, "estimand": (
+                        "mean of within-layer paired invocation ratios"
+                        if name in ratio_numerators else "measured layer arithmetic mean"),
+                    "layer_count": 1, "observations_per_layer": len(values),
+                    "n": len(values), "availability": "complete" if values else "missing",
+                    "estimate": summary["mean"], **summary,
+                    "mean_ci95_method": INTERVAL_METHOD if len(values) >= 2 else "undefined for n<2",
+                    "quartile_method": QUARTILE_METHOD,
+                    "unit": units.get(name, "us"),
+                    "metric_definition": PUBLIC_VECTOR_TIMER_DEFINITION
+                    if "public_polynomial_exchange_us" in name else "",
+                })
+
+        # A row is the complete vector of available numeric observations. Sort
+        # by numeric content, not labels or input order, before drawing indices.
+        # The same draw selects every column, preserving the measured local
+        # protocol/dealer pairing, but no draw ever pairs different layers.
+        names = sorted(strata[0])
+        complete_names = [
+            name for name in names if all(stratum[name] for stratum in strata)
+        ]
+        additive_names = [
+            name for name in complete_names
+            if name not in nonadditive and name not in ratio_numerators
+        ]
+        canonical_strata = []
+        for stratum in strata:
+            numeric_names = [name for name in names if stratum[name]]
+            observations = sorted(zip(*(stratum[name] for name in numeric_names)))
+            indices = {name: numeric_names.index(name) for name in additive_names}
+            canonical_strata.append((observations, indices))
+        estimates = {
+            name: sum(
+                (sum(stratum[name], Decimal(0)) / Decimal(len(stratum[name]))
+                 for stratum in strata), Decimal(0))
+            for name in additive_names
+        }
+        model_ratios = {
+            name: numerator for name, numerator in ratio_numerators.items()
+            if numerator in estimates and "matched_dealer_keygen_us" in estimates
+        }
+        for name, numerator in model_ratios.items():
+            estimates[name] = estimates[numerator] / estimates["matched_dealer_keygen_us"]
+        bootstrap = {name: [] for name in estimates}
+        if args.trials >= 2:
+            rng = random.Random(BOOTSTRAP_SEED)
+            for _ in range(BOOTSTRAP_RESAMPLES):
+                totals = dict.fromkeys(additive_names, Decimal(0))
+                for observations, indices in canonical_strata:
+                    counts = [0] * len(observations)
+                    for _ in observations:
+                        counts[rng.randrange(len(observations))] += 1
+                    for name, index in indices.items():
+                        totals[name] += sum(
+                            (row[index] * count for row, count in zip(observations, counts)),
+                            Decimal(0)) / Decimal(len(observations))
+                for name, numerator in model_ratios.items():
+                    totals[name] = totals[numerator] / totals["matched_dealer_keygen_us"]
+                for name in estimates:
+                    bootstrap[name].append(totals[name])
+        for name in names:
+            if name in nonadditive:
+                continue  # Extrema are measured per layer, not additive model costs.
+            available = name in estimates
+            samples = sorted(bootstrap.get(name, []))
+            summary = {key: "NA" for key in summarize([])}
+            summary["mean_ci95_low"] = decimal_text(quantile_r7(samples, Decimal("0.025"))) if samples else "NA"
+            summary["mean_ci95_high"] = decimal_text(quantile_r7(samples, Decimal("0.975"))) if samples else "NA"
+            if name not in ratio_numerators and available:
+                summary["mean"] = decimal_text(estimates[name])
             statistics_rows.append({
                 "schema_version": STATISTICS_SCHEMA_VERSION, **identity,
-                "model": model, "workload": metadata["workload"],
-                "population": "passing measured aggregate rows only; warmups excluded",
-                "metric": name, "n": len(values), **summarize(values),
-                "mean_ci95_method": INTERVAL_METHOD if len(values) >= 2 else "undefined for n<2",
-                "quartile_method": QUARTILE_METHOD,
+                "model": model, "source_layer": "", "scope": "model",
+                "workload": metadata["workload"],
+                "population": "independently sampled layers; no measured joint model trials; warmups excluded",
+                "metric": name + "_of_summed_layer_means" if name in ratio_numerators else name,
+                "estimand": "ratio of sums of independently sampled layer means"
+                if name in ratio_numerators else "sum of independently sampled layer means",
+                "layer_count": len(strata),
+                "observations_per_layer": json.dumps(
+                    {layer: len(stratum[name]) for layer, stratum in zip(layer_names, strata)},
+                    sort_keys=True, separators=(",", ":")),
+                "n": "NA", "availability": "complete" if available else "missing",
+                "estimate": decimal_text(estimates[name]) if available else "NA", **summary,
+                "mean_ci95_method": BOOTSTRAP_METHOD if samples else
+                "undefined: missing metric or fewer than two observations per layer",
+                "quartile_method": "not applicable: no measured joint model distribution",
                 "unit": units.get(name, "us"),
+                "metric_definition": PUBLIC_VECTOR_TIMER_DEFINITION
+                if "public_polynomial_exchange_us" in name else "",
             })
 
     atomic_write_csv(args.aggregate_csv, aggregate_fields, aggregates)
     atomic_write_csv(args.statistics_csv, statistics_fields, statistics_rows)
+    if args.output_schema_json:
+        contract = {
+            "aggregate": {
+                "schema_version": AGGREGATE_SCHEMA_VERSION,
+                "columns": aggregate_fields,
+                "group_key": ["model", "source_layer", "sample_role", "trial"],
+                "population": "individual measured or warmup layer invocations, not model trials",
+                "numeric_suffixes": "_total/_max/_min apply within one layer invocation only",
+            },
+            "statistics": {
+                "schema_version": STATISTICS_SCHEMA_VERSION,
+                "columns": statistics_fields,
+                "group_key": ["model", "scope", "source_layer", "metric"],
+                "model_estimands": "sums of independent layer means; ratios of those sums; no model distribution statistics",
+                "model_ci": BOOTSTRAP_METHOD,
+                "layer_ci": INTERVAL_METHOD,
+                "model_n": "NA: no measured joint model trials",
+                "model_extrema": "omitted; memory extrema are reported only for measured layers",
+            },
+            "public_polynomial_exchange_us": PUBLIC_VECTOR_TIMER_DEFINITION,
+        }
+        with open(args.output_schema_json, "w", encoding="utf-8") as handle:
+            json.dump(contract, handle, indent=2)
+            handle.write("\n")
 
 
 if __name__ == "__main__":

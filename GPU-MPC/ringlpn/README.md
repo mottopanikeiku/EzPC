@@ -22,6 +22,16 @@ bounds, empty OT handling, a reusable SCI sender worker, source-native
 terminal linear material consumption, and bounded process-group cleanup.
 The stock Orca kernels and enclosing stock timing scope remain intact.
 
+The September 11 follow-through also sizes terminal peer buffers from the
+validated layer with strict transfer slack, seals pre/post application-build
+inputs while holding the actual archive-producer locks, fixes post-checker
+ownership handback and partial-create cleanup, binds GPUs by host plus UUID/PCI,
+disables ambient SSH-agent authentication, and corrects independent-layer
+statistics. Source exports include the retained worker/held-out experiment
+controller, not the internal manuscript, new measured datasets, or approvals.
+The statistics replay regression depends on internal historical matrix inputs
+and is intentionally not exported onto this source-only branch.
+
 Initialize the pinned `GPU-MPC/ext/cutlass` and `SCI/extern/eigen` submodules
 from the repository root. With CUDA and the documented system libraries
 installed, run from `GPU-MPC/` on three available GPUs (adjust the indices):
@@ -41,10 +51,31 @@ ringlpn/host_bin/test_correlation_freshness
 ```
 
 The application/helper build enters a private fixed source path because host
-prefix maps alone do not make CUDA fatbins relocation-stable. Root-distinct
-builds produce identical binaries and provenance. Dependency-only preprocessing
-uses the equivalent physical view without relaxing source-symlink rejection;
-the fixed build directory rejects stale/concurrent use and is removed on exit.
+prefix maps alone do not make CUDA fatbins relocation-stable. This is a
+checked live source view, not an immutable snapshot: recipes are sealed before
+entry, source/tool/archive/environment identities and ten dependency groups
+are checked before and after compilation, and both real archive-producer locks
+remain held through linking and provenance. Dependency-only preprocessing uses
+the physical view without relaxing source-symlink rejection. Ordinary mutation
+rejects without provenance; hostile same-UID ABA restoration is not covered.
+The fixed temporary path rejects stale/concurrent use and is removed on exit.
+
+The opt-in terminal buffer regression runs the real 16 MiB weight transfer
+and a strict-capacity boundary with fresh protocol state:
+
+```bash
+python3 ringlpn/scripts/run_orca_linear_application.py \
+  --p0-gpu 1 --p1-gpu 2 --timeout 600 --large-fc-only
+python3 ringlpn/scripts/test_peer_private_gpu_bindings.py -v
+python3 ringlpn/scripts/run_fc_review_experiments.py --help
+```
+
+The experiment controller requires explicit existing binary inputs and a new
+output path. It pins source/binary/harness identities and all trial rules before
+execution; held-out predictions and intervals are sealed after training but
+before held-out warmups. A failed preregistered criterion remains a negative
+result, not a reason to refit on held-outs. This fixed-tuple wall-time model
+does not expose or establish GPU work/transfer attribution.
 
 The application is terminal-only. Its caller must supply fresh, single-use
 material: producer freshness is not persistent application-consumer replay
@@ -53,6 +84,22 @@ traffic has no per-message integrity. Feasibility parameters are not security
 pins. Full-graph execution still uses TEST-ONLY trusted nonlinear/truncation
 material and requires fresh source-bound approvals; old/internal receipts are
 not silently carried onto this branch.
+Independent automated protocol review leaves P-KEY and P-CONV open. The
+implemented ideal-leaf map has statistical payload-hiding loss that must be
+charged along with composition/lifetime losses; the corrected local conversion
+inverse is not a complete output-conditioned transcript proof. No reviewed
+concrete-security parameter claim follows from functional checks.
+
+Publication mode requires each coordinator/party ledger to be its own
+inspectable block-backed ext4/xfs mount boundary. Tmpfs, RAM, loop, unknown,
+virtual-only, and other unreviewed storage reject. This conservative admission
+is not durability attestation: persistence barriers and no rollback, deletion,
+cloning, or hidden volatile storage remain operator assumptions. Checker input
+and output ownership is handed back only after its exact container exits.
+Physical GPU separation is host-scoped; remote ordinals may coincide, local
+UUID/PCI aliases may not. Explicit SSH identity use includes
+`IdentityAgent=none`. Native rootless Podman and a genuinely distinct authorized
+host are still required; focused local controls cannot substitute for them.
 Publication/coordinator gates also require a freshly pinned environment
 manifest, release authorization, and retained evidence. Those deployment and
 paper-release prerequisites are intentionally not supplied by this source-only
