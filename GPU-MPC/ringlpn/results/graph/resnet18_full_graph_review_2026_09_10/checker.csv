@@ -1,2 +1,0 @@
-source_bindings,linear_inputs,linear_outputs,secure_stochastic_truncations,stock_key_stream,residual_merges,global_average_pool,state_links,terminal_output,trace_contract,counter_contract,stock_nonlinear_key_source,scope,status
-pass,pass,pass,pass,pass,pass,pass,pass,pass,pass,pass,stock_trusted_dealer_test_only,known-zero-full-resnet18,pass

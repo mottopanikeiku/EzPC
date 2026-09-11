@@ -33,13 +33,16 @@ and fresh q64/bw29/inner-3 FC/Conv online checks also pass. The focused
 `fc/two_party_fc_review_controls_2026_09_10.csv` retain five live cases and
 sixteen controls; their timings are not a benchmark cohort.
 
-`graph/resnet18_full_graph_review_2026_09_10/` retains the fresh 18-file
-known-zero graph summary: full-graph digest `ccd598f8...`, all checker fields
+The fresh 18-file known-zero graph summary is kept owner-private outside Git;
+`reports/engineering_review_verification_2026_09_10.json` records its location.
+Full-graph digest `ccd598f8...`, all checker fields
 and seven rejection controls pass. Both self-digests and all indexed file
 hashes verify. It uses P0/P1/checker GPUs 1/2/3, with TEST-ONLY trusted
 nonlinear material. This new bundle remains internal-only and contains
 non-secret private-ledger path metadata; it does not replace the original
 immutable August checkpoint or authorize external release.
+The source-tree private-artifact guard passes; its historical private-metadata
+allowlist is unchanged.
 
 `reports/paper_review_verification_2026_09_10.json` records two independent
 byte-identical two-pass PDF builds, font/reference checks, and visual review

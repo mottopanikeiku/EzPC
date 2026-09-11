@@ -628,7 +628,13 @@
     "marker_display_repository_root_normalized": true
   },
   "fresh_graph": {
-    "path": "GPU-MPC/ringlpn/results/graph/resnet18_full_graph_review_2026_09_10",
+    "external_path_relative_to_repository": "../.local/share/ringlpn/reviews/2026-09-10/full-graph",
+    "storage": "owner-private outside Git; all original summary bytes retained unchanged",
+    "source_tree_private_artifact_guard": {
+      "before_retention_move_returncode": 1,
+      "after_retention_move_returncode": 0,
+      "allowlist_changed": false
+    },
     "full_graph_digest": "ccd598f84ec17b0cea3017c4fa2726181172ea6a4f9203f658b503a1e17e89de",
     "index_sha256": "97028008866d1f0705ce19d251bf80e79955c4b9e0360cea8184b19a8a190d27",
     "all_indexed_file_hashes_verified": true,

@@ -1,2 +1,0 @@
-party,total_us,linear_us,secure_truncate_us,stock_nonlinear_us,global_pool_us,terminal_us,total_protocol_bytes_sent,party_channel_bytes_sent,stock_bytes_sent,stock_bytes_received,truncations,handoffs,dabits,edabits,logical_opened_bits,triples,stock_raw_key_bytes,status
-0,11849051,151491,6870955,185769,81,68,1943029865,1930734632,12295233,12295233,2484224,2484224,4968448,24842240,178864128,47200256,1084582352,pass

@@ -84,11 +84,14 @@ rejection controls. Afterward, the source-only worktree rebuild passes the
 actual terminal FC/Conv gate and all eight controls; fresh q64/bw29/inner-3
 FC and Conv records pass their stock online checkers. Exact observations are
 in `results/reports/engineering_review_verification_2026_09_10.json`.
-The new `results/graph/resnet18_full_graph_review_2026_09_10/` summary is
-internal-only, retains non-secret private-ledger path metadata, and does not
+The fresh 18-file graph summary is owner-private outside the repository;
+its external location is recorded in that JSON. It retains non-secret
+private-ledger path metadata and does not
 replace the immutable August publication-bound checkpoint. Its nonlinear
 material remains TEST-ONLY trusted. These checks do not close security,
 authenticated deployment, release authorization, or conference research gates.
+The source-tree private-artifact guard passes without expanding its historical
+metadata allowlist.
 
 The current live composition uses thin
 `src/test_two_party_{fc,conv}_preprocess.cu` entrypoints over
