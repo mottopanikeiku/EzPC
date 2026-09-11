@@ -61,7 +61,80 @@ which statement is newer and gate-backed, correct all live documents in the
 same slice, and mark superseded material explicitly. Historical checkpoint
 bytes are evidence and must not be edited in place.
 
-## Completed review and current publication boundary
+## Latest follow-through — 2026-09-11
+
+The user's request to establish review subagents and execute the remaining
+work produced four independent automated reviews and 15 findings. All
+reachable implementation and claim corrections are recorded in
+`independent_review_verification_2026_09_11.json`. This is not human
+cryptographic sign-off, an owner ruling, or a completed publication gate.
+
+- Verified local commits: `300a324` (terminal capacity/build seals), `dd4276e`
+  (checker ownership, storage/physical-GPU/SSH policy), and `69fd8b6`
+  (independent-layer statistics and retained prospective experiments).
+- The separate source-only branch `ringlpn/clinical-review-2026-09-10` is now
+  at `4a2e29a1719203e0c67b342b81ee3ba25c436285`, after `5dc7548` and `5409025`.
+  Main/source-only builds produce identical application/helper binaries and
+  complete provenance; the source-only terminal FC/Conv/API/eight-control
+  runtime gate passes. These remain two-checkout checks, not a newly
+  authorized independent clean-clone release. All new commits use the sole
+  Git author/committer `mottopanikeiku`.
+- **Not pushed.** The fresh noninteractive Git credential-helper query
+  returns 128 with no credentials; no host authentication is available.
+  Authenticate Git on the host, then push only the explicit source branch
+  using the command below. Never push internal `master` or copy its ancestry,
+  current manuscript, historical private checkpoint, or new internal
+  measurement/approval inputs onto that branch.
+- The old 10 MiB terminal buffer limit and an exact-capacity strict-slack
+  boundary both fail before correction. The retained opt-in gate now passes
+  real 16 MiB and 8,200-byte transfers with fresh preprocessing and clear
+  output oracles. Actual post-link source/archive mutations reject without
+  provenance; both archive producers reject under the held producer locks.
+  The build is a checked live view, not an immutable snapshot/hostile-ABA defense.
+- Linux UID/mode controls reproduce and fix checker post-exit and partial-create
+  ownership failures. An actual tmpfs ledger is rejected; no positive durable
+  mount or native rootless-Podman run is claimed. Native OpenSSH proves agent
+  fallback is disabled while explicit identity authentication succeeds.
+  Host/GPU regressions allow remote ordinal reuse but reject local aliases.
+- Old CNN2 model-trial statistics were fabricated by aligning unrelated
+  layer-major trial labels. Reversing one layer's labels changes the old
+  estimator but not the corrected one. The replacement sums independent layer
+  means and resamples whole rows within each layer. Corrected setup/dealer
+  ratios of mean sums are 882.3274× (CNN2) and 60.5768× (CNN3); historical
+  raw bytes remain unchanged. The old CNN2 model median/SD/IQR/t-CI and
+  paired-ratio median are withdrawn.
+- The new retained worker controller passes 22 fresh invocations with 68
+  per-party contract fields unchanged. Median launch-to-party-exit latency
+  is 0.976022→0.906485 s (7.12% lower); Phase B is
+  280.205→223.2515 ms (20.33% lower). The old deleted-controller experiment
+  remains historical and its confidence interval is not reused.
+- The prospective fixed-tuple wall-time model executes 88 training and 22
+  held-out invocations, all passing consumers/accounting. Predictions and
+  intervals are sealed before held-out warmups and exactly replay from raw
+  training data. The **prediction gate fails**: point errors are 1.530% and
+  0.220%, but AlexNet's median is outside its sealed interval. No retuning,
+  exclusions, or interval widening. GPU resource/transfer attribution remains
+  absent and is not claimed.
+- P-KEY must charge the actual biased ideal-leaf map plus lifetime and
+  AES/DPF composition losses. P-CONV is reopened after correcting the local
+  opening-first complement-branch inverse; the complete state-consistent
+  transcript proof remains open. The live per-limb regular inventory is
+  5,632 chosen-message 128-bit string OTs across both directions, not
+  2,816 bit-COTs.
+- The current internal v2.17 PDF is 36 pages, SHA-256
+  `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`.
+  Two pinned two-pass builds agree, warning/font checks pass, and all pages
+  were visually inspected; see `paper_review_verification_2026_09_11.json`.
+  The report remains **not submission-ready**. The ASPLOS 2027 September 9
+  AoE deadline has passed; engineering passes are not an acceptance case.
+
+Remaining external prerequisites: qualified independent human proof/parameter
+review; ownership/credit/circulation rulings; an executable matched dealerless
+baseline at those reviewed parameters; authorized distinct-host identities and
+native rootless runtime; and Git authentication. No local experiment or model
+review can manufacture these approvals.
+
+## September 10 review and source-boundary history
 
 The engineering review has replaced the pre-review work inventory below.
 Those inventories and reusable process instructions are historical context,

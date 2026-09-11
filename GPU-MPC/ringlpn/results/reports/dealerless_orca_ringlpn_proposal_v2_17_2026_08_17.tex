@@ -5,8 +5,8 @@
 % All "Figure 2" references to BCG+20 renamed to "BCG+20 generator";
 % this document now contains its own figures.
 % Numbers: measured values are regenerated from the current artifact CSVs;
-% the distributed-keygen cost table is derived per DPF tree, including three
-% scalar OLEs per tree and the bootstrap condition 3 c^2 t^2 < n.
+% the distributed-keygen inventory counts directional 128-bit string OTs,
+% bit triples, and three Phase-C products per tree; it is not a byte estimate.
 \documentclass[11pt]{article}
 
 \usepackage[margin=1in]{geometry}
@@ -65,9 +65,9 @@ the latter is independently unreviewed correctness/accounting evidence only.
 The controlled source-manifest matrix covers both CNN2 FC layers and the CNN3
 FC scale point. Every layer passes one warmup plus ten measured trials. On a
 quiescent RTX 5000 Ada selected per sample for both the protocol critical path
-and subsequent stock dealer, median setup-included preprocessing/stock-dealer
-ratios are $879.30\times$ for CNN2's two FC layers in aggregate and
-$60.32\times$ for CNN3 FC5. These same-host feasibility results are
+and subsequent stock dealer, ratios of summed per-layer mean setup-included
+preprocessing and stock-dealer times are $882.33\times$ for CNN2's two FC
+layers and $60.58\times$ for CNN3 FC5. These same-host feasibility results are
 a controlled negative comparison, not a speedup or security claim.
 A source-native terminal FC/Conv2D application also passes nonzero input-share
 and public-bias checks; the extracted stock helpers pass signed/wrapping clear
@@ -202,14 +202,15 @@ executes the stock nonlinear consumers.
   one-process transcript retains \texttt{build\_spfss\_keys()} solely as a
   diagnostic/validation artifact; none of its timings are presented as live
   protocol measurements.
-\item[G2 --- Exact share conversion: closed.]
+\item[G2 --- Exact share conversion: implemented; privacy proof reopened.]
   Batched edaBits, daBits, and Boolean triples from the selected OT backend
   implement exact $\Z_Q\to\Z_{2^\bw}$ conversion. The canonical and classifier
   suites use SCI/IKNP. A current separate EMP-Silent rerun passes the same five
   focused cases and sixteen controls with exact directional inventory
   exhaustion, but remains opt-in and independently unreviewed. The wrap bit is
-  never opened; the simulator in \S\ref{sec:design-convert} proves privacy at
-  the correlation boundary. The measured local runner first performs mutual
+  never opened directly. Section~\ref{sec:design-convert} corrects the local
+  output-conditioned inverse, but a full state-consistent conditional
+  transcript proof remains open (P-CONV). The measured local runner first performs mutual
   HMAC-SHA256 endpoint/context establishment; later loopback bytes have no
   application-layer per-message integrity.
 \item[G3 --- Randomness/RO separation: closed.]
@@ -262,8 +263,8 @@ output layer; professor/contributor credit, permission, disclosure, and
 private-project-overlap rulings remain explicitly open and must be settled
 before external circulation. The point-DPF and Ring-LPN generator primitives
 are prior work, not claimed as novel. This is feasibility evidence: the
-controlled CNN2/CNN3 median setup-included preprocessing/dealer ratios are
-$879.2970985824659\times$ and $60.3181599795375\times$, respectively.
+controlled CNN2/CNN3 setup-included preprocessing/dealer ratios of summed
+layer means are $882.3274\times$ and $60.5768\times$, respectively.
 Together with unprotected post-handshake local transport and unpinned Ring-LPN
 parameters, these negative results are publication risks rather than
 competitive-system evidence.
@@ -398,8 +399,9 @@ $\lambda$ & target symmetric parameter $128$; GPU expansion now uses full
 
 Figure~\ref{fig:pipeline} shows the composed live forward path. Every stage is
 implemented and gate-verified for the stated feasibility configurations.
-Components D1--D4 close the earlier centralized-keygen, conversion, randomness,
-and process-separation boundaries for this scope; D5 remains open. Three
+Components D1--D4 implement the earlier centralized-keygen, conversion,
+randomness, and process-separation boundaries for this scope; this does not
+close P-KEY or the reopened P-CONV proof obligation. D5 remains open. Three
 principles govern the artifact:
 
 \begin{enumerate}
@@ -467,9 +469,11 @@ Two computationally bounded parties; \textbf{static semi-honest}
 (honest-but-curious) corruption of one party. The conditional theorem assumes
 authenticated point-to-point channels, AES as a PRG/PRF
 ($\lambda{=}128$), standard semi-honest security of the selected OT backend,
-the Gilboa field-multiplication wrapper, and BGI DPF, plus decisional
+the Gilboa field-multiplication wrapper, and an actual-map BGI DPF reduction
+including the leaf-conversion statistical loss, plus decisional
 splittable Ring-LPN for the exact selected sparse-noise distribution
-(\S\ref{sec:design-params}). The canonical and classifier suites instantiate
+(\S\ref{sec:design-params}) and a complete output-conditioned conversion
+simulator. These proof obligations remain open. The canonical and classifier suites instantiate
 SCI/IKNP. The separate EMP-Silent correctness/accounting rerun remains opt-in
 and independently unreviewed. Current measurements use same-host loopback after
 a mutual HMAC-SHA256 endpoint/context handshake, but later local protocol bytes
@@ -702,10 +706,12 @@ OpenSSL-private-DRBG roots/noise/masks and fixes the unsent identity $a_0=1$.
 It exchanges four seed-share words once per layer and derives every
 per-instance $(c-1)n$ tail through domain-separated SHAKE256 rejection
 sampling. This is exact in the stated random-oracle hybrid, not a
-standard-model public-coin construction. The exact key-distribution coupling
-and conversion simulator close the remaining algebraic hybrid obligations.
-Concrete Ring-LPN security parameters and an authenticated deployment remain
-open; no end-to-end 128-bit claim is made.
+standard-model public-coin construction. Exact key-distribution coupling
+does not discharge the actual leaf-map privacy reduction (P-KEY).
+The corrected conversion inverse is only a necessary local consistency step,
+not a complete conditional transcript proof (P-CONV).
+Concrete Ring-LPN security parameters and an authenticated deployment also
+remain open; no end-to-end 128-bit claim is made.
 
 \paragraph{Leakage and abort contract.}
 Common leakage consists of protocol/session and party-role identifiers; the
@@ -818,9 +824,52 @@ $F=F_0+F_1=t_{0,\alpha}-t_{1,\alpha}\in\{+1,-1\}$. Phase C reconstructs
 \]
 which is $\beta-A$ for tags $(1,0)$ and $A-\beta$ for $(0,1)$, exactly the
 standard final correction. Thus, conditioned on the supplied roots, both
-output keys equal standard generation deterministically; independent uniform
-roots give the same joint distribution. This algebraic coupling is separate
-from the standard single-key privacy theorem and its PRG assumption.
+output keys equal standard generation with the same leaf map deterministically;
+independent uniform roots give the same joint distribution. This algebraic
+coupling does not prove single-key privacy for the actual PRG and leaf map.
+
+\paragraph{P-01: ideal-leaf bias and the open P-KEY reduction.}
+Both host and GPU \texttt{convert\_zp} sum the separately reduced 64-bit
+halves of a 128-bit seed modulo $p$. Even with ideal independent uniform
+halves this is not exact-uniform in $\Z_p$. Write $2^{64}=kp+r$,
+$0\le r<p$. Each half has $k+[v<r]$ preimages; their modular sum has
+$k^2p+2kr+T(v)$, where $T$ is the cyclic convolution of the interval
+indicator on $[0,r-1]$ with itself and $\sum_vT(v)=r^2$.
+Thus the distribution is
+\[
+ (1-\epsilon)U_p+\epsilon D_r,\qquad
+ \epsilon=\frac{r^2}{2^{128}},\qquad
+ \Delta(\operatorname{Convert}(U_{128}),U_p)\le\epsilon,
+\]
+where $D_r$ is the modular sum of two uniform values in $[0,r-1]$
+(for $r=0$ the map is uniform). This is a bound per ideal-uniform leaf,
+not a complete DPF-security bound.
+
+For $p=4611686018326724609$, $k=4$ and $r=402653180$.
+Here $T$ is triangular on $[0,2r-2]$, and
+\[
+ \epsilon=
+ \frac{10133098960257025}{21267647932558653966460912964485513216},
+ \qquad \log_2\epsilon\simeq-70.830075.
+\]
+A shift by $\lfloor p/2\rfloor$ makes the excess supports disjoint.
+For candidate payloads at the same known $\alpha$, a party-0 key computes
+its own leaf tag. In the ideal-leaf hybrid, when that tag is 1, evaluation
+at $\alpha$ equals $\beta+\operatorname{Convert}(s_{1,\alpha})$.
+The shifted-interval event has probability gap $\epsilon$ conditional on
+that tag, or $\epsilon/2$ including the independent uniform tag event.
+The 8-bit-half analogue at $p=61$, shift 30, and interval $[0,22]$ has
+exact count gap 144 among $256^2$ pairs.
+This same-$\alpha$ payload-shift witness is \emph{not an empirical AES
+attack}, nor the full P-KEY reduction.
+
+Qualified review must justify the actual AES/DPF ideal-leaf replacements and
+their number, then compose these statistical terms with the computational
+losses over keys, both CRT limbs, directions, batches, epochs, and layers
+for a declared lifetime. A sum of the applicable per-leaf bounds is only
+one component after those replacements are justified, not the final concrete
+advantage budget. This correction changes no primitive and makes no 128-bit
+claim.
 
 \paragraph{D1 batch-simulation lemma at the ideal boundary.}
 Fix either corrupt party, its complete arbitrarily correlated input/root
@@ -908,8 +957,8 @@ ID & Proof obligation & Current status\\
 P-CORR & Keys reconstruct $\beta[x=\alpha]$. & 2{,}432/2{,}432 executable passes\\
 P-DIST & Couple correction words to standard DPF generation conditioned on
 both roots. & exact algebraic coupling above\\
-P-KEY & One standard key hides point/payload. & standard DPF/PRG theorem;
-concrete reduction review open\\
+P-KEY & Hide point/payload under the actual AES expansion and biased leaf map. &
+open: P-01 statistical loss and lifetime reduction/composition\\
 P-POS & Prove the exact uniform/regular Ring-LPN exponent distribution. &
 contract fixed; distribution/reduction audit open\\
 P-ADD & Simulate either ripple-adder view with explicit triple/opening
@@ -923,7 +972,7 @@ reuse before output. & D1 lemma + persistent invocation/ledger controls\\
 P-RNG/P-PCG & Realize private tapes/exact public $a$ and prove Ring-LPN OLE at
 the selected distribution. & RNG implemented; PCG reduction/parameters open\\
 P-CONV & Realize exact modulo-$Q$ conversion without revealing wrap. &
-closed in the edaBit/daBit/triple hybrid; transport assumptions explicit\\
+reopened: local inverse corrected; full conditional transcript proof open\\
 P-TOPO/P-PROC & Match stateful reuse/serialization and two-process execution. &
 forward FC and classifier evidence closed on SCI/IKNP; training state and
 authenticated deployment open\\
@@ -934,7 +983,7 @@ not a computational-security claim; open rows are binding later-stage gates.}
 \label{tab:s1proof}
 \end{table}
 
-\paragraph{Conditional forward-FC theorem.}
+\paragraph{Conditional forward-FC proof target.}
 Let $\chi_{\mathrm U}$ sample exactly $t$ distinct positions without
 replacement and $\chi_{\mathrm R}$ sample one position in each of $t$ public
 equal buckets; in both cases coefficients are independent uniform elements of
@@ -949,12 +998,16 @@ Sampling all $c$ public entries would be a different, unreviewed assumption.
 Also model SHAKE256 on the exact V2 byte query $\mathsf Q$ of
 \S\ref{sec:design-seeds} as the public random oracle used for independently
 scoped public-$a$ vectors, and assume the four-call GPU AES expansion is a PRG,
-the standard BGI single-key theorem, semi-honest security of the selected OT
-backend and Gilboa field-multiplication wrapper, authenticated channels, and
-the BCG+20 Figure-2 reduction.
+a reviewed single-key reduction for the actual leaf map including P-01
+statistical loss and lifetime composition, semi-honest security of the selected
+OT backend and Gilboa field-multiplication wrapper, authenticated channels,
+the role-indexed BCG+20 Figure-2 reduction, and a complete state-consistent
+output-conditioned P-CONV simulator. The actual-map reduction, Figure-2 bridge,
+and full conversion simulator are not discharged here.
 
-Under those assumptions, the live forward protocol realizes the forward-matmul
-restriction of $\mathcal F_{\mathrm{FC}}$ with the leakage above. The simulator
+Subject to these open obligations, the proposed conclusion is realization of
+the forward-matmul restriction of $\mathcal F_{\mathrm{FC}}$ with the leakage
+above and the composed advantage losses. The conditional proof outline
 samples one joint 256-bit public seed, sets the honest four-word XOR share
 against the corrupt share, and programs every fresh exact $\mathsf Q$ query
 with an independent uniform stream. It retains the corrupt random tape,
@@ -971,11 +1024,13 @@ Figure-2 replacement then provide the next ideal Ring-OLE state. Induction in
 public epoch order covers every later DPF and
 expansion without assuming its own output. It samples each opposing application
 derandomization opening under the corresponding fresh hidden OLE share, applies
-the exact conversion simulator, and adds the fresh uniform output-mask share
-before serializing $A_b\Vert B_b\Vert C_b$. Every replacement conditions on
-prior state. Across $m$ fresh direction/limb/batch instances, the hybrid incurs
-at most the sum of the $m$ role-indexed Figure-2/module-Ring-LPN advantages; it
-does not infer a joint claim from one unconditioned single-instance sample.
+the complete conversion simulator still required by P-CONV, and adds the fresh
+uniform output-mask share before serializing $A_b\Vert B_b\Vert C_b$.
+Every replacement must preserve prior state. Across $m$ fresh
+direction/limb/batch instances, the intended hybrid sums the $m$ role-indexed
+Figure-2/module-Ring-LPN advantages; the full bound must additionally charge
+the actual-map DPF statistical/computational losses and justify conversion
+composition. A joint claim cannot follow from one unconditioned sample.
 This theorem excludes the measured post-handshake TCP transport, which has no
 per-message integrity, as well as malicious parties and unimplemented training
 state transitions. The source execution uses $(n,c,t)=(8192,2,8)$; the separate
@@ -1008,9 +1063,10 @@ the role-indexed ideal Ring-OLE. Its reserved suffix registers state for
 $\mathcal F_{\rm BMUL}$, whose exact role-specific simulator supplies the next
 DPF's Phase-C view without replacing the correlated output by fresh
 $\mathcal F_{\rm OLE}$ shares. Repeat the DPF and Figure-2 replacements in
-public order. Distinct slot IDs compose sequentially. The conclusion remains
-conditional on the multi-instance Ring-LPN obligation; bootstrapping does not
-solve that open assumption.
+public order. Distinct slot IDs are necessary for sequential composition.
+The conclusion remains conditional on the role-indexed multi-instance
+Ring-LPN and actual-map P-KEY obligations; epoch order alone does not prove
+the required retained-state reduction or discharge P-01.
 
 For the classifier run, the exact count is
 $2L\lceil MKN/C_{\rm app}\rceil=276$ Ring-OLE instances
@@ -1032,47 +1088,51 @@ two-stage payload multiplication add dependency stages. The TCP implementation
 reports semantic dependency layers separately from direction switches; neither
 counter is a packet/network-round measurement.
 
-\paragraph{Cost model (per ring-OLE limb).} Each DPF tree of depth $d$ costs
-$\lambda d$ correlated-OT instances; Ferret-class silent OT estimates place
-each instance at roughly 1--8 bits of real traffic across maturity regimes.
-The live implementation instead measures its selected backend; this range is
-analytic context only. With uniform noise there are
-$c^2t^2$ trees of depth $\log(2n) = 14$. With \emph{regular} noise (one
-nonzero per width-$n/t$ bucket), the $t^2$ product points of each polynomial
-pair fall on $2t-1$ predictable diagonals, so the same $c^2t^2$ trees shrink
-to depth $\log(2n/t)$, grouped as $c^2(2t-1)$ SPFSS instances over the smaller
-domain.\footnote{The 2026-06-10 draft priced the regular-noise row per SPFSS
-\emph{instance} ($c^2(2t-1)$ units of depth 14), giving 107{,}520 OT
-instances at $t{=}8$; the counts below are per DPF \emph{tree}, matching
-\texttt{build\_spfss\_keys()}, and supersede it. Separate $t{=}64$
-diagnostics record 881\,ms and 9.04\,MB for uniform noise and 61\,ms and
-5.53\,MB for regular noise. The distributions and SPFSS domains differ, so no
-timing or key-size ratio is claimed.}
+\paragraph{P-03: exact live primitive inventory (one ring-OLE limb instance).}
+Let $B=c^2t^2$ and let the tree depth be $d=\log_2(2n)$ for uniform noise
+or $d=\log_2(2n/t)$ for regular noise. Regular product points are grouped
+on $c^2(2t-1)$ public bucket diagonals, but key generation still uses $B$
+DPF trees. At every level the live \texttt{ot\_duplex\_128} sends and receives
+on two independent directional contexts. The exact Phase-B inventory is
+$Bd$ chosen-message 128-bit string OTs \emph{per direction}, hence $2Bd$
+total, not $Bd$. The one-OT-per-level walk is unimplemented.
+Phase A additionally consumes $B(d-1)$ Boolean triples and Phase C consumes
+$3B$ field products. These are distinct primitive functionalities.
 
 \begin{table}[ht]
 \centering
 \small
 \begin{tabular}{lrrrrr}
 \toprule
-noise, $t$ ($c{=}2$) & DPF trees & depth & OT instances & scalar OLEs & est.\ silent-OT comm.\\
+noise, $t$ ($c{=}2$) & trees $B$ & depth $d$ & string OTs $2Bd$ & bit triples & field products\\
 \midrule
-uniform, $t{=}8$  & 256    & 14 & 458{,}752   & 768    & 0.06--0.46\,MB\\
-regular, $t{=}8$  & 256    & 11 & 360{,}448   & 768    & 0.05--0.36\,MB\\
-uniform, $t{=}64$ & 16{,}384 & 14 & 29{,}360{,}128 & 49{,}152 & 3.7--29\,MB\\
-regular, $t{=}64$ & 16{,}384 & 8  & 16{,}777{,}216 & 49{,}152 & 2.1--17\,MB\\
+uniform, $t{=}8$ & 256 & 14 & 7{,}168 & 3{,}328 & 768\\
+regular, $t{=}8$ & 256 & 11 & 5{,}632 & 2{,}560 & 768\\
+uniform, $t{=}64$ & 16{,}384 & 14 & 458{,}752 & 212{,}992 & 49{,}152\\
+regular, $t{=}64$ & 16{,}384 & 8 & 262{,}144 & 114{,}688 & 49{,}152\\
 \bottomrule
 \end{tabular}
-\caption{Distributed key-generation cost per ring-OLE limb (derived).
-$n=8192$, $\lambda=128$; depth is $\log_2(2n)$ resp.\
-$\log_2(2n/t)$. Scalar OLEs equal three times the tree count. The silent-OT
-communication column is an analytic range, not the live byte counter. The live
-implementation measures its selected backend and pays the scalar-OLE OT cost
-only for the first instance of each CRT limb; later rows consume Ring-LPN
-output slots and exchange the counted masked field words. The standalone host
-prototype of \S\ref{sec:m1proto} retains 2 string OTs per level,
-depth$-1$ bit triples, and three ideal scalar OLEs per tree.}
+\caption{Source-derived DPF primitive inventory for one ring-OLE limb
+instance at $n=8192$. String OTs count both directions, each with two 128-bit
+messages and one choice bit; they are not bit-COT counts or measured bytes.
+At regular $t=8$, each direction uses 2{,}816 OTs, totaling 5{,}632.
+The $t=64$ rows are standalone inventory diagnostics, not feasible
+self-bootstrapping points: $3B\ge n$.}
 \label{tab:keygen}
 \end{table}
+
+The earlier $\lambda d$ bit-correlation pricing and 1--8-bit silent-OT
+traffic range are retired, not corrected into a performance estimate.
+No reviewed reduction equating a chosen-message 128-bit string OT with
+bit-COT is asserted. This inventory is not a complete transport budget:
+Phase-A triple generation, setup, chosen-message adjustment/ciphertexts,
+correction-word openings, framing, and conversion must be accounted
+separately. Only the first instance of each CRT limb obtains its $3B$
+Phase-C products from external Gilboa OLE; later instances consume reserved
+Ring-OLE slots and exchange the recorded masked field words.
+Historical measured SCI/IKNP and EMP-Silent byte counters remain separate,
+immutable backend evidence. Neither those counters nor this corrected
+inventory provide a matched direct-OT baseline or a new performance estimate.
 
 \subsection{D2: PCG-sourced share conversion (removes G2)}
 \label{sec:design-convert}
@@ -1096,10 +1156,18 @@ arithmetic share makes the sum uniform), and realizes each Boolean triple
 with two one-bit OTs. Under fresh correlations: (1)~mask and open
 $A=(z_0+z_1+R)\bmod 2^\ell$; (2)~a ripple adder recovers Boolean shares of
 $S=A-R$; (3)~a second adder obtains
-$w=[S\ge\Q]$ from the carry of $S+(2^\ell-\Q)$; (4)~the daBit converts $w$
-to arithmetic shares; and (5)~each party computes
-$r_i=(z_i-\Q w_i)\bmod 2^\bw$. Thus
-$r_0+r_1=((z_0+z_1)\bmod\Q)\bmod 2^\bw$ and $w$ is never opened.
+$w=[S\ge\Q]$ from the carry of $S+(2^\ell-\Q)$;
+(4)~write $a_b$ for the raw arithmetic share of a fresh daBit $d$,
+open $h=w\oplus d$, and compute the corrected arithmetic wrap share
+\[
+ w_b=\begin{cases}
+ a_b,&h=0,\\
+ (1-b)-a_b,&h=1
+ \end{cases}\pmod{2^\bw};
+\]
+and (5)~return $r_b=(z_b-\Q w_b)\bmod2^\bw$.
+Since $w_0+w_1=w\bmod2^\bw$, the output sum is
+$((z_0+z_1)\bmod\Q)\bmod2^\bw$ and $w$ is never opened directly.
 \paragraph{Ideal-OT wrapper lemma.}
 These custom correlations are exact constructions in the
 $\mathcal F_{\mathrm{OT}}$ hybrid. For one daBit, $P_0$ samples bit $x$ and
@@ -1130,23 +1198,45 @@ artifact separately measures setup, correlation, and online bytes and
 direction switches. Dependency stages are semantic depth, not measured
 network rounds.
 
-\paragraph{Semi-honest privacy at the correlation boundary.}
-$A$ is uniform because $R$ is uniform. Every ripple-AND opening is one-time
-padded by a fresh Boolean triple, and the B2A opening is $w\oplus d$ for a
-fresh uniform daBit $d$; hence these opened values are simulatable and reveal
-neither $S$ nor $w$. The output-share distribution also matches the ideal
-functionality: $\Q$ is odd, so multiplication by $\Q$ permutes
-$\Z_{2^\bw}$; a uniform arithmetic daBit share makes each
-$z_i-\Q w_i$ uniform subject to the required sum. Given an ideal local output,
-the simulator solves uniquely for that local daBit share using
-$\Q^{-1}\bmod2^\bw$, samples all local Boolean/edaBit/triple shares with their
-real marginals, chooses every masked opening uniformly, and completes only the
-honest transmitted shares. This closes P-CONV in the
-$(\mathcal F_{\mathrm{edaBit}},\mathcal F_{\mathrm{daBit}},
-\mathcal F_{\mathrm{BT}})$ hybrid. The concrete path remains conditional on
-the selected backend's semi-honest OT security and an authenticated channel.
+\paragraph{P-02: corrected local inverse; conditional transcript proof open.}
+$A$ is uniform because $R$ is uniform; fresh Boolean triples mask the
+ripple-AND openings. The B2A opening is $h=w\oplus d$, not $w$.
+For either fixed $h$, the transformation from raw $a_b$ to corrected $w_b$
+is a permutation. The fresh uniform arithmetic mask and odd $\Q$ therefore
+give a uniform local output share subject to the required sum.
 
-\paragraph{What remains for production D2.} Two things. \emph{Sourcing:} AND triples come
+An output-conditioned local sampler must sample $h$ \emph{first}.
+For prescribed $r_b$, compute in $\Z_{2^\bw}$
+\[
+ w_b=\Q^{-1}(z_b-r_b),\qquad
+ a_b=\begin{cases}
+ w_b,&h=0,\\
+ (1-b)-w_b,&h=1.
+ \end{cases}
+\]
+The deterministic source computation then returns $r_b$ in either branch.
+The earlier inverse incorrectly fixed raw $a_b$ before independently
+sampling $h$. At q64/bw3, $\Q\bmod8=1$, $b=0$, $z_b=r_b=0$, raw
+$a_b=0$, and $h=1$, it returns 7 rather than 0. The corrected local inverse
+passes exact arithmetic checks for all 256 combinations of role, $h$,
+input residue, and prescribed output in $\Z_8$.
+
+Local inversion is not a complete output-conditioned simulator. Qualified
+review must construct the joint Boolean daBit, edaBit/triple, earlier-opening,
+local-random-tape, and OT-wrapper state conditioned on $r_b$ and sampled $h$,
+preserving every recomputable dependency and the real conditional law.
+Independently sampling the remaining marginals and completing honest shares
+does not prove this. P-CONV is therefore reopened even in the
+$(\mathcal F_{\mathrm{edaBit}},\mathcal F_{\mathrm{daBit}},
+\mathcal F_{\mathrm{BT}})$ hybrid; fresh IDs alone do not close its sequential
+composition. The inspected source already implements the correct branch.
+Concrete transport additionally requires the selected backend's semi-honest
+OT security and authenticated channels. Automated correction is not qualified
+human security review or circulation authorization.
+
+\paragraph{What remains for production D2.} The complete P-CONV proof above
+is required before a privacy claim. Separate prospective engineering work
+includes \emph{sourcing:} AND triples come
 from a binary PCG (the $\Z_2$ instantiation of our own pipeline, or
 expand-accumulate codes~\cite{couteau2021silver}; Ferret~\cite{yang2020ferret}
 yields them at $\sim$1 bit amortized), edaBits from random bit-shares by the
@@ -1326,8 +1416,9 @@ boundary & status & executable/proof evidence & consequence\\
 G1 centralized keygen & closed for forward FC & live distributed GPU-AES DPF
 keys in six cases and the model run; exact correction-word coupling &
 no centralized key generator; trusted-dealer-free only in stated RO model\\
-G2 share conversion & closed in hybrid & live selected-OT conversion plus
-exact simulator; wrap remains hidden & conditional semi-honest privacy\\
+G2 share conversion & implemented; proof open & exact source algebra and
+corrected local inverse; full conditional transcript missing & no completed
+P-CONV privacy proof\\
 G3 shared/private RNG & closed in RO hybrid & per-party OpenSSL DRBG, unsent
 identity $a_0=1$, four-word joint seed, and independently scoped SHAKE256
 rejection sampling & exact required distribution in the stated random-oracle
@@ -1614,7 +1705,7 @@ The source-authored workload manifest selects CNN2 FC4
 ($100{\times}256{\times}128$), CNN2 FC5
 ($100{\times}128{\times}10$), and CNN3 FC5
 ($100{\times}64{\times}10$). All use q128/bw32, regular noise, and the
-feasibility tuple $(n,c,t)=(8192,2,8)$; they require 42, 18, and 9 Ring-LPN
+feasibility tuple $(n,c,t)=(8192,2,8)$. They require 442, 18, and 9 Ring-LPN
 batches, respectively. Every layer passes one warmup and ten measured trials,
 for 30/30 passing measured layer trials. Both protocol parties run on distinct
 quiescent RTX 5000 Ada GPUs. After they exit, the stock
@@ -1632,20 +1723,22 @@ order is fixed as protocol then dealer, not randomized.
 metric & CNN2 all FC & CNN3 FC5\\
 \midrule
 FC layers / measured layer trials & $2$ / $20$ & $1$ / $10$\\
-mean setup-included / sample SD (s) & $26.881842$ / $0.050965$ & $0.903894$ / $0.018971$\\
-median / R-7 IQR (s) & $26.897711$ / $0.065754$ & $0.904910$ / $0.028512$\\
-95\% Student-$t$ CI for mean (s) & $[26.845384,26.918301]$ & $[0.890323,0.917466]$\\
-mean stock dealer / sample SD (ms) & $30.46697$ / $0.47174$ & $14.92146$ / $0.31011$\\
-median stock dealer (ms) & $30.5729$ & $14.96295$\\
-median paired setup-included ratio & $879.2970985824659\times$ & $60.3181599795375\times$\\
+sum of layer mean setup-included times (s) & $26.881842$ & $0.903894$\\
+95\% stratified-bootstrap CI (s) & $[26.849728,26.911767]$ & $[0.892967,0.915280]$\\
+sum of layer mean stock-dealer times (ms) & $30.46697$ & $14.92146$\\
+setup/dealer ratio of summed layer means & $882.3274\times$ & $60.5768\times$\\
+95\% stratified-bootstrap ratio CI & $[876.3872,890.1396]$ & $[59.3419,61.8764]$\\
 application / total transport bytes & $1{,}302{,}752{,}736$ / $1{,}302{,}840{,}696$ & $39{,}432{,}504$ / $39{,}476{,}484$\\
 semantic dependency layers & $72{,}278$ & $1{,}663$\\
-mean peak host RSS / process GPU bytes & $305{,}696{,}768$ / $431{,}095{,}808$ & $137{,}465{,}446$ / $431{,}095{,}808$\\
 \bottomrule
 \end{tabular}
-\caption{Controlled model-FC feasibility matrix. CNN2 statistics sum both
-retained FC layers within each measured model trial; CNN3 has one supported FC
-layer. Setup-included time sums the per-layer critical-party
+\caption{Controlled FC feasibility matrix, reanalyzed September 11. Layers
+were measured separately; integer trial labels do not form joint model trials.
+Model estimates sum independent layer means, not model-trial latencies.
+Intervals use 10,000 whole-row resamples within each layer (seed 20260911),
+preserving each protocol/dealer pair; endpoints use R-7 percentiles.
+No model median, SD, IQR, or Student-$t$ interval is inferred.
+The per-layer critical-party timer is
 \texttt{total\_us+preflight\_us+ot\_setup\_us}; it still excludes channel
 construction, socket establishment, authentication, checker time, and the
 stock dealer. ``Semantic dependency layers'' are implementation schedule
@@ -1656,6 +1749,17 @@ loopback feasibility measurements at unpinned parameters, not full-model,
 WAN, security-level, or competitive-performance evidence.}
 \label{tab:cnnmatrix}
 \end{table}
+
+The original August raw CSV and its schema remain unchanged. The corrected
+observation, summary, output-schema, and reconstructed analysis-plan files
+have the stem \path{results/fc/two_party_fc_model_scale_cnn2_cnn3_} and suffix
+\path{2026_09_11}; the historical source-manifest inputs are retained in
+\path{results/fc/model_scale_inputs_2026_08_14/}.
+The live aggregator emits layer-invocation observations (v4) and
+independent-layer statistics (v3). Reversing only one layer's trial labels
+leaves every estimate and interval unchanged. The previous CNN2 synthetic
+model-trial distribution and paired-ratio median are withdrawn, not pooled
+with this analysis. Per-layer measured distributions remain meaningful.
 
 In the retained classifier rows, legacy post-OT median Phase C is 0.041723\,s, Phase B is
 1.955515\,s, Phase A is 0.2462935\,s, and GPU Ring-LPN expansion is
@@ -1720,8 +1824,8 @@ allocator/synchronization boundary, and output bytes. The retained classifier
 execution was not controlled on the same physical GPU and occupancy state, so
 its $268.6769431352700\times$ statistic remains descriptive. The newer
 CNN2/CNN3 matrix adds per-sample physical-GPU and quiescence control; its
-$879.2970985824659\times$ and $60.3181599795375\times$ medians are controlled,
-strongly negative stock-dealer comparisons rather than speedup claims.
+$882.3274\times$ and $60.5768\times$ ratios of summed layer means are
+controlled, strongly negative stock-dealer comparisons, not speedup claims.
 A separately pinned stock libOTe Reverse-Cuckoo run and a project-prime
 exact-$p_0$ native-folded adapter diagnostic are retained:
 \begin{table}[ht]
@@ -1814,10 +1918,10 @@ FC test).
 \item[Closed narrowly --- model-FC matrix.] The source manifest selects CNN2
   FC4 and FC5 and CNN3 FC5; each passes one warmup and ten measured trials.
   Per-sample stock-dealer execution follows both parties on the quiescent
-  physical GPU of the slower setup-included party. Aggregate median paired
-  ratios are $879.2970985824659\times$ for CNN2 and
-  $60.3181599795375\times$ for CNN3. This closes source coverage, repetition,
-  dispersion, and same-hardware/quiescence control for these three FC layers,
+  physical GPU of the slower setup-included party. Ratios of summed
+  layer mean times are $882.3274\times$ for CNN2 and $60.5768\times$ for
+  CNN3. This closes source coverage, per-layer repetition and dispersion,
+  and same-hardware/quiescence control for these three FC layers,
   not competitive performance, parameter security, full-model execution, or
   network evaluation.
 \item[Closed narrowly --- full-graph systems control.] One source-bound
@@ -1848,9 +1952,9 @@ cryptographic review remain open.
   transcript, plain Ring-LPN boundary, application-slot budget, stock-key ABI,
   and deployed-shape cost simultaneously. Keep the measured DPF path for the
   approved full-linear systems integration and pursue algorithmic Phase-B/round
-  reduction. The controlled model-FC matrix reports median setup-included
-  shape-matched preprocessing/dealer ratios of $879.2970985824659\times$ for
-  CNN2 and $60.3181599795375\times$ for CNN3. The result is not competitive;
+  reduction. The controlled FC matrix reports setup-included
+  preprocessing/dealer ratios of summed per-layer means of $882.3274\times$
+  for CNN2 and $60.5768\times$ for CNN3. The result is not competitive;
   reruns at reviewed parameters and further Phase-B/dependency-layer work
   remain necessary.
 \item[Open --- model realism and dealer scope.] Exact source-bound ResNet18
@@ -1925,9 +2029,10 @@ pages~\cite{asplos2027cfp}. A future submission must therefore make the
 systems question, new mechanism or insight, strongest evidence, and trust
 boundary self-contained there. The CFP specifies an 11-page main paper using
 \texttt{acmart} with \texttt{sigplan,anonymous,review,nonacm}, no template
-squeezing, and a September 9, 2026 AoE submission deadline. Appendices cannot
-carry essential evidence omitted from that limit, and reviewers need not read
-them. This historical internal article retains its format, date, author, and
+squeezing, and a September 9, 2026 AoE submission deadline. That deadline
+has passed as of this September 11 supplement. Appendices cannot carry
+essential evidence omitted from the limit, and reviewers need not read them.
+This historical internal article retains its format, date, author, and
 circulation restriction; recording these rules neither converts it into a
 submission nor grants permission to circulate it.
 
@@ -1945,7 +2050,7 @@ Phase A, with Phase C much smaller (\S\ref{sec:milestones}); the older
 isolated-expansion profile is not a profile of the composed protocol.
 These observations motivate causal experiments, not an architectural result.
 
-\paragraph{Executed scheduling experiment---September 10 review supplement.}
+\paragraph{Executed scheduling experiment---September 11 reproducible supplement.}
 \label{sec:worker-review}
 We replaced per-duplex-call SCI sender-thread creation with one lazy,
 channel-owned sender worker. The caller still waits for both directions;
@@ -1966,30 +2071,86 @@ bytes, dependency counts, and evaluator counts.
 \toprule
 Median per-invocation metric & Before & Reusable worker \\
 \midrule
-Process launch through both party exits & 1.0413 s & 0.9652 s \\
-Post-channel setup-included preprocessing & 0.9222 s & 0.8465 s \\
-Slower-party DPF Phase B & 278.18 ms & 226.25 ms \\
+Process launch through both party exits & 0.976022 s & 0.906485 s \\
+Post-channel setup-included preprocessing & 0.858949 s & 0.790864 s \\
+Slower-party DPF Phase B & 280.205 ms & 223.252 ms \\
 \bottomrule
 \end{tabular}
 \end{center}
-The ratio of process-latency medians is $1.079\times$ (7.31\% lower
-latency); the median of the ten \emph{paired} ratios is $1.072\times$,
-with a descriptive paired-bootstrap 95\% interval of
-$[1.061,1.084]$ (10,000 resamples, seed 20260910).
-Process-latency sample standard deviations are 8.45 ms before and
-14.82 ms after. Phase B's median decreases by 18.67\%.
+The ratio of process-latency medians is $1.07671\times$ (7.12\% lower
+latency); the median of the ten \emph{paired} ratios is $1.07838\times$.
+Process-latency sample standard deviations are 10.02 ms before and
+11.49 ms after. Phase B's median decreases by 20.33\%.
+No confidence interval from the previous experiment is reused.
 These timers have different scopes and are not summed.
-The controller used blocking waits under an external process timeout;
-the checker and GPU-idle admission are outside that timer.
-Raw warmup/measured samples, exact binary hashes, header hashes, calculation
-rules, and post-measurement source-export commits are retained in
-\path{results/fc/sci_duplex_worker_review_2026_09_10.json}.
-GPU idle-memory/utilization admission and post-run checks are not exclusive
-GPU leases or fixed clocks; unrelated GPU activity remained on the shared
-host. An earlier timeout-polling pilot is not part of this final dataset.
+The retained \path{scripts/run_fc_review_experiments.py} controller times
+from immediately before the first producer launch through blocking
+observation of both timeout-wrapped producer exits. Private-fixture creation,
+binary hashes, CSV parsing, the checker, and GPU-idle admission are outside
+that timer. Raw warmup/measured samples and the pre-execution frozen plan
+are \path{results/fc/sci_duplex_worker_reproducible_2026_09_11.json}
+and its \path{.plan.json} companion. They bind the harness, binary and source
+identities, calculation rules, timer boundaries, and all 22 invocations.
+Idle admission is not an exclusive GPU lease, fixed-clock, or CPU-affinity
+control; the host remained shared. The September 10 JSON remains historical:
+its controller source was not retained, and its measurements are not pooled
+with this reproducible experiment.
 This one-shape result supports the scheduling change locally, not a
 matched-security dealerless comparison, a full-model speedup, a clean-clone
 release attestation, or a general resource/dependency model.
+
+\paragraph{Prospective capacity prediction---executed and rejected.}
+\label{sec:capacity-review}
+Before any new measurement, the retained controller froze eight training
+FC shapes and two unseen held-out shapes, q128/bw32 regular
+$(n,c,t)=(8192,2,8)$, one warmup and ten measured invocations per shape,
+fixed ordering, binary/harness/source identities, fitting rules, and failure
+criteria. This is a \emph{fixed-tuple wall-time/capacity model}, not a GPU
+resource or causal attribution model: FC rows do not expose GPU work and
+host/device-transfer counters for that stronger claim.
+For an $M\times K\times N$ FC shape, let
+\[
+ X=MKN,\quad C=MN,\quad W=MK+KN+MN,\quad
+ R=4\left\lceil X/7424\right\rceil .
+\]
+The predictor is $\widehat{Y}=\beta_0+\beta_R R+\beta_X X+\beta_C C+\beta_W W$,
+with nonnegative coefficients fitted to training-shape medians of
+$Y=\max_b(\texttt{total\_us}_b+\texttt{preflight\_us}_b+\texttt{ot\_setup\_us}_b)$.
+The controller enumerates the five-column NNLS faces using column-scaled,
+reorthogonalized QR and checks rank and KKT conditions; no ridge fallback is used.
+Training covers CNN3 FC5, ModelB FC5, CNN2 FC5, P-SecureML FC3,
+AlexNet gemm17, P-LeNet FC5, ModelB FC4, and CNN2 FC4; exact dimensions
+and constructor/batch-source anchors are in the frozen plan.
+After all 88 training invocations, but before either held-out warmup, it
+exclusively wrote and fsynced the training seal, coefficients, and pointwise
+95\% prediction intervals. The intervals use 10,000 centered training-median
+residual resamples (seed 20260911), NNLS refitting, an independent residual
+draw per held-out prediction, and R-7 endpoints. They assume exchangeable
+shape-median errors, not simultaneous coverage or calibrated within-shape
+or heteroskedastic uncertainty.
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Held-out shape & Prediction (s) & Median (s) & Sealed interval (s)\\
+\midrule
+P-SecureML $128\times128\times128$ & 14.57796 & 14.35828 & $[14.21224,15.28882]$\\
+AlexNet $100\times256\times256$ & 42.93165 & 43.02620 & $[42.88603,42.97896]$\\
+\bottomrule
+\end{tabular}
+\end{center}
+All 110 producer/checker invocations and accounting checks pass; the
+\textbf{prediction gate fails}. Point errors are 1.530\% and 0.220\%, below
+the frozen 15\% threshold, but AlexNet's measured median lies outside its
+sealed interval. Close point predictions do not rescue the rejected interval
+contract. No samples were excluded, held-outs reclassified, thresholds widened,
+or parameters retuned. The interval procedure is not validated by this result.
+Raw samples, the pre-execution plan, and the training seal are
+\path{results/fc/capacity_model_prospective_2026_09_11.json}
+and its \path{.plan.json}/\path{.seal.json} companions. The seal and every
+training-sample hash replay exactly from the retained data. Parties used GPUs
+1/2 and the post-exit stock checker GPU 3; shared-host/no-fixed-clock limitations
+apply. This negative experiment does not establish cross-hardware prediction,
+WAN behavior, a reviewed-security baseline, or an ASPLOS contribution.
 
 \paragraph{Claims, present evidence, and decisive missing experiments.}
 \begin{description}
@@ -2199,9 +2360,10 @@ independently unreviewed, and absent from headline rows.
 This is an internal/advisor checkpoint, not a submission-ready security or
 systems paper. The known-zero graph/state-composition seam and the narrow
 CNN2/CNN3 same-hardware stock-dealer comparison are closed. The latter is
-strongly negative: median paired setup-included ratios are
-$879.2970985824659\times$ for CNN2's two FC layers and
-$60.3181599795375\times$ for CNN3 FC5. Remaining systems gates include
+strongly negative: setup-included ratios of summed layer means are
+$882.3274\times$ for CNN2's two FC layers and $60.5768\times$ for
+CNN3 FC5. The prospective capacity-model interval gate also fails.
+Remaining systems gates include
 dealerless nonlinear setup, repeated private-input/trained-model evidence,
 authenticated distinct-host execution, a compatible dealerless baseline,
 competitive performance, and independent review. No reviewed

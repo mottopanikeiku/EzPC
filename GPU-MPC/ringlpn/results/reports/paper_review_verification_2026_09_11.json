@@ -1,0 +1,38 @@
+{
+  "schema": "ringlpn-internal-paper-review-v2",
+  "review_date": "2026-09-11",
+  "classification": "internal/advisor",
+  "source": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex",
+  "source_sha256": "6654c013c0a19d20250441a506a0e4645992d2a765b72a773a7054720ffccaf4",
+  "pdf": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
+  "pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+  "pages": 36,
+  "builds": [
+    {
+      "build": "c",
+      "source_sha256": "6654c013c0a19d20250441a506a0e4645992d2a765b72a773a7054720ffccaf4",
+      "pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+      "bytes": 530311,
+      "pages": 36,
+      "warnings": [],
+      "fonts": "name                                 type              encoding         emb sub uni object ID\n------------------------------------ ----------------- ---------------- --- --- --- ---------\nFOISBZ+CMR17                         Type 1            Builtin          yes yes yes    133  0\nSAQYID+CMR12                         Type 1            Builtin          yes yes yes    134  0\nEQIERG+CMBX10                        Type 1            Builtin          yes yes yes    135  0\nYVNCOA+CMR10                         Type 1            Builtin          yes yes yes    136  0\nZYCZXM+MSBM10                        Type 1            Builtin          yes yes yes    137  0\nSRUNVI+CMMI7                         Type 1            Builtin          yes yes yes    138  0\nDSEHFM+CMSY10                        Type 1            Builtin          yes yes yes    139  0\nKAUTMK+CMR7                          Type 1            Builtin          yes yes yes    140  0\nDHJLCT+CMSS8                         Type 1            Builtin          yes yes yes    141  0\nUAYEDH+CMMI10                        Type 1            Builtin          yes yes yes    142  0\nNVXXBW+SFRM1095                      Type 1            Custom           yes yes yes    144  0\nLBUWAU+CMR8                          Type 1            Builtin          yes yes yes    156  0\nJWNRGB+CMSS10                        Type 1            Builtin          yes yes yes    157  0\nIITMFC+CMBX8                         Type 1            Builtin          yes yes yes    158  0\nRBGHOR+CMTI8                         Type 1            Builtin          yes yes yes    159  0\nGGNFUD+CMBX12                        Type 1            Builtin          yes yes yes    161  0\nWDCBKT+CMTI10                        Type 1            Builtin          yes yes yes    163  0\nTUPEJM+CMTT10                        Type 1            Builtin          yes yes yes    164  0\nNNPXCU+CMMI8                         Type 1            Builtin          yes yes yes    171  0\nBKJWOE+CMSY8                         Type 1            Builtin          yes yes yes    196  0\nFCOJOH+CMEX10                        Type 1            Builtin          yes yes yes    197  0\nLSAXLJ+CMR6                          Type 1            Builtin          yes yes yes    202  0\nMBXPAH+CMR9                          Type 1            Builtin          yes yes yes    204  0\nMRDLCF+CMMI6                         Type 1            Builtin          yes yes yes    222  0\nYEEZZO+CMTT8                         Type 1            Builtin          yes yes yes    223  0\nUGVZTU+SFBX1095                      Type 1            Custom           yes yes yes    239  0\nJKSUUE+CMSY6                         Type 1            Builtin          yes yes yes    319  0\nUTGMXM+CMTT9                         Type 1            Builtin          yes yes yes    347  0\n",
+      "image": "sha256:63b6d387733d145bd26e6d1ada75c3dea568c5144f0e2831dc3590079ab9bd35",
+      "source_date_epoch": 1786320000
+    },
+    {
+      "build": "d",
+      "source_sha256": "6654c013c0a19d20250441a506a0e4645992d2a765b72a773a7054720ffccaf4",
+      "pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+      "bytes": 530311,
+      "pages": 36,
+      "warnings": [],
+      "fonts": "name                                 type              encoding         emb sub uni object ID\n------------------------------------ ----------------- ---------------- --- --- --- ---------\nFOISBZ+CMR17                         Type 1            Builtin          yes yes yes    133  0\nSAQYID+CMR12                         Type 1            Builtin          yes yes yes    134  0\nEQIERG+CMBX10                        Type 1            Builtin          yes yes yes    135  0\nYVNCOA+CMR10                         Type 1            Builtin          yes yes yes    136  0\nZYCZXM+MSBM10                        Type 1            Builtin          yes yes yes    137  0\nSRUNVI+CMMI7                         Type 1            Builtin          yes yes yes    138  0\nDSEHFM+CMSY10                        Type 1            Builtin          yes yes yes    139  0\nKAUTMK+CMR7                          Type 1            Builtin          yes yes yes    140  0\nDHJLCT+CMSS8                         Type 1            Builtin          yes yes yes    141  0\nUAYEDH+CMMI10                        Type 1            Builtin          yes yes yes    142  0\nNVXXBW+SFRM1095                      Type 1            Custom           yes yes yes    144  0\nLBUWAU+CMR8                          Type 1            Builtin          yes yes yes    156  0\nJWNRGB+CMSS10                        Type 1            Builtin          yes yes yes    157  0\nIITMFC+CMBX8                         Type 1            Builtin          yes yes yes    158  0\nRBGHOR+CMTI8                         Type 1            Builtin          yes yes yes    159  0\nGGNFUD+CMBX12                        Type 1            Builtin          yes yes yes    161  0\nWDCBKT+CMTI10                        Type 1            Builtin          yes yes yes    163  0\nTUPEJM+CMTT10                        Type 1            Builtin          yes yes yes    164  0\nNNPXCU+CMMI8                         Type 1            Builtin          yes yes yes    171  0\nBKJWOE+CMSY8                         Type 1            Builtin          yes yes yes    196  0\nFCOJOH+CMEX10                        Type 1            Builtin          yes yes yes    197  0\nLSAXLJ+CMR6                          Type 1            Builtin          yes yes yes    202  0\nMBXPAH+CMR9                          Type 1            Builtin          yes yes yes    204  0\nMRDLCF+CMMI6                         Type 1            Builtin          yes yes yes    222  0\nYEEZZO+CMTT8                         Type 1            Builtin          yes yes yes    223  0\nUGVZTU+SFBX1095                      Type 1            Custom           yes yes yes    239  0\nJKSUUE+CMSY6                         Type 1            Builtin          yes yes yes    319  0\nUTGMXM+CMTT9                         Type 1            Builtin          yes yes yes    347  0\n",
+      "image": "sha256:63b6d387733d145bd26e6d1ada75c3dea568c5144f0e2831dc3590079ab9bd35",
+      "source_date_epoch": 1786320000
+    }
+  ],
+  "warning_policy": "existing reproduce_publication.sh publication-pdf subgate",
+  "visual_inspection": "all 36 pages in six contact sheets; corrected FC table page 25 and negative prediction table page 31 also inspected individually; no visible clipping or overlap",
+  "conference_verdict": "not submission-ready; frozen capacity interval criterion rejected; independent human cryptographic/ownership review, concrete parameter pin, matched dealerless baseline and authenticated distinct-host/release gates remain open",
+  "publication_runtime": "not executed: source/circulation authorization and distinct-host prerequisites unavailable"
+}

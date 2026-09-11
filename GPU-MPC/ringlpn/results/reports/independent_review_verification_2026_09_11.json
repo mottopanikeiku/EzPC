@@ -1,0 +1,631 @@
+{
+  "schema": "ringlpn-independent-review-followthrough-v1",
+  "review_date": "2026-09-11",
+  "classification": "internal/advisor",
+  "automated_reviews": {
+    "reviewers": [
+      "ProtocolReview",
+      "RuntimeReview",
+      "DeploymentReview",
+      "EvaluationReview"
+    ],
+    "findings": 15,
+    "boundary": "independent model-assisted read-only review, not qualified human cryptographic sign-off or owner permission"
+  },
+  "finding_dispositions": [
+    {
+      "id": "P-01",
+      "finding": "Uncharged leaf-map statistical loss",
+      "disposition": "Proof contract now charges exact ideal-leaf loss; concrete lifetime and AES/DPF replacement proof remain open."
+    },
+    {
+      "id": "P-02",
+      "finding": "Output-conditioned conversion simulator misses complement branch",
+      "disposition": "Correct h-first local inverse documented and arithmetically checked; P-CONV full transcript proof reopened, not certified."
+    },
+    {
+      "id": "P-03",
+      "finding": "Directional string-OT cost mismatch",
+      "disposition": "Live inventory corrected to 5632 chosen-message 128-bit OTs per regular B=256 depth-11 limb; no bit-COT byte equivalence claimed."
+    },
+    {
+      "id": "R-001",
+      "finding": "Fixed peer buffers reject admitted large FC",
+      "disposition": "Plan-sized strict-slack buffers pass actual 16 MiB and exact-unit boundary regressions; original builds abort."
+    },
+    {
+      "id": "R-002",
+      "finding": "Archive linker/hash race",
+      "disposition": "Hold actual archive producer locks and reject pre/post identity/hash changes; actual mutation and lock controls pass."
+    },
+    {
+      "id": "R-003",
+      "finding": "Live-source compile/hash race",
+      "disposition": "Seal recipes before entry and check all source/tool/environment/dependency closures across compilation; ordinary mutation rejects; no hostile same-UID ABA promise."
+    },
+    {
+      "id": "D-001",
+      "finding": "Checker subordinate ownership blocks finalization and cleanup",
+      "disposition": "Post-exit handback covers both stages and output, including partial-create abort; real Linux UID fixture passes, native rootless Podman not exercised."
+    },
+    {
+      "id": "D-002",
+      "finding": "Volatile ledger mounts admitted as persistent",
+      "disposition": "All three ledgers require inspectable block-backed ext4/xfs mount boundaries and stable cleanup identities; real tmpfs rejects, positive durable mount not exercised; operator no-rollback/fsync assumptions remain."
+    },
+    {
+      "id": "D-003",
+      "finding": "Host-local GPU ordinals compared globally",
+      "disposition": "Bind host identity plus physical UUID/PCI and requested selector; remote ordinal reuse accepted and local aliases/wrong bindings rejected."
+    },
+    {
+      "id": "D-004",
+      "finding": "Ambient SSH agent fallback despite no-agent contract",
+      "disposition": "IdentityAgent=none; actual native client/server/agent accepts before, rejects fallback after, accepts explicit plain identity after."
+    },
+    {
+      "id": "E-01",
+      "finding": "Fabricated joint model-trial statistics",
+      "disposition": "Layer invocation outputs plus sums of independent layer means and paired-row stratified bootstrap; old trial-label dependence reproduced, new regressions pass."
+    },
+    {
+      "id": "E-02",
+      "finding": "No frozen executable prediction contract",
+      "disposition": "Retained prospective training/holdout plan, training-only seal and raw samples; all 110 invocations pass consumers, frozen prediction-interval gate fails honestly."
+    },
+    {
+      "id": "E-03",
+      "finding": "GPU resource/transfer counters absent from FC evidence",
+      "disposition": "No instrumentation claim added: experiment and manuscript explicitly scoped to fixed-tuple wall-time/capacity; GPU resource attribution remains unestablished."
+    },
+    {
+      "id": "E-04",
+      "finding": "Public-polynomial timer misdescribed as communication",
+      "disposition": "Metric dictionary/harness describe joint seed setup plus per-Ring-OLE local SHAKE derivation, not coefficient-vector communication."
+    },
+    {
+      "id": "E-05",
+      "finding": "Deleted historical timing controller",
+      "disposition": "New retained executable controller and fresh 22-invocation counterbalanced experiment; historical measurements/CI not pooled or relabeled as source-reproducible."
+    }
+  ],
+  "protocol_arithmetic": {
+    "p": 4611686018326724609,
+    "r": 402653180,
+    "ideal_leaf_distance_upper_bound_fraction": "10133098960257025/21267647932558653966460912964485513216",
+    "small_p61_8bit_half_exact_gap": 144,
+    "corrected_inverse_role_opening_input_output_cases": 256,
+    "inverse_ring_example": {
+      "Q": 61,
+      "bw": 3
+    },
+    "scope": "exact distribution/local inverse arithmetic only; no empirical AES attack, full conditional simulator, lifetime security budget, or qualified human sign-off",
+    "including_tag_event_gap_fraction": "10133098960257025/42535295865117307932921825928971026432",
+    "literal_old_inverse_counterexample": {
+      "Q": 4611686018326724609,
+      "bw": 3,
+      "party": 0,
+      "z_share": 0,
+      "prescribed_output": 0,
+      "opening_h": 1,
+      "raw_dabit_share": 0,
+      "result": 7
+    }
+  },
+  "large_fc": {
+    "results": [
+      {
+        "version": "before",
+        "binary_sha256": "f00f7b89db5156426eca1df28629a0572addf552339ae83c0648701e538f7885",
+        "shape": [
+          1,
+          2048,
+          1024
+        ],
+        "weight_transfer_bytes": 16777216,
+        "error": "fc application failed: (-6, -6)",
+        "clear_oracle_pass": false,
+        "application_logs": [
+          "Allocating 10485760 bytes of memory for comm bufs\nwaiting for connection from client...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\norca_inference_ringlpn: ../utils/sigma_comms.cpp:175: void SigmaPeer::getMemSz(int, u64, size_t&, size_t&) [with T = long unsigned int; u64 = long unsigned int; size_t = long unsigned int]: Assertion `memSz < commBufSize' failed.\n",
+          "Allocating 10485760 bytes of memory for comm bufs\ntrying to connect with server...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\norca_inference_ringlpn: ../utils/sigma_comms.cpp:175: void SigmaPeer::getMemSz(int, u64, size_t&, size_t&) [with T = long unsigned int; u64 = long unsigned int; size_t = long unsigned int]: Assertion `memSz < commBufSize' failed.\n"
+        ]
+      },
+      {
+        "version": "after",
+        "binary_sha256": "740d128b9f30c3855518eff180af0f31b5df60376a616f18e033110c81e5d453",
+        "shape": [
+          1,
+          2048,
+          1024
+        ],
+        "weight_transfer_bytes": 16777216,
+        "error": null,
+        "clear_oracle_pass": true,
+        "application_logs": [
+          "Allocating 16777220 bytes of memory for comm bufs\nwaiting for connection from client...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\nTime for key write: 5\nTime for key write: 0\nTime for key write: 0\n",
+          "Allocating 16777220 bytes of memory for comm bufs\ntrying to connect with server...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\nTime for key write: 5\nTime for key write: 0\nTime for key write: 0\n"
+        ]
+      }
+    ],
+    "fresh_fixture_per_version": true,
+    "core_dumps_disabled": true,
+    "private_fixture_cleanup": "complete"
+  },
+  "strict_buffer_boundary_before_final_fix": {
+    "binary_sha256": "740d128b9f30c3855518eff180af0f31b5df60376a616f18e033110c81e5d453",
+    "shape": [
+      1,
+      205,
+      5
+    ],
+    "weight_bytes": 8200,
+    "error": "fc application failed: (-6, -6)",
+    "logs": [
+      "Allocating 8200 bytes of memory for comm bufs\nwaiting for connection from client...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\norca_inference_ringlpn: ../utils/sigma_comms.cpp:175: void SigmaPeer::getMemSz(int, u64, size_t&, size_t&) [with T = long unsigned int; u64 = long unsigned int; size_t = long unsigned int]: Assertion `memSz < commBufSize' failed.\n",
+      "Allocating 8200 bytes of memory for comm bufs\ntrying to connect with server...connected\nNot setting socket priority!\nTime for key write: 0\nTime for key write: 0\norca_inference_ringlpn: ../utils/sigma_comms.cpp:175: void SigmaPeer::getMemSz(int, u64, size_t&, size_t&) [with T = long unsigned int; u64 = long unsigned int; size_t = long unsigned int]: Assertion `memSz < commBufSize' failed.\n"
+    ]
+  },
+  "final_terminal_gate": {
+    "command": "python3 ringlpn/scripts/run_orca_linear_application.py --p0-gpu 1 --p1-gpu 2 --timeout 600 --large-fc-only && python3 ringlpn/scripts/run_orca_linear_application.py --p0-gpu 1 --p1-gpu 2 --timeout 600",
+    "returncode": 0,
+    "wall_seconds": 37.36,
+    "large_shapes": [
+      [
+        1,
+        2048,
+        1024
+      ],
+      [
+        1,
+        205,
+        5
+      ]
+    ],
+    "clear_oracles": "pass",
+    "normal_fc_conv_and_public_api": "pass",
+    "bilateral_rejection_controls": 8,
+    "private_fixture_cleanup": "runner finally blocks remove owned scratch"
+  },
+  "build_race_controls": {
+    "controls": [
+      {
+        "control": "source-change",
+        "boundary": "both links and post-compile dependency scans complete; final provenance not yet generated",
+        "mutated_input": "ringlpn/src/linear_preprocess.h",
+        "returncode": 1,
+        "elapsed_seconds": 69.35637562721968,
+        "provenance_published": false,
+        "diagnostic": ":62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \ngraph-build-provenance: build input changed across compilation: /home/fatih/EzPC/GPU-MPC/ringlpn/src/linear_preprocess.h\n"
+      },
+      {
+        "control": "archive-change",
+        "boundary": "both links and post-compile dependency scans complete; final provenance not yet generated",
+        "mutated_input": "ringlpn/build/linear-library/lib/libringlpn_linear.a",
+        "returncode": 1,
+        "elapsed_seconds": 68.95921051688492,
+        "provenance_published": false,
+        "diagnostic": " from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \ngraph-build-provenance: build input changed across compilation: /home/fatih/EzPC/GPU-MPC/ringlpn/build/linear-library/lib/libringlpn_linear.a\n"
+      },
+      {
+        "control": "producer-locks",
+        "boundary": "both links and post-compile dependency scans complete; final provenance not yet generated",
+        "producer_attempts": [
+          {
+            "recipe": "build_component.sh",
+            "returncode": 1,
+            "diagnostic": "mkdir: cannot create directory \u2018/home/fatih/EzPC/GPU-MPC/ringlpn/build/.graph-libraries.lock\u2019: File exists\nstale or concurrent build root: /home/fatih/EzPC/GPU-MPC/ringlpn/build/.graph-libraries.lock\nremove it only after confirming that no component build is active\n"
+          },
+          {
+            "recipe": "build_linear_library.sh",
+            "returncode": 1,
+            "diagnostic": "mkdir: cannot create directory \u2018/tmp/ringlpn-linear-library-reproducible-build/source/GPU-MPC/ringlpn/build/linear-library/.objects\u2019: File exists\nlinear-library build directory already exists: /tmp/ringlpn-linear-library-reproducible-build/source/GPU-MPC/ringlpn/build/linear-library/.objects\n"
+          }
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 79.20351691171527,
+        "provenance_published": true,
+        "diagnostic": "PC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca.h:27,\n                 from ../experiments/orca/orca_inference.cu:30:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nIn file included from /home/fatih/EzPC/GPU-MPC/fss/gpu_linear_helper.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.cu:27,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_select.h:62,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_relu.h:26,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_truncate.h:30,\n                 from /home/fatih/EzPC/GPU-MPC/fss/gpu_matmul.h:25,\n                 from /home/fatih/EzPC/GPU-MPC/backend/orca_base.h:36,\n                 from src/test_orca_linear_helpers.cu:5:\n/home/fatih/EzPC/GPU-MPC/utils/helper_cutlass.h:34:100: warning: backslash-newline at end of file\n   34 | #define CUTLASS_CHECK(status)                                                                      \\\n      |                                                                                                     \nBuilt /home/fatih/EzPC/GPU-MPC/ringlpn/bin/orca_inference_ringlpn\nBuilt /home/fatih/EzPC/GPU-MPC/ringlpn/bin/test_orca_linear_helpers\nProvenance /home/fatih/EzPC/GPU-MPC/ringlpn/bin/orca_linear_application_build_provenance.json\n",
+        "verification": {
+          "returncode": 0,
+          "output": "5cdf43bff5b41cf68c00e7583a0156ee49c551546d60669503e3c667b4b45967\n"
+        }
+      }
+    ],
+    "input_bytes_restored": true,
+    "scope": "ordinary post-link source/archive mutation and actual producer-lock exclusion; not hostile same-UID ABA protection"
+  },
+  "root_distinct_builds": {
+    "builds": [
+      {
+        "root_label": "main",
+        "build_returncode": 0,
+        "build_seconds": 81.92091370560229,
+        "sha256": {
+          "orca_inference_ringlpn": "d1f58928cf70628f0d80ffe6c9956cd7073e521aa031c46fa853ea53654bbde9",
+          "test_orca_linear_helpers": "5f702062a3b999451abdff39d3e90a3db6a0769a20aecb924e68f9b4ef5e52b3",
+          "orca_linear_application_build_provenance.json": "628e596dce9e55b5faff720d18a6e49d406d3df8e675c2c58ad8e746292a0119"
+        },
+        "verify_output": "5cdf43bff5b41cf68c00e7583a0156ee49c551546d60669503e3c667b4b45967"
+      },
+      {
+        "root_label": "public-source",
+        "build_returncode": 0,
+        "build_seconds": 238.82524698413908,
+        "sha256": {
+          "orca_inference_ringlpn": "d1f58928cf70628f0d80ffe6c9956cd7073e521aa031c46fa853ea53654bbde9",
+          "test_orca_linear_helpers": "5f702062a3b999451abdff39d3e90a3db6a0769a20aecb924e68f9b4ef5e52b3",
+          "orca_linear_application_build_provenance.json": "628e596dce9e55b5faff720d18a6e49d406d3df8e675c2c58ad8e746292a0119"
+        },
+        "verify_output": "5cdf43bff5b41cf68c00e7583a0156ee49c551546d60669503e3c667b4b45967"
+      }
+    ],
+    "complete_manifest_byte_identity": "pass",
+    "public_source_runtime": {
+      "returncode": 0,
+      "seconds": 17.51086673513055,
+      "output": "linear-library-api,ok\nringlpn-orca-linear-application,fc,pass\nringlpn-orca-linear-application,conv2d,pass\nringlpn-orca-linear-control,wrong-kind,pass\nringlpn-orca-linear-control,wrong-shape,pass\nringlpn-orca-linear-control,wrong-ordinal,pass\nringlpn-orca-linear-control,swapped-state,pass\nringlpn-orca-linear-control,corrupt-state,pass\nringlpn-orca-linear-control,permissive-share-file,pass\nringlpn-orca-linear-control,duplicate-output,pass\nringlpn-orca-linear-control,one-sided-metadata-mismatch,pass\nORCA LINEAR APPLICATION PASS\n"
+    },
+    "scope": "two checked-out roots, not an independently authorized clean-clone release"
+  },
+  "peer_lifecycle_controls": {
+    "runtime": "networkless read-only Docker with real Linux UID/mode changes and a narrow simulated Podman CLI, not native rootless Podman",
+    "image_id": "sha256:8734209bcc3b2f07fd99f236ba499a4fa7d0e8cda2ee109ddf2ebc9ea6d17b0c",
+    "checker_exit": {
+      "before": "all three stage/output trees unreadable to coordinator UID 1000",
+      "after": "all three readable; production manifest load passes"
+    },
+    "partial_create_abort": {
+      "before": "stage p0 unreadable; stage p1 readable; output removed",
+      "after": "both stages readable/removable; output removed"
+    },
+    "tmpfs_ledger": {
+      "actual_tmpfs_mount_outside_lexical_tmp": true,
+      "old_owner_mount_rw_fsync_checks": "pass",
+      "new_block_backed_policy": "reject"
+    },
+    "native_rootless_probe": {
+      "command": "unshare --user --map-root-user --mount /bin/true",
+      "returncode": 1,
+      "diagnostic": "write failed /proc/self/uid_map: Operation not permitted"
+    },
+    "positive_durable_mount": "not exercised",
+    "cleanup": "container and actual tmpfs mounts removed by --rm"
+  },
+  "native_openssh_control": {
+    "schema": "ringlpn-ssh-policy-control-v1",
+    "scope": "synthetic keys, dedicated loopback-only OpenSSH server, actual native client and disposable matching-key agent; not two-host evaluation",
+    "results": [
+      {
+        "case": "before-matching-agent",
+        "returncode": 0
+      },
+      {
+        "case": "after-matching-agent-denied",
+        "returncode": 255
+      },
+      {
+        "case": "after-explicit-plain-key",
+        "returncode": 0
+      }
+    ],
+    "cleanup": {
+      "dedicated_sshd_and_agent": "stopped",
+      "synthetic_private_keys_and_authorization_files": "removed",
+      "real_user_ssh_configuration": "unchanged"
+    }
+  },
+  "host_gpu_binding_regressions": {
+    "tests": 2,
+    "main_and_public_source": "pass",
+    "scope": "synthetic measured host/GPU identity boundary inputs, no GPU hardware probe"
+  },
+  "statistical_reanalysis": {
+    "old_estimator_sha256": "e26d40aea900b21bc5c6163cf47131885da95c9e6585235faf86ab1e62c3365f",
+    "old_trial_label_witness": {
+      "original": [
+        {
+          "metric": "critical_path_setup_included_us",
+          "mean": "26881842.3365",
+          "median": "26897710.76",
+          "sample_stdev": "50965.308978523562954742044748920012910688331519018",
+          "mean_ci95_low": "26845383.950757284554394311935914550048820322263116",
+          "mean_ci95_high": "26918300.722242715445605688064085449951179677736884"
+        }
+      ],
+      "relabeled": [
+        {
+          "metric": "critical_path_setup_included_us",
+          "mean": "26881842.3365",
+          "median": "26900604.286",
+          "sample_stdev": "54948.449061748647623524713591088886548242379619331",
+          "mean_ci95_low": "26842534.58399130093039032581703425931909767655782",
+          "mean_ci95_high": "26921150.08900869906960967418296574068090232344218"
+        }
+      ]
+    },
+    "new_regressions": {
+      "trial_relabeling_preserves_every_estimate_and_interval": "pass",
+      "whole_row_resampling_preserves_exact_proportional_ratio": "pass",
+      "tests": 2,
+      "last_runtime_seconds": 4.61
+    },
+    "historical_manifest_inputs": {
+      "orca_forward_linear_layer_manifest_2026_08_04.json": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984",
+      "orca_model_scale_workload_manifest_2026_08_04.json": "718570af4bf7afa523d029dfddcf0f3dae9e554c9c6e26b744999df193956f72"
+    },
+    "derived_outputs": {
+      "observations.csv": "two_party_fc_model_scale_cnn2_cnn3_observations_2026_09_11.csv",
+      "summary.csv": "two_party_fc_model_scale_cnn2_cnn3_summary_2026_09_11.csv",
+      "output_schema.json": "two_party_fc_model_scale_cnn2_cnn3_output_schema_2026_09_11.json",
+      "execution_plan.json": "two_party_fc_model_scale_cnn2_cnn3_analysis_plan_2026_09_11.json"
+    },
+    "raw_evidence_rewritten": false,
+    "bootstrap": {
+      "resamples": 10000,
+      "seed": 20260911,
+      "method": "independent whole-row strata per layer; R7 percentile endpoints; preserve within-layer protocol/dealer pair"
+    }
+  },
+  "worker_experiment": {
+    "raw": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_reproducible_2026_09_11.json",
+    "raw_sha256": "c3f57ae2b5605002b7b0401a80a4b6412fe5f34b243ddc722f66b3fde233a3e4",
+    "invocations": 22,
+    "measured": 20,
+    "fields_per_party": 68,
+    "summary_exact_replay": "pass",
+    "median_metrics": {
+      "controller_launch_to_party_exit_us": {
+        "before": 976021.855,
+        "after": 906485.317,
+        "reduction_percent": 7.1244857524220055,
+        "ratio_of_medians": 1.0767100544222052
+      },
+      "Y_us": {
+        "before": 858949.059,
+        "after": 790863.5904999999,
+        "reduction_percent": 7.92660144237961,
+        "ratio_of_medians": 1.0860900278099224
+      },
+      "max_party_dpf_phase_b_us": {
+        "before": 280205.0,
+        "after": 223251.5,
+        "reduction_percent": 20.32565443157688,
+        "ratio_of_medians": 1.2551091482028116
+      }
+    },
+    "scope": "shared-host single-shape unpinned feasibility; existing before/after binary inputs, not independently reproduced clean-clone builds"
+  },
+  "prospective_model": {
+    "raw": "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.json",
+    "raw_sha256": "0702baefbbfdf22b9594edd056f047ff40f01e631e20dcd6e4b5640ecd9d3ca0",
+    "integrity": {
+      "plan_sha256": "465cf4ae59ac933e4046be873b52928aaefa8ca2f1db843146d0dd57fd4b3dea",
+      "seal_sha256": "95d8a34bade33c66b66937c7a592b5fb314706acfff3c529247970d6d54174b7",
+      "harness_sha256": "aa0c40ea898935d3e360a7184058096b20abf62d3e1bcc98269e73500611db0f",
+      "training_samples": 88,
+      "heldout_samples": 22,
+      "training_seal_exact_replay": "pass",
+      "immutable_harness_pin": "pass",
+      "ordered_sample_indices": "pass",
+      "all_producers_pass": true,
+      "all_checkers_pass": true,
+      "all_accounting_pass": true
+    },
+    "heldout_evaluations": [
+      {
+        "absolute_relative_median_error": 0.015299388375673283,
+        "inside_sealed_interval": true,
+        "label": "P-SecureML-fc2",
+        "observed_Y_us": {
+          "max": 14530235.903,
+          "mean": 14343136.368,
+          "median": 14358284.1585,
+          "min": 14191016.443,
+          "n": 10,
+          "sample_sd": 90532.3089300761
+        },
+        "pointwise_95_prediction_interval_us": [
+          14212244.732162667,
+          15288823.884251202
+        ],
+        "predicted_median_us": 14577957.12424917,
+        "status": "pass"
+      },
+      {
+        "absolute_relative_median_error": 0.002197469083878428,
+        "inside_sealed_interval": false,
+        "label": "AlexNet-gemm13",
+        "observed_Y_us": {
+          "max": 43534358.828,
+          "mean": 43059896.0091,
+          "median": 43026199.883499995,
+          "min": 42609892.065,
+          "n": 10,
+          "sample_sd": 272433.0053508276
+        },
+        "pointwise_95_prediction_interval_us": [
+          42886031.85379298,
+          42978961.21135909
+        ],
+        "predicted_median_us": 42931651.13945923,
+        "status": "FAIL"
+      }
+    ],
+    "status": "FAIL",
+    "failure": "heldout_prediction_rejected",
+    "retuning_exclusions_or_reclassification": "none"
+  },
+  "paper_verification": "GPU-MPC/ringlpn/results/reports/paper_review_verification_2026_09_11.json",
+  "changed_python_syntax": "py_compile passes for nine affected Python entrypoints/modules",
+  "changed_shell_syntax": "bash -n passes for launcher, application builder, and FC model-scale runner",
+  "private_artifact_guard_sha256": "32179bfb40ec2267324070cf64f1dbd2f2e19e155eba4cff5b83706bc1fa4e75",
+  "source_commits": [
+    {
+      "subject": "ringlpn: bound terminal communication and seal application build inputs",
+      "sha": "300a3245169cd0e5b2a62ddef79bcc1093b9eca3",
+      "paths": [
+        "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh",
+        "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py",
+        "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh",
+        "GPU-MPC/ringlpn/scripts/orca_linear_application_build_provenance.py",
+        "GPU-MPC/ringlpn/scripts/graph_build_provenance.py",
+        "GPU-MPC/ringlpn/results/reports/orca_linear_application_integration_2026_08_24.md"
+      ]
+    },
+    {
+      "subject": "ringlpn: enforce checker handback and host-bound deployment resources",
+      "sha": "dd4276ed05609ee7b122b6289f616572e788a8ef",
+      "paths": [
+        "GPU-MPC/ringlpn/scripts/peer_private_execution.py",
+        "GPU-MPC/ringlpn/scripts/run_two_host_authenticated.sh",
+        "GPU-MPC/ringlpn/scripts/host_publication_coordinator.py",
+        "GPU-MPC/ringlpn/scripts/test_peer_private_gpu_bindings.py",
+        "GPU-MPC/ringlpn/results/reports/authenticated_two_host_deployment_2026_08_04.md"
+      ]
+    },
+    {
+      "subject": "ringlpn: correct layer statistics and retain prospective experiments",
+      "sha": "69fd8b6a540d24b015880492b94afff6797c1a4f",
+      "paths": [
+        "GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py",
+        "GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh",
+        "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
+        "GPU-MPC/ringlpn/scripts/test_fc_model_scale_statistics.py",
+        "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py",
+        "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_observations_2026_09_11.csv",
+        "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_summary_2026_09_11.csv",
+        "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_output_schema_2026_09_11.json",
+        "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_analysis_plan_2026_09_11.json",
+        "GPU-MPC/ringlpn/results/fc/model_scale_inputs_2026_08_14/orca_forward_linear_layer_manifest_2026_08_04.json",
+        "GPU-MPC/ringlpn/results/fc/model_scale_inputs_2026_08_14/orca_model_scale_workload_manifest_2026_08_04.json",
+        "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_reproducible_2026_09_11.json",
+        "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_reproducible_2026_09_11.plan.json",
+        "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.json",
+        "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.plan.json",
+        "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.seal.json"
+      ]
+    }
+  ],
+  "public_source_commits": [
+    {
+      "subject": "ringlpn: bound terminal communication and seal application build inputs",
+      "sha": "5dc754894055f1b6902bae226717edb4b2277c4f",
+      "paths": [
+        "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh",
+        "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py",
+        "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh",
+        "GPU-MPC/ringlpn/scripts/orca_linear_application_build_provenance.py",
+        "GPU-MPC/ringlpn/scripts/graph_build_provenance.py"
+      ]
+    },
+    {
+      "subject": "ringlpn: enforce checker handback and host-bound deployment resources",
+      "sha": "54090258f9211c2d8caee719d815f7935ad865f1",
+      "paths": [
+        "GPU-MPC/ringlpn/scripts/peer_private_execution.py",
+        "GPU-MPC/ringlpn/scripts/run_two_host_authenticated.sh",
+        "GPU-MPC/ringlpn/scripts/host_publication_coordinator.py",
+        "GPU-MPC/ringlpn/scripts/test_peer_private_gpu_bindings.py"
+      ]
+    },
+    {
+      "subject": "ringlpn: expose independent-layer analysis and frozen experiment controller",
+      "sha": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
+      "paths": [
+        "GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py",
+        "GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh",
+        "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
+        "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py",
+        "GPU-MPC/ringlpn/README.md"
+      ]
+    }
+  ],
+  "public_source_branch": {
+    "name": "ringlpn/clinical-review-2026-09-10",
+    "head": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
+    "pushed": false,
+    "reason": "noninteractive Git credential helper exit 128; no host Git authentication available",
+    "new_export_allowlist": [
+      "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh",
+      "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py",
+      "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh",
+      "GPU-MPC/ringlpn/scripts/orca_linear_application_build_provenance.py",
+      "GPU-MPC/ringlpn/scripts/graph_build_provenance.py",
+      "GPU-MPC/ringlpn/scripts/peer_private_execution.py",
+      "GPU-MPC/ringlpn/scripts/run_two_host_authenticated.sh",
+      "GPU-MPC/ringlpn/scripts/host_publication_coordinator.py",
+      "GPU-MPC/ringlpn/scripts/test_peer_private_gpu_bindings.py",
+      "GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py",
+      "GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh",
+      "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
+      "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py",
+      "GPU-MPC/ringlpn/README.md"
+    ],
+    "new_export_sha256": {
+      "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh": "9ff94f103a541fdbbb9437d484826e48eea54fb514ed0181e64738e9af820418",
+      "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py": "b3e8f547a20817e5a7d476e0993de52352621d3c090d8cf6498e5748ba662845",
+      "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh": "7656b266a574799efc99f4d3336788e21300c3667992f63177ab5b3fadf8a7be",
+      "GPU-MPC/ringlpn/scripts/orca_linear_application_build_provenance.py": "b35db382b7b999e6556e125b3981c2c24f0da767794f2ce9d7ba64de041f1d0c",
+      "GPU-MPC/ringlpn/scripts/graph_build_provenance.py": "97858b6eb8c6e06ea72600a0d933902d34471bc37c0fe2b8674f954e74d79f75",
+      "GPU-MPC/ringlpn/scripts/peer_private_execution.py": "5f062a57ab7b8283d9c34437603f0e211e7c198d0d9bac8eb89d5a909116c05d",
+      "GPU-MPC/ringlpn/scripts/run_two_host_authenticated.sh": "e09eb74e23d2ae9e6efd54038ce697feedd0118ed7fc1c8551deb24d58b72c22",
+      "GPU-MPC/ringlpn/scripts/host_publication_coordinator.py": "53a716a0727a4c51caa4e004ee446ee6bf1d6cc42560254c2acd9c569c0f7a5b",
+      "GPU-MPC/ringlpn/scripts/test_peer_private_gpu_bindings.py": "af0732d2654b4d309f353e1cedd97aaf9012f1be563f82aed5b9d46e386968ed",
+      "GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py": "a2ebf0681f43398df5310f0bb458a8389943a87a255ebfe124c938ef4dcf2831",
+      "GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh": "4ad56b84f95b6db3a60a48d90b7ab1fd63ac83db1c715d5a682104bffcd02a87",
+      "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv": "ab4c32764f7f52a971c1b2eca07e5fa4fd2da2cb3c849706dfbeea26e8c3e392",
+      "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py": "aa0c40ea898935d3e360a7184058096b20abf62d3e1bcc98269e73500611db0f"
+    },
+    "internal_master_history_or_current_manuscript_exported": false
+  },
+  "external_gates": {
+    "independent_human_cryptographic_review": "blocked",
+    "ownership_and_external_circulation": "blocked",
+    "reviewed_parameter_matched_dealerless_evaluation": "blocked",
+    "genuine_authenticated_distinct_host_evaluation": "blocked",
+    "git_push": "blocked"
+  },
+  "verdict": "Engineering and claim corrections verified at the exercised boundaries; prospective prediction interval hypothesis rejected; not submission-ready, security-certified, authenticated-two-host evaluated, or pushed.",
+  "final_verification": {
+    "private_artifact_guard": "pass; unchanged digest-bound historical private metadata exception",
+    "required_evidence_hashes": 46,
+    "exact_existing_publication_pdf_subgate": "pass",
+    "source_release_boundary": {
+      "new_changed_paths": [
+        "GPU-MPC/ringlpn/README.md",
+        "GPU-MPC/ringlpn/scripts/aggregate_two_party_fc_model_scale.py",
+        "GPU-MPC/ringlpn/scripts/build_orca_linear_application.sh",
+        "GPU-MPC/ringlpn/scripts/graph_build_provenance.py",
+        "GPU-MPC/ringlpn/scripts/host_publication_coordinator.py",
+        "GPU-MPC/ringlpn/scripts/orca_linear_application_build_provenance.py",
+        "GPU-MPC/ringlpn/scripts/peer_private_execution.py",
+        "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py",
+        "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py",
+        "GPU-MPC/ringlpn/scripts/run_two_host_authenticated.sh",
+        "GPU-MPC/ringlpn/scripts/run_two_party_fc_model_scale.sh",
+        "GPU-MPC/ringlpn/scripts/test_peer_private_gpu_bindings.py",
+        "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
+        "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh"
+      ],
+      "all_fourteen_authors_and_committers": "mottopanikeiku only",
+      "internal_ancestors_excluded": [
+        "09996aa",
+        "300a324",
+        "dd4276e",
+        "69fd8b6"
+      ],
+      "current_internal_manuscript_and_graph_checkpoint": "absent",
+      "status": "pass"
+    },
+    "historical_checkpoint_boundary": "unchanged; still internal-only"
+  },
+  "cleanup": {
+    "owned_throwaway_reproduction_scripts_logs_binary_copies_renders_and_replay_directories": "removed after retaining observed results",
+    "canonical_build_temporary_roots": "removed by build cleanup",
+    "private_correlations_and_channel_keys": "fresh fixture/controller finally cleanup; no retained private protocol state added",
+    "dedicated_native_sshd_and_agent": "stopped; synthetic keys/authorization removed; real user SSH configuration unchanged",
+    "public_source_worktree": "preserved",
+    "previous_round_worker_baseline_binary": "preserved for explicit-input experiment replay; not private protocol state",
+    "unrelated_user_work": "not included in selected-path commits"
+  }
+}

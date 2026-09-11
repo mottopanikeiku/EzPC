@@ -4,6 +4,45 @@ Reorganized 2026-06-10. Evidence-producing runners write into their artifact
 directory below. The terminal application gate emits only sanitized public rows
 and deletes private scratch; its dated CSV/log are explicit retained summaries.
 
+## Independent review follow-through (2026-09-11)
+
+Four automated read-only reviews returned 15 findings. The protocol contract
+now charges the biased ideal-leaf map and reopens P-CONV's output-conditioned
+proof; these corrections are not independent human cryptographic sign-off.
+Runtime/deployment fixes and exact verification scopes are recorded in
+`reports/independent_review_verification_2026_09_11.json`.
+
+`scripts/run_fc_review_experiments.py` is the retained executable controller.
+`fc/sci_duplex_worker_reproducible_2026_09_11.json` and `.plan.json` retain
+22 fresh worker invocations (two warmups, twenty measured), all passing,
+with all 68 per-party accounting fields unchanged. Launch-to-party-exit
+median is 0.976021855 s before and 0.906485317 s after (7.12% lower);
+Phase B is 280.205/223.2515 ms (20.33% lower). Exact scope, variability,
+binary/source identities, and ordering are pinned. The September 10 dataset
+below is historical, its controller source was not retained, and neither its
+measurements nor its confidence interval are pooled with this rerun.
+
+`fc/capacity_model_prospective_2026_09_11.{json,plan.json,seal.json}` retains
+88 training and 22 held-out invocations. Every producer, stock consumer, and
+accounting check passes, but the frozen **prediction gate fails**:
+P-SecureML FC2's 1.530% point error passes its sealed interval, while AlexNet
+gemm13's 0.220% point error lies outside its sealed interval. Coefficients and
+intervals were sealed before held-out warmups and exactly replay from the
+retained training samples. This negative fixed-tuple wall-time experiment
+does not establish GPU resource attribution or a calibrated/general model.
+
+The September 11 `fc/two_party_fc_model_scale_cnn2_cnn3_` observation,
+summary, output-schema, and analysis-plan companions correct the August
+layer-major analysis without rewriting raw evidence. Exact historical
+manifests are in `fc/model_scale_inputs_2026_08_14/`.
+`python3 ringlpn/scripts/test_fc_model_scale_statistics.py --replay-dir NEW`
+(from `GPU-MPC/`) regenerates these outputs; its two regressions defend
+trial-label invariance and within-layer paired-ratio resampling.
+The old CNN2 synthetic model median, SD, IQR, Student-t interval, and
+paired-ratio median are withdrawn. Human review/ownership, reviewed parameters,
+matched dealerless evaluation, distinct-host deployment, and release
+authorization remain blocked; the report is not submission-ready.
+
 ## Engineering review supplement (2026-09-10)
 
 `fc/sci_duplex_worker_review_2026_09_10.json` retains every final warmup and
@@ -120,21 +159,23 @@ Recorded current live and retained evidence:
   and 61 ms regular, with two timed iterations per mode (`n=2` each; four
   total). The distributions and SPFSS domains differ, so no ratio is claimed.
 - `fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.csv` and its
-  aggregate/summary/environment/A-B-audit/control/log companions are the current
-  controlled model-FC matrix. A source manifest selects CNN2 FC4
+  environment/A-B-audit/control/log companions bind the controlled FC matrix;
+  the September 11 derived outputs supersede its old aggregate/summary. The manifest selects CNN2 FC4
   `(100x256x128)`, CNN2 FC5 `(100x128x10)`, and CNN3 FC5 `(100x64x10)`, all
   q128/bw32 regular at `(n,c,t)=(8192,2,8)`. Each layer has one warmup plus ten
   measured trials; all 30 measured layer trials pass. Both party GPUs were
   quiescent and locked for each run. After both parties exited, the
   shape/contract-matched stock `gpuKeygenMatmul` comparator ran on the same
   quiescent physical GPU as that sample's slower setup-included party.
-- CNN2's two-layer aggregate has 26.8818423365-s mean,
-  26.89771076-s median, 0.05096530898-s sample SD, 0.06575381975-s R-7 IQR,
-  and 95% Student-`t` mean CI `[26.8453839508,26.9183007222]` s. Its
-  shape-matched stock-dealer median is 30.5729 ms, paired-ratio median is
-  `879.2970985824659x`, application bytes are 1,302,752,736, total recorded
-  transport bytes are 1,302,840,696, mean peak host RSS / process GPU bytes are
-  305,696,768 / 431,095,808, and semantic dependency layers are 72,278.
+- CNN2's sum of independent layer mean setup-included times is
+  26.8818423365 s, with stratified-bootstrap 95% CI
+  `[26.84972841498,26.9117673864825]` s. The mean stock-dealer sum is
+  30.46697 ms; the ratio of summed layer means is `882.3273970631x`,
+  CI `[876.3872084103,890.1395707186]`. The 10,000 whole-row bootstrap
+  resamples within each layer preserve protocol/dealer pairing (seed 20260911,
+  R-7 endpoints). There are twenty measured layer invocations, not ten model
+  trials. Application/total transport bytes are 1,302,752,736/1,302,840,696,
+  and semantic dependency layers are 72,278.
 - CNN3 FC5 has 0.903894393-s mean, 0.904909782-s median,
   0.01897115914-s sample SD, 0.02851206825-s R-7 IQR, and CI
   `[0.8903232433,0.9174655427]` s. Its dealer median is 14.96295 ms,
@@ -308,9 +349,9 @@ Proof/evidence boundary:
   128-bit, malicious, WAN, trained/private-model, accuracy, or
   full-dealerless-Orca claims.
 - The current controlled CNN2/CNN3 model-FC matrix is strongly negative:
-  same-physical-GPU, quiescence-checked median paired preprocessing/dealer
-  ratios are `879.2970985824659x` for CNN2 FC4+FC5 and
-  `60.3181599795375x` for CNN3 FC5. Fixed protocol-then-dealer order remains a
+  same-physical-GPU, quiescence-checked setup-included ratios of summed
+  per-layer means are `882.3273970631x` for CNN2 FC4+FC5 and
+  `60.5768063581x` for CNN3 FC5. Fixed protocol-then-dealer order remains a
   possible order bias. The retained ResNet18 classifier ratio
   `268.6769431352700x` used uncontrolled occupancy and different physical GPUs;
   it remains descriptive rather than same-hardware A/B evidence.
@@ -444,10 +485,10 @@ Consume-once ledgers remain unpublished owner-private host state.
 | `reports/s2_regular_projection_law_2026_08_04.md` | **PINNED CURRENT-SOURCE MATHEMATICAL LAW:** exact projection/cancellation recurrences are freshly rebound to the unchanged live sampling functions. This is distribution correspondence only, not bit security or a parameter pin. |
 | `reports/s2_professor_decision_request_2026_07_29.md` | **Historical advisor request.** Its unresolved security/provenance questions remain required before claim advancement, but its “before S3 implementation” wording predates the owner's implementation-only S3–S6 gate lift and must not be used to deny the component work that subsequently proceeded. |
 | `reports/publication_readiness_plan_2026_07_21.md` | **BINDING PUBLICATION ROADMAP**: integrated dealerless Orca FC thesis; advisor-first report; S1--S10 dependency order, security proof and parameter gates, M1--M6 implementation/evaluation criteria, risks, evidence matrix, per-stage user consultation, and required checkpoint commit |
-| `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** exact DPF correction-word coupling, role-specific correlated-batch simulators, conversion simulator, full live source-to-transcript map, conditional forward theorem, obligation table, and explicit concrete-parameter/authentication/training limits. |
+| `reports/dealerless_orca_fc_security_contract_2026_07_29.md` | **CURRENT FORWARD SECURITY CONTRACT:** DPF correction-word coupling, role-specific batch simulators, source-to-transcript map, conditional forward proof target, and explicit limits. P-KEY must charge the implemented biased leaf map and lifetime composition; P-CONV is reopened pending the full state-consistent output-conditioned simulator. |
 | `reports/session_handoff_2026_07_21.md` | **HISTORICAL/SUPERSEDED** corrected-M1/v2.3 checkpoint handoff; current status is in `CLAUDE.md` |
 | `reports/distributed_dpf_keygen_memo_2026_07_21.md` | **HISTORICAL COMPONENT PROTOTYPE:** preserves the corrected ideal OT/triple/OLE host logic and 2,432-tree controls. Its old “GPU batching/dependency measurement open” disposition and one-visible-GPU full-gate command are obsolete; use the current source map and the three-GPU canonical command below. |
-| `reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex` (+ current `.pdf`) | **LIVE internal/advisor v2.17 with September 10 review supplement:** conditional forward proof, historical controlled comparisons, scoped SCI scheduling experiment, source-native terminal checks, and explicit ASPLOS research/AE gates. Two fresh pinned TeX Live 2023 two-pass builds produce the same 34-page PDF, SHA-256 `dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`; no warnings, undefined references, or bad boxes, embedded Type 1 fonts only, and all pages visually inspected. Not a conference submission or external-circulation authorization. |
+| `reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex` (+ current `.pdf`) | **LIVE internal/advisor v2.17 with September 11 supplement:** reopened proof obligations, corrected independent-layer statistics, reproducible SCI scheduling experiment, failed prospective capacity-interval gate, terminal checks, and explicit research/release limits. Two fresh pinned TeX Live 2023 two-pass builds produce the same 36-page PDF, SHA-256 `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`; no warnings or bad boxes, embedded Type 1 fonts only, all pages visually inspected. Not a conference submission or circulation authorization. |
 | `reports/dealerless_orca_ringlpn_proposal_v2_2026_07_10.{tex,pdf}` | **HISTORICAL v2.16 advisor predecessor:** frozen after the 2026-08-14 checkpoint; superseded by v2.17 above. |
 | `reports/session_handoff_2026_07_10.md` | **HISTORICAL** proposal-v2 restructure and explainer rationale; superseded by the 2026-07-21 handoff |
 | `reports/dealerless_orca_ringlpn_full_proposal_2026_06_10.tex` | HISTORICAL first proposal draft (M1-M6 milestones) — superseded by v2 |

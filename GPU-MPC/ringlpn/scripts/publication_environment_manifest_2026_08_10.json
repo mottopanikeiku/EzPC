@@ -1,13 +1,13 @@
 {
   "schema": "ringlpn-publication-environment/v4",
-  "date": "2026-09-10",
+  "date": "2026-09-11",
   "classification": "internal/advisor",
   "source_release": {
     "required_annotated_tag": "ringlpn-publication-candidate-v1",
     "external_authorization_schema": "ringlpn-source-authorization/v1",
     "unavailable_reason": "The owner-approved final source commit, annotated release tag, and operator-supplied external source-consistency authorization do not exist yet; the coordinator validates object shape/digest but does not verify a cryptographic signer."
   },
-  "claim_boundary": "Feasibility, controlled strongly negative local CNN2/CNN3 model-FC measurements, scoped same-host SCI scheduling measurements, source-native terminal FC/Conv2D functional integration, and source-bound known-zero full-graph systems reproduction only; nonlinear keys remain test-only trusted, arbitrary multi-layer dispatch is not implemented, and no concrete Ring-LPN security, private/trained inference, network-performance, or full-model claim is made.",
+  "claim_boundary": "Unpinned feasibility only: corrected independent-layer CNN2/CNN3 stock-dealer comparisons, scoped shared-host SCI scheduling measurements, rejected prospective fixed-tuple wall-time prediction intervals, terminal FC/Conv2D functionality, and known-zero graph reproduction. P-KEY leaf/lifetime losses and P-CONV output-conditioned proof remain open. Nonlinear material is test-only trusted; no concrete security, GPU resource attribution, private/trained inference, authenticated deployment, or full-model claim is made.",
   "retained_checkpoint_boundary": {
     "classification": "internal/advisor-only",
     "external_circulation_blockers": [
@@ -86,9 +86,9 @@
   "build": {
     "publication_source": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex",
     "publication_pdf": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
-    "publication_source_sha256": "a325b78bb3d7bb7f63e463fd6bc4840609a549e91e631ed89e45c4ac69a74463",
-    "publication_pdf_sha256": "dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1",
-    "publication_pages": 34,
+    "publication_source_sha256": "6654c013c0a19d20250441a506a0e4645992d2a765b72a773a7054720ffccaf4",
+    "publication_pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+    "publication_pages": 36,
     "pdf_command": "SOURCE_DATE_EPOCH=1786320000 pdflatex -interaction=nonstopmode -halt-on-error (twice); zero warnings/bad boxes; embedded Type 1 fonts only; exact SHA-256",
     "source_date_epoch": 1786320000,
     "fc_builder": "GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh",
@@ -243,7 +243,7 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/orca_linear_application_integration_2026_08_24.md",
-      "sha256": "068dff4bf353bade83e49dd897d773b168d77f29b76ce3b1fc7654e3583b0327"
+      "sha256": "023d0756fe48a1579fdf7133b49b78dd5b8e4e70478b2647d7d4cdee2ae95c92"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_preprocess_2026_08_04.csv",
@@ -287,7 +287,7 @@
     },
     {
       "path": "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv",
-      "sha256": "4ead0d24a8f9fe24ff7bf7d58bd1ef0c87d0e51b644db8893a27de9b8569ae26"
+      "sha256": "ab4c32764f7f52a971c1b2eca07e5fa4fd2da2cb3c849706dfbeea26e8c3e392"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/linear_adapter_build_provenance_2026_08_10.json",
@@ -351,7 +351,7 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
-      "sha256": "dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1"
+      "sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a"
     },
     {
       "path": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_review_2026_09_10.json",
@@ -360,8 +360,60 @@
     {
       "path": "GPU-MPC/ringlpn/results/reports/engineering_review_verification_2026_09_10.json",
       "sha256": "a5b92c832a9b94c39896620a2c166112281bf4e518b3fb6d194a4aa55fd6a4bf"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_reproducible_2026_09_11.json",
+      "sha256": "c3f57ae2b5605002b7b0401a80a4b6412fe5f34b243ddc722f66b3fde233a3e4"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/sci_duplex_worker_reproducible_2026_09_11.plan.json",
+      "sha256": "c2eb2d2dbc2b6f63ed06005a1b79772cb6f2fc4ccfbd8b0952fdaffe14772794"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.json",
+      "sha256": "0702baefbbfdf22b9594edd056f047ff40f01e631e20dcd6e4b5640ecd9d3ca0"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.plan.json",
+      "sha256": "465cf4ae59ac933e4046be873b52928aaefa8ca2f1db843146d0dd57fd4b3dea"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/capacity_model_prospective_2026_09_11.seal.json",
+      "sha256": "95d8a34bade33c66b66937c7a592b5fb314706acfff3c529247970d6d54174b7"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_observations_2026_09_11.csv",
+      "sha256": "db234fc7d35031735de1e6a714b5fde5d3d8a53c09abbaf8250b80e7c4007213"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_summary_2026_09_11.csv",
+      "sha256": "bfde653c1c4f296b810c5223cb0b081314086d502c63d552f476f64bf86665b6"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_output_schema_2026_09_11.json",
+      "sha256": "03e6d18c4d07f8fd7ec678f997aad27047074cf16415a575bc27e08ed66b4ccb"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/two_party_fc_model_scale_cnn2_cnn3_analysis_plan_2026_09_11.json",
+      "sha256": "ec5b222a21c865ce19eba902f7d2a315b9bedc5d989d8d1c8df2050b82a5bb8a"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/model_scale_inputs_2026_08_14/orca_forward_linear_layer_manifest_2026_08_04.json",
+      "sha256": "6bd5e24f5e18eb744458d4aaf86d42a823857bc134ac1d4be25c95d49cf3c984"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/fc/model_scale_inputs_2026_08_14/orca_model_scale_workload_manifest_2026_08_04.json",
+      "sha256": "718570af4bf7afa523d029dfddcf0f3dae9e554c9c6e26b744999df193956f72"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/paper_review_verification_2026_09_11.json",
+      "sha256": "0d7cefde496fd5ae9b866edbdc58ac0a54a997d1159779ead05a8375253d0f91"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/independent_review_verification_2026_09_11.json",
+      "sha256": "74456bce5dc5d224c85617004bc49da091191804d59690c0c389b9027a72d2cc"
     }
   ],
   "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "f985600ecb1039690502d101b64a84f9ed5425bfceef5b86e78a1a446eb076a8"
+  "manifest_digest": "9c7483ea81d82cf9a2316147af063d59d0d9f9396a5923afe56721fa46eef503"
 }

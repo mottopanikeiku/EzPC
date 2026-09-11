@@ -4,31 +4,51 @@
 **Scope:** two-party, semi-honest, dealerless preprocessing for one Orca **forward-FC matmul** from splittable Ring-LPN. Stateful training transitions, nonlinear-layer FSS keys, malicious security, and full-model dealer removal remain out of scope.
 **Starting checkpoint:** commit `28f8451` (`ringlpn: add corrected distributed DPF keygen artifact`), with the required GPU gate ending `ALL GATES PASS`.
 
-## ASPLOS research decision — 2026-09-10
+## ASPLOS research decision — updated 2026-09-11
 
 **Not submission-ready.** The target is an accelerator-systems result, not
-another compatibility demonstration. The revised internal proposal's
-conference-readiness section defines the falsifiable scheduling/cost-model
-hypothesis, matched-security baseline, cryptographic host/GPU and setup/reuse
-ablations, held-out workloads, authenticated distinct-host network matrix,
-raw-data regeneration, independent human security review, and release gates.
+another compatibility demonstration. The internal proposal distinguishes
+the candidate resource/dependency hypothesis from a narrower executable
+fixed-tuple wall-time/capacity prediction experiment. A general mechanism,
+matched-security baseline, cryptographic host/GPU and setup/reuse ablations,
+authenticated distinct-host matrix, raw-data regeneration, independent human
+security review, and release authorization remain separate evidence gates.
 It follows the [ASPLOS 2027 CFP](https://www.asplos-conference.org/asplos2027/cfp/)
 and [artifact appendix guidance](https://www.asplos-conference.org/asplos2027/ae-artifact-appendix/);
 passing functional gates alone establishes neither novelty nor acceptance.
+The CFP's September 9, 2026 AoE submission deadline has passed. This internal
+report is not a submission for that deadline.
 
 The first executed causal slice replaces SCI per-call sender threads with a
 channel-owned reusable worker. A counterbalanced same-host CNN3 FC5-shaped
 `100x64x10` experiment at q128/bw32, `(8192,2,8)`, passes all 20 measured
-invocations after one warmup per version. Process-latency median changes from
-1.0413064545 s to 0.965220348 s (7.31% lower); slower-party Phase B median
-changes from 278.1845 ms to 226.2475 ms (18.67% lower). All 68 per-party
+invocations after one warmup per version. The September 11 reproducible rerun
+uses a retained controller and frozen pre-execution plan. Launch-to-party-exit
+median changes from 0.976021855 s to 0.906485317 s (7.12% lower); slower-party
+Phase B changes from 280.205 ms to 223.2515 ms (20.33% lower). All 68 per-party
 non-timing contract/accounting fields match. The median paired ratio is
-1.0722x; its descriptive 95% paired-bootstrap interval is [1.0615,1.0842].
-This is a shared-host, one-shape scheduling result at unpinned feasibility
-parameters, not a dealerless baseline, GPU speedup, full-model result, or
-clean-clone release claim. Raw samples, scope, variability, binary/source
-identities, and calculation rules are in
-`../fc/sci_duplex_worker_review_2026_09_10.json`.
+1.07838x; process-latency sample SD is 10.02/11.49 ms before/after. No prior
+experiment's confidence interval is reused. This is a shared-host, one-shape
+scheduling result at unpinned feasibility parameters, not a dealerless
+baseline, GPU speedup, full-model result, or clean-clone release claim.
+`scripts/run_fc_review_experiments.py`, the raw
+`../fc/sci_duplex_worker_reproducible_2026_09_11.json`, and its `.plan.json`
+companion retain executable timing, checks, variability, and identity rules.
+The September 10 JSON remains historical and is not pooled into this dataset.
+
+The prospective fixed-tuple capacity experiment is now executed, not merely
+specified: 88 training and 22 held-out invocations all pass stock-consumer and
+accounting checks. The training-only NNLS fit and 95% pointwise intervals were
+sealed before any held-out warmup. P-SecureML FC2 predicts 14.577957 s versus
+14.358284 s (1.530% error, inside its interval); AlexNet gemm13 predicts
+42.931651 s versus 43.026200 s (0.220% error, outside its interval).
+The frozen **prediction gate fails** because both the 15% error bound and
+interval inclusion were mandatory. The retained
+`../fc/capacity_model_prospective_2026_09_11.{json,plan.json,seal.json}`
+records the negative result, exact five-feature/fitting/residual-bootstrap
+contract, source bindings, and all raw observations. Its training seal
+replays exactly. No held-out retuning, exclusions, or confidence-interval
+widening is permitted. This is not a validated GPU-resource/dependency model.
 
 The completed engineering review separately passes the required-GPU
 checkpoint, including the source-bound known-zero full graph, and then the
@@ -43,8 +63,10 @@ authorization.
 **Next decisive research gate:** establish the exact security/assumption
 contract with qualified independent human review, then evaluate the composed
 system and matched dealerless baseline at that reviewed point. In parallel,
-test whether the resource/dependency model predicts held-out shapes; do not
-promote the worker micro-optimization itself to the paper's novelty claim.
+test the prospectively frozen fixed-tuple wall-time/capacity model; FC rows
+do not yet provide GPU work/transfer attribution for the broader
+resource/dependency hypothesis. Do not promote the worker optimization or a
+wall-time fit itself to an established architecture contribution.
 Distinct-host access/identities, external overlap/circulation permission, and
 independent cryptographic sign-off remain external prerequisites, not checks
 an automated coding review can self-certify.
@@ -110,11 +132,12 @@ an automated coding review can self-certify.
   30/30 measured layer trials. Party GPUs 1 and 3 were quiescent and locked.
   After both protocol parties exited, each stock `gpuKeygenMatmul` comparator
   ran on the same quiescent physical GPU as that sample's slower
-  setup-included party. CNN2 FC4+FC5 has 26.8818423365-s mean,
-  26.89771076-s median, 30.5729-ms stock-dealer median, and
-  `879.2970985824659x` paired-ratio median. CNN3 FC5 has 0.903894393-s mean,
-  0.904909782-s median, 14.96295-ms stock-dealer median, and
-  `60.3181599795375x` paired-ratio median. Fixed protocol-then-dealer order may
+  setup-included party. The corrected September 11 analysis gives CNN2 a
+  sum of layer means of 26.8818423365 s and a protocol/dealer ratio of summed
+  means of `882.3273970631x`; CNN3 has 0.903894393 s and `60.5768063581x`.
+  The old CNN2 synthetic model-trial distribution is withdrawn; per-layer
+  statistics and stratified-bootstrap model intervals are reported in S9.
+  Fixed protocol-then-dealer order may
   retain order bias. This closes the narrow controlled local model-FC
   comparator measurement, but it is a strongly negative feasibility result—not
   a speedup, network, full-model, or security claim.
@@ -230,7 +253,7 @@ first point at which their protocol-backed paths compose.
 
 ---
 
-### S1 — Freeze the protocol, functionality, and proof obligations — **complete 2026-07-29**
+### S1 — Freeze the protocol, functionality, and proof obligations — **reopened 2026-09-11**
 
 **Purpose:** prevent implementation choices from outrunning the security argument.
 
@@ -241,8 +264,10 @@ first point at which their protocol-backed paths compose.
    transcript, and the source-aligned forward/bias/truncation/`dW`/`dX`/
    bias-gradient/weight-and-bias optimizer mask topology.
 2. Specify D1 at message level: arithmetic-share adder, level walk, control bits, seed correction words, three-OLE Phase C, and the sole Phase C opening `finalCW`.
-3. Specify D2–D4 composition: conversion correlations, exact full-vector
-   public-coin exchange, private CSPRNG streams, derandomization openings, key serialization, and two-process transport.
+3. Specify D2–D4 composition: conversion correlations, a four-word joint
+   public seed and domain-separated rejection-sampled SHAKE256 public vectors
+   in the explicit random-oracle model, private CSPRNG streams,
+   derandomization openings, key serialization, and two-process transport.
 4. Enumerate leakage explicitly: dimensions, parameters, batch sizes, message
    lengths and schedule, public polynomial, DPF correction words, conversion
    openings, key topology, and abort stage. State the excluded packet/timing/
@@ -720,14 +745,20 @@ measured trials; all 30 measured layer trials pass. Both party GPUs are
 quiescence-checked and locked. After both parties exit, each shape-matched stock
 `gpuKeygenMatmul` comparator runs on the same quiescent physical GPU as that
 sample's slower setup-included party. CNN2's FC4+FC5 aggregate has
-26.8818423365-s mean, 26.89771076-s median, 0.06575381975-s R-7 IQR, and 95%
-Student-`t` CI `[26.8453839508,26.9183007222]` s; its dealer median is
-30.5729 ms and paired-ratio median is `879.2970985824659x`. CNN3 FC5 has
-0.903894393-s mean, 0.904909782-s median, 0.02851206825-s IQR, CI
-`[0.8903232433,0.9174655427]` s, 14.96295-ms dealer median, and
-`60.3181599795375x` paired-ratio median. Fixed protocol-then-dealer order can
-retain order bias. These are controlled, strongly negative local feasibility
-comparisons—not speedup, network, full-model, or security-level results.
+a sum of independent layer means of 26.8818423365 s, with stratified-bootstrap
+95% CI `[26.84972841498,26.9117673864825]` s. Its ratio of summed
+protocol/dealer layer means is `882.3273970631x`, CI
+`[876.3872084103,890.1395707186]`. CNN3's corresponding mean is
+0.903894393 s, CI `[0.8929673378725,0.9152799675375]`, and ratio is
+`60.5768063581x`, CI `[59.3418846688,61.8764437656]`. The September 11 analysis
+uses 10,000 whole-row resamples within each layer (seed 20260911, R-7
+endpoints), preserving each measured protocol/dealer pair. Layer-major
+invocations are not joint model trials: the old CNN2 model median, SD, IQR,
+Student-t interval, and paired-ratio median are withdrawn. New versioned
+derived files retain the exact historical manifest inputs without rewriting
+the August raw evidence. Fixed protocol-then-dealer order can retain order
+bias. These remain strongly negative local feasibility comparisons, not
+speedup, network, full-model, or security-level results.
 
 The retained 2026-08-10 SCI/IKNP `1x512x1000` ResNet18 classifier artifact
 (binary `02eaaac9...`) has one warmup and ten passing trials. Mean
@@ -828,12 +859,13 @@ the binding continuation.
 
 ### S10 — Reproducible artifact and submission candidate
 
-**Status 2026-09-10:** the live internal/advisor v2.17 source includes the
-conference-readiness contract and measured SCI scheduling supplement.
-Two fresh pinned-image two-pass builds produce the same 34-page PDF,
-SHA-256 `dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`.
+**Status 2026-09-11:** the live internal/advisor v2.17 source includes reopened
+P-KEY/P-CONV proof obligations, corrected independent-layer statistics, the
+reproducible SCI worker experiment, and the failed prospective capacity-model
+interval gate. Two fresh pinned-image two-pass builds produce the same 36-page
+PDF, SHA-256 `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`.
 The final log has no warnings, undefined references, or bad boxes; every font
-is embedded Type 1, and all 34 pages were visually inspected. The v4 manifest binds the
+is embedded Type 1, and all 36 pages were visually inspected. The v4 manifest binds the
 digest-pinned base image, internal gate-image ID, package/toolchain set,
 deterministic build epoch, current source/PDF hashes, graph checkpoint, and
 publication gate. The retained 2026-08-10 graph checkpoint preserves
@@ -938,9 +970,12 @@ Both commands must exit 0. The paper's generated tables must match the committed
 
 Publication readiness is reached only when every box is supported by a committed artifact:
 
-- [x] S1 protocol and proof contract frozen for advisor review after the
-  requested model-assisted audit; independent human cryptographic review
-  remains an S8 gate.
+- [ ] S1/S8 proof contract reclosed after the September 11 automated review.
+  P-KEY must charge the implemented leaf conversion's statistical distance
+  and lifetime/leaf-replacement losses. P-CONV must supply the full
+  output-conditioned, state-consistent simulator after the corrected h-first
+  complement-branch inverse. Local arithmetic checks and model-assisted
+  review do not constitute independent human cryptographic sign-off.
 - [ ] S2 exact splittable parameters have a reviewed reduction, only in-domain independently reproducible estimator evidence, and the claimed security level.
 - [ ] S2 formal novelty/overlap, source/license inventory, and professor
   provenance decisions are recorded before overlapping implementation.

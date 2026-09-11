@@ -56,27 +56,65 @@ and its eight rejection controls pass, with signed/wrapping stock-helper clear
 oracles. The full-graph runner shares the compiled-contract checker's reviewed
 manifest pin; changing approval-bound source still requires a fresh approval.
 
+
+**Independent automated review (2026-09-11).** Four read-only reviewers
+returned 15 protocol, runtime, deployment, and evaluation findings. These are
+not independent human cryptographic sign-offs. P-KEY now explicitly charges
+the implemented leaf conversion's ideal-leaf statistical loss: for the first
+prime, `epsilon=(2^64 mod p)^2/2^128`, about `2^-70.83` per comparison.
+It is not an empirical AES attack or a complete lifetime security bound.
+P-CONV is reopened: the output-conditioned inverse must sample the masked
+carry opening first and handle its complement branch; the full
+state-consistent transcript proof remains open. The live regular B=256,
+depth-11 inventory is 5,632 chosen-message 128-bit string OTs per limb across
+both directions, not 2,816 bit-COTs.
 The SCI duplex sender now uses one lazy channel-owned worker, preserving
 synchronous single-caller semantics. After worker creation, its per-job
 scheduling handoff allocates no storage and copies no payloads.
-In the counterbalanced same-host CNN3 FC5-shaped `100x64x10`
-experiment, all 20 measured invocations pass and all 68 per-party
-contract/accounting fields match. Process-latency median falls from 1.0413 s
-to 0.9652 s (7.31%); slower-party DPF Phase B falls from 278.18 ms to 226.25 ms
-(18.67%). Raw samples and limitations are in
-`results/fc/sci_duplex_worker_review_2026_09_10.json`. This is one shared-host,
-unpinned feasibility point, not a GPU, matched-dealerless-baseline,
-full-model, or security claim. Producer freshness does not provide persistent
-application-consumer replay prevention; callers must use fresh material.
+The retained `scripts/run_fc_review_experiments.py` repeats the counterbalanced
+same-host CNN3 FC5-shaped `100x64x10` experiment with a frozen plan. All 22
+fresh invocations pass (two warmups, twenty measured); all 68 per-party
+contract/accounting fields match. Controller launch-to-party-exit median
+falls from 0.976021855 s to 0.906485317 s (7.12%); slower-party DPF Phase B
+falls from 280.205 ms to 223.2515 ms (20.33%). Raw samples and exact timer,
+binary/source, and shared-host scope are in
+`results/fc/sci_duplex_worker_reproducible_2026_09_11.json` and `.plan.json`.
+The September 10 JSON is historical; its controller source was not retained,
+and its confidence interval is not reused. This one unpinned feasibility
+point is not a GPU, matched-dealerless, full-model, or security claim.
+Producer freshness does not provide persistent application-consumer replay
+prevention; callers must use fresh material.
 
-The application/helper build now also enters a private fixed source path;
-host prefix maps alone left checkout-dependent CUDA fatbins. The main and
-source-only worktrees produce identical binaries and complete provenance
-(`f2d16c75...`), and both provenance verifiers pass after that temporary path
-is removed. Dependency-only preprocessing uses the equivalent physical source
-view, preserving strict rejection of symlinked source inputs. All ten compiler
-dependency groups, environment inputs, and linked archives match the pre-fix
-build; only the application build recipe changed.
+The prospectively frozen capacity experiment
+`results/fc/capacity_model_prospective_2026_09_11.{json,plan.json,seal.json}`
+executes 88 training and 22 held-out invocations, with all producer, stock
+consumer, and accounting checks passing. Eight training medians fit
+nonnegative coefficients for `[1, 4*ceil(M*K*N/7424), M*K*N, M*N,
+M*K+K*N+M*N]`. Predictions/pointwise 95% intervals were sealed before any
+held-out warmup; the full training seal exactly replays from raw samples.
+P-SecureML FC2 predicts 14.577957 s versus observed 14.358284 s (1.530% error),
+inside `[14.212245,15.288824]` s. AlexNet gemm13 predicts 42.931651 s versus
+43.026200 s (0.220% error), outside `[42.886032,42.978961]` s. Therefore the
+frozen gate **fails**, despite both point errors passing the 15% criterion.
+No retuning or interval widening follows. This is fixed-tuple wall-time/capacity
+prediction, not GPU resource/transfer attribution or validated generalization.
+
+The application/helper build uses a private fixed compilation path because
+host prefix maps alone leave checkout-dependent CUDA fatbins. This is a
+checked live source view, not an immutable snapshot: the updated build holds
+both actual archive-producer locks through linking and provenance, seals
+recipes before entry, and compares source/tool/archive identities, hashes,
+environment, and all ten dependency groups before and after compilation.
+It rejects ordinary compile/hash races; it does not promise protection
+against a hostile same-UID actor restoring every observed state (ABA).
+The September 10 root-relocation result `f2d16c75...` predates these seals.
+Fresh root-distinct builds and post-cleanup verifiers now agree on complete
+provenance self-digest `5cdf43bf...` and application `d1f58928...`; actual
+post-link source/archive mutations reject without provenance, and both
+archive producers reject under the reader's actual producer locks.
+The retained opt-in application gate passes 16 MiB reconstruction and the
+strict exact-capacity boundary; normal terminal FC/Conv/API and eight controls
+also pass on the source-only checkout.
 
 The final required-GPU checkpoint prints `ALL GATES PASS` (5,228.406 s),
 including the full source-bound known-zero ResNet18 graph and seven graph
@@ -92,6 +130,20 @@ material remains TEST-ONLY trusted. These checks do not close security,
 authenticated deployment, release authorization, or conference research gates.
 The source-tree private-artifact guard passes without expanding its historical
 metadata allowlist.
+
+The September 11 deployment correction restores all checker stage/output
+trees to coordinator ownership only after exact-container exit; partial-create
+abort also reclaims both stages. A networkless Linux UID fixture reproduces
+the old failure and new success, but is not native rootless-Podman deployment.
+GPU separation now binds physical UUID/PCI identity together with host identity,
+so a remote ordinal may equal the local checker's while local aliases reject.
+Native OpenSSH controls confirm `IdentityAgent=none` rejects ambient-agent
+fallback while an explicit unencrypted identity works. All three publication
+ledgers must now be their own inspectable block-backed ext4/xfs mount boundaries;
+actual tmpfs admission rejects. Device persistence/fsync and no rollback,
+deletion, cloning, or hidden volatile storage remain operator assumptions.
+Native rootless prerequisites and an authorized distinct host are still absent;
+no genuine two-host success or durable-mount positive result is claimed.
 
 The current live composition uses thin
 `src/test_two_party_{fc,conv}_preprocess.cu` entrypoints over
@@ -202,13 +254,21 @@ admits a consumer.
   passes one warmup plus ten measured trials: 30/30 measured layer trials.
   Party GPUs 1 and 3 were quiescent and locked; after both parties exited, each
   stock `gpuKeygenMatmul` comparator ran on the quiescent physical GPU of that
-  sample's slower setup-included party. CNN2's two-layer aggregate has
-  26.8818423365-s mean, 26.89771076-s median, 0.06575381975-s R-7 IQR, and
-  95% Student-t CI `[26.8453839508,26.9183007222]` s; its stock-dealer median is
-  30.5729 ms and paired-ratio median is `879.2970985824659x`. CNN3 FC5 has
-  0.903894393-s mean, 0.904909782-s median, 0.02851206825-s IQR, CI
-  `[0.8903232433,0.9174655427]` s, 14.96295-ms dealer median, and
-  `60.3181599795375x` paired-ratio median. Application/total recorded bytes are
+  sample's slower setup-included party. The September 11 correction treats
+  these as independent layer invocations, not ten joint model trials. CNN2's
+  sum of layer mean setup-included times is 26.8818423365 s, with stratified
+  bootstrap 95% CI `[26.84972841498,26.9117673864825]` s. Its ratio of summed
+  protocol/dealer layer means is `882.3273970631x`, CI
+  `[876.3872084103,890.1395707186]`. CNN3's corresponding mean is
+  0.903894393 s, CI `[0.8929673378725,0.9152799675375]`, and ratio of means
+  `60.5768063581x`, CI `[59.3418846688,61.8764437656]`.
+  Resampling uses 10,000 whole-row draws within each layer (seed 20260911,
+  R-7 endpoints), preserving protocol/dealer pairing. The previous CNN2
+  synthetic model median, SD, IQR, Student-t CI, and paired-ratio median are
+  withdrawn. Corrected `*_observations/summary/output_schema/analysis_plan_2026_09_11`
+  files and exact historical inputs in `model_scale_inputs_2026_08_14/` retain
+  replay provenance; the original raw evidence is unchanged.
+  Application/total recorded bytes are
   1,302,752,736/1,302,840,696 (CNN2) and 39,432,504/39,476,484 (CNN3);
   semantic dependency layers are 72,278 and 1,663, not network rounds. Fixed
   protocol-then-dealer order can retain order bias. This is a controlled,
@@ -400,11 +460,11 @@ resource/success accounting, and independent human review remain parameter-pin
 blockers.
 
 **Paper and publication verdict.** The live v2.17 source now includes the
-September 10 engineering/conference-readiness supplement:
+September 11 independent-review and prospective-negative-result supplement:
 `results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex`.
 Two fresh pinned TeX Live 2023 two-pass builds are byte-identical; the
-34-page PDF has SHA-256
-`dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`.
+36-page PDF has SHA-256
+`f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`.
 The final log has no warnings, undefined references, or bad boxes; all fonts are
 embedded Type 1, and every page was visually inspected. The manuscript is an
 internal/advisor checkpoint, not a submission candidate. Its first-page
@@ -708,8 +768,8 @@ this API, and the security contract contains its exact hybrid simulator.
    slot-packed transcript and NTT backend changes.
 9. `results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.{tex,pdf}` —
    current internal/advisor source with the September review supplement and
-   matching deterministic 34-page pinned two-pass PDF (SHA-256
-   `dd1de27a496a3be4251e60f813f0a82ea658612e47ac2624d0859b99f99dffc1`).
+   matching deterministic 36-page pinned two-pass PDF (SHA-256
+   `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`).
    Rebuild, visually inspect every page, and refresh its digest/manifest after
    evidence or text changes.
 10. `results/reports/baseline_2026_06_10.md` — historical full-GPU
@@ -873,8 +933,8 @@ NOT claimable (never blur these):
   bounded rekeying, but no second-host execution exists; the theorem assumes an
   authenticated channel and trusted endpoints.
 - A current performance win. The controlled same-physical-GPU stock-dealer
-  paired-ratio medians are `879.2970985824659×` for CNN2 FC4+FC5 and
-  `60.3181599795375×` for CNN3 FC5: strongly negative. The retained classifier
+  setup-included ratios of summed layer means are `882.3273970631×` for
+  CNN2 FC4+FC5 and `60.5768063581×` for CNN3 FC5: strongly negative. The retained classifier
   artifact's uncontrolled descriptive ratio is `268.6769431352700×`.
 - Full-model dealer removal, arbitrary multi-layer record dispatch, dealerless
   nonlinear key generation, private or trained/accuracy ResNet18, a full-model
@@ -994,9 +1054,9 @@ remains open. Components remain D1--D5 in the v2.17 report.
 | OLE expand, t=64 | 881 ms uniform / 61 ms regular (q64); two timed iterations per mode (`n=2` each; four total); distributions/SPFSS domains differ, so no ratio; diagnostic only |
 | Linear OLE-to-Beaver 2×2×2 regular | 143.686 ms (q64) / 289.511 ms (q128); one iteration per configuration (`n=1` each), diagnostic only |
 | Cheddar polymul n=8192 batch=64 | ~255–265 µs (q64) |
-| Controlled CNN2 all-FC setup-included preprocess | mean 26.8818423365 s; SD 0.05096530898 s; median 26.89771076 s; R-7 IQR 0.06575381975 s; t95 [26.8453839508, 26.9183007222] s (`n=10` aggregate model trials; FC4+FC5) |
-| Controlled CNN3 FC5 setup-included preprocess | mean 0.903894393 s; SD 0.01897115914 s; median 0.904909782 s; R-7 IQR 0.02851206825 s; t95 [0.8903232433, 0.9174655427] s (`n=10`) |
-| Controlled stock dealer / paired ratio medians | CNN2 all-FC: 30.5729 ms / 879.2970985824659×; CNN3 FC5: 14.96295 ms / 60.3181599795375×; same physical GPU and quiescence checked per sample, fixed protocol-then-dealer order, strongly negative |
+| Controlled CNN2 all-FC setup-included estimate | sum of independent layer means 26.8818423365 s; stratified-bootstrap 95% CI [26.84972841498, 26.9117673864825] s; 20 measured invocations across two layers, not ten model trials |
+| Controlled CNN3 FC5 setup-included preprocess | mean 0.903894393 s; SD 0.01897115914 s; median 0.904909782 s; R-7 IQR 0.02851206825 s; t95 [0.8903232433, 0.9174655427] s (`n=10` actual layer invocations) |
+| Controlled stock-dealer mean sums / ratio of mean sums | CNN2: 30.46697 ms / 882.3273970631×; CNN3: 14.92146 ms / 60.5768063581×; same physical GPU and quiescence checked per sample, fixed protocol-then-dealer order, strongly negative |
 | Controlled CNN application / total transport bytes | CNN2 all-FC: 1,302,752,736 / 1,302,840,696; CNN3 FC5: 39,432,504 / 39,476,484 |
 | Controlled CNN semantic dependency layers | CNN2 all-FC: 72,278; CNN3 FC5: 1,663; implementation schedule depth, not packet/network rounds |
 | Retained ResNet18 classifier post-channel setup-included preprocess | mean 4.011203588 s; SD 0.036601967373448 s; median 4.0193924415 s; R-7 IQR 0.03481908225 s; t95 [3.985020117867291, 4.037387058132709] s (`n=10`; uncontrolled physical GPU/occupancy) |
