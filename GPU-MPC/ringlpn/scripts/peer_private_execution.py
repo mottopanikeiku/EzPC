@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import shutil
 import stat
 import subprocess
@@ -75,6 +76,77 @@ def require_absolute(path: str, label: str) -> pathlib.Path:
     if value.is_symlink():
         fail(f"{label} must not be a symlink")
     return value
+
+
+def ledger_storage_evidence(root: pathlib.Path) -> dict[str, Any]:
+    """Admit inspectable block-backed ext4/xfs, not a durability attestation."""
+    root = require_absolute(str(root), "persistent ledger root")
+    try:
+        metadata = root.lstat()
+        if (
+            not stat.S_ISDIR(metadata.st_mode)
+            or metadata.st_uid != os.geteuid()
+            or stat.S_IMODE(metadata.st_mode) & 0o077
+        ):
+            fail("persistent ledger must be an owner-owned owner-only directory")
+        completed = run(
+            ["findmnt", "--json", "--target", str(root), "--output",
+             "TARGET,SOURCE,FSTYPE,OPTIONS,MAJ:MIN,UUID"], capture=True
+        )
+        filesystems = json.loads(completed.stdout).get("filesystems", [])
+        if len(filesystems) != 1:
+            fail("persistent ledger has no unambiguous mount identity")
+        mount = filesystems[0]
+        if mount.get("fstype") not in {"ext4", "xfs"}:
+            fail("persistent ledger policy requires block-backed ext4/xfs; volatile or unreviewed filesystems are forbidden")
+        if "rw" not in str(mount.get("options", "")).split(","):
+            fail("persistent ledger mount must be read-write")
+        if pathlib.Path(str(mount.get("target", ""))).resolve() != root.resolve():
+            fail("persistent ledger must be its own mount boundary")
+        run(["mountpoint", "-q", str(root)])
+        device = mount.get("maj:min")
+        if not isinstance(device, str) or re.fullmatch(r"[0-9]+:[0-9]+", device) is None:
+            fail("persistent ledger has no block-device identity")
+        filesystem_uuid = mount.get("uuid")
+        if not isinstance(filesystem_uuid, str) or not filesystem_uuid:
+            fail("persistent ledger filesystem UUID is unavailable")
+        leaves: dict[str, dict[str, str]] = {}
+        visited: set[pathlib.Path] = set()
+
+        def inspect_backing(node: pathlib.Path) -> None:
+            node = node.resolve(strict=True)
+            if node in visited:
+                return
+            visited.add(node)
+            slaves = sorted((node / "slaves").iterdir()) if (node / "slaves").is_dir() else []
+            if slaves:
+                for slave in slaves:
+                    inspect_backing(slave)
+            elif (node / "partition").is_file():
+                inspect_backing(node.parent)
+            else:
+                # A filesystem label is insufficient: ext4 on a RAM-backed loop
+                # image must not pass. Unknown virtual leaves fail closed too.
+                if "/virtual/" in str(node) or not (node / "device").exists():
+                    fail("persistent ledger has volatile, loop, or unreviewed virtual block backing")
+                number = (node / "dev").read_text(encoding="ascii").strip()
+                leaves[number] = {"major_minor": number, "sysfs_path": str(node)}
+
+        inspect_backing(pathlib.Path("/sys/dev/block") / device)
+        if not leaves:
+            fail("persistent ledger has no inspectable nonvirtual block backing")
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
+        fail(f"cannot establish persistent ledger storage policy: {exc}")
+    return {
+        "schema": "ringlpn-ledger-storage-v1",
+        "policy": "block-backed-ext4-xfs-v1",
+        "mount_target": str(root.resolve()),
+        "mount_source": mount["source"],
+        "filesystem": mount["fstype"],
+        "filesystem_uuid": filesystem_uuid,
+        "block_devices": [leaves[key] for key in sorted(leaves)],
+        "operator_assumption": "devices honor fsync; no ledger deletion, rollback, cloning, or volatile backing hidden by a hypervisor",
+    }
 
 
 def require_separate(paths: Sequence[pathlib.Path]) -> None:
@@ -952,6 +1024,7 @@ def party_command(args: argparse.Namespace) -> int:
     ):
         fail("persistent ledger root must be an owner-only real directory")
     private_evidence(ledger_root)
+    ledger_storage = ledger_storage_evidence(ledger_root)
     ensure_gpu(args.gpu)
     if args.uid < 1:
         fail("container UID must be non-root and positive")
@@ -1076,6 +1149,7 @@ def party_command(args: argparse.Namespace) -> int:
         "container_name": name,
         "private_root": str(root),
         "started_at": started,
+        "ledger_storage": ledger_storage,
         "volume_topology": {
             "private_bind_source": str(root),
             "private_bind_destination": PARTY_MOUNT,
@@ -1312,6 +1386,20 @@ def abort_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def restore_checker_roots(podman: str, roots: Sequence[pathlib.Path]) -> None:
+    """Recover coordinator access only after the checker has stopped."""
+    for root in roots:
+        info = root.lstat()
+        if not stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode):
+            fail("checker handback requires exact real directories")
+    run([podman, "unshare", "chown", "-hR", "0:0",
+         *(str(root) for root in roots)], capture=True)
+    for root in roots:
+        evidence = harden_tree(root)
+        if any(entry["uid"] != os.geteuid() for entry in evidence):
+            fail("checker ownership handback did not restore coordinator access")
+
+
 def harden_tree(root: pathlib.Path) -> list[dict[str, Any]]:
     for path in [root, *sorted(root.rglob("*"))]:
         info = path.lstat()
@@ -1508,10 +1596,14 @@ def purge_party_command(args: argparse.Namespace) -> int:
         or ledger_info.st_uid != os.geteuid()
     ):
         fail("persistent ledger root was not retained owner-only")
+    ledger_storage = ledger_storage_evidence(ledger_root)
+    if ledger_storage != document.get("ledger_storage"):
+        fail("persistent ledger storage identity changed during the invocation")
     persistent_ledger = {
         "identity": f"party{party}-consume-once-ledger",
         "path": str(ledger_root),
         "status": "retained-owner-only-distinct-mount",
+        "storage": ledger_storage,
     }
     print(
         json.dumps(
@@ -1565,11 +1657,13 @@ def verify_party_pair(p0: dict[str, Any], p1: dict[str, Any]) -> None:
         or p1.get("channel_auth_protocol") != "ringlpn-mutual-hmac-sha256-v1"
     ):
         fail("party completion manifests do not bind the same channel authenticator")
-    identity0 = (p0.get("host"), tuple(p0.get("mapped_host_uids", [])), p0.get("container", {}).get("id"))
-    identity1 = (p1.get("host"), tuple(p1.get("mapped_host_uids", [])), p1.get("container", {}).get("id"))
+    machine0 = require_sha256(p0.get("machine_identity_sha256"), "party 0 machine identity")
+    machine1 = require_sha256(p1.get("machine_identity_sha256"), "party 1 machine identity")
+    identity0 = (machine0, tuple(p0.get("mapped_host_uids", [])), p0.get("container", {}).get("id"))
+    identity1 = (machine1, tuple(p1.get("mapped_host_uids", [])), p1.get("container", {}).get("id"))
     if identity0 == identity1:
         fail("party OS/container identities are not distinct")
-    if p0.get("host") == p1.get("host"):
+    if machine0 == machine1:
         if set(p0.get("mapped_host_uids", [])) & set(p1.get("mapped_host_uids", [])):
             fail("same-host party user namespaces reuse a mapped UID")
         if p0.get("gpu", {}).get("requested_cdi_device") == p1.get("gpu", {}).get("requested_cdi_device"):
@@ -1594,8 +1688,60 @@ def verify_party_pair(p0: dict[str, Any], p1: dict[str, Any]) -> None:
             "persistent_ledger_bind_source"
         ):
             fail("party private and persistent ledger mounts alias")
+        storage = party.get("ledger_storage", {})
+        if (
+            storage.get("schema") != "ringlpn-ledger-storage-v1"
+            or storage.get("policy") != "block-backed-ext4-xfs-v1"
+            or storage.get("mount_target") != topology.get("persistent_ledger_bind_source")
+        ):
+            fail("party manifest lacks the admitted persistent ledger storage binding")
         if any(mount.get("destination") == "/run/ringlpn/peer-private" for mount in mounts):
             fail("party container received a peer-private mount")
+
+def verify_publication_gpu_bindings(
+    preparation: dict[str, Any], p0: dict[str, Any], p1: dict[str, Any]
+) -> None:
+    devices = preparation.get("gpu_identities")
+    if not isinstance(devices, dict) or set(devices) != {"party0", "party1", "checker"}:
+        fail("publication preparation lacks host-qualified physical GPU identities")
+    expected_machines = {
+        "party0": p0.get("machine_identity_sha256"),
+        "party1": p1.get("machine_identity_sha256"),
+        "checker": machine_identity_sha256(),
+    }
+    uuids = set()
+    pci_addresses = set()
+    for role, device in devices.items():
+        if not isinstance(device, dict) or set(device) != {
+            "machine_identity_sha256", "requested_cdi_device", "uuid", "pci_bus_id"
+        }:
+            fail(f"{role} physical GPU binding is incomplete")
+        machine = require_sha256(device["machine_identity_sha256"], f"{role} GPU host")
+        if machine != expected_machines[role]:
+            fail(f"{role} GPU belongs to the wrong authenticated host")
+        selector = device["requested_cdi_device"]
+        if not isinstance(selector, str) or not selector.startswith("nvidia.com/gpu="):
+            fail(f"{role} GPU selector is malformed")
+        ensure_gpu(selector.removeprefix("nvidia.com/gpu="))
+        if role != "checker":
+            party = p0 if role == "party0" else p1
+            if selector != party.get("gpu", {}).get("requested_cdi_device"):
+                fail(f"{role} GPU selector differs from its party manifest")
+        uuid = device["uuid"]
+        pci = device["pci_bus_id"]
+        if not isinstance(uuid, str) or re.fullmatch(
+            r"GPU-[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}", uuid
+        ) is None:
+            fail(f"{role} physical GPU UUID is malformed")
+        if not isinstance(pci, str) or re.fullmatch(
+            r"(?:[0-9a-fA-F]{4}|[0-9a-fA-F]{8}):[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]", pci
+        ) is None:
+            fail(f"{role} physical GPU PCI identity is malformed")
+        uuids.add((machine, uuid.lower()))
+        pci_addresses.add((machine, tuple(int(part, 16) for part in pci.replace(".", ":").split(":"))))
+    if len(uuids) != 3 or len(pci_addresses) != 3:
+        fail("publication party/checker physical GPUs alias on the same host")
+
 
 def verify_publication_bindings(
     args: argparse.Namespace,
@@ -1685,6 +1831,7 @@ def verify_publication_bindings(
         or result.get("checker_stage") != str(prepared_path.parent)
     ):
         fail("launcher preparation does not match the expected publication launch")
+    verify_publication_gpu_bindings(result, p0, p1)
     expected_parties = {
         "party0": {"path": str(p0_path), "sha256": sha256_file(p0_path)},
         "party1": {"path": str(p1_path), "sha256": sha256_file(p1_path)},
@@ -1743,7 +1890,7 @@ def checker_command(args: argparse.Namespace) -> int:
         p0_manifest=p0_manifest_path,
         p1_manifest=p1_manifest_path,
     )
-    verify_publication_bindings(
+    publication = verify_publication_bindings(
         args, p0, p1, p0_manifest_path, p1_manifest_path, prepared_path, prepared
     )
     if parse_utc(prepared["prepared_at"], "PREPARED timestamp") <= max(
@@ -1762,14 +1909,15 @@ def checker_command(args: argparse.Namespace) -> int:
         fail("checker UID must be non-root and positive")
     if args.uid in (p0.get("container_uid"), p1.get("container_uid")):
         fail("checker UID must differ from both party container UIDs")
+    checker_gpu = {
+        "requested_cdi_device": f"nvidia.com/gpu={args.gpu}",
+        "cuda_visible_devices": "0",
+    }
     if args.publication:
-        checker_device = f"nvidia.com/gpu={args.gpu}"
-        party_devices = {
-            p0.get("gpu", {}).get("requested_cdi_device"),
-            p1.get("gpu", {}).get("requested_cdi_device"),
-        }
-        if checker_device in party_devices:
-            fail("publication checker GPU must differ from both party GPUs")
+        binding = publication["gpu_identities"]["checker"]
+        if binding["requested_cdi_device"] != checker_gpu["requested_cdi_device"]:
+            fail("checker GPU differs from its measured publication binding")
+        checker_gpu.update(binding)
 
     checker_started = now()
     if checker_started <= max(p0["ended_at"], p1["ended_at"]):
@@ -1862,6 +2010,18 @@ def checker_command(args: argparse.Namespace) -> int:
     after = container_evidence(inspect_container(podman, name))
     if after["running"]:
         fail("checker container still runs after attached execution returned")
+    expected_labels = {
+        "io.ezpc.ringlpn.schema": SCHEMA,
+        "io.ezpc.ringlpn.session": str(p0["session_id"]),
+        "io.ezpc.ringlpn.role": "checker",
+    }
+    if (
+        not before_evidence["id"]
+        or after["id"] != before_evidence["id"]
+        or any(after["labels"].get(key) != value for key, value in expected_labels.items())
+    ):
+        fail("checker identity changed before ownership handback")
+    restore_checker_roots(podman, (p0_root, p1_root, output_root))
     document = {
         "schema": SCHEMA,
         "phase": "checker-exited",
@@ -1884,7 +2044,7 @@ def checker_command(args: argparse.Namespace) -> int:
         "coordinator_uid": os.getuid(),
         "coordinator_gid": os.getgid(),
         "container_uid": args.uid,
-        "gpu": {"requested_cdi_device": f"nvidia.com/gpu={args.gpu}", "cuda_visible_devices": "0"},
+        "gpu": checker_gpu,
         "podman": {"version": info.get("version", {}), "rootless": True, "userns": "auto"},
         "party_completion": {"party0_ended_at": p0["ended_at"], "party1_ended_at": p1["ended_at"]},
         "party_manifests": {"party0": str(args.p0_manifest), "party1": str(args.p1_manifest)},
@@ -1914,6 +2074,7 @@ def checker_command(args: argparse.Namespace) -> int:
             "party_inputs_read_only": True,
             "digest_bound_prepared_records": True,
             "checker_network": "none",
+            "coordinator_ownership_restored_after_exit": True,
         },
     }
     write_manifest(manifest, document)
@@ -1952,7 +2113,7 @@ def verify_command(args: argparse.Namespace) -> int:
         p0_manifest=p0_path,
         p1_manifest=p1_path,
     )
-    verify_publication_bindings(args, p0, p1, p0_path, p1_path, prepared_path, prepared)
+    publication = verify_publication_bindings(args, p0, p1, p0_path, p1_path, prepared_path, prepared)
     if args.publication:
         if checker.get("publication_mode") is not True:
             fail("checker manifest lacks the publication boundary marker")
@@ -1972,12 +2133,11 @@ def verify_command(args: argparse.Namespace) -> int:
             p1.get("container_uid"),
         ):
             fail("publication checker manifest reuses a party container UID")
-        checker_device = checker.get("gpu", {}).get("requested_cdi_device")
-        if checker_device in {
-            p0.get("gpu", {}).get("requested_cdi_device"),
-            p1.get("gpu", {}).get("requested_cdi_device"),
+        if checker.get("gpu") != {
+            "cuda_visible_devices": "0",
+            **publication["gpu_identities"]["checker"],
         }:
-            fail("publication checker manifest reuses a party GPU")
+            fail("checker manifest differs from its host-qualified physical GPU binding")
     if checker.get("prepared_manifest") != str(prepared_path) or checker.get(
         "prepared_manifest_sha256"
     ) != sha256_file(prepared_path):
@@ -2133,8 +2293,15 @@ def purge_checker_records_command(args: argparse.Namespace) -> int:
     return 0
 def abort_checker_command(args: argparse.Namespace) -> int:
     checker_root = require_absolute(args.checker_root, "checker output root")
+    stage_roots = (
+        require_absolute(args.p0_root, "party 0 checker-stage root"),
+        require_absolute(args.p1_root, "party 1 checker-stage root"),
+    )
+    require_separate([checker_root, *stage_roots])
     checker_manifest = require_absolute(args.checker_manifest, "checker manifest")
     require_manifest_outside(checker_root, checker_manifest)
+    for root in stage_roots:
+        require_manifest_outside(root, checker_manifest)
     podman, _ = podman_info()
     expected_labels = {
         "io.ezpc.ringlpn.schema": SCHEMA,
@@ -2145,11 +2312,17 @@ def abort_checker_command(args: argparse.Namespace) -> int:
         podman, f"ringlpn-{args.session_id}-checker", expected_labels
     )
     stop_wait_remove_labeled_containers(podman, expected_labels)
+    # Creation/start may already have applied U=true to any subset of mounts.
+    # Reclaim all surviving inputs before the launcher's final stage removal.
+    survivors = [
+        root for root in (*stage_roots, checker_root)
+        if root.exists() or root.is_symlink()
+    ]
+    if survivors:
+        restore_checker_roots(podman, survivors)
     if checker_root.exists() or checker_root.is_symlink():
         if not checker_root.is_dir() or checker_root.is_symlink():
             fail("checker abort root is not a real directory")
-        run([podman, "unshare", "chown", "-R", "0:0", str(checker_root)], capture=True)
-        harden_tree(checker_root)
         shutil.rmtree(checker_root)
         fsync_directory(checker_root.parent)
     if checker_root.exists() or checker_root.is_symlink():
@@ -2315,6 +2488,8 @@ def parse_args() -> argparse.Namespace:
     abort_checker.add_argument("--session-id", required=True)
     abort_checker.add_argument("--checker-manifest", required=True)
     abort_checker.add_argument("--checker-root", required=True)
+    abort_checker.add_argument("--p0-root", required=True)
+    abort_checker.add_argument("--p1-root", required=True)
 
     verify_absent = subparsers.add_parser(
         "verify-session-containers-absent",
@@ -2330,6 +2505,11 @@ def parse_args() -> argparse.Namespace:
     machine_identity = subparsers.add_parser(
         "machine-identity", help="emit a one-way stable OS machine identity"
     )
+
+    ledger_storage = subparsers.add_parser(
+        "ledger-storage", help="admit and measure a dedicated persistent ledger mount"
+    )
+    ledger_storage.add_argument("--ledger-root", required=True)
 
     runtime_identity = subparsers.add_parser(
         "runtime-identity", help="measure an immutable image and in-image binary"
@@ -2382,6 +2562,10 @@ def main() -> int:
         return verify_session_containers_absent_command(args)
     if args.operation == "machine-identity":
         return machine_identity_command(args)
+    if args.operation == "ledger-storage":
+        print(json.dumps(ledger_storage_evidence(pathlib.Path(args.ledger_root)),
+                         sort_keys=True, separators=(",", ":")))
+        return 0
     if args.operation == "runtime-identity":
         return runtime_identity_command(args)
     if args.operation == "capability-preflight":

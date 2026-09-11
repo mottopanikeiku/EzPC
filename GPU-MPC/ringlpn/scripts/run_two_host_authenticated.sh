@@ -177,6 +177,10 @@ local_party_ledger_mode="$(stat -c %a "$local_party_ledger_root")"
   fail "local party ledger root must not be group/other accessible"
 mountpoint -q "$local_party_ledger_root" ||
   fail "local party ledger root must be its own persistent mount"
+coordinator_storage_json="$("$local_executor" ledger-storage --ledger-root "$ledger_root")" ||
+  fail "coordinator ledger storage policy failed"
+local_party_storage_json="$("$local_executor" ledger-storage --ledger-root "$local_party_ledger_root")" ||
+  fail "local party ledger storage policy failed"
 
 contains_path() {
   local outer="${1%/}" inner="${2%/}"
@@ -299,7 +303,7 @@ known_hosts="$control_dir/known-hosts"
 ssh-keygen -F "$peer_host" -f "$known_hosts" >/dev/null ||
   fail "known-hosts snapshot has no pinned entry for $peer_host"
 
-ssh_common=(-F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes
+ssh_common=(-F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none
   -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known_hosts"
   -o GlobalKnownHostsFile=/dev/null -o PasswordAuthentication=no
   -o KbdInteractiveAuthentication=no -o HostbasedAuthentication=no
@@ -344,6 +348,10 @@ remote_executor_sha256="$(
 [[ "$local_executor_sha256" =~ ^[0-9a-f]{64}$ &&
    "$remote_executor_sha256" == "$local_executor_sha256" ]] ||
   fail "remote executor differs from the clean coordinator source"
+remote_party_storage_json="$(
+  ssh "${ssh_common[@]}" "$peer" "$remote_executor" ledger-storage \
+    --ledger-root "$remote_party_ledger_root"
+)" || fail "remote party ledger storage policy failed"
 local_machine_identity="$("$local_executor" machine-identity)"
 remote_machine_identity="$(
   ssh "${ssh_common[@]}" "$peer" "$remote_executor" machine-identity
@@ -736,6 +744,7 @@ abort_parties() {
 
   "$local_executor" abort-checker --session-id "$session_id" \
     --checker-manifest "$checker_manifest" \
+    --p0-root "$checker_stage/party0" --p1-root "$checker_stage/party1" \
     --checker-root "$checker_output_root" >/dev/null 2>&1 || cleanup_failed=1
   "$local_executor" verify-session-containers-absent \
     --session-id "$session_id" >/dev/null 2>&1 || cleanup_failed=1
@@ -1078,11 +1087,20 @@ python3 - "$launcher_preparation" "$session_id" "$invocation_id" \
   "$remote_machine_identity" "$checker_stage/party0/isolation-manifest.json" \
   "$checker_stage/party1/isolation-manifest.json" "$checker_stage" \
   "$prepared_manifest" "$local_party_manifest" "$remote_manifest_copy" \
-  "$local_executor_sha256" <<'PY'
+  "$local_executor_sha256" "$local_preflight_json" "$remote_preflight_json" \
+  "$checker_preflight_json" <<'PY'
 import hashlib, json, os, pathlib, sys
 def bound(raw):
     path = pathlib.Path(raw)
     return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+def physical_gpu(raw):
+    measured = json.loads(raw)
+    return {
+        "machine_identity_sha256": measured["machine_identity_sha256"],
+        "requested_cdi_device": measured["gpu"],
+        "uuid": measured["gpu_uuid"],
+        "pci_bus_id": measured["gpu_pci_bus_id"],
+    }
 path = pathlib.Path(sys.argv[1])
 document = {
     "schema": "ringlpn-authenticated-launch-preparation-v1",
@@ -1106,6 +1124,10 @@ document = {
         "party0": bound(sys.argv[14]), "party1": bound(sys.argv[15])
     },
     "executor_sha256": sys.argv[16],
+    "gpu_identities": {
+        role: physical_gpu(raw)
+        for role, raw in zip(("party0", "party1", "checker"), sys.argv[17:20])
+    },
 }
 with path.open("x", encoding="utf-8") as stream:
     os.chmod(path, 0o600)
@@ -1206,11 +1228,14 @@ remote_call "$remote_executor" verify-session-containers-absent \
 [[ "$fault_injection" != deletion-receipt ]] ||
   fail "deterministic deletion receipt failure"
 finalized_at="$(python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="microseconds"))')"
+[[ "$("$local_executor" ledger-storage --ledger-root "$ledger_root")" == "$coordinator_storage_json" ]] ||
+  fail "coordinator ledger storage identity changed during invocation"
 python3 - "$deletion_receipt.tmp" "$session_id" "$invocation_id" \
   "$parameters_digest" "$local_deletion_json" "$remote_deletion_json" \
   "$checker_deletion_json" "$prepared_manifest" "$checker_manifest" \
   "$launcher_preparation" "$coordinator_ledger_digest" "$ledger_root" \
-  "$channel_auth_secret" "$finalized_at" <<'PY'
+  "$channel_auth_secret" "$finalized_at" "$coordinator_storage_json" \
+  "$local_party_storage_json" "$remote_party_storage_json" <<'PY'
 import hashlib, json, os, pathlib, sys
 def bound(raw):
     path = pathlib.Path(raw)
@@ -1263,12 +1288,14 @@ actual_deletions = {
 if actual_deletions != expected_deletions:
     raise SystemExit("cleanup fragments do not cover the exact required deletion set")
 persistent_ledgers = []
-for host_role, fragment in zip(("party0-host", "party1-host"), fragments[:2]):
+expected_party_storage = [json.loads(value) for value in sys.argv[16:18]]
+for index, (host_role, fragment) in enumerate(zip(("party0-host", "party1-host"), fragments[:2])):
     entry = fragment.get("persistent_ledger")
     if (
         not isinstance(entry, dict)
-        or set(entry) != {"identity", "path", "status"}
+        or set(entry) != {"identity", "path", "status", "storage"}
         or entry["status"] != "retained-owner-only-distinct-mount"
+        or entry.get("storage") != expected_party_storage[index]
     ):
         raise SystemExit("party cleanup fragment lacks retained persistent ledger evidence")
     persistent_ledgers.append({"host_role": host_role, **entry})
@@ -1279,6 +1306,7 @@ persistent_ledgers.append(
         "path": sys.argv[12],
         "status": "retained-owner-only-distinct-mount",
         "claim_sha256": sys.argv[11],
+        "storage": json.loads(sys.argv[15]),
     }
 )
 document = {
@@ -1397,6 +1425,8 @@ if (
     or len(receipt.get("persistent_ledgers", [])) != 3
     or any(
         entry.get("status") != "retained-owner-only-distinct-mount"
+        or entry.get("storage", {}).get("schema") != "ringlpn-ledger-storage-v1"
+        or entry.get("storage", {}).get("policy") != "block-backed-ext4-xfs-v1"
         for entry in receipt.get("persistent_ledgers", [])
     )
 ):

@@ -14,6 +14,7 @@ import sys
 import tempfile
 from typing import Any
 from retained_public_evidence import scan_private_artifacts
+from peer_private_execution import ledger_storage_evidence
 
 GUIDANCE = (
     "two-host-publication must run on each host's native rootless Podman; "
@@ -606,6 +607,8 @@ def main() -> int:
         options = run(["findmnt", "-n", "-o", "OPTIONS", "--target", str(path)], capture=True).stdout.strip().split(",")
         if label.endswith("ledger") and "rw" not in options:
             fail(f"{label} mount must be read-write")
+        if label.endswith("ledger"):
+            ledger_storage_evidence(path)
     mount_sources = [
         run(["findmnt", "-n", "-o", "SOURCE", "--target", str(path)], capture=True).stdout.strip()
         for path in (evidence_resolved, ledger_resolved,

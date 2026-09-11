@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-04
 **Status:** internal/advisor deployment contract; not a concrete-security or publication claim
-**Launcher binding:** updated 2026-08-14 for AEAD-only OpenSSH transport, `ringlpn-authenticated-launch-result-v2`, and `ringlpn-two-host-final-commit-v2`
+**Launcher binding:** updated 2026-09-11 for explicit no-agent SSH, checker ownership handback, physical host/GPU binding, and conservative block-backed ledger admission. Genuine distinct-host execution remains unperformed.
 
 ## Boundary
 
@@ -24,7 +24,7 @@ master creates two independent remote forwards:
 
 These streams carry the complete SCI `PartyChannel`: the mutual HMAC
 authentication exchange, IKNP base/extended OT, Gilboa OLE and Boolean-triple
-traffic, preflight, public-polynomial exchange, openings, conversion,
+traffic, preflight, jointly exchanged public-vector seeds, openings, conversion,
 publication agreement, and application messages. The OpenSSH transport is
 restricted to ChaCha20-Poly1305 or AES-GCM and rekeys after at most 1 GiB or
 one hour, so all post-handshake bytes receive tunnel confidentiality and
@@ -36,7 +36,7 @@ non-loopback connection is rejected before preflight or OT. This leaves a
 denial-of-service surface, not an unauthenticated protocol fallback.
 
 OpenSSH uses no user config (`-F /dev/null`), `BatchMode=yes`,
-`IdentitiesOnly=yes`, an explicit private identity, an explicit
+`IdentitiesOnly=yes`, `IdentityAgent=none`, an explicit private identity, an explicit
 `UserKnownHostsFile`, `StrictHostKeyChecking=yes`, no global known-hosts file,
 no password/keyboard-interactive/hostbased/GSSAPI authentication, no agent or
 X11 forwarding, no proxy command, no compression, AEAD-only ciphers, pinned
@@ -98,6 +98,22 @@ that root. Both private containers separately claim the same invocation
 namespace inside their non-shared private roots; coordinator locks never enter
 the party-claim scan.
 
+The coordinator ledger and both party ledgers must each be a pre-existing
+owner-only read-write **mount boundary on inspectable block-backed ext4 or xfs**.
+`peer_private_execution.py ledger-storage --ledger-root ABS` is the shared
+admission policy: it binds filesystem UUID, mount source/target, and device
+identity, traverses partition parents and device-mapper/MD backing devices,
+and rejects unknown, virtual-only, loop, RAM, and tmpfs backing. A lexical path
+outside `/tmp`, owner/mode checks, and a successful `fsync` alone never prove
+persistence. Btrfs, ZFS, network filesystems, and other storage are conservatively
+unsupported until reviewed, not silently treated as unsafe-equivalent ext4.
+This policy is **not durability attestation**. The operator still guarantees
+that devices honor persistence barriers and that ledger state is never rolled
+back, deleted, cloned, or hosted on hidden volatile backing. Storage identity
+is captured before each claim, remeasured during cleanup/finalization, and
+bound into all three deletion-receipt ledger entries; consumed claims survive
+failures. A future hardware/runtime admission broadening requires review.
+
 All paths must be normalized absolute, distinct and non-nested as applicable.
 Output, private, export, and checker roots must be fresh. The ledger root must
 already exist, be writable by and owned by the coordinator, and deny all
@@ -126,10 +142,37 @@ remote SHA-256 digests must match.
 The coordinator first atomically publishes
 `checker-stage/PREPARED.manifest` with schema
 `ringlpn-two-host-prepare-v1`. It binds the authenticated channel, ports,
-public parameters, pinned runtime and executor identities, three distinct
-machine identities, zero party exit codes, and the party record/isolation
-manifests. The distinct-UID, distinct-GPU, networkless checker must then emit
-its bound successful isolation manifest.
+public parameters, pinned runtime and executor identities, host and process
+identities, zero party exit codes, and the party record/isolation manifests.
+Party 0 and the checker share the coordinator host; party 1 is remote.
+The three GPU bindings combine stable host identity, requested CDI selector,
+GPU UUID, and normalized PCI bus identity. Equal ordinal strings on different
+hosts are valid; equal UUID or PCI identities on the same host reject even
+through different aliases. These checks bind observations, not a proof that
+two machine-id strings necessarily represent physically distinct hosts.
+The distinct-UID, distinct-physical-GPU, networkless checker must emit its
+bound successful isolation manifest.
+
+Checker mounts use rootless `U=true` ownership changes. After the exact
+label-bound container has stopped, the executor restores both input-stage
+trees and output tree to the coordinator via `podman unshare`, hardens their
+private modes, and verifies ownership **before** coordinator manifest reads
+or finalization. Abort stops/removes the exact labeled container first and
+reclaims all surviving stage/output roots, including partial-create failure;
+ordinary stage deletion must not be attempted while a subordinate UID owns
+an unreadable tree.
+
+September 11 controls reproduce the old ownership failure and the corrected
+handback using real Linux UID/mode transitions in a networkless container
+with a narrow simulated Podman CLI. An actual tmpfs mount that met the old
+lexical/owner/mount/fsync checks is rejected by the new policy. Native OpenSSH
+client/server/agent controls show that matching ambient-agent authentication
+previously succeeded despite `IdentitiesOnly=yes`; `IdentityAgent=none`
+rejects it while an explicit unencrypted identity still succeeds. Synthetic
+host/GPU boundary regressions exercise remote ordinal reuse and local aliases.
+These are focused controls, not a rootless-Podman success, a positive durable
+storage test, or an authenticated two-host benchmark. This host lacks native
+Podman/user-mapping helpers and an authorized remote identity/host.
 
 After checker success, the launcher deletes both parties' private/export roots,
 purges checker records and duplicate outputs while retaining only the checker
