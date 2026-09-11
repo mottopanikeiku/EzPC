@@ -456,7 +456,8 @@ def read_link_commands(build: pathlib.Path, target: str) -> list[list[str]]:
     return commands
 
 
-def generate(args: argparse.Namespace) -> None:
+def collect_manifest(args: argparse.Namespace, *,
+                     bind_artifacts: bool = True) -> dict[str, Any]:
     repo = args.repo_root.resolve(strict=True)
     ringlpn = args.ringlpn_root.resolve(strict=True)
     build = args.cmake_build.resolve(strict=True)
@@ -667,7 +668,7 @@ def generate(args: argparse.Namespace) -> None:
                 f"artifact has no command or dependency-group closure: {name}"
             )
         artifacts[name] = {
-            **file_binding(path),
+            **(file_binding(path) if bind_artifacts else {}),
             "archives": artifact_archives[name],
             "commands": artifact_commands[name],
             "dependency_groups": artifact_dependency_groups[name],
@@ -743,6 +744,11 @@ def generate(args: argparse.Namespace) -> None:
         "schema": SCHEMA,
         "tools": tools,
     }
+    return document
+
+
+def generate(args: argparse.Namespace) -> None:
+    document = collect_manifest(args)
     document["provenance_digest"] = self_digest(document, "provenance_digest")
     output = args.output.absolute()
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -256,7 +256,9 @@ class GateRunner:
         write_private(paths[1], secret)
         return paths
 
-    def generate_fixture(self, kind: str) -> Fixture:
+    def generate_fixture(
+            self, kind: str, fc_shape: tuple[int, int, int] = (2, 3, 2),
+    ) -> Fixture:
         case = self.work / f"fixture-{kind}"
         private_directory(case)
         party_dirs = (case / "p0", case / "p1")
@@ -279,10 +281,11 @@ class GateRunner:
         ]
         if kind == "fc":
             binary = self.fc_preprocess
-            common += ["--rows", "2", "--inner", "3", "--cols", "2"]
+            rows, inner, cols = fc_shape
+            common += ["--rows", str(rows), "--inner", str(inner), "--cols", str(cols)]
             suffix = "fc"
             model = "RingLPN-FC"
-            shape_args = ["--rows", "2", "--inner", "3", "--cols", "2"]
+            shape_args = ["--rows", str(rows), "--inner", str(inner), "--cols", str(cols)]
         elif kind == "conv2d":
             binary = self.conv_preprocess
             common += [
@@ -325,16 +328,21 @@ class GateRunner:
                               for path in states)
 
         if kind == "fc":
-            clear_input = [3, 5, 7, 11, 13, 17]
-            clear_weight = [19, 23, 29, 31, 37, 41]
-            public_bias = [181, 191]
+            if fc_shape == (2, 3, 2):
+                clear_input = [3, 5, 7, 11, 13, 17]
+                clear_weight = [19, 23, 29, 31, 37, 41]
+                public_bias = [181, 191]
+            else:
+                clear_input = [3 + index % 7 for index in range(rows * inner)]
+                clear_weight = [19 + index % 11 for index in range(inner * cols)]
+                public_bias = [181 + col for col in range(cols)]
             expected = []
-            for row in range(2):
-                for col in range(2):
+            for row in range(rows):
+                for col in range(cols):
                     value = public_bias[col]
-                    for index in range(3):
-                        value += (clear_input[row * 3 + index] *
-                                  clear_weight[index * 2 + col])
+                    for index in range(inner):
+                        value += (clear_input[row * inner + index] *
+                                  clear_weight[index * cols + col])
                     expected.append(value % MODULUS)
         else:
             clear_input = list(range(1, 17))
@@ -594,7 +602,20 @@ class GateRunner:
             outputs,
         )
 
-    def run(self) -> None:
+    def run(self, *, large_fc_only: bool = False) -> None:
+        if large_fc_only:
+            # Regress both the old 10 MiB limit and SigmaPeer's strict
+            # memSz < commBufSize guard when transfer bytes divide by five.
+            for label, shape in (("large", (1, 2048, 1024)),
+                                 ("exact-unit", (1, 205, 5))):
+                case_work = self.work / label
+                private_directory(case_work)
+                case = GateRunner(
+                    self.root, case_work, self.p0_gpu, self.p1_gpu,
+                    self.timeout, self.fc_port, self.conv_port)
+                case.run_success(case.generate_fixture("fc", shape))
+            print("ORCA LARGE FC APPLICATION PASS", flush=True)
+            return
         self.run_helper()
         fc = self.generate_fixture("fc")
         conv = self.generate_fixture("conv2d")
@@ -615,6 +636,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--fc-port", type=int, default=28620)
     parser.add_argument("--conv-port", type=int, default=28630)
+    parser.add_argument(
+        "--large-fc-only", action="store_true",
+        help="exercise real FC transfers beyond 10 MiB and at the strict buffer-capacity boundary",
+    )
     return parser.parse_args()
 
 
@@ -646,7 +671,7 @@ def main() -> int:
         GateRunner(
             root, work, args.p0_gpu, args.p1_gpu, args.timeout,
             args.fc_port, args.conv_port,
-        ).run()
+        ).run(large_fc_only=args.large_fc_only)
     finally:
         if not retain:
             shutil.rmtree(work)
