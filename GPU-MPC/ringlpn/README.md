@@ -77,6 +77,24 @@ before held-out warmups. A failed preregistered criterion remains a negative
 result, not a reason to refit on held-outs. This fixed-tuple wall-time model
 does not expose or establish GPU work/transfer attribution.
 
+The September 22 follow-through adds two standard-library-only CPU research
+audits, runnable from `GPU-MPC/` without a GPU:
+
+```bash
+python3 ringlpn/scripts/audit_conversion_simulator.py --mode all --samples 40
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --comparisons-p0 1 --comparisons-p1 1 --budget-bits 128 --check-reduced
+```
+
+The conversion audit compares complete conditional views on exact reduced-domain
+slices, then checks both-party recomputation and ideal-OT wrapper consistency at
+production moduli. This is a logical-coin model, not execution or simulation of
+the native DRBG/SCI transport. The leaf audit pins six source files and checks
+exact rational distances and exhaustive small-domain distributions. Comparison
+counts are explicit hypothetical hybrid counts, not inferred key lifetimes.
+Successful execution is not a passed security budget: the one-comparison-per-limb
+example misses its requested leaf-only target. Neither audit closes human review.
+
 The application is terminal-only. Its caller must supply fresh, single-use
 material: producer freshness is not persistent application-consumer replay
 prevention. Local HMAC establishes endpoints/context; subsequent local TCP
@@ -86,9 +104,10 @@ material and requires fresh source-bound approvals; old/internal receipts are
 not silently carried onto this branch.
 Independent automated protocol review leaves P-KEY and P-CONV open. The
 implemented ideal-leaf map has statistical payload-hiding loss that must be
-charged along with composition/lifetime losses; the corrected local conversion
-inverse is not a complete output-conditioned transcript proof. No reviewed
-concrete-security parameter claim follows from functional checks.
+charged along with composition/lifetime losses. An explicit output-conditioned
+simulator is now proposed at the independent-logical-coin/ideal-OT boundary;
+qualified review and its concrete cryptographic realization remain required.
+No reviewed concrete-security parameter claim follows from functional checks.
 
 Publication mode requires each coordinator/party ledger to be its own
 inspectable block-backed ext4/xfs mount boundary. Tmpfs, RAM, loop, unknown,
