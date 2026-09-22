@@ -61,7 +61,7 @@ which statement is newer and gate-backed, correct all live documents in the
 same slice, and mark superseded material explicitly. Historical checkpoint
 bytes are evidence and must not be edited in place.
 
-## Latest follow-through — 2026-09-11
+## Latest follow-through — 2026-09-22
 
 The user's request to establish review subagents and execute the remaining
 work produced four independent automated reviews and 15 findings. All
@@ -72,19 +72,28 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
 - Verified local commits: `300a324` (terminal capacity/build seals), `dd4276e`
   (checker ownership, storage/physical-GPU/SSH policy), and `69fd8b6`
   (independent-layer statistics and retained prospective experiments).
-- The separate source-only branch `ringlpn/clinical-review-2026-09-10` is now
-  at `4a2e29a1719203e0c67b342b81ee3ba25c436285`, after `5dc7548` and `5409025`.
+- The published source-only ref `ringlpn/clinical-review-2026-09-10` is
+  `4a2e29a1719203e0c67b342b81ee3ba25c436285`, after `5dc7548` and `5409025`.
   Main/source-only builds produce identical application/helper binaries and
   complete provenance; the source-only terminal FC/Conv/API/eight-control
   runtime gate passes. These remain two-checkout checks, not a newly
   authorized independent clean-clone release. All new commits use the sole
   Git author/committer `mottopanikeiku`.
-- **Not pushed.** The fresh noninteractive Git credential-helper query
-  returns 128 with no credentials; no host authentication is available.
-  Authenticate Git on the host, then push only the explicit source branch
-  using the command below. Never push internal `master` or copy its ancestry,
-  current manuscript, historical private checkpoint, or new internal
-  measurement/approval inputs onto that branch.
+- **Pushed successfully on September 22.** After the user confirmed host Git
+  authentication, a direct interactive push published reviewed commit `4a2e29a`;
+  `git ls-remote` independently returned that full commit for the source ref.
+  The earlier noninteractive credential-helper failure did not establish
+  that an interactive push was unavailable. Never push internal `master` or
+  copy its ancestry, current manuscript, historical private checkpoint, or
+  new internal measurement/approval inputs onto the source branch.
+- The two new CPU audit scripts and source-only README are committed locally
+  as `afc93c6fb94af01239f51b06d5c29a40c6fe7d84`. Both audits pass from that
+  checkout. Its additional push is pending: timed attempts and a supervised
+  push stall in the VS Code `askpass.sh` child. The process tree was stopped;
+  a fresh remote query still returns `4a2e29a`. This does not undo the first
+  successful push or prove that the user's interactive Git is unauthenticated.
+  Complete host Git prompt handling, then push that exact commit to the
+  explicit source ref. No token or private key belongs in chat.
 - The old 10 MiB terminal buffer limit and an exact-capacity strict-slack
   boundary both fail before correction. The retained opt-in gate now passes
   real 16 MiB and 8,200-byte transfers with fresh preprocessing and clear
@@ -115,12 +124,14 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
   0.220%, but AlexNet's median is outside its sealed interval. No retuning,
   exclusions, or interval widening. GPU resource/transfer attribution remains
   absent and is not claimed.
-- P-KEY must charge the actual biased ideal-leaf map plus lifetime and
-  AES/DPF composition losses. P-CONV is reopened after correcting the local
-  opening-first complement-branch inverse; the complete state-consistent
-  transcript proof remains open. The live per-limb regular inventory is
-  5,632 chosen-message 128-bit string OTs across both directions, not
-  2,816 bit-COTs.
+- P-KEY now has source-pinned exact two-prime ideal-leaf arithmetic and finite
+  comparison diagnostics, with five exhaustive small-domain checks. It still
+  needs a justified live-key/lifetime reduction. P-CONV now has a complete
+  conditional-view simulator candidate at the independent-logical-coin/ideal-OT
+  boundary: 72 exact conditional-slice identities and 1,120 two-party dependency
+  cases pass. The proof and concrete cryptographic lifting still require
+  independent qualified review. The per-limb inventory remains 5,632
+  chosen-message 128-bit string OTs across both directions, not 2,816 bit-COTs.
 - The current internal v2.17 PDF is 36 pages, SHA-256
   `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`.
   Two pinned two-pass builds agree, warning/font checks pass, and all pages
@@ -130,9 +141,11 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
 
 Remaining external prerequisites: qualified independent human proof/parameter
 review; ownership/credit/circulation rulings; an executable matched dealerless
-baseline at those reviewed parameters; authorized distinct-host identities and
-native rootless runtime; and Git authentication. No local experiment or model
-review can manufacture these approvals.
+baseline at reviewed parameters; authorized distinct-host identities, native
+rootless runtime, dedicated durable mounts, and source/runtime release inputs.
+Git source publication is complete. No local experiment or automated review
+can manufacture the remaining approvals. Exact prerequisite mapping and the
+new audit execution evidence are in `technical_followthrough_2026_09_22.json`.
 
 ## September 10 review and source-boundary history
 
@@ -172,10 +185,10 @@ not a request to repeat completed work without a relevant change.
   internal checkpoint ancestry, manuscript, historical measurements, binary
   approvals, and private records. Its own README gives the source-only
   execution contract; do not copy internal release inputs into it.
-- The user authorized this source publication, but no push succeeded:
-  HTTPS askpass stalled, noninteractive Git reported a missing username,
-  and no token, SSH agent, or SSH private key was available. Authenticate
-  the host's Git credential helper, then push only this branch:
+- At the September 10 checkpoint, no push had succeeded: HTTPS askpass
+  stalled and noninteractive Git reported a missing username. This historical
+  blocker is superseded by the successful September 22 direct push above.
+  For future authorized source-only updates, push only this explicit branch:
 
   ```bash
   git push origin \

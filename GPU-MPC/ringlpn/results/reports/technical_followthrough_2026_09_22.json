@@ -1,0 +1,1452 @@
+{
+  "schema": "ringlpn-technical-followthrough-v1",
+  "date": "2026-09-22",
+  "classification": "internal/advisor",
+  "public_source_publication": {
+    "remote": "https://github.com/mottopanikeiku/EzPC.git",
+    "ref": "refs/heads/ringlpn/clinical-review-2026-09-10",
+    "head": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
+    "push_returncode": 0,
+    "remote_confirmation": "4a2e29a1719203e0c67b342b81ee3ba25c436285 refs/heads/ringlpn/clinical-review-2026-09-10",
+    "observed_at_utc": "2026-09-22T01:29:49.838409+00:00",
+    "internal_master_pushed": false
+  },
+  "public_source_followthrough": {
+    "branch": "ringlpn/clinical-review-2026-09-10",
+    "commit": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+    "pushed": false,
+    "last_confirmed_remote_commit": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
+    "checked_at_utc": "2026-09-22T01:54:53.702511+00:00",
+    "explicit_export_paths": [
+      "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py",
+      "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py",
+      "GPU-MPC/ringlpn/README.md"
+    ],
+    "source_sha256": {
+      "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py": "52eb32e774d755d256840ad4498aec072e750cf4601bb53eade14ed5412a3028",
+      "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py": "c140fecb539a6f00a6a410378fca4d5ccdb45a6f943ed2b7e3f6a555e323c9a0"
+    },
+    "attempts": [
+      {
+        "transport": "interactive shell / VS Code askpass",
+        "outcome": "timed out after 120 seconds"
+      },
+      {
+        "transport": "shell / VS Code askpass, terminal prompts disabled",
+        "outcome": "timed out after 90 seconds"
+      },
+      {
+        "transport": "direct subprocess without shell askpass",
+        "returncode": 128,
+        "stderr": "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+      },
+      {
+        "transport": "supervised VS Code askpass",
+        "outcome": "still waiting after 6 minutes; stopped process tree",
+        "observed_process_chain": "git -> git -> git-remote-http -> askpass.sh -> node MainThread"
+      }
+    ],
+    "next_command": "git push origin afc93c6fb94af01239f51b06d5c29a40c6fe7d84:refs/heads/ringlpn/clinical-review-2026-09-10",
+    "scope": "The original source publication succeeded. Follow-through authentication-helper completion is a separate external prerequisite; do not infer that user interactive Git is unauthenticated.",
+    "internal_master_pushed": false
+  },
+  "conversion": {
+    "source_sha256": {
+      "GPU-MPC/ringlpn/src/secure_convert.cpp": "94e4686c3c1834b1b7d7fa2798c4896065391008ca06195a777b3e7c8af435c8",
+      "GPU-MPC/ringlpn/src/secure_convert.h": "311428e4fb64bb2e9149554faee2ed0c833b4a3688179d6bcb016080bba52247",
+      "GPU-MPC/ringlpn/src/two_party_ot.h": "bafdac15667e61033d90777a6c075e7b81145ad920fac22d6e1de5852dfb5fd4"
+    },
+    "executed_audit": {
+      "command": [
+        "python3",
+        "ringlpn/scripts/audit_conversion_simulator.py",
+        "--mode",
+        "all",
+        "--samples",
+        "40"
+      ],
+      "started_at_utc": "2026-09-22T01:32:15.128539+00:00",
+      "finished_at_utc": "2026-09-22T01:32:22.852004+00:00",
+      "returncode": 0,
+      "stdout": "{\n  \"exact\": {\n    \"distribution_equalities\": 72,\n    \"local_slices\": 2,\n    \"real_worlds_enumerated\": 294912,\n    \"scope\": \"complete-view conditional slices, Q=3 ell=3 bw=1\",\n    \"views_per_condition\": 4096\n  },\n  \"model\": \"independent ideal logical coins; no DRBG-state or concrete-OT simulation\",\n  \"qualified_human_review\": \"required; P-CONV not approved\",\n  \"sampled\": {\n    \"cases\": 1120,\n    \"h_branches\": [\n      0,\n      1\n    ],\n    \"production_moduli\": [\n      \"4611686018326724609\",\n      \"21267647931552827693776735476788494337\"\n    ],\n    \"roles\": [\n      0,\n      1\n    ],\n    \"scope\": \"two-party recomputation and ideal-OT wrapper coupling, sampled not proof\"\n  }\n}\n",
+      "stderr": "",
+      "script_sha256": "52eb32e774d755d256840ad4498aec072e750cf4601bb53eade14ed5412a3028",
+      "result": {
+        "exact": {
+          "distribution_equalities": 72,
+          "local_slices": 2,
+          "real_worlds_enumerated": 294912,
+          "scope": "complete-view conditional slices, Q=3 ell=3 bw=1",
+          "views_per_condition": 4096
+        },
+        "model": "independent ideal logical coins; no DRBG-state or concrete-OT simulation",
+        "qualified_human_review": "required; P-CONV not approved",
+        "sampled": {
+          "cases": 1120,
+          "h_branches": [
+            0,
+            1
+          ],
+          "production_moduli": [
+            "4611686018326724609",
+            "21267647931552827693776735476788494337"
+          ],
+          "roles": [
+            0,
+            1
+          ],
+          "scope": "two-party recomputation and ideal-OT wrapper coupling, sampled not proof"
+        }
+      },
+      "negative_controls": {
+        "legacy_h1_inverse_output": 7,
+        "prescribed_output": 0,
+        "corrected_h1_inverse_output": 0,
+        "selected_OT_message_corruption_rejected": true,
+        "scope": "in-memory mathematical model controls, not native cryptographic transport"
+      }
+    },
+    "boundary_mode": {
+      "model": "independent ideal logical coins; no DRBG-state or concrete-OT simulation",
+      "qualified_human_review": "required; P-CONV not approved",
+      "sampled": {
+        "cases": 140,
+        "h_branches": [
+          0,
+          1
+        ],
+        "production_moduli": [
+          "4611686018326724609",
+          "21267647931552827693776735476788494337"
+        ],
+        "roles": [
+          0,
+          1
+        ],
+        "scope": "two-party recomputation and ideal-OT wrapper coupling, sampled not proof"
+      }
+    },
+    "status": "explicit ideal-correlation conditional-view candidate; independent qualified approval and concrete cryptographic lifting remain open"
+  },
+  "leaf_accounting": {
+    "initial_main_observations": [
+      {
+        "command": [
+          "python3",
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "--comparisons-p0",
+          "1",
+          "--comparisons-p1",
+          "1",
+          "--budget-bits",
+          "128",
+          "--check-reduced"
+        ],
+        "started_at_utc": "2026-09-22T01:34:43.495214+00:00",
+        "finished_at_utc": "2026-09-22T01:34:43.539737+00:00",
+        "returncode": 0,
+        "stderr": "",
+        "result": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "a reviewed mapping from runtime lifetime to comparison counts"
+          ],
+          "budget_bits_not_security_level": 128,
+          "comparison_counts": {
+            "p0": 1,
+            "p1": 1
+          },
+          "comparison_semantics": "Each count is a hypothetical conditional-law replacement/comparison in one specified hybrid, aggregated over its declared lifetime. Counts are NOT derived from trees, keys, leaves, parties, or execution counters. Two composition rows are alternative experiments, not additive charges.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "fraction": "127209100163640224677092450354908443054137761140310021/113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "log2_approx_not_security_bits": -69.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "fraction": "127209100163640224677092450354908443054137761140310021/113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "log2_approx_not_security_bits": -69.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "10633823966279326983230456482242756608",
+                "fraction": "11962686292099073/10633823966279326983230456482242756608",
+                "log2_approx_not_security_bits": -69.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "10633823966279326983230456482242756608",
+                "fraction": "11962686292099073/10633823966279326983230456482242756608",
+                "log2_approx_not_security_bits": -69.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "340282366920938463463374607431768211456",
+            "fraction": "1/340282366920938463463374607431768211456",
+            "log2_approx_not_security_bits": -128.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": [
+            {
+              "all_shifts_checked": 61,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "8192",
+                "fraction": "9/8192",
+                "log2_approx_not_security_bits": -9.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 61,
+              "single_law_tv": {
+                "denominator": "1998848",
+                "fraction": "2841/1998848",
+                "log2_approx_not_security_bits": -9.458554221373344,
+                "numerator": "2841"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 127,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "32768",
+                "fraction": "1/32768",
+                "log2_approx_not_security_bits": -15.0,
+                "numerator": "1"
+              },
+              "interval_event_gap": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "modulus": 127,
+              "single_law_tv": {
+                "denominator": "520192",
+                "fraction": "31/520192",
+                "log2_approx_not_security_bits": -14.034488376385292,
+                "numerator": "31"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 1024,
+              "half_bits": 5,
+              "half_modulus_shift_tv": {
+                "denominator": "1024",
+                "fraction": "21/1024",
+                "log2_approx_not_security_bits": -5.607682577221239,
+                "numerator": "21"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "2048",
+                "fraction": "11/2048",
+                "log2_approx_not_security_bits": -7.540568381362703,
+                "numerator": "11"
+              },
+              "interval_event_gap": {
+                "denominator": "1024",
+                "fraction": "11/1024",
+                "log2_approx_not_security_bits": -6.540568381362703,
+                "numerator": "11"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "6656",
+                "fraction": "69/6656",
+                "log2_approx_not_security_bits": -6.5919152613629235,
+                "numerator": "69"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "512",
+                "fraction": "9/512",
+                "log2_approx_not_security_bits": -5.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "416",
+                "fraction": "9/416",
+                "log2_approx_not_security_bits": -5.5305147166987805,
+                "numerator": "9"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 16,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "interval_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "modulus": 16,
+              "single_law_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            }
+          ],
+          "schema": "ringlpn-ideal-leaf-loss-v1",
+          "script_sha256": "7fd6f36159a54b2750c6c167f3308c6f520b3db870e0ad2ba2bd6a34abf01676",
+          "source_sha256": {
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      },
+      {
+        "command": [
+          "python3",
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "--comparisons-p0",
+          "1000000",
+          "--comparisons-p1",
+          "1000000",
+          "--budget-bits",
+          "64"
+        ],
+        "started_at_utc": "2026-09-22T01:34:43.539869+00:00",
+        "finished_at_utc": "2026-09-22T01:34:43.572140+00:00",
+        "returncode": 0,
+        "stderr": "",
+        "result": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "a reviewed mapping from runtime lifetime to comparison counts"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 1000000,
+            "p1": 1000000
+          },
+          "comparison_semantics": "Each count is a hypothetical conditional-law replacement/comparison in one specified hybrid, aggregated over its declared lifetime. Counts are NOT derived from trees, keys, leaves, parties, or execution counters. Two composition rows are alternative experiments, not additive charges.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "fraction": "1987642190056878510579569536795444422720902517817344078125/1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "log2_approx_not_security_bits": -49.659040521117475,
+                "numerator": "1987642190056878510579569536795444422720902517817344078125"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "fraction": "1987642190056878510579569536795444422720902517817344078125/1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "log2_approx_not_security_bits": -49.659040521117475,
+                "numerator": "1987642190056878510579569536795444422720902517817344078125"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "186916973314048015625/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -49.65904052084136,
+                "numerator": "186916973314048015625"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "186916973314048015625/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -49.65904052084136,
+                "numerator": "186916973314048015625"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": null,
+          "schema": "ringlpn-ideal-leaf-loss-v1",
+          "script_sha256": "7fd6f36159a54b2750c6c167f3308c6f520b3db870e0ad2ba2bd6a34abf01676",
+          "source_sha256": {
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      }
+    ],
+    "final_source_observations": [
+      {
+        "command": [
+          "python3",
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "--comparisons-p0",
+          "1",
+          "--comparisons-p1",
+          "1",
+          "--budget-bits",
+          "128",
+          "--check-reduced"
+        ],
+        "returncode": 0,
+        "started_at_utc": "2026-09-22T01:37:11.504402+00:00",
+        "stderr": "",
+        "result": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "a reviewed mapping from runtime lifetime to comparison counts"
+          ],
+          "budget_bits_not_security_level": 128,
+          "comparison_counts": {
+            "p0": 1,
+            "p1": 1
+          },
+          "comparison_semantics": "Each count is a hypothetical conditional-law replacement/comparison in one specified hybrid, aggregated over its declared lifetime. Counts are NOT derived from trees, keys, leaves, parties, or execution counters. Two composition rows are alternative experiments, not additive charges.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "fraction": "127209100163640224677092450354908443054137761140310021/113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "log2_approx_not_security_bits": -69.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "fraction": "127209100163640224677092450354908443054137761140310021/113078212140468707331139833979510267364814108784720883673820190026338664448",
+                "log2_approx_not_security_bits": -69.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "10633823966279326983230456482242756608",
+                "fraction": "11962686292099073/10633823966279326983230456482242756608",
+                "log2_approx_not_security_bits": -69.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "10633823966279326983230456482242756608",
+                "fraction": "11962686292099073/10633823966279326983230456482242756608",
+                "log2_approx_not_security_bits": -69.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "340282366920938463463374607431768211456",
+            "fraction": "1/340282366920938463463374607431768211456",
+            "log2_approx_not_security_bits": -128.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": [
+            {
+              "all_shifts_checked": 61,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "8192",
+                "fraction": "9/8192",
+                "log2_approx_not_security_bits": -9.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 61,
+              "single_law_tv": {
+                "denominator": "1998848",
+                "fraction": "2841/1998848",
+                "log2_approx_not_security_bits": -9.458554221373344,
+                "numerator": "2841"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 127,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "32768",
+                "fraction": "1/32768",
+                "log2_approx_not_security_bits": -15.0,
+                "numerator": "1"
+              },
+              "interval_event_gap": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "modulus": 127,
+              "single_law_tv": {
+                "denominator": "520192",
+                "fraction": "31/520192",
+                "log2_approx_not_security_bits": -14.034488376385292,
+                "numerator": "31"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 1024,
+              "half_bits": 5,
+              "half_modulus_shift_tv": {
+                "denominator": "1024",
+                "fraction": "21/1024",
+                "log2_approx_not_security_bits": -5.607682577221239,
+                "numerator": "21"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "2048",
+                "fraction": "11/2048",
+                "log2_approx_not_security_bits": -7.540568381362703,
+                "numerator": "11"
+              },
+              "interval_event_gap": {
+                "denominator": "1024",
+                "fraction": "11/1024",
+                "log2_approx_not_security_bits": -6.540568381362703,
+                "numerator": "11"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "6656",
+                "fraction": "69/6656",
+                "log2_approx_not_security_bits": -6.5919152613629235,
+                "numerator": "69"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "512",
+                "fraction": "9/512",
+                "log2_approx_not_security_bits": -5.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "416",
+                "fraction": "9/416",
+                "log2_approx_not_security_bits": -5.5305147166987805,
+                "numerator": "9"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 16,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "interval_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "modulus": 16,
+              "single_law_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            }
+          ],
+          "schema": "ringlpn-ideal-leaf-loss-v1",
+          "script_sha256": "c140fecb539a6f00a6a410378fca4d5ccdb45a6f943ed2b7e3f6a555e323c9a0",
+          "source_sha256": {
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      },
+      {
+        "command": [
+          "python3",
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "--comparisons-p0",
+          "1000000",
+          "--comparisons-p1",
+          "1000000",
+          "--budget-bits",
+          "64"
+        ],
+        "returncode": 0,
+        "started_at_utc": "2026-09-22T01:37:11.543339+00:00",
+        "stderr": "",
+        "result": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "a reviewed mapping from runtime lifetime to comparison counts"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 1000000,
+            "p1": 1000000
+          },
+          "comparison_semantics": "Each count is a hypothetical conditional-law replacement/comparison in one specified hybrid, aggregated over its declared lifetime. Counts are NOT derived from trees, keys, leaves, parties, or execution counters. Two composition rows are alternative experiments, not additive charges.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "fraction": "1987642190056878510579569536795444422720902517817344078125/1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "log2_approx_not_security_bits": -49.659040521117475,
+                "numerator": "1987642190056878510579569536795444422720902517817344078125"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "fraction": "1987642190056878510579569536795444422720902517817344078125/1766847064694823552049059905929847927575220449761263807403440469161541632",
+                "log2_approx_not_security_bits": -49.659040521117475,
+                "numerator": "1987642190056878510579569536795444422720902517817344078125"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "186916973314048015625/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -49.65904052084136,
+                "numerator": "186916973314048015625"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "186916973314048015625/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -49.65904052084136,
+                "numerator": "186916973314048015625"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": null,
+          "schema": "ringlpn-ideal-leaf-loss-v1",
+          "script_sha256": "c140fecb539a6f00a6a410378fca4d5ccdb45a6f943ed2b7e3f6a555e323c9a0",
+          "source_sha256": {
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      }
+    ],
+    "independent_rational_derivation_matches": true,
+    "source_pin_mutation_control": {
+      "mutation": "newline appended to disposable copied DPF source",
+      "returncode": 2,
+      "stdout_empty": true,
+      "stderr": "leaf diagnostic rejected: source pin mismatch: src/two_party_dpf_protocol.h; review before repinning\n",
+      "fixture_removed": true,
+      "runtime_sources_modified": false
+    },
+    "boundary_controls": {
+      "zero_counts_exactly_zero": true,
+      "negative_comparison_count_rejected": true,
+      "negative_count_stderr": "usage: audit_dpf_leaf_loss.py [-h] --comparisons-p0 COMPARISONS_P0\n                              --comparisons-p1 COMPARISONS_P1 --budget-bits\n                              BUDGET_BITS [--check-reduced]\naudit_dpf_leaf_loss.py: error: argument --comparisons-p0: must be nonnegative\n"
+    },
+    "status": "exact ideal-law arithmetic only; hypothetical counts do not establish live-key lifetime or P-KEY certification"
+  },
+  "source_only_checkout_execution": {
+    "conversion": {
+      "command": [
+        "python3",
+        "ringlpn/scripts/audit_conversion_simulator.py",
+        "--mode",
+        "all",
+        "--samples",
+        "40"
+      ],
+      "returncode": 0,
+      "started_at_utc": "2026-09-22T01:37:03.859664+00:00",
+      "stderr": "",
+      "result": {
+        "exact": {
+          "distribution_equalities": 72,
+          "local_slices": 2,
+          "real_worlds_enumerated": 294912,
+          "scope": "complete-view conditional slices, Q=3 ell=3 bw=1",
+          "views_per_condition": 4096
+        },
+        "model": "independent ideal logical coins; no DRBG-state or concrete-OT simulation",
+        "qualified_human_review": "required; P-CONV not approved",
+        "sampled": {
+          "cases": 1120,
+          "h_branches": [
+            0,
+            1
+          ],
+          "production_moduli": [
+            "4611686018326724609",
+            "21267647931552827693776735476788494337"
+          ],
+          "roles": [
+            0,
+            1
+          ],
+          "scope": "two-party recomputation and ideal-OT wrapper coupling, sampled not proof"
+        }
+      }
+    },
+    "audit_bytes_match_main": true,
+    "private_input_or_gpu_required": false
+  },
+  "baseline_prerequisites": {
+    "status": "NO-GO preserved; no matched baseline executed",
+    "binding_decision": "GPU-MPC/ringlpn/results/reports/regular_dmpf_design_no_go_2026_08_06.md",
+    "mismatch_matrix": [
+      {
+        "dimension": "parameters",
+        "existing": "p0 only; compile-time (1048576,4,16); one report-path argument",
+        "needed": "accepted common tuple, both deployed primes, runtime parameter contract"
+      },
+      {
+        "dimension": "input law",
+        "existing": "deterministic deliberate-collision fixture and deterministic PRNGs",
+        "needed": "fresh party-private regular factors and bound public-vector scope"
+      },
+      {
+        "dimension": "function and layout",
+        "existing": "native-folded sparse-product capture before final Ring-OLE output",
+        "needed": "raw arity strata and party-local X/Z slot relation with differential proof"
+      },
+      {
+        "dimension": "process and setup",
+        "existing": "live genBaseCors; both parties in one process through LocalAsyncSocket",
+        "needed": "common live two-process setup, transport/context authentication and freshness"
+      },
+      {
+        "dimension": "downstream consumer",
+        "existing": "JSON metrics and full-domain CPU reference only",
+        "needed": "reuse existing CRT lift, secure_convert_batch, A/B/C records and unchanged Orca checker"
+      },
+      {
+        "dimension": "security contract",
+        "existing": "unreviewed feasibility; support-dependent Reverse-Cuckoo descriptors",
+        "needed": "approved leakage/placement/rank construction and common composed security tuple; existing NO-GO must be explicitly resolved"
+      },
+      {
+        "dimension": "retained executable",
+        "existing": "dated reports retained; named /tmp checkouts contain skeletons but no runnable source/binary closure",
+        "needed": "fresh licensed pinned source acquisition if the route is approved"
+      }
+    ],
+    "current_cpu_workload_plan": {
+      "command": [
+        "ringlpn/bin/test_two_party_fc_preprocess",
+        "--plan",
+        "--qbits",
+        "128",
+        "--bw",
+        "32",
+        "--rows",
+        "100",
+        "--inner",
+        "64",
+        "--cols",
+        "10",
+        "--ole-n",
+        "8192",
+        "--ole-c",
+        "2",
+        "--ole-t",
+        "8",
+        "--noise",
+        "regular"
+      ],
+      "returncode": 0,
+      "stdout": "fc,128,32,6400,640,1000,64000,9,7424,768,0,0\n",
+      "stderr": "",
+      "binary_sha256": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283",
+      "scope": "public CPU-only planning dispatch; exits before party/checker or GPU initialization; not a new benchmark"
+    },
+    "smallest_model_scale_contract": {
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "qbits": 128,
+      "bw": 32,
+      "ring_tuple": [
+        8192,
+        2,
+        8
+      ],
+      "cross_terms": 64000,
+      "ring_batches": 9,
+      "application_slots": 7424,
+      "bootstrap_slots": 768,
+      "ring_instances_per_party": 36,
+      "raw_groups_per_instance": 60,
+      "point_terms_per_instance": 256,
+      "payload_bytes_per_party": 64320,
+      "consumer": "untruncated GPUMatmulKey A|B|C and unchanged gpuMatmulBeaver"
+    },
+    "engineering_boundary": "Additional p1/raw-strata/XZ/process/consumer integration is real engineering, but not the selected route under the existing fixed-transcript architecture NO-GO. Do not imply human review is the only missing executable component."
+  },
+  "deployment_prerequisites": {
+    "status": "not executable; no genuine distinct-host run",
+    "inputs": [
+      {
+        "input": "final full-release commit, annotated tag, external source-consistency object",
+        "state": "absent; source-only push is not full-evidence authorization",
+        "gate": "host_publication_coordinator.validate_source"
+      },
+      {
+        "input": "qualified ownership/credit/circulation decisions",
+        "state": "not provided",
+        "gate": "owner/institutional release decision; not cryptographically verified by source-consistency JSON"
+      },
+      {
+        "input": "immutable runtime image and FC binary/executor hashes",
+        "state": "four publication_runtime fields are null",
+        "gate": "publication_environment_manifest and coordinator runtime binding"
+      },
+      {
+        "input": "fresh same-HEAD local-smoke evidence",
+        "state": "not provided at finalized release/manifest identity",
+        "gate": "host_publication_coordinator.validate_local_smoke"
+      },
+      {
+        "input": "authorized distinct SSH peer and explicit immutable client identity/known_hosts",
+        "state": "no registered authorized peer or client private identity found; no connection attempted",
+        "gate": "run_two_host_authenticated SSH trust and machine-identity checks"
+      },
+      {
+        "input": "native rootless Podman, mapping helpers, subordinate IDs and selected CDI devices",
+        "state": "subordinate ID ranges exist; native runtime/mapping helpers absent; prior user-namespace failure not retried",
+        "gate": "peer_private_execution host capability preflight"
+      },
+      {
+        "input": "dedicated evidence and coordinator/party ledger mount boundaries",
+        "state": "dedicated distinct-source mounts absent; ordinary directories on root filesystem do not qualify",
+        "gate": "coordinator mount/source checks and ledger_storage_evidence"
+      },
+      {
+        "input": "operator-selected party/checker UIDs and physical GPUs",
+        "state": "not established; no GPU queries performed",
+        "gate": "host-scoped UUID/PCI separation, rootless UID isolation and post-exit checker"
+      }
+    ],
+    "gate_flow": "`reproduce_publication.sh two-host-publication` \u2192 host coordinator \u2192 pinned-SSH launcher \u2192 byte-identical `peer_private_execution.py` on both hosts \u2192 two rootless party containers \u2192 post-exit networkless checker \u2192 deletion receipt \u2192 durable `COMMITTED.manifest` \u2192 runtime/evidence manifests committed last. There is intentionally no Docker, host-process, raw-WAN, agent, or permissive fallback.",
+    "scope": "Read-only source/configuration/resource inspection by scout; no host connection, secret-key read, GPU query, privileged provisioning or repeated known-failing rootless probe."
+  },
+  "review_participants": [
+    {
+      "id": "ConversionClosure",
+      "role": "automated conditional-view construction"
+    },
+    {
+      "id": "LeafAccounting",
+      "role": "automated exact leaf-law derivation"
+    },
+    {
+      "id": "BaselineReadiness",
+      "role": "read-only executable/contract mismatch analysis"
+    },
+    {
+      "id": "DeploymentReadiness",
+      "role": "read-only authorized-input and runtime prerequisite analysis"
+    }
+  ],
+  "unchanged_evidence": {
+    "prediction_gate": "failed; no refit, interval widening or new benchmark",
+    "current_pdf_path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
+    "current_pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+    "runtime_protocol_source_changed": false,
+    "internal_master_pushed": false
+  },
+  "cleanup": {
+    "temporary_source_pin_fixture_removed": true,
+    "generated_audit_bytecode_removed": true,
+    "stalled_push_process_tree_stopped": true,
+    "public_source_worktree_preserved": true
+  },
+  "verdict": "Reviewed engineering source was published. New mathematical audit sources are committed but their additional push awaits VS Code Git-helper completion. Both audits pass at their stated ideal-model boundaries. No concrete-security, matched-dealerless, authenticated-deployment, full-evidence-release or submission-readiness claim is made.",
+  "changed_source_and_report_sha256": {
+    "GPU-MPC/ringlpn/CLAUDE.md": "743bc68f3bb1247d84d475393eb506f8135356b899363a09948c44ce03c1afea",
+    "GPU-MPC/ringlpn/results/README.md": "f37df039e38e2312de63af0159a8412f0923d91bbea5820b2b1aab161fe03936",
+    "GPU-MPC/ringlpn/results/reports/chief_of_staff_handoff_2026_09_10.md": "1ae0204e4a5571d5ed763d13c28467a16ed91d017e3e9d058ecff842b4882308",
+    "GPU-MPC/ringlpn/results/reports/independent_review_verification_2026_09_11.json": "494219fe21e0bff4973749ae122bd3d1f9a36f0c5b95fba22f238388a29de3ff",
+    "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md": "13a6c8654eb44fafd7745bb1bb02799c4a2e32148eec58dd149b867197977b07",
+    "GPU-MPC/ringlpn/results/reports/structured_attack_audit_2026_08_04.md": "44504e1ff624a9c9e91c7883019ee6290e4010728b7c5da76b035452dd47c63f",
+    "GPU-MPC/ringlpn/results/reports/regular_dmpf_design_no_go_2026_08_06.md": "0e386808cb689c42b2269ce60b5e1b89db3f832d5c2d4da4cd68ac69ebb93e7d",
+    "GPU-MPC/ringlpn/results/reports/publication_readiness_plan_2026_07_21.md": "0c02ab3439388a82075537d1ce0de6f15b92f7c6934af9da09ac7563f360f73d",
+    "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py": "52eb32e774d755d256840ad4498aec072e750cf4601bb53eade14ed5412a3028",
+    "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py": "c140fecb539a6f00a6a410378fca4d5ccdb45a6f943ed2b7e3f6a555e323c9a0"
+  },
+  "final_verification": {
+    "private_artifact_guard": {
+      "command": [
+        "python3",
+        "GPU-MPC/ringlpn/scripts/retained_public_evidence.py",
+        "--repo",
+        "/home/fatih/EzPC",
+        "--manifest",
+        "/home/fatih/EzPC/GPU-MPC/ringlpn/scripts/publication_environment_manifest_2026_08_10.json"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "required_evidence_hashes": 50,
+    "all_required_evidence_hashes_match": true,
+    "prior_evidence_changed_only_for_successful_publication_status": [
+      "GPU-MPC/ringlpn/results/reports/independent_review_verification_2026_09_11.json"
+    ],
+    "publication_pdf_byte_unchanged": true,
+    "full_gpu_or_project_suite_rerun": false,
+    "reason": "No runtime protocol, native build or GPU behavior changed; both new CPU audit CLIs, controls, source-only replay and public FC planning path were exercised."
+  }
+}

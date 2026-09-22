@@ -4,6 +4,29 @@ Reorganized 2026-06-10. Evidence-producing runners write into their artifact
 directory below. The terminal application gate emits only sanitized public rows
 and deletes private scratch; its dated CSV/log are explicit retained summaries.
 
+## Technical follow-through (2026-09-22)
+
+`reports/technical_followthrough_2026_09_22.json` retains the successful
+source-only Git publication and two new CPU-only research audits. The complete
+conversion-view model passes 72 exact conditional-slice distribution comparisons
+(294,912 real worlds) and 1,120 sampled two-party/ideal-OT consistency cases.
+The leaf-loss calculator pins six source files, matches five exhaustive
+small-domain distributions, and computes exact rational distances for both
+deployed primes. An altered disposable source copy rejects before emitting
+results. The illustrative finite-comparison budgets fail; these are not
+approved lifetime counts or security levels.
+
+The security contract now gives the output-conditioned simulator candidate,
+and the structured-attack report distinguishes exact single-law distance,
+payload-shift gap, and tag-event gap. P-KEY and P-CONV independent human review
+remain open. Deployment lacks authorized hosts/runtime/mount/release inputs;
+the matched dealerless comparison still needs reviewed parameters and a
+consumer-matched implementation. Source publication does not close full-evidence
+release. The failed prospective prediction experiment and current PDF are
+unchanged. Audit source and its README are in source-only commit `afc93c6`;
+its extra push awaits VS Code Git-helper completion. The remote remains at
+the successfully published `4a2e29a`. Internal evidence is not exported.
+
 ## Independent review follow-through (2026-09-11)
 
 Four automated read-only reviews returned 15 findings. The protocol contract

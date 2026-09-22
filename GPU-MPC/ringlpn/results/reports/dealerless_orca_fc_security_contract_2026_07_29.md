@@ -1,12 +1,12 @@
 # Dealerless Orca forward-FC preprocessing — security contract and proof boundary
 
 **Original freeze:** 2026-07-29
-**Updated:** 2026-09-11
+**Updated:** 2026-09-22
 **Status:** exact forward-FC coupling, role-specific D1 batch simulators, and
 source mapping are recorded for the current live artifact. The conditional
 forward theorem remains a proof target: `P-KEY` must charge the actual biased
-leaf map and its composition, and `P-CONV` is reopened pending a complete
-state-consistent output-conditioned transcript proof. The live path
+leaf map and its composition, and `P-CONV` remains blocking pending independent
+qualified human review of the new full conditional-view candidate in §5. The live path
 self-bootstraps DPF Phase C through a
 stateful masked-difference multiplication over reserved Ring-OLE output,
 uploads grouped GPU DPF keys once per Ring-OLE instance, and derives independent
@@ -782,11 +782,12 @@ online protocol opens the `ell`-bit masked value
 `2ell-2` fresh bit triples, opens one masked bit for B2A, and applies the local
 `Q*wrap` correction. This exposes `5ell-3` logical opened bits and
 `10ell-6` meaningful share bits per conversion. The wrap bit is neither
-reconstructed nor opened. The algebra below establishes conversion
-correctness and repairs a necessary local simulator equation; full privacy
-in the `(F_DABIT,F_EDABIT,F_BT)` hybrid remains `P-CONV`, an open proof
-obligation. Transport additionally requires the semi-honest OT theorem and
-an authenticated channel. The closed forms are
+reconstructed nor opened. The algebra and output-conditioned construction
+below give a candidate exact privacy argument in the
+`(F_DABIT,F_EDABIT,F_BT)` hybrid. `P-CONV` remains blocking pending
+independent qualified human review; this automated derivation is not approval.
+Transport additionally requires the semi-honest OT theorem and an authenticated
+channel. The closed forms are
 not measured bytes or rounds. Before base-OT setup, the parties exchange
 and acknowledge a fixed canonical encoding of every workload-shaping public
 parameter. The artifact separately records setup, agreement, TEST-ONLY
@@ -807,13 +808,13 @@ each party samples local `a_b,b_b` and a fresh mask, acts once as sender with
 `(mask,mask xor b_b)` and once as receiver with choice `a_b`, and sets its
 `c_b` share to its local product XOR its sender mask and receiver output.
 Expanding the two cross terms proves
-`c_0 xor c_1=(a_0 xor a_1) AND (b_0 xor b_1)`. Ideal-OT privacy simulates
-each wrapper from the corrupt local inputs and output share by retaining its
-real random tape and choosing only the hidden sender mask/unused message.
-Fresh wrapper identifiers give the batched composition used by `F_CONV`.
+`c_0 xor c_1=(a_0 xor a_1) AND (b_0 xor b_1)`. The precise conditioned
+wrapper view, including the sender's own mask, is constructed below; it is
+not enough to say that an already fixed random tape can always be retained.
+Fresh wrapper identifiers are required for batched composition.
 
-**Exact-conversion algebra and reopened P-CONV (P-02).** Let `R` be the
-edaBit value. Because `R` is uniform in `Z_(2^ell)`, the opened
+**Exact-conversion algebra and conditional-view candidate (P-02, 2026-09-22).**
+Let `R` be the edaBit value. Because `R` is uniform in `Z_(2^ell)`, the opened
 `A=(z_0+z_1+R) mod 2^ell` is uniform and independent of the canonical input
 sum. The first ripple adder computes secret XOR shares of
 `A + bitwise-not(R) + 1 = z_0+z_1 mod 2^ell`; the second adds
@@ -832,27 +833,202 @@ For either fixed `h`, the raw-to-corrected transformation is a permutation;
 the fresh uniform arithmetic mask and odd `Q` make either output share
 uniform subject to this sum.
 
-A necessary output-conditioned local sampler must **sample `h` first**.
-Given prescribed output `r_b`, set
-`w_b=Q^(-1)*(z_b-r_b) mod 2^bw`, then set `a_b=w_b` for `h=0` or
-`a_b=(1-b)-w_b mod 2^bw` for `h=1`. This inverse makes the deterministic
-source computation return the prescribed output in both branches. The
-previous ordering solved for the raw daBit share before sampling `h` and was
-incorrect: at q64/bw3, `Q mod 8=1`, `b=0`, `z_b=r_b=0`, raw `a_b=0`, and
-`h=1`, it returns 7 rather than the prescribed 0. Exact arithmetic checks
-cover all 256 combinations of role, `h`, input residue, and prescribed output
-in `Z_8` for the corrected inverse.
+The old raw-share-first inverse was wrong: at q64/bw3, `Q mod 8=1`,
+`b=0`, `z_b=r_b=0`, raw `a_b=0`, and `h=1`, it returns 7. The construction
+below samples `h` before solving for the raw arithmetic share and, unlike
+that local repair alone, specifies the joint state and all exchanged shares.
 
-This local inversion is **not a complete conditional-view simulator**.
-One must still jointly construct the Boolean daBit shares, edaBit/triple
-state, all earlier openings, local random tape and OT-wrapper views
-conditioned on the prescribed output and sampled `h`, preserving every
-recomputable dependency and the real conditional law. They cannot simply be
-sampled independently from their marginals. Fresh correlation identifiers
-are necessary for sequential batching but do not establish this missing
-state-consistent transcript argument. `P-CONV` therefore remains open for
-qualified human review even in the ideal-correlation hybrid; the inspected
-conversion implementation already uses the correct branch equation.
+**Hybrid distribution and retained state.** Fix one static semi-honest
+corruption `b`, canonical inputs `z_0,z_1`, public odd `Q`, and
+`N=2^ell`, `B=2^bw`, where `2Q<=N`. A daBit of arithmetic modulus `T`
+has independent uniform Boolean shares `u_0,u_1` and uniform arithmetic
+share `v_0 in Z_T`, with `v_1=(u_0 xor u_1)-v_0 mod T`.
+Equivalently, for either role, `(u_b,v_b,d=u_0 xor u_1)` is a product
+of uniform distributions on `{0,1}`, `Z_T`, and `{0,1}`. This follows
+by the bijection `u_(1-b)=d xor u_b`,
+`v_(1-b)=d-v_b`; it holds for the receiver role as well as the sender.
+For the edaBit retain **all** component pairs `(u_(j,b),v_(j,b))`,
+not merely the weighted aggregate. They are independently sampled as above
+at `T=N`, and `E_b=sum_j 2^j v_(j,b) mod N` is computed, not sampled
+independently. In particular the full component vector and `R` are
+independent, although the aggregate and its components are not.
+
+Each fresh Boolean triple is uniform on the 32 valid six-bit tuples:
+sample global masks `alpha,beta`, local shares `(a_b,b_b,c_b)` independently
+uniform, and set the peer shares to
+`(alpha xor a_b,beta xor b_b,(alpha AND beta) xor c_b)`.
+These local triples are mutually independent and independent of the
+edaBit and the final daBit. Here `b_b` is a triple component, not the role.
+The source order generates these correlations before opening `A`; simulator
+sampling order may differ, but the resulting full view must obey that order
+and the same joint law.
+
+**Output-conditioned simulator `Sim_b(z_b,r_b)`.** The ideal conversion
+chooses one uniform output share and the other to satisfy its sum. This
+simulator receives only the corrupt canonical input, its prescribed output,
+and the public invocation metadata. It does not receive the honest input,
+`R`, `S`, or `wrap`.
+
+1. Draw every corrupt edaBit component Boolean/arithmetic pair uniformly and
+   independently in `{0,1} x Z_N`; derive `E_b`. Draw every local triple's
+   three shares independently uniformly. Draw the final daBit Boolean share
+   `t_b` uniformly. Retain these values in the view.
+2. Draw `A` uniformly in `Z_N`. The corrupt sent masked sum is
+   `m_b=z_b+E_b mod N`; the received peer word is `A-m_b mod N`.
+   Use canonical zero-extended 128-bit words as in the source.
+3. Execute both local ripple adders exactly. Initial local carry is
+   `carry_in` at role 0 and zero at role 1. The first adder takes public
+   `A`, local secret bits `u_(j,b) xor [b=0]`, and carry-in 1;
+   retain every local sum bit. The second takes public `N-Q`, those sum
+   bits, and carry-in 0. For each bit-zero transition there is no opening:
+   start with `next=x_b AND carry_in`. For every higher-bit AND draw a
+   fresh independent uniform pair `(D,E)`. Send
+   `(x_b xor a_b,y_b xor b_b)` and receive that pair XOR `(D,E)`.
+   Compute
+   `v_b=c_b xor (D AND b_b) xor (E AND a_b) xor ([b=0] AND D AND E)`.
+   At either kind of transition, XOR `x_b xor y_b` into `next` when the
+   public addend bit is one. The sum bit is
+   `x_b xor y_b xor ([b=0] AND public_bit)`. Preserve every sent/received
+   pair and intermediate carry; pack the two AND opening shares into one
+   byte with upper six bits zero, exactly as `and_batch()` does. This uses
+   exactly `g=2ell-2` pairs and produces the local Boolean wrap share `k_b`.
+4. Draw `h` uniformly and independently. Set
+   `w_b=Q^(-1)(z_b-r_b) mod B`. Set the raw final daBit arithmetic share
+   `a_b=w_b` for `h=0`, or `a_b=(1-b)-w_b mod B` for `h=1`.
+   Its Boolean share remains the sampled `t_b`. Send `k_b xor t_b`;
+   receive `h xor k_b xor t_b`. The source's corrected share is `w_b`
+   in either branch, so its local output is exactly `r_b`.
+
+Sampling the final raw arithmetic share last is an offline construction of a
+whole passive view, not an instruction to change runtime message order or
+to retroactively program randomness already given to an online adversary.
+The supplied `r_b` generally **does correlate** the retained raw arithmetic
+share and `h`; neither can be sampled independently after conditioning.
+All computations above are deterministic functions of the specified coins,
+and the distribution of those coins is independent of the honest input.
+
+**Why this is the real conditional law, gate by gate.** The following
+completion uses the honest input only to prove a coupling; it is not an input
+to `Sim_b`. First set `R=A-z_0-z_1 mod N`. Each global edaBit bit is the
+corresponding bit `rho_j` of `R`; complete its peer component by
+`u_(j,1-b)=rho_j xor u_(j,b)` and
+`v_(j,1-b)=rho_j-v_(j,b) mod N`. This preserves **each** daBit relation
+and therefore the weighted arithmetic/Boolean edaBit dependency. Since
+`A <-> R` is a permutation for fixed inputs, its law is exact even
+conditional on all retained local component pairs. In particular, the
+honest masked arithmetic word is exactly `A-m_b`.
+
+Induct on every bit of the first adder and then every bit of the second.
+All input shares and the prior carries are fixed at the next gate. For
+global gate inputs `x=x_0 xor x_1`, `y=y_0 xor y_1`, set
+`alpha=D xor x`, `beta=E xor y`, and complete that gate's peer triple by
+the formula above. Conditional on all earlier state and on **all retained
+local triples**, the fresh `(alpha,beta)` is uniform; the translation to
+`(D,E)` is a bijection. The Beaver equation yields XOR output `x AND y`,
+and the simulated peer's sent opening shares equal the honest recomputed
+ones. This remains true even though the local `c_b`, previous carries,
+and later local triples are already fixed: the fresh global masks have not
+been conditioned. Gate-free bit zero and the public-bit carry adjustment
+are deterministic linear/local transitions and preserve the induction.
+Thus every earlier opening, every local sum/carry, and the final
+`k_0 xor k_1=wrap` have the joint real distribution, not merely uniform
+opening marginals. The unused first-adder final carry is retained too.
+
+Finally put `d=wrap xor h`, `t_(1-b)=d xor t_b`, and
+`a_(1-b)=d-a_b mod B`. Prior to output conditioning, for either role the
+coordinates `(t_b,a_b,d)` are independent uniform, and are independent
+of the entire adder prefix. The change `d <-> h` is a permutation for
+fixed inputs. For either fixed `h`, the change `a_b <-> r_b` is a
+permutation of `Z_B` because `Q` is odd. Hence the real joint law factors
+as uniform prefix coins, `t_b`, `h`, and `r_b`. Conditioning on `r_b`
+leaves the other coordinates uniform, while forcing precisely the raw
+share in step 4. This proves the dependence used by the sampler in **both**
+roles and branches. In the completion,
+`w_0+w_1=wrap mod B`; the honest output automatically equals the other
+ideal share. No additional rejection, knowledge of `wrap`, or marginal
+independence assumption is used.
+
+More explicitly, for each fixed local edaBit-component/triple vector and
+final Boolean share, a visible prefix is indexed by
+`(A,((D_j,E_j))_(j<g))`, each with probability `1/(N*4^g)`.
+After fixing `r_b`, append independent uniform `h`; each resulting
+**complete conditional view** has probability `1/(2*N*4^g)` (before
+optional wrapper masks). The map to the retained state/openings is
+injective: `A`, every `(D,E)`, and `h` can be recovered from the view.
+The construction and inverse show equality for every fixed local vector,
+not just the few slices covered by the executable enumeration.
+
+The same construction applies coordinatewise in the source's bit-major
+batched schedule: each component and gate uses distinct fresh correlations.
+Condition on the complete previous invocation state and any correlated
+canonical input vector. The uniform-coordinate bijections still hold for
+each fresh coordinate, and deterministic reordering into the public
+batch exchange schedule does not alter the joint law. This argument does
+not cover reusing an edaBit, triple, or final daBit across coordinates.
+
+**Ideal-OT wrappers and random-tape boundary.** To lift this view to the
+specified wrappers in `F_OT`, retain the edaBit component pairs above.
+For each daBit at modulus `T`, role 0's logical tape is its sampled
+Boolean share `u_0` and arithmetic mask `v_0`; its sender inputs are
+`(u_0-v_0,1-u_0-v_0) mod T`. Role 1's logical tape contains its
+Boolean choice `u_1`, and its selected OT output is the sampled `v_1`.
+These are the only party-visible ideal-OT values for that direction.
+The completion above makes the selected sender message exactly the
+receiver output for every component and the final daBit.
+
+For a triple with retained local `(a_b,b_b,c_b)`, sample an additional
+independent uniform sender mask `mu_b`; expose sender messages
+`(mu_b,mu_b xor b_b)`, receiver choice `a_b`, and selected output
+`o_b=c_b xor (a_b AND b_b) xor mu_b`. In the completion, choose the
+peer sender mask `mu_(1-b)=o_b xor (a_b AND b_(1-b))`.
+The triple relation makes the peer's opposite-direction selected output
+consistent as well. The map from the original two sender masks to
+`(c_b,mu_b)` is a bijection once all four `a,b` shares are fixed.
+Thus this augmentation is exact conditional on the retained triple and
+online view; it does not posit a freely resampled receiver output while
+keeping an incompatible local sender tape.
+
+This is an exact statement at the **independent logical random-draw /
+ideal-OT boundary**, not a simulator for OpenSSL DRBG internal state,
+SCI/IKNP extension messages, base-OT secrets, or a fixed previously exposed
+random tape. With ideal independent `u64` words, complete the unused high
+bits of each masked `u128()` draw uniformly, and pack the prescribed
+`bit()` draws into the source's separate 64-bit bit pool in source order,
+filling unused bits/unused buffer words uniformly. Those operations preserve
+the source's consumption dependencies; they do not invert a DRBG seed.
+Replacing that ideal draw interface and realizing `F_OT` require their
+separate computational assumptions, concrete wrapper/composition review,
+static semi-honest corruption, fresh correlations, and authenticated
+transport. No adaptive-corruption or malicious-security claim follows.
+
+**Executable research audit (not proof or approval).**
+`scripts/audit_conversion_simulator.py` uses only Python's standard library.
+`--mode exact` enumerates all remaining real coins for two fixed local
+correlation slices at `Q=3,ell=3,bw=1`, all nine canonical input pairs,
+both roles and both output residues. For each it compares `Counter`s of
+the **entire visible view**, including component daBits, all intermediate
+carries, all sent/received openings, raw/corrected final shares, and local
+ideal-OT wrapper inputs/outputs, against exhaustive simulation. Width one is
+a reduced research domain, not accepted production input. Slice conditioning
+is explicitly narrower than enumerating every possible local vector;
+the general equality rests on the bijections above, not the enumeration.
+`--mode sampled --samples 40` exercises both branches and roles with
+`Q=3,5,9,p_0,p_0*p_1`, including `bw=3,32`, the canonical endpoints
+and sums `0,Q-1,Q,2Q-2`. It completes each simulated view and independently
+recomputes both local circuits, both directional OT selections, arithmetic
+openings and the output sum. Seeded sampling is only a dependency audit.
+Main executed `python3 ringlpn/scripts/audit_conversion_simulator.py --mode all
+--samples 40` on 2026-09-22: exit 0, 72 exact conditional-slice equalities,
+294,912 real worlds, 4,096 views per condition, and 1,120 two-party
+recomputation/ideal-OT coupling cases. The executed script SHA-256 was
+`52eb32e774d755d256840ad4498aec072e750cf4601bb53eade14ed5412a3028`.
+This CPU-only evidence does not execute SCI/IKNP, the DRBG, or GPU code.
+
+This advances `P-CONV` from a local inverse to an explicit conditional-view
+candidate and a replayable audit. **It remains open/blocking for independent
+qualified human cryptographic review**, including the exact hybrid
+functionality and random-tape/OT lifting boundary. No runtime protocol
+source is changed, and no automated derivation confers privacy approval.
 
 The live two-process artifact realizes steps 1--10 for one forward-shaped
 matmul: party-local mask sampling, distributed GPU-AES DPF key generation,
@@ -1109,8 +1285,9 @@ together with the role-indexed Figure-2 PCG reduction, (v) SHA-256 collision
 resistance for public correlation IDs/claim digests, (vi) one deployment-wide
 trusted private persistent ledger namespace providing the documented
 no-replace create, write/fsync, atomic rename, and directory-fsync semantics
-without adversarial deletion, cloning, or rollback, and (vii) a complete
-state-consistent output-conditioned `P-CONV` simulator. Under these
+without adversarial deletion, cloning, or rollback, and (vii) independent
+qualified review of the §5 output-conditioned `P-CONV` candidate and its
+ideal-OT/random-draw lifting boundary. Under these
 obligations the proposed conclusion is realization of the forward-matmul
 restriction of `F_FC` with the leakage of §6 and the composed advantage
 losses. Obligations (iii), (iv), and (vii) are not discharged here.
@@ -1158,10 +1335,11 @@ public shape/order, and ideal forward key. The conditional proof outline is:
    uniform in the hybrid, so choose the honest opening uniformly and derive
    its sent share. Reused operand handles do not reuse OLE slots or correlation
    IDs.
-6. Subject to the reopened `P-CONV` obligation in §5, apply a complete
-   state-consistent output-conditioned simulator to replace the SCI/IKNP
-   conversion transcript by `F_CONV`; the corrected local inverse alone
-   does not justify this step.
+6. Subject to independent qualified review of `P-CONV` in §5, apply its
+   explicit output-conditioned full-view candidate and the separately
+   justified random-draw/OT hybrid replacements to replace the SCI/IKNP
+   conversion transcript by `F_CONV`. Automated derivation and finite
+   computational audits alone do not discharge this review obligation.
 7. The corrupt output field is
    `C_b=converted_b+R_(C,b) mod 2^bw`. Its fresh uniform `R_(C,b)` makes the
    share uniform subject to the ideal sum, while `A_b,B_b` are the conditioned
@@ -1214,7 +1392,7 @@ composition review extending this forward-only theorem.
 | `P-FRESH` | No primitive correlation or private random-tape draw is reused | §2.1 fixed-width namespace; full IDs in SPFSS/conversion preflights; persistent consume-before-release ledger and record digest binding; sixteen endpoint/context-authentication, duplicate/restart/collision/ledger/tail/capacity/record controls | closed at the stated SHA-256/filesystem boundary; controls pass; independent human review open |
 | `P-RNG` | Concrete PRG/CSPRNG state realizes the S1 random-tape interface | Private roots/noise/masks use OpenSSL's private DRBG; public `a_0` is the unsent identity; each party contributes one 256-bit seed share and domain-separated SHAKE256 rejection-samples the public tail from their XOR in the explicit random-oracle model; GPU DPF expansion uses four domain-separated AES calls | implementation evidence; SHAKE/random-oracle instantiation and concrete reduction review open |
 | `P-PCG` | Role-indexed Figure-2 output is pseudorandom OLE at the exact `a=(1,a_1,...,a_(c-1))`, noise, structured-code, and multi-instance distribution | Figure-2 correctness and leakage-conditioned simulator only. The exact orbit and source-pinned 2024 regular-ISD calculator remain model diagnostics. The self-tested hybrid-RSD script/CSV are freshly paired at `cbcedaf6...`/`1f671d94...`. No reviewed structured-code, resource/success, modern-attack, two-limb, or advantage-composition bridge exists | open/blocking; no parameter pin |
-| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | Correct source branch, exact output algebra, corrected opening-first local inverse, and two-process boundary/control evidence | reopened/blocking: complete state-consistent output-conditioned transcript proof in the daBit/edaBit/triple hybrid; transport additionally conditional on semi-honest OT and authenticated channels |
+| `P-CONV` | D2 securely realizes exact modulo-`Q` `F_CONV` without revealing wrap | §5 explicit both-role full conditional-view candidate, gate-by-gate bijective coupling, component edaBit and ideal-OT wrapper tapes; 72 exact reduced-domain conditional-slice equalities and 1,120 recomputation cases | open/blocking: independent qualified human review of the hybrid proof and logical-random-draw/OT lifting boundary; no DRBG-state or concrete-OT simulation claim; authenticated transport still required |
 | `P-TOPO` | Stateful forward/bias/truncation/`dW`/`dX`/bias-gradient/dual-optimizer handle reuse, velocity evolution, and emitted fields match Orca | Live artifact covers one complete forward matmul only | forward closed; training-state extension open |
 | `P-PROC` | Two-process implementation matches the corrected forward transcript | The reviewed SCI/IKNP five-case suite and all 21 shape plans pass. The September worker experiment passes 20 measured invocations with unchanged contract/accounting fields. Retained August evidence comprises 30 controlled model-FC trials, 10 classifier trials, and five EMP-Silent cases with sixteen controls; those binary identities and timings are historical, not reruns of the September source | Feasibility functionality/accounting only. Historical stock-dealer comparisons are strongly negative; no full-model, authenticated-deployment, EMP-performance, matched-dealerless speedup, or concrete-security claim |
 | `P-MAP` | Every current cross-party read/send maps to the contract | §5.1 maps epoch-zero OLE, bootstrapped masked differences, the corrected public-polynomial tail, DPF/OT/conversion messages, malformed-vector rejection, records, and post-exit checker | source map current; independent human audit open |
@@ -1330,8 +1508,9 @@ multi-instance advantage bound, two-CRT-limb composition, or concrete parameter
 pin exists. The proved cyclic orbit is not a reviewed arbitrary-decoder speedup.
 `P-KEY` additionally requires the actual biased leaf map, its statistical
 loss, and full lifetime composition; a standard DPF/PRG citation alone is
-insufficient. `P-CONV` is reopened for the full state-consistent conditional
-transcript proof, not closed by the repaired local inverse. `P-FRESH` is
+insufficient. `P-CONV` now has the explicit state-consistent conditional-view
+candidate and executable audit in §5, but remains open/blocking for independent
+qualified human review of the proof and its random-draw/OT boundary. `P-FRESH` is
 closed only under the explicit SHA-256, one deployment-wide private persistent
 ledger, OS exclusive-create, fsync/atomic-rename, and no
 deletion/cloning/storage-rollback assumptions. Each live loopback socket

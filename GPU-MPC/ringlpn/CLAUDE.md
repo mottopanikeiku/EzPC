@@ -63,9 +63,10 @@ not independent human cryptographic sign-offs. P-KEY now explicitly charges
 the implemented leaf conversion's ideal-leaf statistical loss: for the first
 prime, `epsilon=(2^64 mod p)^2/2^128`, about `2^-70.83` per comparison.
 It is not an empirical AES attack or a complete lifetime security bound.
-P-CONV is reopened: the output-conditioned inverse must sample the masked
-carry opening first and handle its complement branch; the full
-state-consistent transcript proof remains open. The live regular B=256,
+P-CONV was reopened for its output-conditioned state dependencies. The
+September 22 follow-through supplies a full ideal-correlation conditional-view
+candidate and executable audit; independent qualified review and concrete
+cryptographic realization remain open. The live regular B=256,
 depth-11 inventory is 5,632 chosen-message 128-bit string OTs per limb across
 both directions, not 2,816 bit-COTs.
 The SCI duplex sender now uses one lazy channel-owned worker, preserving
@@ -144,6 +145,37 @@ actual tmpfs admission rejects. Device persistence/fsync and no rollback,
 deletion, cloning, or hidden volatile storage remain operator assumptions.
 Native rootless prerequisites and an authorized distinct host are still absent;
 no genuine two-host success or durable-mount positive result is claimed.
+
+**Technical follow-through (2026-09-22).** Direct authenticated Git push
+published the reviewed source commit `4a2e29a` on
+`ringlpn/clinical-review-2026-09-10`; the remote ref was checked. Internal
+`master`, the current manuscript, internal measurements, and checkpoint
+ancestry were not pushed. A noninteractive credential-helper failure had
+incorrectly been treated as proving that an interactive push was unavailable.
+
+`scripts/audit_conversion_simulator.py` now constructs complete conditional
+views at the independent-logical-coin/ideal-OT boundary. Its exact reduced-domain
+audit passes 72 conditional-slice distribution identities across 294,912 real
+worlds, and 1,120 sampled two-party dependency/OT-wrapper cases pass at boundary
+and production moduli. The old complement inverse yields 7 instead of 0 in its
+retained counterexample; the new inverse yields 0, and altered selected OT
+messages reject. This does not simulate the native DRBG or SCI/IKNP transcript.
+`scripts/audit_dpf_leaf_loss.py` derives exact single-law and payload-shift
+distances at both source-pinned primes, distinguishes the conditional tag
+event from full-key privacy, and passes five exact small-domain enumerations.
+Explicit one-comparison-per-limb and million-comparison diagnostics miss their
+illustrative targets; neither count is a justified live-key lifetime.
+Both audits run from the source-only checkout without private inputs or GPUs.
+The source-only audit commit is `afc93c6`; its additional push is not complete.
+Subsequent push attempts stall in VS Code's `askpass.sh` child despite the
+earlier successful publication. The stalled process tree was stopped, and the
+remote still resolves to `4a2e29a`. Approve the host's Git prompt and push only
+the explicit source ref; do not substitute internal `master`.
+`results/reports/technical_followthrough_2026_09_22.json` records commands,
+source bindings, controls, publication, and the remaining prerequisite matrix.
+P-KEY, P-CONV human approval, parameter review, matched dealerless evaluation,
+and genuine authenticated two-host deployment remain open. The frozen failed
+prediction gate and the September 11 PDF are unchanged.
 
 The current live composition uses thin
 `src/test_two_party_{fc,conv}_preprocess.cu` entrypoints over

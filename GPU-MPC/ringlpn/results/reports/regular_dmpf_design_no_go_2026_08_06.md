@@ -50,3 +50,29 @@ That route has since produced the retained known-zero full-graph checkpoint.
 `CLAUDE.md` and `results/README.md` are the binding continuation;
 `full_linear_layer_systems_plan_2026_08_06.md` is historical. Reverse Cuckoo
 remains a labelled non-comparable diagnostic; it is not the implementation route.
+
+## September 22 prerequisite clarification
+
+The source-publication follow-through does not reverse this architecture
+decision. The retained p0 adapter accepts only a report path and remains fixed
+at `(2^20,4,16)` with deterministic collision inputs. Its early native-folded
+capture is a sparse-product diagnostic, not the final Ring-OLE X/Z output or
+an Orca FC record. A matched route would require both CRT fields, raw arity
+strata, fresh private-factor/public-vector binding, live two-process setup,
+an X/Z bridge, and reuse of the existing conversion/record/unchanged-consumer
+path. Those are real engineering tasks, not executable flags already present.
+
+The existing CNN3 FC5 public planner was executed successfully at
+`(M,K,N)=(100,64,10)`, q128/bw32, regular `(8192,2,8)`: 64,000 cross terms,
+nine ring batches, 7,424 application slots and 768 bootstrap slots per instance.
+That establishes the smallest retained model-scale workload contract, not a
+new timing row. The named historical `/tmp` baseline roots no longer contain
+the recorded runnable source/binary closure; old JSON/report bytes remain
+historical evidence, not executable availability.
+
+`technical_followthrough_2026_09_22.json` records the mismatch/prerequisite
+matrix. MIT executable-code reuse is possible, but the current NO-GO remains:
+the Reverse-Cuckoo support-dependent descriptor/leakage assumption and its
+placement/rank parameters have not been accepted as matching the present
+contract, and neither side has a reviewed common security tuple. A generic
+request to finalize engineering is not approval to change that boundary.

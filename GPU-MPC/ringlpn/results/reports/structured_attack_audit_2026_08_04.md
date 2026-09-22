@@ -1,9 +1,9 @@
 # Structured Ring-LPN attack audit
 
-**Date:** 2026-08-04; live source and hybrid-formula bindings refreshed 2026-08-10
+**Date:** 2026-08-04; live source and hybrid-formula bindings refreshed 2026-08-10; ideal-leaf arithmetic supplement 2026-09-22
 **Status:** internal/advisor; attack inventory and proof obligation ledger; **not a parameter pin or concrete-security review**
-**Scope:** the current audited regular sampler revision, its direct expanded instance, and every one-sparse fully split projection
-**Review state:** source-grounded model/attack triage plus an elementary orbit lemma; independent human cryptographic review is required
+**Scope:** the current audited regular sampler revision, its direct expanded instance, every one-sparse fully split projection, and the implemented DPF map's ideal-leaf statistical loss
+**Review state:** source-grounded model/attack triage, an elementary orbit lemma, and exact ideal-leaf arithmetic; independent human cryptographic review is required
 
 ## 1. Decision and non-claim
 
@@ -278,3 +278,186 @@ At `d=2^j`, the full projected-orbit sensitivity is `j/2` bits. At `d=1` it is z
 10. **Independent human review:** the orbit proof, attack-model bridges, cost transcriptions and final advantage budget require independent cryptographic review. Model-assisted review does not close this gate.
 
 Until all blockers close, diagnostics may rank engineering candidates but cannot select, advertise or benchmark a “secure” tuple. No concrete-security claim is unlocked by this audit.
+
+## 9. P-KEY: exact ideal-leaf arithmetic, not a DPF security certificate
+
+**Classification: EXACT LOCAL CALCULATION, conditional on the ideal-leaf
+experiment below.** This supplement sharpens the September 11 `P-01` bound;
+it changes neither the leaf map nor the independent-human-review gate.
+`P-KEY` remains open. The previous `epsilon` is a valid single-law upper
+bound and an exact disjoint-payload-shift gap, not the exact single-law TV.
+
+### 9.1 Source binding and probability experiment
+
+The executable companion is `scripts/audit_dpf_leaf_loss.py`. It fails closed
+unless SHA-256 pins match all six reviewed source files, extracts both primes
+from `two_party_dpf_protocol.h`, and emits source/script hashes with its JSON.
+Its source bindings cover:
+
+- `src/two_party_dpf_protocol.h`: `kPrime62`, `kPrime62Crt2`, and
+  `convert_zp`, which reduces each 64-bit half separately and adds modulo `p`;
+- `src/gpu_spfss_zp.cuh`: the same `convert_zp`, `block_lo`/`block_hi`,
+  and separate full-width child-seed/control-bit AES outputs;
+- `src/spfss_host.cpp`: the host reference conversion, final correction
+  `beta-c0+c1` when `t0=1,t1=0`, and signed evaluation;
+- `src/two_party_dpf_gpu.cuh`: live `sum_party_leaves_kernel` calls that GPU
+  conversion on every leaf of its local frontier;
+- `src/ringlpn_ole_party.cuh`: `(c*t)^2` trees per Ring-OLE instance;
+- `src/two_party_linear_preprocess.cuh`: aggregation and the expected
+  `2*limbs*ring_batches` Ring-OLE instances per linear-layer invocation.
+
+Hashes bind the reviewed source, not a compiled binary or a proof of its
+execution. The arithmetic below treats `lo,hi` as independent uniform integers
+in `[0,H-1]`, `H=2^64`. This is an idealized input law, **not an established
+conditional law for live AES-derived seeds, related leaves, or a key holder's
+view**. SplitMix host reference semantics are not a security assumption.
+
+### 9.2 Exact distance of one mapped leaf from uniform
+
+Write `H=k*p+r`, `0<=r<p`. Each half-residue has `k+[v<r]` preimages.
+For `Q=Law((lo mod p + hi mod p) mod p)`,
+
+```text
+H^2 Q(v) = p*k^2 + 2*k*r + T(v),
+T(v) = #{(a,b) in [0,r-1]^2 : a+b = v mod p},
+sum_v T(v) = r^2,
+Q = (1-epsilon) U_p + epsilon D_r,   epsilon = r^2/H^2.
+```
+
+Here `D_r=T/r^2` for `r>0`; for `r=0`, `Q=U_p` exactly. At both deployed
+primes `2r-2<p`, so `T` is the nonwrapping triangle
+`T(v)=max(0,min(v+1,2r-1-v,r))`. No enumeration of the field is needed.
+Define `j=floor(r^2/p)`. Since `Q(v)>1/p` exactly when `T(v)>r^2/p`,
+the positive set contains `2(r-j)-1` residues and its triangular mass is
+`r^2-j(j+1)`. Therefore the **exact** total-variation distance is
+
+```text
+delta = TV(Q,U_p)
+      = [p*(r^2-j*(j+1)) - (2*(r-j)-1)*r^2] / (p*H^2).
+```
+
+For both deployed primes `k=4` and `r^2<p`, hence `j=0`, giving:
+
+| limb | deployed `p` | `r=2^64 mod p` | exact `TV(Q,U_p)` | exact disjoint-shift gap / single-law upper bound |
+|---|---:|---:|---|---|
+| p0 | 4611686018326724609 | 402653180 | `402653180^2*(4611686018326724609-805306359)/(4611686018326724609*2^128)` | `402653180^2/2^128` |
+| p1 | 4611686018309947393 | 469762044 | `469762044^2*(4611686018309947393-939524087)/(4611686018309947393*2^128)` | `469762044^2/2^128` |
+
+Equivalently, `delta=epsilon*(1-(2r-1)/p)<epsilon`. These are exact rational
+expressions, not floating-point estimates. The calculator emits reduced
+numerator/denominator pairs; any displayed logarithms are approximations,
+not security-bit certifications.
+
+### 9.3 Two payloads, a conditioned tag, and a joint event are different
+
+Fix a known common `alpha`, a payload `beta`, and `s=floor(p/2)`. Put
+`S=[0,2r-2]`. At both deployed primes, `S` and `S+s` are disjoint modulo `p`.
+Uniform mass cancels in a translation comparison, so
+
+```text
+TV(Q, Q+s) = epsilon*TV(D_r, D_r+s) = epsilon.
+Pr[beta+Q in beta+S] - Pr[beta+s+Q in beta+S] = epsilon.
+```
+
+For an arbitrary shift, `TV(Q,Q+s)<=min(epsilon,2*delta)` by the mixture
+representation and triangle inequality; equality to `epsilon` here is
+justified by the disjoint supports, not by treating the single-law distance
+as a distinguishing gap. A TV gap is the maximum difference of event
+probabilities; in equal-prior binary guessing, success advantage over `1/2`
+is half the TV.
+
+For a party-0 DPF key, when its computable on-path tag is `t0=1`, the
+correction/evaluation identity gives `Eval0(alpha)=beta+Convert(s1)`.
+**If**, in the relevant hybrid, the hidden leaf has the above ideal law
+conditional on that tag, the interval predicate has conditional probability
+gap `epsilon` between the two payloads. **If additionally** the tag is
+independent and fair in both experiments, the predicate
+`{t0=1 AND Eval0(alpha) in beta+S}` has unconditioned joint-event gap
+`epsilon/2`. A tag of probability `q` instead scales this predicate's gap by
+`q`, provided the requisite conditional law holds.
+
+The joint-event gap is a witness, **not** an upper bound on the entire key
+view: it does not analyze the tag-0 branch or other key observables.
+No empirical AES attack, live-key distinguisher advantage, or full DPF
+privacy theorem is claimed.
+
+### 9.4 Finite-comparison budgets and missing reduction
+
+Let `N0,N1` be explicit counts of conditional comparisons in a specified
+hybrid over a declared lifetime. Two different arithmetic diagnostics are:
+
+```text
+mapped-leaf to uniform replacement:
+    B_uniform = min(1, N0*delta0 + N1*delta1);
+two-payload translated-leaf comparison:
+    B_shift   = min(1, N0*epsilon0 + N1*epsilon1).
+```
+
+They describe alternative experiments, not two losses to add automatically.
+Their conditional-law hypotheses must hold at every hybrid step, including
+conditioning on the adversary's prior view. Under those hypotheses,
+telescoping TV and data processing justify the bounds; no independence
+between steps is needed. **Uniform-looking marginals alone do not establish
+those hypotheses.** In particular, this is not an independent-leaf theorem
+for leaves sharing seeds, correction words, keys, or PRG calls. We do not
+multiply independent-sample success probabilities, nor insert the joint-tag
+witness's factor `1/2` into an alleged full-key upper bound.
+
+Tree/evaluator counters do not determine `N0,N1`. Runtime accounting gives
+`2*ring_batches*(c*t)^2` tree pairs per active limb per linear invocation,
+already including the two Ring-OLE directions. The two parties hold shares
+of those same tree pairs; summing their identical counters double-counts
+them. GPU frontier summation may convert every leaf, and evaluation can
+repeat a conversion without producing a fresh secret or a new hybrid step.
+Conversely, a DPF reduction may need multiple primitive/conditional
+replacements per tree. None of `trees`, `trees*domain`, number of key files,
+or evaluator calls is silently promoted to a proved comparison count.
+
+The command requires both counts and a leaf-only diagnostic target `2^-b`.
+The reported Boolean says only whether the stated conditional upper bound
+fits that target by exact rational comparison. A false result means this
+upper-bound certificate misses the target, not a lower bound on the
+composed advantage. Exit success means arithmetic/source processing
+succeeded, not that any security budget passed.
+
+Still missing: a reviewed AES/DPF key-privacy reduction establishing the
+conditional leaf/tag laws and every replacement count; the exact lifetime
+inventory over both CRT limbs, directions, keys, batches, layers and epochs;
+composition with PRG/OT/OLE/Ring-LPN/conversion/sampler losses and all bad
+events; and independent human cryptographic review of that reduction and
+budget. Exact coupling of distributed and centralized key generation with
+the same biased map cannot substitute for this privacy argument.
+
+### 9.5 Focused reproduction (CPU only)
+
+From `GPU-MPC/`, first run the exact tiny-domain check together
+with the two-prime one-comparison diagnostic:
+
+```sh
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --comparisons-p0 1 --comparisons-p1 1 --budget-bits 128 --check-reduced
+```
+
+The reduced checker enumerates every pair for `(half_bits,p)` equal to
+`(8,61)`, `(8,127)`, `(5,13)`, `(4,13)`, and `(4,16)`. The last is an
+arithmetic zero-remainder boundary, not a prime-field instance. It checks
+the entire distribution, exact TV, every payload shift's upper bound, and
+the disjoint-support interval equality where applicable. This includes
+nonzero-threshold and overlapping-support cases. For `(8,61)`, the
+half-modulus shift has interval count gap `144/256^2`; its independent
+fair-tag joint event has half that probability gap.
+
+For an explicitly hypothetical finite lifetime, not a runtime-derived one:
+
+```sh
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --comparisons-p0 1000000 --comparisons-p1 1000000 --budget-bits 64
+```
+
+Use `--comparisons-p1 0` for a one-limb hypothetical scope, not to omit p1
+from a two-limb deployment. Counts here are illustrative; no deployed
+lifetime or acceptable security target has been approved. Both commands
+were executed successfully on September 22, and the five reduced-domain
+enumerations agree exactly with the formulas. Neither illustrative bound
+meets its requested leaf-only target. Source-bound outputs and the precise
+non-claims are retained in `technical_followthrough_2026_09_22.json`.

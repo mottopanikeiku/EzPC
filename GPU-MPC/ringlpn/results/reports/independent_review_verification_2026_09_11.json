@@ -543,8 +543,8 @@
   "public_source_branch": {
     "name": "ringlpn/clinical-review-2026-09-10",
     "head": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
-    "pushed": false,
-    "reason": "noninteractive Git credential helper exit 128; no host Git authentication available",
+    "pushed": true,
+    "reason": "User-confirmed host authentication followed by successful direct interactive push; the earlier noninteractive helper failure was not conclusive.",
     "new_export_allowlist": [
       "GPU-MPC/ringlpn/src/orca_terminal_linear_backend.cuh",
       "GPU-MPC/ringlpn/scripts/run_orca_linear_application.py",
@@ -576,16 +576,28 @@
       "GPU-MPC/ringlpn/scripts/two_party_fc_metrics_schema_2026_08_04.csv": "ab4c32764f7f52a971c1b2eca07e5fa4fd2da2cb3c849706dfbeea26e8c3e392",
       "GPU-MPC/ringlpn/scripts/run_fc_review_experiments.py": "aa0c40ea898935d3e360a7184058096b20abf62d3e1bcc98269e73500611db0f"
     },
-    "internal_master_history_or_current_manuscript_exported": false
+    "internal_master_history_or_current_manuscript_exported": false,
+    "push_command": "git push origin 4a2e29a1719203e0c67b342b81ee3ba25c436285:refs/heads/ringlpn/clinical-review-2026-09-10",
+    "push_returncode": 0,
+    "remote_confirmation": "4a2e29a1719203e0c67b342b81ee3ba25c436285 refs/heads/ringlpn/clinical-review-2026-09-10",
+    "publication_event": {
+      "remote": "https://github.com/mottopanikeiku/EzPC.git",
+      "ref": "refs/heads/ringlpn/clinical-review-2026-09-10",
+      "head": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
+      "push_returncode": 0,
+      "remote_confirmation": "4a2e29a1719203e0c67b342b81ee3ba25c436285 refs/heads/ringlpn/clinical-review-2026-09-10",
+      "observed_at_utc": "2026-09-22T01:29:49.838409+00:00",
+      "internal_master_pushed": false
+    }
   },
   "external_gates": {
     "independent_human_cryptographic_review": "blocked",
     "ownership_and_external_circulation": "blocked",
     "reviewed_parameter_matched_dealerless_evaluation": "blocked",
     "genuine_authenticated_distinct_host_evaluation": "blocked",
-    "git_push": "blocked"
+    "git_push": "complete; exact reviewed public-source commit published"
   },
-  "verdict": "Engineering and claim corrections verified at the exercised boundaries; prospective prediction interval hypothesis rejected; not submission-ready, security-certified, authenticated-two-host evaluated, or pushed.",
+  "verdict": "Engineering and claim corrections verified at the exercised boundaries; prospective prediction interval hypothesis rejected; exact reviewed public-source commit pushed. Not submission-ready, security-certified, or authenticated-two-host evaluated.",
   "final_verification": {
     "private_artifact_guard": "pass; unchanged digest-bound historical private metadata exception",
     "required_evidence_hashes": 46,

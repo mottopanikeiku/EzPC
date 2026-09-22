@@ -859,6 +859,15 @@ the binding continuation.
 
 ### S10 — Reproducible artifact and submission candidate
 
+**September 22 technical follow-through:** the reviewed public-source commit
+`4a2e29a` was pushed successfully. Two standalone CPU research audits advance
+the P-CONV conditional-view candidate and exact two-prime P-KEY leaf accounting;
+see `technical_followthrough_2026_09_22.json`. Independent human cryptographic
+approval, a reviewed parameter pin, matched dealerless evaluation, authorized
+two-host deployment, and full-evidence release remain open. Source publication
+is not an annotated permission-cleared release. The September 11 PDF below
+and its rejected prediction experiment remain unchanged.
+
 **Status 2026-09-11:** the live internal/advisor v2.17 source includes reopened
 P-KEY/P-CONV proof obligations, corrected independent-layer statistics, the
 reproducible SCI worker experiment, and the failed prospective capacity-model
@@ -972,10 +981,11 @@ Publication readiness is reached only when every box is supported by a committed
 
 - [ ] S1/S8 proof contract reclosed after the September 11 automated review.
   P-KEY must charge the implemented leaf conversion's statistical distance
-  and lifetime/leaf-replacement losses. P-CONV must supply the full
-  output-conditioned, state-consistent simulator after the corrected h-first
-  complement-branch inverse. Local arithmetic checks and model-assisted
-  review do not constitute independent human cryptographic sign-off.
+  and justified lifetime/leaf-replacement losses. September 22 supplies exact
+  two-prime arithmetic and a complete P-CONV output-conditioned simulator
+  candidate at the independent-logical-coin/ideal-OT boundary. Both require
+  qualified human review and the missing concrete reduction/composition;
+  executable model checks do not constitute independent cryptographic sign-off.
 - [ ] S2 exact splittable parameters have a reviewed reduction, only in-domain independently reproducible estimator evidence, and the claimed security level.
 - [ ] S2 formal novelty/overlap, source/license inventory, and professor
   provenance decisions are recorded before overlapping implementation.
