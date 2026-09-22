@@ -166,12 +166,12 @@ event from full-key privacy, and passes five exact small-domain enumerations.
 Explicit one-comparison-per-limb and million-comparison diagnostics miss their
 illustrative targets; neither count is a justified live-key lifetime.
 Both audits run from the source-only checkout without private inputs or GPUs.
-The source-only audit commit is `afc93c6`; its additional push is not complete.
-Earlier attempts stalled in VS Code's `askpass.sh`; the latest retry instead
-returns 128 with `ECONNREFUSED` at its stale IPC socket. No current-user Git
-helper listener, credential cache/store, or SSH agent is available to this
-session. The remote still resolves to `4a2e29a`. Restore the host authentication
-channel before retrying the explicit source ref; never push internal `master`.
+The source-only audit commit `afc93c6` is now published on
+`ringlpn/clinical-review-2026-09-10`; a fresh remote query returned its full SHA.
+Earlier attempts stalled in VS Code's `askpass.sh`, then failed with
+`ECONNREFUSED` at its disconnected IPC socket. The user reconnected VS Code Git;
+the same-user listener returned and the exact push succeeded in 1.54 seconds.
+This source publication exports no internal `master` ancestry or evidence.
 A 9,572-byte incremental source bundle is retained outside Git; its exact
 path/SHA-256 and successful isolated-repository import are in the report below.
 It imports precisely `afc93c6` over published `4a2e29a`, contains only the

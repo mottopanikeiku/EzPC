@@ -14,9 +14,9 @@
   "public_source_followthrough": {
     "branch": "ringlpn/clinical-review-2026-09-10",
     "commit": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
-    "pushed": false,
-    "last_confirmed_remote_commit": "4a2e29a1719203e0c67b342b81ee3ba25c436285",
-    "checked_at_utc": "2026-09-22T07:02:04.765395+00:00",
+    "pushed": true,
+    "last_confirmed_remote_commit": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+    "checked_at_utc": "2026-09-22T08:40:22.146237+00:00",
     "explicit_export_paths": [
       "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py",
       "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py",
@@ -60,12 +60,22 @@
         "ssh_agent_available": false,
         "credential_contents_read_or_retained": false,
         "required_external_action": "Restore the current-user authenticated host Git channel or push the exact source commit from an already authenticated terminal. Do not send tokens or private keys in chat."
+      },
+      {
+        "recorded_at_utc": "2026-09-22T08:40:22.146237+00:00",
+        "command": "git push origin afc93c6fb94af01239f51b06d5c29a40c6fe7d84:refs/heads/ringlpn/clinical-review-2026-09-10",
+        "returncode": 0,
+        "wall_seconds": 1.54,
+        "remote_confirmation_command": "git ls-remote origin refs/heads/ringlpn/clinical-review-2026-09-10",
+        "remote_confirmation": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84 refs/heads/ringlpn/clinical-review-2026-09-10",
+        "recovery": "User selected Reconnect VS Code Git; same-user credential IPC listener returned; exact source-only push succeeded.",
+        "credentials_exposed_or_retained_by_assistant": false,
+        "internal_master_pushed": false
       }
     ],
-    "next_command": "git push origin afc93c6fb94af01239f51b06d5c29a40c6fe7d84:refs/heads/ringlpn/clinical-review-2026-09-10",
-    "scope": "The original source publication succeeded. Follow-through authentication-helper completion is a separate external prerequisite; do not infer that user interactive Git is unauthenticated.",
+    "scope": "Both the original reviewed source and audit follow-through are published. Only the explicit public-source ref was pushed; internal master, manuscript and evidence were not exported.",
     "internal_master_pushed": false,
-    "latest_authentication_state": "VS Code credential IPC endpoint disconnected; no supported live authentication channel in this session",
+    "latest_authentication_state": "restored; exact reviewed source commit pushed and remote SHA confirmed",
     "portable_source_bundle": {
       "path": "/tmp/ringlpn-publication-recovery-0chtnbzn/ringlpn-source-audit-afc93c6.bundle",
       "sha256": "eb6d7d989726ca2e78c2f70162c69ead99377dda313c4ed4914acb04ce04ceeb",
@@ -96,6 +106,17 @@
         "internal_master_object_absent": true,
         "verification_repository_removed": true
       }
+    },
+    "successful_publication": {
+      "recorded_at_utc": "2026-09-22T08:40:22.146237+00:00",
+      "command": "git push origin afc93c6fb94af01239f51b06d5c29a40c6fe7d84:refs/heads/ringlpn/clinical-review-2026-09-10",
+      "returncode": 0,
+      "wall_seconds": 1.54,
+      "remote_confirmation_command": "git ls-remote origin refs/heads/ringlpn/clinical-review-2026-09-10",
+      "remote_confirmation": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84 refs/heads/ringlpn/clinical-review-2026-09-10",
+      "recovery": "User selected Reconnect VS Code Git; same-user credential IPC listener returned; exact source-only push succeeded.",
+      "credentials_exposed_or_retained_by_assistant": false,
+      "internal_master_pushed": false
     }
   },
   "conversion": {
@@ -1463,11 +1484,11 @@
     "bundle_verification_repository_removed": true,
     "source_bundle_retained_outside_repository": "/tmp/ringlpn-publication-recovery-0chtnbzn/ringlpn-source-audit-afc93c6.bundle"
   },
-  "verdict": "Reviewed engineering source 4a2e29a is published. Mathematical audit source afc93c6 is committed, verified and packaged as an independently import-verified incremental Git bundle, but the additional push fails because the session Git credential IPC endpoint is disconnected. Both audits pass at their stated ideal-model boundaries. No concrete-security, matched-dealerless, authenticated-deployment, full-evidence-release or submission-readiness claim is made.",
+  "verdict": "Reviewed engineering source 4a2e29a and mathematical audit source afc93c6 are published on the explicit public-source branch; the final remote SHA is verified. The disconnected VS Code credential IPC blocker was resolved after user reconnection. The incremental source bundle independently imports the exact commit without internal master objects. Both audits pass at their stated ideal-model boundaries. No concrete-security, matched-dealerless, authenticated-deployment, full-evidence-release or submission-readiness claim is made.",
   "changed_source_and_report_sha256": {
-    "GPU-MPC/ringlpn/CLAUDE.md": "44d09a1dfd2fc43a387db40b4110f6c3dc8e3a9c1e0545c2eab55e4f504e8d10",
-    "GPU-MPC/ringlpn/results/README.md": "02d806606b02f085b0d1dfc99d848d6550801b94d9c72ae93cdfb8da9a0d7409",
-    "GPU-MPC/ringlpn/results/reports/chief_of_staff_handoff_2026_09_10.md": "cfca1f1525a3ca99e40ffb59d65d10476d3668fb41b45041456b2365df3a0a41",
+    "GPU-MPC/ringlpn/CLAUDE.md": "ec763b61c151cc1913a4ac7c09af2c9aa914d704f4210247ce994448f44a8529",
+    "GPU-MPC/ringlpn/results/README.md": "d2ff4852060bf52d0f63eff9545d1068ba508374e42933980c51712c339266ab",
+    "GPU-MPC/ringlpn/results/reports/chief_of_staff_handoff_2026_09_10.md": "3d92a4e717c7243ddfd99b03d76405c758f35b29296131b4a66a73ed90a995c4",
     "GPU-MPC/ringlpn/results/reports/independent_review_verification_2026_09_11.json": "494219fe21e0bff4973749ae122bd3d1f9a36f0c5b95fba22f238388a29de3ff",
     "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md": "13a6c8654eb44fafd7745bb1bb02799c4a2e32148eec58dd149b867197977b07",
     "GPU-MPC/ringlpn/results/reports/structured_attack_audit_2026_08_04.md": "44504e1ff624a9c9e91c7883019ee6290e4010728b7c5da76b035452dd47c63f",

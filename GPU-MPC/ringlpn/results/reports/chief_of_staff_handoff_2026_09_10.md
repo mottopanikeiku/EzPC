@@ -72,8 +72,8 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
 - Verified local commits: `300a324` (terminal capacity/build seals), `dd4276e`
   (checker ownership, storage/physical-GPU/SSH policy), and `69fd8b6`
   (independent-layer statistics and retained prospective experiments).
-- The published source-only ref `ringlpn/clinical-review-2026-09-10` is
-  `4a2e29a1719203e0c67b342b81ee3ba25c436285`, after `5dc7548` and `5409025`.
+- The initial source-only publication on `ringlpn/clinical-review-2026-09-10`
+  was `4a2e29a1719203e0c67b342b81ee3ba25c436285`, after `5dc7548` and `5409025`.
   Main/source-only builds produce identical application/helper binaries and
   complete provenance; the source-only terminal FC/Conv/API/eight-control
   runtime gate passes. These remain two-checkout checks, not a newly
@@ -86,15 +86,14 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
   that an interactive push was unavailable. Never push internal `master` or
   copy its ancestry, current manuscript, historical private checkpoint, or
   new internal measurement/approval inputs onto the source branch.
-- The two new CPU audit scripts and source-only README are committed locally
-  as `afc93c6fb94af01239f51b06d5c29a40c6fe7d84`. Both audits pass from that
-  checkout. Its additional push is pending. Earlier attempts stalled in the
-  VS Code `askpass.sh` child and were stopped. The latest retry returns 128
-  with `ECONNREFUSED` at the stale Git-helper IPC socket; no live current-user
-  listener, credential cache/store, or SSH agent is available. A fresh remote
-  query still returns `4a2e29a`. Restore host Git authentication, then push
-  the exact source commit/ref; no token or private key belongs in chat.
-  This does not undo the first successful push.
+- **Audit follow-through published.** The two new CPU audit scripts and
+  source-only README are now remote commit
+  `afc93c6fb94af01239f51b06d5c29a40c6fe7d84`; `git ls-remote` confirms the exact
+  SHA. Both audits pass from that checkout. Earlier attempts stalled in
+  `askpass.sh`, then failed with `ECONNREFUSED` at the disconnected IPC socket.
+  The user reconnected VS Code Git, the same-user listener returned, and the
+  exact push succeeded in 1.54 seconds. Git publication is no longer blocked.
+  No token/private key was read or retained, and internal `master` was not pushed.
 - A 9,572-byte incremental source bundle is retained outside the repository.
   Its path and SHA-256 are in `technical_followthrough_2026_09_22.json`.
   An isolated bare repository with only the published base imported it as

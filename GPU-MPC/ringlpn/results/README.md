@@ -24,12 +24,12 @@ the matched dealerless comparison still needs reviewed parameters and a
 consumer-matched implementation. Source publication does not close full-evidence
 release. The failed prospective prediction experiment and current PDF are
 unchanged. Audit source and its README are in source-only commit `afc93c6`;
-its extra push now fails because the VS Code Git-helper socket is disconnected.
-The remote remains at successfully published `4a2e29a`. The report records an
-incremental source bundle, its checksum, and an isolated import recovering exact
-commit `afc93c6` with only the three intended changed paths and no internal
-checkpoint object. Internal evidence is not exported. A live authenticated
-host Git channel is still required to publish the source update.
+it is now published on `ringlpn/clinical-review-2026-09-10`, with its exact
+remote SHA verified. Reconnecting VS Code Git restored the disconnected
+credential IPC channel and resolved the push blocker. The report also records
+an incremental source bundle and isolated import recovering exact `afc93c6`
+with only the three intended changed paths and no internal checkpoint object.
+Internal evidence is not exported.
 
 ## Independent review follow-through (2026-09-11)
 
