@@ -167,10 +167,15 @@ Explicit one-comparison-per-limb and million-comparison diagnostics miss their
 illustrative targets; neither count is a justified live-key lifetime.
 Both audits run from the source-only checkout without private inputs or GPUs.
 The source-only audit commit is `afc93c6`; its additional push is not complete.
-Subsequent push attempts stall in VS Code's `askpass.sh` child despite the
-earlier successful publication. The stalled process tree was stopped, and the
-remote still resolves to `4a2e29a`. Approve the host's Git prompt and push only
-the explicit source ref; do not substitute internal `master`.
+Earlier attempts stalled in VS Code's `askpass.sh`; the latest retry instead
+returns 128 with `ECONNREFUSED` at its stale IPC socket. No current-user Git
+helper listener, credential cache/store, or SSH agent is available to this
+session. The remote still resolves to `4a2e29a`. Restore the host authentication
+channel before retrying the explicit source ref; never push internal `master`.
+A 9,572-byte incremental source bundle is retained outside Git; its exact
+path/SHA-256 and successful isolated-repository import are in the report below.
+It imports precisely `afc93c6` over published `4a2e29a`, contains only the
+three intended changed source paths, and does not import internal `8e0c498`.
 `results/reports/technical_followthrough_2026_09_22.json` records commands,
 source bindings, controls, publication, and the remaining prerequisite matrix.
 P-KEY, P-CONV human approval, parameter review, matched dealerless evaluation,

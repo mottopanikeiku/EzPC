@@ -415,7 +415,7 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/technical_followthrough_2026_09_22.json",
-      "sha256": "d907ca30cea533224fe686ae9859accc7badb692d98461f0f5646edc716addab"
+      "sha256": "ce9cc2bc3d6efb51c7818f2cfa2b0b088d2f54397752dd5f07d1d9f9b4e5b72b"
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
@@ -431,5 +431,5 @@
     }
   ],
   "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "4fa40d6c7ce8b9964dcf932dbbc8811f4da59bc26e28d6073b751f5ec56805be"
+  "manifest_digest": "711a1fee33680f81f92c9ac0453d49162e2a00bd613e881f9a1903899458cc13"
 }

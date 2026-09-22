@@ -24,8 +24,12 @@ the matched dealerless comparison still needs reviewed parameters and a
 consumer-matched implementation. Source publication does not close full-evidence
 release. The failed prospective prediction experiment and current PDF are
 unchanged. Audit source and its README are in source-only commit `afc93c6`;
-its extra push awaits VS Code Git-helper completion. The remote remains at
-the successfully published `4a2e29a`. Internal evidence is not exported.
+its extra push now fails because the VS Code Git-helper socket is disconnected.
+The remote remains at successfully published `4a2e29a`. The report records an
+incremental source bundle, its checksum, and an isolated import recovering exact
+commit `afc93c6` with only the three intended changed paths and no internal
+checkpoint object. Internal evidence is not exported. A live authenticated
+host Git channel is still required to publish the source update.
 
 ## Independent review follow-through (2026-09-11)
 
