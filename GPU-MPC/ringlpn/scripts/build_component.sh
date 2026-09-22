@@ -31,6 +31,7 @@ Focused executable components:
   secure-truncate             host secure truncation
   distributed-dpf             host distributed DPF prototype
   two-party-dpf               host two-process DPF keygen and validator
+  direct-ot-fc                experimental direct Gilboa-OT FC baseline
   ole-cuda                    CUDA Figure-2/OLE components
   linear-ole                  CUDA linear OLE benchmark
   orca-fc-ringlpn             CUDA Ring-LPN FC demo
@@ -113,6 +114,9 @@ if [[ $# -ne 1 ]]; then
   exit 2
 fi
 
+# The explicit component, not an inherited experimental selector, owns dispatch.
+export RINGLPN_DIRECT_OT_FC=0
+
 case "$component" in
   list|--list|-l)
     usage
@@ -147,6 +151,9 @@ case "$component" in
   secure-truncate) run_wrapper build_secure_truncate_test.sh ;;
   distributed-dpf) run_wrapper build_distributed_dpf_keygen.sh ;;
   two-party-dpf) run_wrapper build_two_party_dpf_keygen.sh ;;
+  direct-ot-fc)
+    RINGLPN_DIRECT_OT_FC=1 run_wrapper build_two_party_fc_preprocess.sh
+    ;;
   ole-cuda) run_wrapper build_ole_cuda_bench.sh ;;
   linear-ole) run_wrapper build_linear_ole_bench.sh ;;
   orca-fc-ringlpn) run_wrapper build_orca_fc_ringlpn_demo.sh ;;

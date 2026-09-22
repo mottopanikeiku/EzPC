@@ -57,6 +57,52 @@ and deterministic epoch. The host dispatcher overrides the runtime user with
 the invoking non-root UID/GID so bind-mounted outputs remain caller-owned;
 runtime UID or GID zero is rejected.
 
+## Same-function direct-OT FC baseline
+
+`direct-ot-fc` builds a separate experimental executable, never a production
+adapter selection. It computes both FC cross products with existing Gilboa
+OLE, uses both deployed CRT fields for q128, and reuses the existing exact
+conversion, authenticated loopback channel, consume-once claims and private
+record/state writer. Its compatibility header carries the **reference**
+Ring-LPN plan; no Ring-LPN noise, DPF keys or expansion slots are generated.
+The unchanged reference executable checks the records and independently
+recorded input/output mask states.
+
+From `GPU-MPC/`, with CUDA on `PATH` and a new output filename:
+
+```sh
+bash ringlpn/scripts/build_component.sh direct-ot-fc
+python3 ringlpn/scripts/run_direct_ot_fc_baseline.py --mode direct-only \
+  --direct ringlpn/bin/test_direct_ot_fc_preprocess \
+  --reference ringlpn/bin/test_two_party_fc_preprocess \
+  --output /tmp/direct-ot-fc-fresh.json
+```
+
+Direct producers are CPU-only with CUDA hidden; the checker uses physical GPU3.
+`--mode compare` prospectively interleaves the same `100x64x10`, q128/bw32
+workload with the existing Ring-LPN producer on P0/GPU1 and P1/GPU2. Selected
+GPUs must be idle, GPU0 is never selected, and failed plans are never reused.
+The default is one warmup and three measured invocations per selected backend.
+Neither a same-function comparison nor a successful checker establishes a
+common reviewed security level, a raw-diagonal DMPF baseline, or deployment.
+
+## Source-only runtime candidate
+
+`scripts/build_source_runtime_candidate.py` fetches exact public commit
+`afc93c6fb94af01239f51b06d5c29a40c6fe7d84` and its FC-required CUTLASS gitlink,
+admits only source/licenses and the separately hashed packaging recipe, and
+uses the canonical FC builder inside `scripts/Dockerfile.runtime`. Fresh
+external work/output roots are mandatory. The resulting local Docker image,
+actual ELF, build provenance and Docker-save archive have measured identities.
+This is not a registry publication or a substitute for native rootless Podman,
+authorized distinct hosts, dedicated durable ledgers or release authorization.
+
+```sh
+python3 ringlpn/scripts/build_source_runtime_candidate.py \
+  --work-root /tmp/ringlpn-runtime-new-work \
+  --output-root /tmp/ringlpn-runtime-new-artifacts
+```
+
 ## Layout
 - src/bench_ntt.cpp: NFLLib CPU microbenchmark (NTT, INTT, PolyMul)
 - src/bench_ntt_cuda_cheddar.cu: primary CUDA benchmark, extracted from cheddar-fhe and adapted to the Ring-LPN harness

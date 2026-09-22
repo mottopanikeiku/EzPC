@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+# Local source-only candidate; not a registry release or publication authorization.
+FROM nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade
+ENV SOURCE_DATE_EPOCH=1786320000 FORCE_SOURCE_DATE=1 \
+    CUDA_ARCH=89 GPU_ARCH=89 PATH=/usr/local/cuda/bin:/usr/bin:/bin \
+    HOME=/tmp CMAKE_GENERATOR="Unix Makefiles" CMAKE_BUILD_PARALLEL_LEVEL=1 \
+    RINGLPN_BUILD_JOBS=1
+LABEL org.opencontainers.image.title="Ring-LPN source-only local FC runtime candidate" \
+      org.opencontainers.image.source="https://github.com/mottopanikeiku/EzPC" \
+      org.opencontainers.image.revision="afc93c6fb94af01239f51b06d5c29a40c6fe7d84" \
+      org.opencontainers.image.base.digest="sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade" \
+      org.opencontainers.image.ubuntu.snapshot="20260810T000000Z" \
+      io.ezpc.ringlpn.role="local-runtime-candidate-not-authorized-publication"
+# Same exact package snapshot/compiler convention as Dockerfile.reproduction;
+# no TeX/evidence/publication packages and no mutable NVIDIA apt repository.
+RUN rm -f /etc/apt/sources.list.d/cuda.list \
+ && sed -i \
+      -e 's|http://archive.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/20260810T000000Z/|g' \
+      -e 's|http://security.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/20260810T000000Z/|g' \
+      /etc/apt/sources.list.d/ubuntu.sources \
+ && ! grep -Eq 'archive\.ubuntu\.com|security\.ubuntu\.com|developer\.download\.nvidia\.com' /etc/apt/sources.list.d/* \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      gcc-13=13.3.0-6ubuntu2~24.04.1 g++-13=13.3.0-6ubuntu2~24.04.1 \
+      cmake=3.28.3-1build7 libmpfr-dev=4.2.1-1build1.1 \
+      libgmp-dev=2:6.3.0+dfsg-2ubuntu6.1 libeigen3-dev=3.4.0-4build0.1 \
+      python3=3.12.3-0ubuntu2.1 git=1:2.43.0-1ubuntu7.3 make=4.3-4.1build2 \
+      libssl-dev=3.0.13-0ubuntu3.12 ca-certificates=20260601~24.04.1 \
+ && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 \
+ && rm -rf /var/lib/apt/lists/* /var/log/apt/* \
+ && rm -f /var/log/dpkg.log /var/log/alternatives.log
+COPY source/ /opt/ringlpn/source/
+COPY source-admission.json /opt/ringlpn/provenance/source-admission.json
+COPY Dockerfile.runtime build_source_runtime_candidate.py capture_runtime_build.py /opt/ringlpn/recipe/
+RUN python3 /opt/ringlpn/recipe/capture_runtime_build.py \
+ && chmod -R a+rX /opt/ringlpn \
+ && printf '%s\n' 'ringlpn:x:65532:' >> /etc/group \
+ && printf '%s\n' 'ringlpn:x:65532:65532::/nonexistent:/usr/sbin/nologin' >> /etc/passwd
+USER 65532:65532
+WORKDIR /tmp
+ENTRYPOINT ["/opt/ringlpn/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess"]
+CMD ["--plan", "--qbits", "128", "--bw", "32", "--rows", "2", "--inner", "3", "--cols", "2"]

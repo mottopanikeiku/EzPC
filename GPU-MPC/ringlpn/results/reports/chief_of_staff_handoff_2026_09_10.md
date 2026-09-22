@@ -61,7 +61,53 @@ which statement is newer and gate-backed, correct all live documents in the
 same slice, and mark superseded material explicitly. Historical checkpoint
 bytes are evidence and must not be edited in place.
 
-## Latest follow-through — 2026-09-22
+## Latest autonomous engineering execution — 2026-09-22
+
+The user explicitly rejected treating engineering work as approval-blocked.
+The resulting execution is retained in
+`autonomous_technical_closure_2026_09_22.json`; use it before the older
+prerequisite matrix. Three independent engineering/research slices and two
+read-only challenge reviews were integrated, built, and exercised.
+
+- **Conversion:** an exposed retained-state obstruction is now explicit,
+  alongside a state-preserving, role-conditioned functionality candidate.
+  All 72 exact identities, 1,120 sampled cases, and 96 retained-mask cases pass.
+  Concrete stateful SplitIKNP/NP, fixed-key CRH, DRBG, and successful-entropy
+  hypotheses remain real proof obligations. No live cryptographic model was
+  silently changed and no input-confidentiality attack is claimed.
+- **P-KEY:** the conditional whole-key lemma is separated from the missing
+  live-source lifting. Workload inventory follows eight pinned source files;
+  all 676 reduced role/tag checks pass. Do not reinstate a domain-size charge
+  per key or charge repeated evaluation as independent leaf replacements.
+- **Baseline:** the direct-OT same-function FC producer is implemented and
+  builds identically in both checkouts. Final `direct_ot_fc_complete_2026_09_22`
+  evidence passes eight cases, including independently supplied mask states,
+  replay, and different-public-claim authentication rejection. The direct-only
+  plan uses CPU producers and GPU3 checker; median is 1.079694043 s for three
+  measured `100x64x10` invocations. GPU2 is occupied by an unrelated process.
+  A fresh Ring-LPN ratio is therefore absent; do not recycle the old cohort.
+  The raw-diagonal regular-DMPF replacement remains a separate NO-GO.
+- **Runtime:** actual source-only image `sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8`
+  exports reference binary `a5630582...` byte-for-byte. The nonroot read-only
+  planner and in-image unchanged GPU3 checker pass. Preserve the exported
+  7,754,951,680-byte archive and build logs outside Git; locations/hashes are
+  in the JSON. Do not populate the publication manifest's null authorization
+  fields with this unapproved local image ID.
+- **Source transfer:** new source-only commit `9bf1ab047e5f4fd9b048cd355bad994f135ae62c`
+  contains ten intended paths and no internal evidence. The verified 28,794-byte
+  bundle requires published `afc93c6`; isolated import matches all ten blobs and
+  excludes internal `6f80f2b`. Exact push attempts and remote state are in the
+  JSON; the earlier successful publication is not proof this new commit landed.
+
+The build-dispatch review finding was reproduced before the fix: an inherited
+direct-OT selector made `linear-fc` build the wrong target. The fixed dispatch
+builds the reference even under that environment; the direct component still
+builds its own binary. The throwaway pre-fix launcher, private fixture/state
+roots, checker containers, and verification repository were removed.
+Keep failed attempts as separate evidence; never merge their timings into the
+final cohort. The frozen prediction failure and retained PDF are unchanged.
+
+## Earlier follow-through — 2026-09-22
 
 The user's request to establish review subagents and execute the remaining
 work produced four independent automated reviews and 15 findings. All
@@ -92,7 +138,7 @@ cryptographic sign-off, an owner ruling, or a completed publication gate.
   SHA. Both audits pass from that checkout. Earlier attempts stalled in
   `askpass.sh`, then failed with `ECONNREFUSED` at the disconnected IPC socket.
   The user reconnected VS Code Git, the same-user listener returned, and the
-  exact push succeeded in 1.54 seconds. Git publication is no longer blocked.
+  exact push succeeded in 1.54 seconds. That checkpoint's push blocker closed.
   No token/private key was read or retained, and internal `master` was not pushed.
 - A 9,572-byte incremental source bundle is retained outside the repository.
   Its path and SHA-256 are in `technical_followthrough_2026_09_22.json`.

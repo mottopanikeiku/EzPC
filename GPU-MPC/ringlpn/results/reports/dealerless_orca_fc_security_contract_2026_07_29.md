@@ -464,6 +464,19 @@ The end-to-end proof additionally names:
   `S=z_0+z_1`, `wrap=[S>=Q]`, and `v=S-wrap*Q`. Sample uniform
   `r_0 in Z_(2^bw)`, set `r_1=v-r_0 mod 2^bw`, and deliver only `r_b` to
   `P_b`. The wrap bit is internal and is never opened.
+  This fresh-share interface is a complete-view independent-tape boundary,
+  not an independence guarantee after fixing already-exposed native RNG state.
+- `F_CONV-ret^b`: retain the statically corrupt role's registered RNG state and
+  the source's public consumption schedule. For `b=0`, derive its final raw
+  arithmetic daBit masks `a_0` from that state, sample independent fair `h`,
+  and return `r_0=z_0-Q*a_0` if `h=0`, or
+  `r_0=z_0-Q*(1-a_0)` if `h=1`, modulo `2^bw`. Give the honest party the
+  complementary share of `v`. For `b=1`, sample uniform `r_1`, give the
+  honest party its complement, preserve the corrupt RNG choices, and
+  simulate the selected arithmetic OT value consistently with `r_1,h`.
+  This role-conditioned retained-state alternative parallels `F_RINGOLE^b`;
+  it does not promise an independently uniform share conditional on every
+  native-state snapshot. Runtime source is unchanged.
 - authenticated point-to-point delivery with explicit common abort.
 
 S4, S6, and S8 replace these hybrids with selected real protocols and compose
@@ -958,13 +971,14 @@ injective: `A`, every `(D,E)`, and `h` can be recovered from the view.
 The construction and inverse show equality for every fixed local vector,
 not just the few slices covered by the executable enumeration.
 
-The same construction applies coordinatewise in the source's bit-major
-batched schedule: each component and gate uses distinct fresh correlations.
-Condition on the complete previous invocation state and any correlated
-canonical input vector. The uniform-coordinate bijections still hold for
-each fresh coordinate, and deterministic reordering into the public
-batch exchange schedule does not alter the joint law. This argument does
-not cover reusing an edaBit, triple, or final daBit across coordinates.
+The construction applies coordinatewise in the source's bit-major batched
+schedule when every component and gate uses distinct fresh correlations.
+Sequential conditioning is valid only when the required fresh coordinates
+remain independent given the previous view and input vector. An exposed,
+prefetched RNG-buffer suffix is not such a fresh coordinate. Alternatively,
+sample the permitted whole history jointly or use `F_CONV-ret^b` below.
+Deterministic public reordering changes no joint law; reusing a correlation
+or rewriting previously exposed tape coordinates is not covered.
 
 **Ideal-OT wrappers and random-tape boundary.** To lift this view to the
 specified wrappers in `F_OT`, retain the edaBit component pairs above.
@@ -1024,11 +1038,98 @@ recomputation/ideal-OT coupling cases. The executed script SHA-256 was
 `52eb32e774d755d256840ad4498aec072e750cf4601bb53eade14ed5412a3028`.
 This CPU-only evidence does not execute SCI/IKNP, the DRBG, or GPU code.
 
-This advances `P-CONV` from a local inverse to an explicit conditional-view
-candidate and a replayable audit. **It remains open/blocking for independent
-qualified human cryptographic review**, including the exact hybrid
-functionality and random-tape/OT lifting boundary. No runtime protocol
-source is changed, and no automated derivation confers privacy approval.
+**Concrete lifting and retained-state resolution (2026-09-22).** Ordinary
+PRG security does not supply a simulator that inverts an exposed seed to
+produce an independently prescribed output. The obstruction is exact.
+For a fixed corrupt P0 final raw mask `a` and input `z`, its output lies in
+
+```text
+C(a,z) = {z-Q*a, z-Q*(1-a)} mod B, B=2^bw.
+```
+
+The two residues are distinct: equality would require `2a=1 mod B`, since
+`Q` is odd. The real output passes this consistency test with probability
+one; a fresh ideal output independent of the exposed mask passes with
+probability `2/B` (`2^-31` at bw32). This tests the party's own state/output,
+not the honest input, and is not a conversion confidentiality attack.
+
+The counterexample needs no weak production PRG. After one ordinary
+`PartyRandom::u64()` call, its 512-word buffer is filled and its position
+is one. If that state is exposed, the next q64/count-one conversion draws
+63 edaBit choices from word 1, then 63 arithmetic `u128()` values from
+words 2–127, then the final daBit bit from the remaining bit of word 1.
+The final raw arithmetic value uses high word 128 and low word 129.
+Thus `a=buffer[129] mod B` is already exposed. Even ideal refill bytes do
+not make the next output independently uniform conditional on that state.
+More generally, a deterministic `s`-bit seed and `k` final opening bits
+permit at most `2^(s+k)` output vectors, not `B^k`. At bw32/count-three,
+a 64-bit deterministic seed admits at most a `2^-29` fraction of fresh
+output vectors. This last example illustrates a modeling obstruction;
+the source's deterministic test constructor is not the production RNG.
+`audit_conversion_simulator.py --mode state-boundary` checks the support
+relation and source-bound buffer-consumption arithmetic, not native entropy.
+
+There is an exact **forward state-preserving simulator** in the
+ideal-honest-randomness/`F_OT` hybrid:
+
+1. Continue the corrupt RNG unchanged. Retain its daBit Boolean choices,
+   P0 arithmetic masks, and each triple's local `(a,b,mu)` sender coins.
+   For corrupt P1, sample its edaBit selected arithmetic OT values uniformly.
+2. Sample each triple's selected receiver bit `o` uniformly and set
+   `c=(a AND b) xor mu xor o`. Sample `A` and every successive `(D,E)`
+   uniformly; run the same local ripple equations and derive both outgoing
+   and incoming shares. The preceding honest-completion bijections still
+   hold after fixing these local sender coins.
+3. Sample `h` uniformly. P0 keeps its RNG-generated final arithmetic mask
+   and computes its output, as in `F_CONV-ret^0`. P1 either samples its
+   selected arithmetic OT value for forward simulation or solves that
+   incoming value from its prescribed `r_1,h`; it never programs its RNG seed.
+4. Preserve buffers, bit pools and provider continuation across calls.
+   The honest output is the complementary share by the existing correctness
+   identity. No honest input, true wrap or input sum is a simulator input.
+
+Thus native-state confidentiality can be formulated without changing the
+runtime or manufacturing seed inversion. This does not establish the
+stronger fresh-share functionality under exposed prior native state.
+For a stand-alone final view with independent word tapes, pack all logical
+coins into their actual disjoint word/bit positions and sample unused bits
+uniformly; this gives exact whole-buffer completion. For a black-box RNG
+API with provider state excluded, use a **joint, multi-call** hidden-provider
+indistinguishability hybrid, not rare-output conditional PRG security.
+A post-execution DRBG snapshot needs its own leakage/backtracking model.
+
+The concrete OT replacement is also a technical hypothesis, not just a
+request for approval. The canonical builder selects `../SCI/src`:
+
+- Two continuing `sci::SplitIKNP` contexts must realize stateful, chosen-message,
+  static semi-honest OT for both one-bit and 128-bit APIs, public batch
+  padding, correlated application inputs, and interleaved directions.
+- The source Naor–Pinkas base OT uses P-256 and a SHA256-truncated DH KDF.
+  Its passive theorem needs the corresponding DH/idealized-hash and correctly
+  sampled scalar assumptions.
+- The extension uses `sci::CRH`, `H(x)=AES_fixed-key(x) xor x`, with no
+  OT-index tweak. Require its actual multi-query hidden-shift correlation
+  robustness (or a stated public-AES random-permutation model), not merely
+  ordinary secret-key AES PRP security or an indexed-random-oracle citation.
+- Preserve exposed corrupt AES keys/counters; idealize only hidden streams.
+  `PartyRandom` checks `RAND_priv_bytes`, but SCI's `utils/prg.h` ignores two
+  `_rdseed64_step` return values and `utils/group_openssl.h` ignores
+  `BN_rand_range` status. Successful high-entropy initialization is therefore
+  an explicit unresolved implementation precondition. No entropy failure
+  was measured here; upstream SCI remains outside the editable scope.
+
+Under those stated RNG/stateful-OT hypotheses the logical conversion,
+correlation wrappers and independent-word packing add zero statistical
+simulation loss. The real-primitive advantages remain separate unknown
+terms. This is a precise conditional lifting candidate, not a concrete
+security-level certificate, adaptive-corruption result or human sign-off.
+
+This advances `P-CONV` to conditional complete-view and retained-state
+candidates with an explicit obstruction to the stronger exposed-state
+fresh-share claim. It remains open for the concrete stateful OT/RNG
+realization hypotheses above and independent qualified human review.
+No runtime protocol source is changed, and no automated derivation confers
+privacy approval.
 
 The live two-process artifact realizes steps 1--10 for one forward-shaped
 matmul: party-local mask sampling, distributed GPU-AES DPF key generation,
@@ -1508,9 +1609,10 @@ multi-instance advantage bound, two-CRT-limb composition, or concrete parameter
 pin exists. The proved cyclic orbit is not a reviewed arbitrary-decoder speedup.
 `P-KEY` additionally requires the actual biased leaf map, its statistical
 loss, and full lifetime composition; a standard DPF/PRG citation alone is
-insufficient. `P-CONV` now has the explicit state-consistent conditional-view
-candidate and executable audit in §5, but remains open/blocking for independent
-qualified human review of the proof and its random-draw/OT boundary. `P-FRESH` is
+insufficient. `P-CONV` has complete-view and retained-state candidates plus
+the exposed-state fresh-share obstruction in §5. Concrete SCI/IKNP,
+correlation-robust hashing and entropy-initialization hypotheses remain
+technical obligations in addition to qualified human review. `P-FRESH` is
 closed only under the explicit SHA-256, one deployment-wide private persistent
 ledger, OS exclusive-create, fsync/atomic-rename, and no
 deletion/cloning/storage-rollback assumptions. Each live loopback socket

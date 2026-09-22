@@ -7,7 +7,7 @@
     "external_authorization_schema": "ringlpn-source-authorization/v1",
     "unavailable_reason": "The owner-approved final source commit, annotated release tag, and operator-supplied external source-consistency authorization do not exist yet; the coordinator validates object shape/digest but does not verify a cryptographic signer."
   },
-  "claim_boundary": "Unpinned feasibility only: corrected independent-layer CNN2/CNN3 stock-dealer comparisons, scoped shared-host SCI scheduling measurements, rejected prospective fixed-tuple wall-time prediction intervals, terminal FC/Conv2D functionality, and known-zero graph reproduction. September 22 adds exact ideal-leaf arithmetic and an ideal-correlation output-conditioned conversion simulator candidate. P-KEY lifetime/reduction and P-CONV independent review/concrete lifting remain open. Nonlinear material is test-only trusted; no concrete security, GPU resource attribution, private/trained inference, authenticated deployment, or full-model claim is made.",
+  "claim_boundary": "Unpinned feasibility only: corrected independent-layer CNN2/CNN3 stock-dealer comparisons, scoped shared-host SCI scheduling measurements, rejected prospective fixed-tuple wall-time prediction intervals, terminal FC/Conv2D functionality, and known-zero graph reproduction. September 22 adds exact ideal-leaf arithmetic, source-derived conditional whole-key workload accounting, and explicit ideal-correlation versus retained-state conversion boundaries. An implemented direct-OT same-function FC baseline passes the unchanged checker with independent mask states, and a source-only local image builds and passes its in-image GPU checker. No fresh Ring-LPN comparison ratio is available while GPU2 is occupied. P-KEY live lifetime/reduction and P-CONV independent review/concrete lifting remain open; the retained-state functionality is an unapproved alternative, not a silent model change. Nonlinear material is test-only trusted; no concrete security, GPU resource attribution, private/trained inference, authenticated deployment, or full-model claim is made.",
   "retained_checkpoint_boundary": {
     "classification": "internal/advisor-only",
     "external_circulation_blockers": [
@@ -415,21 +415,77 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/technical_followthrough_2026_09_22.json",
-      "sha256": "baec3f5148d9fd2440bc8475149d72537f5514bae457c577b3148d222fe8391a"
+      "sha256": "54b0bac8a8d122a051f02913ebff07959ea009fcb872d699eaef3927a81e0c9d"
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
-      "sha256": "13a6c8654eb44fafd7745bb1bb02799c4a2e32148eec58dd149b867197977b07"
+      "sha256": "50b0fe036a4a096b7d4c028bb6d109dcdf00d817d62518b2bb89a23105b50b82"
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/structured_attack_audit_2026_08_04.md",
-      "sha256": "44504e1ff624a9c9e91c7883019ee6290e4010728b7c5da76b035452dd47c63f"
+      "sha256": "7aebf648d8c7e349fd23ceaa015e22567aa228fba0be858e5b99deeaf4bda57e"
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/regular_dmpf_design_no_go_2026_08_06.md",
-      "sha256": "0e386808cb689c42b2269ce60b5e1b89db3f832d5c2d4da4cd68ac69ebb93e7d"
+      "sha256": "5e20a5c462e41d281aa999bd805fd4ff49b803f12d790365da8ba493345ffefa"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/autonomous_technical_closure_2026_09_22.json",
+      "sha256": "04e6779d2fe35c3f2f97c66b5fa100a4d3c418cdada2b9bda91da47cae26a5c8"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_baseline_2026_09_22.json",
+      "sha256": "7d6d4d89e71cd8da3e2562f6894ea1aac160bf5be6a86c2ea7974b3072cceac8"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_baseline_2026_09_22.plan.json",
+      "sha256": "93c77c30367274055eeeb8f4fe78e1638bcfd124b5f1b24f421fa84dae3c1592"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_functional_2026_09_22.json",
+      "sha256": "aff1bf53b7fa6cbaa13d0ca6a0c2b16d11ada5ab1b146ad878d585331f888175"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_functional_2026_09_22.plan.json",
+      "sha256": "8575b0730a578923cf4557f3eb77b8b9a1ef28c564613cf4b1a4a68d8c692452"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_verified_2026_09_22.json",
+      "sha256": "7d1bfbd4abf43352afc809ba00fec2f41eb84a361df6ac21eabbe728d8a80b6c"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_verified_2026_09_22.plan.json",
+      "sha256": "0c4a845c87afce6b3285051f185be947de8b7fd3024c3303c8866b58afb545dc"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_comparison_2026_09_22.json",
+      "sha256": "d5f9eee157b4e413c691f7136b5b1d2cd438dfebe3305e978323b012e1ab00ad"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_comparison_2026_09_22.plan.json",
+      "sha256": "e4523369a3f507ffe3568e524f76c74d24c8bcb83ae654b9da19afd1267624d0"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_final_2026_09_22.json",
+      "sha256": "3557bdae2a490358b5077bdd4ce59e61c681a81464f4e1b87921997aa918d0c9"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_final_2026_09_22.plan.json",
+      "sha256": "e7588e78ececc6518ebdaa22eb2a4d0215a63e6c7117525a340b9fc137bb0349"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.json",
+      "sha256": "7bd57cda5b8dcf41cca4c2cbca605fc54f2c8aa3be8b48800650506f2902772e"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.plan.json",
+      "sha256": "cb8716e0c43f864355eb9aafb75eeb0371cc8ca955271a18084eccaa89fee2e3"
+    },
+    {
+      "path": "GPU-MPC/ringlpn/results/reports/authenticated_two_host_deployment_2026_08_04.md",
+      "sha256": "aacfe51e273bf8681d0129ea2f4bbe899631d0d49041fc242aee71e6f9ee7d84"
     }
   ],
   "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "308c0b237ec55560a1e3dd1d5ca8224fc84eac5a352374e9a1e7c2ed00a737f5"
+  "manifest_digest": "44a916126dc5283246e205aa9d34426d2c2d6be08ae97b530226c3cecd9df73b"
 }

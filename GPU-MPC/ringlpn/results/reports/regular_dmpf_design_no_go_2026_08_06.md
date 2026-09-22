@@ -76,3 +76,23 @@ the Reverse-Cuckoo support-dependent descriptor/leakage assumption and its
 placement/rank parameters have not been accepted as matching the present
 contract, and neither side has a reviewed common security tuple. A generic
 request to finalize engineering is not approval to change that boundary.
+
+## Separate same-function baseline, not a DMPF replacement
+
+The September 22 autonomous engineering pass adds
+`src/test_direct_ot_fc_preprocess.cu` and
+`scripts/run_direct_ot_fc_baseline.py`. This is ordinary direct Gilboa OLE
+for both FC cross products, followed by the existing two-prime CRT/exact
+conversion and private record/state writer. The unchanged stock checker
+uses independently recorded output-mask shares, so it checks the generated
+Beaver relation rather than inferring an arbitrary mask from `C`.
+
+The q64/q128, multi-OT-batch and complete `100x64x10` FC paths have executable
+correctness evidence. This removes the blanket claim that no end-to-end
+dealerless baseline is implemented. It does **not** implement the raw-diagonal
+functionality above, accept Reverse-Cuckoo leakage, replace the live encoder,
+or establish a common reviewed security level. Its compatibility headers
+carry a reference Ring-LPN plan; its own accounting reports direct scalar
+OLE/OT work instead of fictitious Ring-LPN trees or slots. Current evidence
+and failed comparison attempts are indexed in
+`autonomous_technical_closure_2026_09_22.json`.

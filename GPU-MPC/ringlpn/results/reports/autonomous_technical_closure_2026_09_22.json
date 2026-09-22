@@ -1,0 +1,2836 @@
+{
+  "classification": "internal-advisor-executed-engineering-not-security-approval-or-full-evidence-release",
+  "cleanup": {
+    "baseline_private_roots": "Fresh per-case roots removed by the exercised harness finally paths; only sanitized summaries/plans retained.",
+    "before_fix_dispatch_fixture_removed": true,
+    "failed_and_superseded_measurement_evidence_preserved": true,
+    "generated_run_fc_review_experiments_bytecode_removed": true,
+    "isolated_bundle_import_repository_removed": true,
+    "private_runtime_fixture_removed": true,
+    "runtime_deliverables_preserved": [
+      "/tmp/ringlpn-runtime-artifacts-afc93c6-002",
+      "/tmp/ringlpn-autonomous-source-9bf1ab0-zthq7bd4/ringlpn-source-9bf1ab0.bundle"
+    ],
+    "unrelated_dirty_manuscript_data_and_submodule_work_preserved": true
+  },
+  "conversion": {
+    "contract_report": "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
+    "decision": "Preserve live implementation/model; explicitly distinguish independent logical tapes, hidden-provider-state hybrids, and an alternative role-conditioned retained-state ideal functionality.",
+    "output": {
+      "exact": {
+        "distribution_equalities": 72,
+        "local_slices": 2,
+        "real_worlds_enumerated": 294912,
+        "scope": "complete-view conditional slices, Q=3 ell=3 bw=1",
+        "views_per_condition": 4096
+      },
+      "model": "independent ideal logical coins; no DRBG-state or concrete-OT simulation",
+      "qualified_human_review": "required; P-CONV not approved",
+      "retained_state": {
+        "bw32_single_coordinate_consistency_probability": "2^-31",
+        "confidentiality_attack_demonstrated": false,
+        "decision": "fresh independent output cannot be required after fixing exposed state",
+        "deterministic_64_bit_seed_bw32_count3_support_fraction_upper_bound": "2^-29",
+        "exact_retained_mask_cases": 96,
+        "independent_fresh_ideal_consistency_probability": "2/2^bw",
+        "q64_count1_preexposed_final_mask_buffer_word": 129,
+        "real_consistency_probability": "1",
+        "runtime_redesign_required": false,
+        "scope": "source-bound arithmetic and consumption model; no native DRBG/OT execution",
+        "source_sha256": {
+          "src/secure_convert.cpp": "94e4686c3c1834b1b7d7fa2798c4896065391008ca06195a777b3e7c8af435c8",
+          "src/two_party_ot.h": "bafdac15667e61033d90777a6c075e7b81145ad920fac22d6e1de5852dfb5fd4"
+        }
+      },
+      "sampled": {
+        "cases": 1120,
+        "h_branches": [
+          0,
+          1
+        ],
+        "production_moduli": [
+          "4611686018326724609",
+          "21267647931552827693776735476788494337"
+        ],
+        "roles": [
+          0,
+          1
+        ],
+        "scope": "two-party recomputation and ideal-OT wrapper coupling, sampled not proof"
+      }
+    },
+    "public_checkout_command": [
+      "python3",
+      "/tmp/ringlpn-review-20260910-_m6jgfab/public-source/GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py",
+      "--mode",
+      "all",
+      "--samples",
+      "40"
+    ],
+    "qualified_approval": false,
+    "remaining_technical_hypotheses": [
+      "Joint continuing stateful SplitIKNP simulation for both 1-bit and 128-bit APIs and directions",
+      "Actual P256 NP base OT and truncated SHA256 DHKDF security",
+      "Multi-query robustness of the implemented unindexed fixed-key AES Davies-Meyer CRH",
+      "Joint DRBG lifting under the stated exposure boundary",
+      "Successful source entropy calls: SCI ignores RDSEED and BN_rand_range return values; no failure observed and read-only upstream unchanged"
+    ],
+    "retained_state_obstruction": "For fixed corrupt input z and final arithmetic mask a, r0 lies in {z-Q*a,z-Q*(1-a)} mod 2^bw. Independent fresh ideal output passes with probability 2/2^bw, not 1.",
+    "returncode": 0,
+    "runtime_crypto_sources_changed": false,
+    "script_sha256": "4cba3c945687f69b872a1e9cb884f2841d3f056a99a2b3e616ba615221a0bd42"
+  },
+  "date": "2026-09-22",
+  "direct_ot_fc_baseline": {
+    "SCI_receive_counters": "Unmeasured/null; wire accounting sums measured sender counters in both directions plus separate authentication bytes.",
+    "comparison_blocker": "Physical GPU2 has an unrelated compute process; the pinned GPU1/GPU2 producer assignment and idle-device gate were not bypassed.",
+    "direct_binary_sha256": "9522205fbb7d08cf5970b9622b8344c5be5d70c329057a38f81dde2893ae9bec",
+    "final_control": {
+      "control": "distinct_public_claims_and_direct_peer_authentication_rejection",
+      "controller_launch_to_party_exit_us": 9449.623,
+      "direct_rejection_stage": "channel_authentication_before_preflight",
+      "entry": {
+        "bw": 32,
+        "ordinal": 7,
+        "qbits": 128,
+        "role": "control",
+        "shape": [
+          2,
+          2,
+          2
+        ],
+        "side": "mismatch"
+      },
+      "environment_pre": [
+        {
+          "clocks.mem": "9000",
+          "clocks.sm": "2550",
+          "driver_version": "560.35.03",
+          "index": "3",
+          "memory.total": "32760",
+          "memory.used": "16",
+          "name": "NVIDIA RTX 5000 Ada Generation",
+          "power.limit": "250.00",
+          "utilization.gpu": "8"
+        }
+      ],
+      "producer_return_codes": [
+        1,
+        2
+      ],
+      "public_claim_digests": [
+        "b9c7135d4adacd069ff332fbb53544f1599d421723cf5332c95f3a2e2813e387",
+        "a6356d8c334a2a291563e028970552c9f5610c1c5e9b7c1a730c16db5658dac5"
+      ],
+      "reference_failure_detail_exposed": false,
+      "status": "pass"
+    },
+    "final_direct_only_physical_gpus": [
+      3
+    ],
+    "final_measured_microseconds": {
+      "direct": {
+        "max": 1102470.955,
+        "mean": 1083559.4980000001,
+        "median": 1079694.043,
+        "min": 1068513.496,
+        "n": 3,
+        "sample_sd": 17305.593379076592
+      }
+    },
+    "final_observation": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.json",
+    "final_passing_cases": 8,
+    "final_plan": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.plan.json",
+    "final_status": "pass",
+    "fresh_ringlpn_comparison_ratio": null,
+    "historical_attempt_index": [
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_baseline_2026_09_22.json",
+            "sha256": "7d6d4d89e71cd8da3e2562f6894ea1aac160bf5be6a86c2ea7974b3072cceac8"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_baseline_2026_09_22.plan.json",
+            "sha256": "93c77c30367274055eeeb8f4fe78e1638bcfd124b5f1b24f421fa84dae3c1592"
+          }
+        ],
+        "disposition": "failed_before_protocol_gpu_occupancy",
+        "observed_status": "failed",
+        "sample_count": 0
+      },
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_functional_2026_09_22.json",
+            "sha256": "aff1bf53b7fa6cbaa13d0ca6a0c2b16d11ada5ab1b146ad878d585331f888175"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_functional_2026_09_22.plan.json",
+            "sha256": "8575b0730a578923cf4557f3eb77b8b9a1ef28c564613cf4b1a4a68d8c692452"
+          }
+        ],
+        "disposition": "failed_harness_assumed_measured_SCI_receive_counters",
+        "observed_status": "failed",
+        "sample_count": 0
+      },
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_verified_2026_09_22.json",
+            "sha256": "7d1bfbd4abf43352afc809ba00fec2f41eb84a361df6ac21eabbe728d8a80b6c"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_verified_2026_09_22.plan.json",
+            "sha256": "0c4a845c87afce6b3285051f185be947de8b7fd3024c3303c8866b58afb545dc"
+          }
+        ],
+        "disposition": "superseded_weaker_mismatch_evidence_and_incorrect_direct_only_device_labels",
+        "observed_status": "pass",
+        "sample_count": 8
+      },
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_comparison_2026_09_22.json",
+            "sha256": "d5f9eee157b4e413c691f7136b5b1d2cd438dfebe3305e978323b012e1ab00ad"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_comparison_2026_09_22.plan.json",
+            "sha256": "e4523369a3f507ffe3568e524f76c74d24c8bcb83ae654b9da19afd1267624d0"
+          }
+        ],
+        "disposition": "partial_direct_cases_then_reference_GPU2_occupancy_gate",
+        "observed_status": "failed",
+        "sample_count": 5
+      },
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_final_2026_09_22.json",
+            "sha256": "3557bdae2a490358b5077bdd4ce59e61c681a81464f4e1b87921997aa918d0c9"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_final_2026_09_22.plan.json",
+            "sha256": "e7588e78ececc6518ebdaa22eb2a4d0215a63e6c7117525a340b9fc137bb0349"
+          }
+        ],
+        "disposition": "seven_positive_cases_then_overstrict_reference_error_detail_expectation",
+        "observed_status": "failed",
+        "sample_count": 8
+      },
+      {
+        "artifacts": [
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.json",
+            "sha256": "7bd57cda5b8dcf41cca4c2cbca605fc54f2c8aa3be8b48800650506f2902772e"
+          },
+          {
+            "path": "GPU-MPC/ringlpn/results/reports/direct_ot_fc_complete_2026_09_22.plan.json",
+            "sha256": "cb8716e0c43f864355eb9aafb75eeb0371cc8ca955271a18084eccaa89fee2e3"
+          }
+        ],
+        "disposition": "final_acceptance_evidence",
+        "observed_status": "pass",
+        "sample_count": 8
+      }
+    ],
+    "implementation": "Separate direct Gilboa field OLE FC producer with real SCI OT, existing conversion, record/state encoding, and unchanged GPU checker; not a raw-diagonal DMPF replacement.",
+    "occupancy_correction": "An early chat note said GPU1; the retained check and direct recheck identify GPU2. GPU0 was neither queried nor used.",
+    "output_mask_correctness": "Unchanged checker receives independent party mask-state files; output masks are not reconstructed from C to manufacture a passing relation.",
+    "public_and_main_direct_binaries_identical": true,
+    "raw_diagonal_regular_DMPF_status": "Separate existing design NO-GO remains unchanged.",
+    "reference_binary_sha256": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283",
+    "replay_return_codes": [
+      2,
+      2
+    ],
+    "reviewed_common_security_tuple": null,
+    "timings_pooled": false
+  },
+  "final_integrity_check_command": [
+    "python3",
+    "GPU-MPC/ringlpn/scripts/retained_public_evidence.py",
+    "--repo",
+    "/home/fatih/EzPC",
+    "--manifest",
+    "/home/fatih/EzPC/GPU-MPC/ringlpn/scripts/publication_environment_manifest_2026_08_10.json"
+  ],
+  "leaf_lifetime": {
+    "approved_security_bits": null,
+    "claim": "Conditional common-prefix whole-key lemma; one hidden mapped seed per generated tree, role, and world, not per leaf or repeated evaluation.",
+    "live_complete_bound": null,
+    "main_checkout_executions": [
+      {
+        "arguments": [
+          "--workload",
+          "8192,2,8,2,regular,1,1",
+          "--budget-bits",
+          "64",
+          "--check-reduced"
+        ],
+        "output": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "distributed-view and adaptive bootstrap lifting of the conditional one-key lemma"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 512,
+            "p1": 512
+          },
+          "comparison_semantics": "Workload counts charge one hidden on-path map per tree pair for one fixed corrupted role in one world, ONLY under report 9.6-9.9 hypotheses; the two-world generic map term is twice that sum. Legacy counts remain hypothetical. Neither mode establishes live-key conditional laws.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+                "fraction": "127209100163640224677092450354908443054137761140310021/220855883086852944006132488241230990946902556220157975925430058645192704",
+                "log2_approx_not_security_bits": -60.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+                "fraction": "127209100163640224677092450354908443054137761140310021/220855883086852944006132488241230990946902556220157975925430058645192704",
+                "log2_approx_not_security_bits": -60.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "20769187434139310514121985316880384",
+                "fraction": "11962686292099073/20769187434139310514121985316880384",
+                "log2_approx_not_security_bits": -60.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "20769187434139310514121985316880384",
+                "fraction": "11962686292099073/20769187434139310514121985316880384",
+                "log2_approx_not_security_bits": -60.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": [
+            {
+              "all_shifts_checked": 61,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "8192",
+                "fraction": "9/8192",
+                "log2_approx_not_security_bits": -9.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "4096",
+                "fraction": "9/4096",
+                "log2_approx_not_security_bits": -8.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 61,
+              "single_law_tv": {
+                "denominator": "1998848",
+                "fraction": "2841/1998848",
+                "log2_approx_not_security_bits": -9.458554221373344,
+                "numerator": "2841"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 127,
+              "enumerated_half_pairs": 65536,
+              "half_bits": 8,
+              "half_modulus_shift_tv": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "32768",
+                "fraction": "1/32768",
+                "log2_approx_not_security_bits": -15.0,
+                "numerator": "1"
+              },
+              "interval_event_gap": {
+                "denominator": "16384",
+                "fraction": "1/16384",
+                "log2_approx_not_security_bits": -14.0,
+                "numerator": "1"
+              },
+              "modulus": 127,
+              "single_law_tv": {
+                "denominator": "520192",
+                "fraction": "31/520192",
+                "log2_approx_not_security_bits": -14.034488376385292,
+                "numerator": "31"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 1024,
+              "half_bits": 5,
+              "half_modulus_shift_tv": {
+                "denominator": "1024",
+                "fraction": "21/1024",
+                "log2_approx_not_security_bits": -5.607682577221239,
+                "numerator": "21"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "2048",
+                "fraction": "11/2048",
+                "log2_approx_not_security_bits": -7.540568381362703,
+                "numerator": "11"
+              },
+              "interval_event_gap": {
+                "denominator": "1024",
+                "fraction": "11/1024",
+                "log2_approx_not_security_bits": -6.540568381362703,
+                "numerator": "11"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "6656",
+                "fraction": "69/6656",
+                "log2_approx_not_security_bits": -6.5919152613629235,
+                "numerator": "69"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 13,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "512",
+                "fraction": "9/512",
+                "log2_approx_not_security_bits": -5.830074998557688,
+                "numerator": "9"
+              },
+              "interval_event_gap": {
+                "denominator": "256",
+                "fraction": "9/256",
+                "log2_approx_not_security_bits": -4.830074998557688,
+                "numerator": "9"
+              },
+              "modulus": 13,
+              "single_law_tv": {
+                "denominator": "416",
+                "fraction": "9/416",
+                "log2_approx_not_security_bits": -5.5305147166987805,
+                "numerator": "9"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            },
+            {
+              "all_shifts_checked": 16,
+              "enumerated_half_pairs": 256,
+              "half_bits": 4,
+              "half_modulus_shift_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "independent_fair_tag_joint_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "interval_event_gap": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "modulus": 16,
+              "single_law_tv": {
+                "denominator": "1",
+                "fraction": "0",
+                "log2_approx_not_security_bits": null,
+                "numerator": "0"
+              },
+              "status": "EXACT_ENUMERATION_MATCH"
+            }
+          ],
+          "role_replacement_checks": {
+            "full_final_cw_tv_each_case": {
+              "denominator": "416",
+              "fraction": "9/416",
+              "log2_approx_not_security_bits": -5.5305147166987805,
+              "numerator": "9"
+            },
+            "half_bits": 4,
+            "independently_resampling_repeated_uniform_answer_equality_gap": {
+              "denominator": "13",
+              "fraction": "12/13",
+              "log2_approx_not_security_bits": -0.1154772174199361,
+              "numerator": "12"
+            },
+            "modulus": 13,
+            "payload_shift_tv_each_case": {
+              "denominator": "256",
+              "fraction": "9/256",
+              "log2_approx_not_security_bits": -4.830074998557688,
+              "numerator": "9"
+            },
+            "revealed_seed_joint_tv_counterexample": {
+              "denominator": "13",
+              "fraction": "12/13",
+              "log2_approx_not_security_bits": -0.1154772174199361,
+              "numerator": "12"
+            },
+            "role_tag_own_payload_cases": 676,
+            "status": "EXACT_ROLE_ENUMERATION_AND_CONDITIONAL_COUNTEREXAMPLE_MATCH"
+          },
+          "schema": "ringlpn-ideal-leaf-loss-v2",
+          "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+          "source_bound_lifetime": {
+            "candidate_hidden_path_expansions_by_limb": {
+              "p0": 5632,
+              "p1": 5632
+            },
+            "complete_conditional_bound": "min(1, sigma + sum_{w=0,1}(rng_w + transcript_w + aes_w + switch_w + bad_w + ring_w + ot_ole_w + conversion_w + sampler_w) + 2*sum_l K_l*delta_l). Terms must describe disjoint transitions; bad includes root repeats only if not already charged. No unknown term is assigned zero. See report 9.9.",
+            "conditional_map_terms": {
+              "fixed_alpha_payload_only_common_prefix_uncapped": {
+                "denominator": "20769187434139310514121985316880384",
+                "fraction": "11962686292099073/20769187434139310514121985316880384",
+                "log2_approx_not_security_bits": -60.59060909016553,
+                "numerator": "11962686292099073"
+              },
+              "one_world_to_uniform_final_cw_uncapped": {
+                "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+                "fraction": "127209100163640224677092450354908443054137761140310021/220855883086852944006132488241230990946902556220157975925430058645192704",
+                "log2_approx_not_security_bits": -60.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "two_world_common_simulator_capped": {
+                "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+                "fraction": "127209100163640224677092450354908443054137761140310021/110427941543426472003066244120615495473451278110078987962715029322596352",
+                "log2_approx_not_security_bits": -59.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              },
+              "two_world_common_simulator_uncapped": {
+                "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+                "fraction": "127209100163640224677092450354908443054137761140310021/110427941543426472003066244120615495473451278110078987962715029322596352",
+                "log2_approx_not_security_bits": -59.59060909044166,
+                "numerator": "127209100163640224677092450354908443054137761140310021"
+              }
+            },
+            "live_complete_bound": null,
+            "missing_reduction": [
+              "conditional hidden-path AES/DPF replacement given one full key prefix and auxiliary view",
+              "joint distributed-transcript simulation (not merely final-key equality)",
+              "adaptive Figure-2 bootstrap/application joint simulation and structured Ring-LPN advantage",
+              "unknown seed exposure/correction-induced collision and namespace bad events"
+            ],
+            "scope": "successful fresh linear invocations; one fixed corrupted role; not a complete view proof",
+            "separate_ideal_primitive_terms_not_live_certificates": {
+              "four_query_prp_prf_switching_one_world_uncapped": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "33/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -111.95560588064154,
+                "numerator": "33"
+              },
+              "iid_128_bit_root_repetition_union_bound_uncapped": {
+                "denominator": "332306998946228968225951765070086144",
+                "fraction": "2047/332306998946228968225951765070086144",
+                "log2_approx_not_security_bits": -107.00070461297659,
+                "numerator": "2047"
+              },
+              "root_draws_both_parties": 2048
+            },
+            "tree_pairs_by_limb": {
+              "p0": 512,
+              "p1": 512
+            },
+            "workload_limit": "Counts inventory the declared successful calls, not arbitrary failures/restarts, a graph inferred from a model name, native AES adversary queries, or all shape admission checks.",
+            "workloads": [
+              {
+                "application_capacity_per_ring_instance": 7424,
+                "application_slots_discarded": 29692,
+                "application_slots_used": 4,
+                "bootstrap_final_tail_discarded": 1536,
+                "bootstrap_reserved_per_ring_instance": 768,
+                "bootstrap_ring_slots_reserved": 3072,
+                "c": 2,
+                "candidate_hidden_path_expansions_one_role_one_world": 11264,
+                "conditional_hidden_leaf_sites_one_role_one_world": 1024,
+                "cross_terms_per_invocation": 1,
+                "depth": 11,
+                "directions": 2,
+                "domain": 2048,
+                "invocations": 1,
+                "keygen_aes_block_calls_both_parties": 16769024,
+                "keygen_leaf_conversions_both_parties": 4194304,
+                "keygen_node_expansions_both_parties": 4192256,
+                "limbs": 2,
+                "n": 8192,
+                "noise": "regular",
+                "one_full_evaluation_leaf_conversions_both_parties": 4194304,
+                "party_key_halves_all_limbs": 2048,
+                "phase_b_string_ot_128_both_ot_directions": 22528,
+                "phase_c_external_epoch_zero_products": 1536,
+                "phase_c_prior_ring_products_consumed": 1536,
+                "phase_c_scalar_products_total": 3072,
+                "ring_batches_per_invocation": 1,
+                "ring_instances_all_limbs": 4,
+                "t": 8,
+                "tree_pairs_all_limbs": 1024,
+                "tree_pairs_per_active_limb": 512,
+                "trees_per_ring_instance": 256
+              }
+            ]
+          },
+          "source_sha256": {
+            "src/gpu_aes_prg_host.h": "e2b1742f88cf3d22c6f7e8c482fbb54449761bf9aefe464294777b9cd240cde1",
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+            "src/two_party_spfss.h": "fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      },
+      {
+        "arguments": [
+          "--workload",
+          "8192,2,8,1,regular,7424,1",
+          "--workload",
+          "8192,2,8,1,regular,7425,1",
+          "--budget-bits",
+          "64"
+        ],
+        "output": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "distributed-view and adaptive bootstrap lifting of the conditional one-key lemma"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 1536,
+            "p1": 0
+          },
+          "comparison_semantics": "Workload counts charge one hidden on-path map per tree pair for one fixed corrupted role in one world, ONLY under report 9.6-9.9 hypotheses; the two-world generic map term is twice that sum. Legacy counts remain hypothetical. Neither mode establishes live-key conditional laws.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "70096006183767215468180193788559375/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -60.24511252675224,
+                "numerator": "70096006183767215468180193788559375"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "70096006183767215468180193788559375/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -60.24511252675224,
+                "numerator": "70096006183767215468180193788559375"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "30399296880771075/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -60.24511252650031,
+                "numerator": "30399296880771075"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "30399296880771075/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -60.24511252650031,
+                "numerator": "30399296880771075"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": null,
+          "role_replacement_checks": null,
+          "schema": "ringlpn-ideal-leaf-loss-v2",
+          "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+          "source_bound_lifetime": {
+            "candidate_hidden_path_expansions_by_limb": {
+              "p0": 16896,
+              "p1": 0
+            },
+            "complete_conditional_bound": "min(1, sigma + sum_{w=0,1}(rng_w + transcript_w + aes_w + switch_w + bad_w + ring_w + ot_ole_w + conversion_w + sampler_w) + 2*sum_l K_l*delta_l). Terms must describe disjoint transitions; bad includes root repeats only if not already charged. No unknown term is assigned zero. See report 9.9.",
+            "conditional_map_terms": {
+              "fixed_alpha_payload_only_common_prefix_uncapped": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "30399296880771075/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -60.24511252650031,
+                "numerator": "30399296880771075"
+              },
+              "one_world_to_uniform_final_cw_uncapped": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "70096006183767215468180193788559375/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -60.24511252675224,
+                "numerator": "70096006183767215468180193788559375"
+              },
+              "two_world_common_simulator_capped": {
+                "denominator": "47890485651013679402901815355757330451116198281084928",
+                "fraction": "70096006183767215468180193788559375/47890485651013679402901815355757330451116198281084928",
+                "log2_approx_not_security_bits": -59.24511252675224,
+                "numerator": "70096006183767215468180193788559375"
+              },
+              "two_world_common_simulator_uncapped": {
+                "denominator": "47890485651013679402901815355757330451116198281084928",
+                "fraction": "70096006183767215468180193788559375/47890485651013679402901815355757330451116198281084928",
+                "log2_approx_not_security_bits": -59.24511252675224,
+                "numerator": "70096006183767215468180193788559375"
+              }
+            },
+            "live_complete_bound": null,
+            "missing_reduction": [
+              "conditional hidden-path AES/DPF replacement given one full key prefix and auxiliary view",
+              "joint distributed-transcript simulation (not merely final-key equality)",
+              "adaptive Figure-2 bootstrap/application joint simulation and structured Ring-LPN advantage",
+              "unknown seed exposure/correction-induced collision and namespace bad events"
+            ],
+            "scope": "successful fresh linear invocations; one fixed corrupted role; not a complete view proof",
+            "separate_ideal_primitive_terms_not_live_certificates": {
+              "four_query_prp_prf_switching_one_world_uncapped": {
+                "denominator": "332306998946228968225951765070086144",
+                "fraction": "99/332306998946228968225951765070086144",
+                "log2_approx_not_security_bits": -111.3706433799204,
+                "numerator": "99"
+              },
+              "iid_128_bit_root_repetition_union_bound_uncapped": {
+                "denominator": "664613997892457936451903530140172288",
+                "fraction": "9213/664613997892457936451903530140172288",
+                "log2_approx_not_security_bits": -105.83054470230297,
+                "numerator": "9213"
+              },
+              "root_draws_both_parties": 3072
+            },
+            "tree_pairs_by_limb": {
+              "p0": 1536,
+              "p1": 0
+            },
+            "workload_limit": "Counts inventory the declared successful calls, not arbitrary failures/restarts, a graph inferred from a model name, native AES adversary queries, or all shape admission checks.",
+            "workloads": [
+              {
+                "application_capacity_per_ring_instance": 7424,
+                "application_slots_discarded": 0,
+                "application_slots_used": 14848,
+                "bootstrap_final_tail_discarded": 768,
+                "bootstrap_reserved_per_ring_instance": 768,
+                "bootstrap_ring_slots_reserved": 1536,
+                "c": 2,
+                "candidate_hidden_path_expansions_one_role_one_world": 5632,
+                "conditional_hidden_leaf_sites_one_role_one_world": 512,
+                "cross_terms_per_invocation": 7424,
+                "depth": 11,
+                "directions": 2,
+                "domain": 2048,
+                "invocations": 1,
+                "keygen_aes_block_calls_both_parties": 8384512,
+                "keygen_leaf_conversions_both_parties": 2097152,
+                "keygen_node_expansions_both_parties": 2096128,
+                "limbs": 1,
+                "n": 8192,
+                "noise": "regular",
+                "one_full_evaluation_leaf_conversions_both_parties": 2097152,
+                "party_key_halves_all_limbs": 1024,
+                "phase_b_string_ot_128_both_ot_directions": 11264,
+                "phase_c_external_epoch_zero_products": 768,
+                "phase_c_prior_ring_products_consumed": 768,
+                "phase_c_scalar_products_total": 1536,
+                "ring_batches_per_invocation": 1,
+                "ring_instances_all_limbs": 2,
+                "t": 8,
+                "tree_pairs_all_limbs": 512,
+                "tree_pairs_per_active_limb": 512,
+                "trees_per_ring_instance": 256
+              },
+              {
+                "application_capacity_per_ring_instance": 7424,
+                "application_slots_discarded": 14846,
+                "application_slots_used": 14850,
+                "bootstrap_final_tail_discarded": 768,
+                "bootstrap_reserved_per_ring_instance": 768,
+                "bootstrap_ring_slots_reserved": 3072,
+                "c": 2,
+                "candidate_hidden_path_expansions_one_role_one_world": 11264,
+                "conditional_hidden_leaf_sites_one_role_one_world": 1024,
+                "cross_terms_per_invocation": 7425,
+                "depth": 11,
+                "directions": 2,
+                "domain": 2048,
+                "invocations": 1,
+                "keygen_aes_block_calls_both_parties": 16769024,
+                "keygen_leaf_conversions_both_parties": 4194304,
+                "keygen_node_expansions_both_parties": 4192256,
+                "limbs": 1,
+                "n": 8192,
+                "noise": "regular",
+                "one_full_evaluation_leaf_conversions_both_parties": 4194304,
+                "party_key_halves_all_limbs": 2048,
+                "phase_b_string_ot_128_both_ot_directions": 22528,
+                "phase_c_external_epoch_zero_products": 768,
+                "phase_c_prior_ring_products_consumed": 2304,
+                "phase_c_scalar_products_total": 3072,
+                "ring_batches_per_invocation": 2,
+                "ring_instances_all_limbs": 4,
+                "t": 8,
+                "tree_pairs_all_limbs": 1024,
+                "tree_pairs_per_active_limb": 1024,
+                "trees_per_ring_instance": 256
+              }
+            ]
+          },
+          "source_sha256": {
+            "src/gpu_aes_prg_host.h": "e2b1742f88cf3d22c6f7e8c482fbb54449761bf9aefe464294777b9cd240cde1",
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+            "src/two_party_spfss.h": "fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      },
+      {
+        "arguments": [
+          "--workload",
+          "8192,2,8,2,regular,64000,22",
+          "--budget-bits",
+          "64"
+        ],
+        "output": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "distributed-view and adaptive bootstrap lifting of the conditional one-key lemma"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 101376,
+            "p1": 101376
+          },
+          "comparison_semantics": "Workload counts charge one hidden on-path map per tree pair for one fixed corrupted role in one world, ONLY under report 9.6-9.9 hypotheses; the two-world generic map term is twice that sum. Legacy counts remain hypothetical. Neither mode establishes live-key conditional laws.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+                "fraction": "12593700916200382243032152585135935862359638352890692079/110427941543426472003066244120615495473451278110078987962715029322596352",
+                "log2_approx_not_security_bits": -52.96125247036204,
+                "numerator": "12593700916200382243032152585135935862359638352890692079"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+                "fraction": "12593700916200382243032152585135935862359638352890692079/110427941543426472003066244120615495473451278110078987962715029322596352",
+                "log2_approx_not_security_bits": -52.96125247036204,
+                "numerator": "12593700916200382243032152585135935862359638352890692079"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "10384593717069655257060992658440192",
+                "fraction": "1184305942917808227/10384593717069655257060992658440192",
+                "log2_approx_not_security_bits": -52.96125247008592,
+                "numerator": "1184305942917808227"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "10384593717069655257060992658440192",
+                "fraction": "1184305942917808227/10384593717069655257060992658440192",
+                "log2_approx_not_security_bits": -52.96125247008592,
+                "numerator": "1184305942917808227"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": null,
+          "role_replacement_checks": null,
+          "schema": "ringlpn-ideal-leaf-loss-v2",
+          "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+          "source_bound_lifetime": {
+            "candidate_hidden_path_expansions_by_limb": {
+              "p0": 1115136,
+              "p1": 1115136
+            },
+            "complete_conditional_bound": "min(1, sigma + sum_{w=0,1}(rng_w + transcript_w + aes_w + switch_w + bad_w + ring_w + ot_ole_w + conversion_w + sampler_w) + 2*sum_l K_l*delta_l). Terms must describe disjoint transitions; bad includes root repeats only if not already charged. No unknown term is assigned zero. See report 9.9.",
+            "conditional_map_terms": {
+              "fixed_alpha_payload_only_common_prefix_uncapped": {
+                "denominator": "10384593717069655257060992658440192",
+                "fraction": "1184305942917808227/10384593717069655257060992658440192",
+                "log2_approx_not_security_bits": -52.96125247008592,
+                "numerator": "1184305942917808227"
+              },
+              "one_world_to_uniform_final_cw_uncapped": {
+                "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+                "fraction": "12593700916200382243032152585135935862359638352890692079/110427941543426472003066244120615495473451278110078987962715029322596352",
+                "log2_approx_not_security_bits": -52.96125247036204,
+                "numerator": "12593700916200382243032152585135935862359638352890692079"
+              },
+              "two_world_common_simulator_capped": {
+                "denominator": "55213970771713236001533122060307747736725639055039493981357514661298176",
+                "fraction": "12593700916200382243032152585135935862359638352890692079/55213970771713236001533122060307747736725639055039493981357514661298176",
+                "log2_approx_not_security_bits": -51.96125247036204,
+                "numerator": "12593700916200382243032152585135935862359638352890692079"
+              },
+              "two_world_common_simulator_uncapped": {
+                "denominator": "55213970771713236001533122060307747736725639055039493981357514661298176",
+                "fraction": "12593700916200382243032152585135935862359638352890692079/55213970771713236001533122060307747736725639055039493981357514661298176",
+                "log2_approx_not_security_bits": -51.96125247036204,
+                "numerator": "12593700916200382243032152585135935862359638352890692079"
+              }
+            },
+            "live_complete_bound": null,
+            "missing_reduction": [
+              "conditional hidden-path AES/DPF replacement given one full key prefix and auxiliary view",
+              "joint distributed-transcript simulation (not merely final-key equality)",
+              "adaptive Figure-2 bootstrap/application joint simulation and structured Ring-LPN advantage",
+              "unknown seed exposure/correction-induced collision and namespace bad events"
+            ],
+            "scope": "successful fresh linear invocations; one fixed corrupted role; not a complete view proof",
+            "separate_ideal_primitive_terms_not_live_certificates": {
+              "four_query_prp_prf_switching_one_world_uncapped": {
+                "denominator": "83076749736557242056487941267521536",
+                "fraction": "3267/83076749736557242056487941267521536",
+                "log2_approx_not_security_bits": -104.32624926056194,
+                "numerator": "3267"
+              },
+              "iid_128_bit_root_repetition_union_bound_uncapped": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "40144797/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -91.74129031762769,
+                "numerator": "40144797"
+              },
+              "root_draws_both_parties": 405504
+            },
+            "tree_pairs_by_limb": {
+              "p0": 101376,
+              "p1": 101376
+            },
+            "workload_limit": "Counts inventory the declared successful calls, not arbitrary failures/restarts, a graph inferred from a model name, native AES adversary queries, or all shape admission checks.",
+            "workloads": [
+              {
+                "application_capacity_per_ring_instance": 7424,
+                "application_slots_discarded": 247808,
+                "application_slots_used": 5632000,
+                "bootstrap_final_tail_discarded": 33792,
+                "bootstrap_reserved_per_ring_instance": 768,
+                "bootstrap_ring_slots_reserved": 608256,
+                "c": 2,
+                "candidate_hidden_path_expansions_one_role_one_world": 2230272,
+                "conditional_hidden_leaf_sites_one_role_one_world": 202752,
+                "cross_terms_per_invocation": 64000,
+                "depth": 11,
+                "directions": 2,
+                "domain": 2048,
+                "invocations": 22,
+                "keygen_aes_block_calls_both_parties": 3320266752,
+                "keygen_leaf_conversions_both_parties": 830472192,
+                "keygen_node_expansions_both_parties": 830066688,
+                "limbs": 2,
+                "n": 8192,
+                "noise": "regular",
+                "one_full_evaluation_leaf_conversions_both_parties": 830472192,
+                "party_key_halves_all_limbs": 405504,
+                "phase_b_string_ot_128_both_ot_directions": 4460544,
+                "phase_c_external_epoch_zero_products": 33792,
+                "phase_c_prior_ring_products_consumed": 574464,
+                "phase_c_scalar_products_total": 608256,
+                "ring_batches_per_invocation": 9,
+                "ring_instances_all_limbs": 792,
+                "t": 8,
+                "tree_pairs_all_limbs": 202752,
+                "tree_pairs_per_active_limb": 101376,
+                "trees_per_ring_instance": 256
+              }
+            ]
+          },
+          "source_sha256": {
+            "src/gpu_aes_prg_host.h": "e2b1742f88cf3d22c6f7e8c482fbb54449761bf9aefe464294777b9cd240cde1",
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+            "src/two_party_spfss.h": "fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      },
+      {
+        "arguments": [
+          "--workload",
+          "8192,2,8,1,uniform,1,1",
+          "--budget-bits",
+          "64"
+        ],
+        "output": {
+          "assumptions_not_established_for_live_keys": [
+            "independent uniform 64-bit halves at each idealized leaf",
+            "appropriate conditional law given adversarial view at every replacement",
+            "independent uniform tag for the joint-event witness only",
+            "distributed-view and adaptive bootstrap lifting of the conditional one-key lemma"
+          ],
+          "budget_bits_not_security_level": 64,
+          "comparison_counts": {
+            "p0": 512,
+            "p1": 0
+          },
+          "comparison_semantics": "Workload counts charge one hidden on-path map per tree pair for one fixed corrupted role in one world, ONLY under report 9.6-9.9 hypotheses; the two-world generic map term is twice that sum. Legacy counts remain hypothetical. Neither mode establishes live-key conditional laws.",
+          "finite_comparison_diagnostics": {
+            "mapped_to_uniform_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "23365335394589071822726731262853125/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -61.830075027473384,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "23365335394589071822726731262853125/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -61.830075027473384,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "upper_bound_within_leaf_only_target": false
+            },
+            "two_payload_shift_conditional_hybrid": {
+              "capped_upper_bound": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "10133098960257025/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -61.83007502722146,
+                "numerator": "10133098960257025"
+              },
+              "uncapped_triangle_sum": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "10133098960257025/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -61.83007502722146,
+                "numerator": "10133098960257025"
+              },
+              "upper_bound_within_leaf_only_target": false
+            }
+          },
+          "leaf_only_target": {
+            "denominator": "18446744073709551616",
+            "fraction": "1/18446744073709551616",
+            "log2_approx_not_security_bits": -64.0,
+            "numerator": "1"
+          },
+          "not_included": [
+            "AES/DPF replacement or key-privacy reduction",
+            "OT/OLE/Ring-LPN losses",
+            "conversion and sampler losses",
+            "live-seed or multi-key independence proof",
+            "independent human review or complete lifetime advantage budget"
+          ],
+          "primes": [
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 805306359,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "10133098960257025/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "k": 4,
+              "label": "p0",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              },
+              "p": 4611686018326724609,
+              "positive_threshold_floor": 0,
+              "r": 402653180,
+              "shift": 2305843009163362304,
+              "single_law_tv_exact": {
+                "denominator": "49039857306638007708571458924295506381942987039830966272",
+                "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+                "log2_approx_not_security_bits": -70.83007502747338,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "10133098960257025/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.83007502722145,
+                "numerator": "10133098960257025"
+              }
+            },
+            {
+              "arbitrary_payload_shift_tv_upper_bound": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_payload_shift_tv_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "disjoint_shift_supports": true,
+              "excess_support_size": 939524087,
+              "half_bits": 64,
+              "independent_fair_tag_joint_event_gap_exact": {
+                "denominator": "42535295865117307932921825928971026432",
+                "fraction": "13792273623941121/42535295865117307932921825928971026432",
+                "log2_approx_not_security_bits": -71.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "k": 4,
+              "label": "p1",
+              "mixture_weight_epsilon": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              },
+              "p": 4611686018309947393,
+              "positive_threshold_floor": 0,
+              "r": 469762044,
+              "shift": 2305843009154973696,
+              "single_law_tv_exact": {
+                "denominator": "49039857306459601746983213939163220635761800147783122944",
+                "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+                "log2_approx_not_security_bits": -70.38529018074765,
+                "numerator": "31802817709638081870020963895083013"
+              },
+              "tag_conditioned_interval_event_gap_exact": {
+                "denominator": "21267647932558653966460912964485513216",
+                "fraction": "13792273623941121/21267647932558653966460912964485513216",
+                "log2_approx_not_security_bits": -70.38529018045375,
+                "numerator": "13792273623941121"
+              }
+            }
+          ],
+          "reduced_domain_checks": null,
+          "role_replacement_checks": null,
+          "schema": "ringlpn-ideal-leaf-loss-v2",
+          "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+          "source_bound_lifetime": {
+            "candidate_hidden_path_expansions_by_limb": {
+              "p0": 7168,
+              "p1": 0
+            },
+            "complete_conditional_bound": "min(1, sigma + sum_{w=0,1}(rng_w + transcript_w + aes_w + switch_w + bad_w + ring_w + ot_ole_w + conversion_w + sampler_w) + 2*sum_l K_l*delta_l). Terms must describe disjoint transitions; bad includes root repeats only if not already charged. No unknown term is assigned zero. See report 9.9.",
+            "conditional_map_terms": {
+              "fixed_alpha_payload_only_common_prefix_uncapped": {
+                "denominator": "41538374868278621028243970633760768",
+                "fraction": "10133098960257025/41538374868278621028243970633760768",
+                "log2_approx_not_security_bits": -61.83007502722146,
+                "numerator": "10133098960257025"
+              },
+              "one_world_to_uniform_final_cw_uncapped": {
+                "denominator": "95780971302027358805803630711514660902232396562169856",
+                "fraction": "23365335394589071822726731262853125/95780971302027358805803630711514660902232396562169856",
+                "log2_approx_not_security_bits": -61.830075027473384,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "two_world_common_simulator_capped": {
+                "denominator": "47890485651013679402901815355757330451116198281084928",
+                "fraction": "23365335394589071822726731262853125/47890485651013679402901815355757330451116198281084928",
+                "log2_approx_not_security_bits": -60.830075027473384,
+                "numerator": "23365335394589071822726731262853125"
+              },
+              "two_world_common_simulator_uncapped": {
+                "denominator": "47890485651013679402901815355757330451116198281084928",
+                "fraction": "23365335394589071822726731262853125/47890485651013679402901815355757330451116198281084928",
+                "log2_approx_not_security_bits": -60.830075027473384,
+                "numerator": "23365335394589071822726731262853125"
+              }
+            },
+            "live_complete_bound": null,
+            "missing_reduction": [
+              "conditional hidden-path AES/DPF replacement given one full key prefix and auxiliary view",
+              "joint distributed-transcript simulation (not merely final-key equality)",
+              "adaptive Figure-2 bootstrap/application joint simulation and structured Ring-LPN advantage",
+              "unknown seed exposure/correction-induced collision and namespace bad events"
+            ],
+            "scope": "successful fresh linear invocations; one fixed corrupted role; not a complete view proof",
+            "separate_ideal_primitive_terms_not_live_certificates": {
+              "four_query_prp_prf_switching_one_world_uncapped": {
+                "denominator": "166153499473114484112975882535043072",
+                "fraction": "21/166153499473114484112975882535043072",
+                "log2_approx_not_security_bits": -112.60768257722124,
+                "numerator": "21"
+              },
+              "iid_128_bit_root_repetition_union_bound_uncapped": {
+                "denominator": "664613997892457936451903530140172288",
+                "fraction": "1023/664613997892457936451903530140172288",
+                "log2_approx_not_security_bits": -109.00140957025467,
+                "numerator": "1023"
+              },
+              "root_draws_both_parties": 1024
+            },
+            "tree_pairs_by_limb": {
+              "p0": 512,
+              "p1": 0
+            },
+            "workload_limit": "Counts inventory the declared successful calls, not arbitrary failures/restarts, a graph inferred from a model name, native AES adversary queries, or all shape admission checks.",
+            "workloads": [
+              {
+                "application_capacity_per_ring_instance": 7424,
+                "application_slots_discarded": 14846,
+                "application_slots_used": 2,
+                "bootstrap_final_tail_discarded": 768,
+                "bootstrap_reserved_per_ring_instance": 768,
+                "bootstrap_ring_slots_reserved": 1536,
+                "c": 2,
+                "candidate_hidden_path_expansions_one_role_one_world": 7168,
+                "conditional_hidden_leaf_sites_one_role_one_world": 512,
+                "cross_terms_per_invocation": 1,
+                "depth": 14,
+                "directions": 2,
+                "domain": 16384,
+                "invocations": 1,
+                "keygen_aes_block_calls_both_parties": 67104768,
+                "keygen_leaf_conversions_both_parties": 16777216,
+                "keygen_node_expansions_both_parties": 16776192,
+                "limbs": 1,
+                "n": 8192,
+                "noise": "uniform",
+                "one_full_evaluation_leaf_conversions_both_parties": 16777216,
+                "party_key_halves_all_limbs": 1024,
+                "phase_b_string_ot_128_both_ot_directions": 14336,
+                "phase_c_external_epoch_zero_products": 768,
+                "phase_c_prior_ring_products_consumed": 768,
+                "phase_c_scalar_products_total": 1536,
+                "ring_batches_per_invocation": 1,
+                "ring_instances_all_limbs": 2,
+                "t": 8,
+                "tree_pairs_all_limbs": 512,
+                "tree_pairs_per_active_limb": 512,
+                "trees_per_ring_instance": 256
+              }
+            ]
+          },
+          "source_sha256": {
+            "src/gpu_aes_prg_host.h": "e2b1742f88cf3d22c6f7e8c482fbb54449761bf9aefe464294777b9cd240cde1",
+            "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+            "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+            "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+            "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+            "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+            "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+            "src/two_party_spfss.h": "fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461"
+          },
+          "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+          "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+        }
+      }
+    ],
+    "mixed_legacy_and_workload_arguments_control": {
+      "arguments": [
+        "python3",
+        "/tmp/ringlpn-review-20260910-_m6jgfab/public-source/GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py",
+        "--workload",
+        "8192,2,8,2,regular,64000,1",
+        "--comparisons-p0",
+        "1",
+        "--comparisons-p1",
+        "1",
+        "--budget-bits",
+        "64"
+      ],
+      "returncode": 2,
+      "stderr": "usage: audit_dpf_leaf_loss.py [-h] [--comparisons-p0 COMPARISONS_P0]\n                              [--comparisons-p1 COMPARISONS_P1]\n                              [--workload N,C,T,LIMBS,MODE,CROSS,INVOCATIONS]\n                              --budget-bits BUDGET_BITS [--check-reduced]\naudit_dpf_leaf_loss.py: error: --workload and hypothetical --comparisons-p* are mutually exclusive\n",
+      "stdout": ""
+    },
+    "public_checkout_command": [
+      "python3",
+      "/tmp/ringlpn-review-20260910-_m6jgfab/public-source/GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py",
+      "--workload",
+      "8192,2,8,2,regular,64000,1",
+      "--budget-bits",
+      "64",
+      "--check-reduced"
+    ],
+    "public_checkout_output": {
+      "assumptions_not_established_for_live_keys": [
+        "independent uniform 64-bit halves at each idealized leaf",
+        "appropriate conditional law given adversarial view at every replacement",
+        "independent uniform tag for the joint-event witness only",
+        "distributed-view and adaptive bootstrap lifting of the conditional one-key lemma"
+      ],
+      "budget_bits_not_security_level": 64,
+      "comparison_counts": {
+        "p0": 4608,
+        "p1": 4608
+      },
+      "comparison_semantics": "Workload counts charge one hidden on-path map per tree pair for one fixed corrupted role in one world, ONLY under report 9.6-9.9 hypotheses; the two-world generic map term is twice that sum. Legacy counts remain hypothetical. Neither mode establishes live-key conditional laws.",
+      "finite_comparison_diagnostics": {
+        "mapped_to_uniform_conditional_hybrid": {
+          "capped_upper_bound": {
+            "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+            "fraction": "1144881901472762022093832053194175987487239850262790189/220855883086852944006132488241230990946902556220157975925430058645192704",
+            "log2_approx_not_security_bits": -57.42068408899934,
+            "numerator": "1144881901472762022093832053194175987487239850262790189"
+          },
+          "uncapped_triangle_sum": {
+            "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+            "fraction": "1144881901472762022093832053194175987487239850262790189/220855883086852944006132488241230990946902556220157975925430058645192704",
+            "log2_approx_not_security_bits": -57.42068408899934,
+            "numerator": "1144881901472762022093832053194175987487239850262790189"
+          },
+          "upper_bound_within_leaf_only_target": false
+        },
+        "two_payload_shift_conditional_hybrid": {
+          "capped_upper_bound": {
+            "denominator": "20769187434139310514121985316880384",
+            "fraction": "107664176628891657/20769187434139310514121985316880384",
+            "log2_approx_not_security_bits": -57.42068408872321,
+            "numerator": "107664176628891657"
+          },
+          "uncapped_triangle_sum": {
+            "denominator": "20769187434139310514121985316880384",
+            "fraction": "107664176628891657/20769187434139310514121985316880384",
+            "log2_approx_not_security_bits": -57.42068408872321,
+            "numerator": "107664176628891657"
+          },
+          "upper_bound_within_leaf_only_target": false
+        }
+      },
+      "leaf_only_target": {
+        "denominator": "18446744073709551616",
+        "fraction": "1/18446744073709551616",
+        "log2_approx_not_security_bits": -64.0,
+        "numerator": "1"
+      },
+      "not_included": [
+        "AES/DPF replacement or key-privacy reduction",
+        "OT/OLE/Ring-LPN losses",
+        "conversion and sampler losses",
+        "live-seed or multi-key independence proof",
+        "independent human review or complete lifetime advantage budget"
+      ],
+      "primes": [
+        {
+          "arbitrary_payload_shift_tv_upper_bound": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "10133098960257025/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.83007502722145,
+            "numerator": "10133098960257025"
+          },
+          "disjoint_payload_shift_tv_exact": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "10133098960257025/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.83007502722145,
+            "numerator": "10133098960257025"
+          },
+          "disjoint_shift_supports": true,
+          "excess_support_size": 805306359,
+          "half_bits": 64,
+          "independent_fair_tag_joint_event_gap_exact": {
+            "denominator": "42535295865117307932921825928971026432",
+            "fraction": "10133098960257025/42535295865117307932921825928971026432",
+            "log2_approx_not_security_bits": -71.83007502722145,
+            "numerator": "10133098960257025"
+          },
+          "k": 4,
+          "label": "p0",
+          "mixture_weight_epsilon": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "10133098960257025/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.83007502722145,
+            "numerator": "10133098960257025"
+          },
+          "p": 4611686018326724609,
+          "positive_threshold_floor": 0,
+          "r": 402653180,
+          "shift": 2305843009163362304,
+          "single_law_tv_exact": {
+            "denominator": "49039857306638007708571458924295506381942987039830966272",
+            "fraction": "23365335394589071822726731262853125/49039857306638007708571458924295506381942987039830966272",
+            "log2_approx_not_security_bits": -70.83007502747338,
+            "numerator": "23365335394589071822726731262853125"
+          },
+          "tag_conditioned_interval_event_gap_exact": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "10133098960257025/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.83007502722145,
+            "numerator": "10133098960257025"
+          }
+        },
+        {
+          "arbitrary_payload_shift_tv_upper_bound": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "13792273623941121/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.38529018045375,
+            "numerator": "13792273623941121"
+          },
+          "disjoint_payload_shift_tv_exact": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "13792273623941121/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.38529018045375,
+            "numerator": "13792273623941121"
+          },
+          "disjoint_shift_supports": true,
+          "excess_support_size": 939524087,
+          "half_bits": 64,
+          "independent_fair_tag_joint_event_gap_exact": {
+            "denominator": "42535295865117307932921825928971026432",
+            "fraction": "13792273623941121/42535295865117307932921825928971026432",
+            "log2_approx_not_security_bits": -71.38529018045375,
+            "numerator": "13792273623941121"
+          },
+          "k": 4,
+          "label": "p1",
+          "mixture_weight_epsilon": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "13792273623941121/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.38529018045375,
+            "numerator": "13792273623941121"
+          },
+          "p": 4611686018309947393,
+          "positive_threshold_floor": 0,
+          "r": 469762044,
+          "shift": 2305843009154973696,
+          "single_law_tv_exact": {
+            "denominator": "49039857306459601746983213939163220635761800147783122944",
+            "fraction": "31802817709638081870020963895083013/49039857306459601746983213939163220635761800147783122944",
+            "log2_approx_not_security_bits": -70.38529018074765,
+            "numerator": "31802817709638081870020963895083013"
+          },
+          "tag_conditioned_interval_event_gap_exact": {
+            "denominator": "21267647932558653966460912964485513216",
+            "fraction": "13792273623941121/21267647932558653966460912964485513216",
+            "log2_approx_not_security_bits": -70.38529018045375,
+            "numerator": "13792273623941121"
+          }
+        }
+      ],
+      "reduced_domain_checks": [
+        {
+          "all_shifts_checked": 61,
+          "enumerated_half_pairs": 65536,
+          "half_bits": 8,
+          "half_modulus_shift_tv": {
+            "denominator": "4096",
+            "fraction": "9/4096",
+            "log2_approx_not_security_bits": -8.830074998557688,
+            "numerator": "9"
+          },
+          "independent_fair_tag_joint_event_gap": {
+            "denominator": "8192",
+            "fraction": "9/8192",
+            "log2_approx_not_security_bits": -9.830074998557688,
+            "numerator": "9"
+          },
+          "interval_event_gap": {
+            "denominator": "4096",
+            "fraction": "9/4096",
+            "log2_approx_not_security_bits": -8.830074998557688,
+            "numerator": "9"
+          },
+          "modulus": 61,
+          "single_law_tv": {
+            "denominator": "1998848",
+            "fraction": "2841/1998848",
+            "log2_approx_not_security_bits": -9.458554221373344,
+            "numerator": "2841"
+          },
+          "status": "EXACT_ENUMERATION_MATCH"
+        },
+        {
+          "all_shifts_checked": 127,
+          "enumerated_half_pairs": 65536,
+          "half_bits": 8,
+          "half_modulus_shift_tv": {
+            "denominator": "16384",
+            "fraction": "1/16384",
+            "log2_approx_not_security_bits": -14.0,
+            "numerator": "1"
+          },
+          "independent_fair_tag_joint_event_gap": {
+            "denominator": "32768",
+            "fraction": "1/32768",
+            "log2_approx_not_security_bits": -15.0,
+            "numerator": "1"
+          },
+          "interval_event_gap": {
+            "denominator": "16384",
+            "fraction": "1/16384",
+            "log2_approx_not_security_bits": -14.0,
+            "numerator": "1"
+          },
+          "modulus": 127,
+          "single_law_tv": {
+            "denominator": "520192",
+            "fraction": "31/520192",
+            "log2_approx_not_security_bits": -14.034488376385292,
+            "numerator": "31"
+          },
+          "status": "EXACT_ENUMERATION_MATCH"
+        },
+        {
+          "all_shifts_checked": 13,
+          "enumerated_half_pairs": 1024,
+          "half_bits": 5,
+          "half_modulus_shift_tv": {
+            "denominator": "1024",
+            "fraction": "21/1024",
+            "log2_approx_not_security_bits": -5.607682577221239,
+            "numerator": "21"
+          },
+          "independent_fair_tag_joint_event_gap": {
+            "denominator": "2048",
+            "fraction": "11/2048",
+            "log2_approx_not_security_bits": -7.540568381362703,
+            "numerator": "11"
+          },
+          "interval_event_gap": {
+            "denominator": "1024",
+            "fraction": "11/1024",
+            "log2_approx_not_security_bits": -6.540568381362703,
+            "numerator": "11"
+          },
+          "modulus": 13,
+          "single_law_tv": {
+            "denominator": "6656",
+            "fraction": "69/6656",
+            "log2_approx_not_security_bits": -6.5919152613629235,
+            "numerator": "69"
+          },
+          "status": "EXACT_ENUMERATION_MATCH"
+        },
+        {
+          "all_shifts_checked": 13,
+          "enumerated_half_pairs": 256,
+          "half_bits": 4,
+          "half_modulus_shift_tv": {
+            "denominator": "256",
+            "fraction": "9/256",
+            "log2_approx_not_security_bits": -4.830074998557688,
+            "numerator": "9"
+          },
+          "independent_fair_tag_joint_event_gap": {
+            "denominator": "512",
+            "fraction": "9/512",
+            "log2_approx_not_security_bits": -5.830074998557688,
+            "numerator": "9"
+          },
+          "interval_event_gap": {
+            "denominator": "256",
+            "fraction": "9/256",
+            "log2_approx_not_security_bits": -4.830074998557688,
+            "numerator": "9"
+          },
+          "modulus": 13,
+          "single_law_tv": {
+            "denominator": "416",
+            "fraction": "9/416",
+            "log2_approx_not_security_bits": -5.5305147166987805,
+            "numerator": "9"
+          },
+          "status": "EXACT_ENUMERATION_MATCH"
+        },
+        {
+          "all_shifts_checked": 16,
+          "enumerated_half_pairs": 256,
+          "half_bits": 4,
+          "half_modulus_shift_tv": {
+            "denominator": "1",
+            "fraction": "0",
+            "log2_approx_not_security_bits": null,
+            "numerator": "0"
+          },
+          "independent_fair_tag_joint_event_gap": {
+            "denominator": "1",
+            "fraction": "0",
+            "log2_approx_not_security_bits": null,
+            "numerator": "0"
+          },
+          "interval_event_gap": {
+            "denominator": "1",
+            "fraction": "0",
+            "log2_approx_not_security_bits": null,
+            "numerator": "0"
+          },
+          "modulus": 16,
+          "single_law_tv": {
+            "denominator": "1",
+            "fraction": "0",
+            "log2_approx_not_security_bits": null,
+            "numerator": "0"
+          },
+          "status": "EXACT_ENUMERATION_MATCH"
+        }
+      ],
+      "role_replacement_checks": {
+        "full_final_cw_tv_each_case": {
+          "denominator": "416",
+          "fraction": "9/416",
+          "log2_approx_not_security_bits": -5.5305147166987805,
+          "numerator": "9"
+        },
+        "half_bits": 4,
+        "independently_resampling_repeated_uniform_answer_equality_gap": {
+          "denominator": "13",
+          "fraction": "12/13",
+          "log2_approx_not_security_bits": -0.1154772174199361,
+          "numerator": "12"
+        },
+        "modulus": 13,
+        "payload_shift_tv_each_case": {
+          "denominator": "256",
+          "fraction": "9/256",
+          "log2_approx_not_security_bits": -4.830074998557688,
+          "numerator": "9"
+        },
+        "revealed_seed_joint_tv_counterexample": {
+          "denominator": "13",
+          "fraction": "12/13",
+          "log2_approx_not_security_bits": -0.1154772174199361,
+          "numerator": "12"
+        },
+        "role_tag_own_payload_cases": 676,
+        "status": "EXACT_ROLE_ENUMERATION_AND_CONDITIONAL_COUNTEREXAMPLE_MATCH"
+      },
+      "schema": "ringlpn-ideal-leaf-loss-v2",
+      "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+      "source_bound_lifetime": {
+        "candidate_hidden_path_expansions_by_limb": {
+          "p0": 50688,
+          "p1": 50688
+        },
+        "complete_conditional_bound": "min(1, sigma + sum_{w=0,1}(rng_w + transcript_w + aes_w + switch_w + bad_w + ring_w + ot_ole_w + conversion_w + sampler_w) + 2*sum_l K_l*delta_l). Terms must describe disjoint transitions; bad includes root repeats only if not already charged. No unknown term is assigned zero. See report 9.9.",
+        "conditional_map_terms": {
+          "fixed_alpha_payload_only_common_prefix_uncapped": {
+            "denominator": "20769187434139310514121985316880384",
+            "fraction": "107664176628891657/20769187434139310514121985316880384",
+            "log2_approx_not_security_bits": -57.42068408872321,
+            "numerator": "107664176628891657"
+          },
+          "one_world_to_uniform_final_cw_uncapped": {
+            "denominator": "220855883086852944006132488241230990946902556220157975925430058645192704",
+            "fraction": "1144881901472762022093832053194175987487239850262790189/220855883086852944006132488241230990946902556220157975925430058645192704",
+            "log2_approx_not_security_bits": -57.42068408899934,
+            "numerator": "1144881901472762022093832053194175987487239850262790189"
+          },
+          "two_world_common_simulator_capped": {
+            "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+            "fraction": "1144881901472762022093832053194175987487239850262790189/110427941543426472003066244120615495473451278110078987962715029322596352",
+            "log2_approx_not_security_bits": -56.42068408899934,
+            "numerator": "1144881901472762022093832053194175987487239850262790189"
+          },
+          "two_world_common_simulator_uncapped": {
+            "denominator": "110427941543426472003066244120615495473451278110078987962715029322596352",
+            "fraction": "1144881901472762022093832053194175987487239850262790189/110427941543426472003066244120615495473451278110078987962715029322596352",
+            "log2_approx_not_security_bits": -56.42068408899934,
+            "numerator": "1144881901472762022093832053194175987487239850262790189"
+          }
+        },
+        "live_complete_bound": null,
+        "missing_reduction": [
+          "conditional hidden-path AES/DPF replacement given one full key prefix and auxiliary view",
+          "joint distributed-transcript simulation (not merely final-key equality)",
+          "adaptive Figure-2 bootstrap/application joint simulation and structured Ring-LPN advantage",
+          "unknown seed exposure/correction-induced collision and namespace bad events"
+        ],
+        "scope": "successful fresh linear invocations; one fixed corrupted role; not a complete view proof",
+        "separate_ideal_primitive_terms_not_live_certificates": {
+          "four_query_prp_prf_switching_one_world_uncapped": {
+            "denominator": "166153499473114484112975882535043072",
+            "fraction": "297/166153499473114484112975882535043072",
+            "log2_approx_not_security_bits": -108.78568087919923,
+            "numerator": "297"
+          },
+          "iid_128_bit_root_repetition_union_bound_uncapped": {
+            "denominator": "332306998946228968225951765070086144",
+            "fraction": "165879/332306998946228968225951765070086144",
+            "log2_approx_not_security_bits": -100.66022827045401,
+            "numerator": "165879"
+          },
+          "root_draws_both_parties": 18432
+        },
+        "tree_pairs_by_limb": {
+          "p0": 4608,
+          "p1": 4608
+        },
+        "workload_limit": "Counts inventory the declared successful calls, not arbitrary failures/restarts, a graph inferred from a model name, native AES adversary queries, or all shape admission checks.",
+        "workloads": [
+          {
+            "application_capacity_per_ring_instance": 7424,
+            "application_slots_discarded": 11264,
+            "application_slots_used": 256000,
+            "bootstrap_final_tail_discarded": 1536,
+            "bootstrap_reserved_per_ring_instance": 768,
+            "bootstrap_ring_slots_reserved": 27648,
+            "c": 2,
+            "candidate_hidden_path_expansions_one_role_one_world": 101376,
+            "conditional_hidden_leaf_sites_one_role_one_world": 9216,
+            "cross_terms_per_invocation": 64000,
+            "depth": 11,
+            "directions": 2,
+            "domain": 2048,
+            "invocations": 1,
+            "keygen_aes_block_calls_both_parties": 150921216,
+            "keygen_leaf_conversions_both_parties": 37748736,
+            "keygen_node_expansions_both_parties": 37730304,
+            "limbs": 2,
+            "n": 8192,
+            "noise": "regular",
+            "one_full_evaluation_leaf_conversions_both_parties": 37748736,
+            "party_key_halves_all_limbs": 18432,
+            "phase_b_string_ot_128_both_ot_directions": 202752,
+            "phase_c_external_epoch_zero_products": 1536,
+            "phase_c_prior_ring_products_consumed": 26112,
+            "phase_c_scalar_products_total": 27648,
+            "ring_batches_per_invocation": 9,
+            "ring_instances_all_limbs": 36,
+            "t": 8,
+            "tree_pairs_all_limbs": 9216,
+            "tree_pairs_per_active_limb": 4608,
+            "trees_per_ring_instance": 256
+          }
+        ]
+      },
+      "source_sha256": {
+        "src/gpu_aes_prg_host.h": "e2b1742f88cf3d22c6f7e8c482fbb54449761bf9aefe464294777b9cd240cde1",
+        "src/gpu_spfss_zp.cuh": "e1c1b711571b661a9934ba9082b5f10d3bdd7ecf7d5ad52d26a1fa914f6aa4da",
+        "src/ringlpn_ole_party.cuh": "9587b3b3896e2ff877116840a0b1bcffe880fb074bd5335096d255f9ce99044a",
+        "src/spfss_host.cpp": "041cdb9dd2ba907187c95fbb521aecdbaece7fa9d85e6f0202684df948778b57",
+        "src/two_party_dpf_gpu.cuh": "097998a9d4a12ab5fe6050bde22701418f27b2fc69a7e56ab80f929bd181369b",
+        "src/two_party_dpf_protocol.h": "352c794fb6b3f9ab921723489684624d2433b5c9df535c73e94b4ef7922f0e3c",
+        "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+        "src/two_party_spfss.h": "fbdb56f84b1da9db63dad8b3464217fb05d21729344ae9ef88054b0677428461"
+      },
+      "status": "IDEAL_LEAF_DIAGNOSTIC_ONLY_P_KEY_OPEN_NO_SECURITY_CERTIFICATION",
+      "target_semantics": "True certifies only an exact arithmetic inequality under the declared ideal conditional-law/count hypotheses. False means this upper-bound certificate misses the target, not an actual composed lower bound or empirical attack. Exit status does not encode target attainment. P-KEY remains open."
+    },
+    "public_checkout_returncode": 0,
+    "remaining_technical_hypotheses": [
+      "Lifting conditional H to the real distributed key and bootstrap view",
+      "Live AES/OT/DRBG reduction terms and a reviewed structured Ring-LPN parameter pin"
+    ],
+    "script_sha256": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e"
+  },
+  "preceding_internal_commit": "6f80f2bca3ccd0c2f4e079bcc9f915e8ba5d61fc",
+  "remaining_gates": {
+    "authority": "Independent qualified review, ownership/full-evidence circulation decisions, annotated full-evidence release tag, and external source-consistency authorization are absent.",
+    "deployment": "No authorized distinct host/client identity, native rootless Podman/mapping prerequisites, dedicated durable mounts, or approved registry runtime/release.",
+    "new_source_push": "Configured VSCode askpass route stalled; verified local commit and portable bundle retained.",
+    "resources": "GPU2 occupancy blocks the pinned fresh comparison; no alternate assignment or unrelated-process termination.",
+    "technical": "Concrete cryptographic lifting/reductions, structured parameter review, and a reviewed security-matched comparison remain open; these are not only missing signatures."
+  },
+  "review_participants": {
+    "baseline_pre_fix_findings_resolved": [
+      {
+        "evidence": {
+          "after": {
+            "artifact": "artifact://454",
+            "built": "test_two_party_fc_preprocess",
+            "inherited_selector": "1",
+            "production_binary_sha256": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283",
+            "requested_component": "linear-fc"
+          },
+          "before": {
+            "artifact": "artifact://452",
+            "built": "test_direct_ot_fc_preprocess",
+            "inherited_selector": "1",
+            "requested_component": "linear-fc"
+          },
+          "before_fixture_removed": true
+        },
+        "finding": "Inherited direct selector overrides requested linear-fc component"
+      },
+      {
+        "finding": "Nonzero mismatch exits do not establish authentication rejection",
+        "resolution": "Final control validates two distinct persisted public claims for the same invocation, no output files, both nonzero exits, and the direct explicit peer-authentication-before-preflight error. Reference CLI detail remains intentionally unexposed."
+      },
+      {
+        "finding": "Direct-only plan incorrectly labels producer GPUs",
+        "resolution": "Final direct-only plan physical_gpus is [3]; CPU producers hide CUDA; the checker alone uses physical GPU3."
+      }
+    ],
+    "execution_owner": "Main; delegated slices skipped builds, linters, formatters, and tests",
+    "outcomes": {
+      "BaselineReview": {
+        "confidence": 0.98,
+        "explanation": "The direct OLE arithmetic, CRT conversion path, authenticated loopback channel, consume-once claims, state publication, checker reuse, and transmitted-byte summation are internally consistent in the reviewed paths. However, the build selector can leak into production dispatch, the mixed-protocol control does not establish why the processes failed, and direct-only plans mislabel unused GPUs, so the patch is not ready as evidence-producing integration.",
+        "findings": [
+          {
+            "body": "When `RINGLPN_DIRECT_OT_FC=1` is present in the caller environment, `build_component.sh linear-fc` and the FC step of `orca-linear-application` preserve it through `run_wrapper`, so this branch changes the output to `test_direct_ot_fc_preprocess` and later selects the direct source. The requested production build can therefore return success without rebuilding `test_two_party_fc_preprocess`, leaving a stale production artifact despite the component dispatch. Make the component argument authoritative by forcing the selector to `0` for every non-`direct-ot-fc` dispatch (and `1` only for the direct component).",
+            "confidence": 0.98,
+            "file_path": "ringlpn/scripts/build_two_party_fc_preprocess.sh",
+            "line_end": 58,
+            "line_start": 53,
+            "priority": 2,
+            "title": "Clear the direct-baseline selector for production builds"
+          },
+          {
+            "body": "The mismatch control accepts any pair of exit codes in `{1,2}` plus absence of output, then records `different_producer_claims_rejected_before_output`. Those same observations occur if either executable fails for an unrelated reason (and line 87 explicitly hides all GPUs from the reference party in this case), so the retained artifact does not prove domain-separated claims caused the rejection. Require the fixed authentication/preflight rejection diagnostics from both logs, or emit and validate a structured nonsecret rejection code; only clear CUDA visibility for the direct party so an accidental fall-through cannot be mistaken for this control passing.",
+            "confidence": 0.99,
+            "file_path": "ringlpn/scripts/run_direct_ot_fc_baseline.py",
+            "line_end": 104,
+            "line_start": 99,
+            "priority": 2,
+            "title": "Verify the mixed run failed for a protocol-identity mismatch"
+          },
+          {
+            "body": "In `direct-only` mode the harness locks and queries only `args.gpus[2]` (GPU3), while both producers have CUDA hidden, but the plan still records `physical_gpus: (1,2,3)`. The retained direct-only artifact therefore attributes GPU1 and GPU2 to a run that neither reserves nor observes them. Record the mode-specific selected set (or explicit producer/checker device assignments) instead of the unconditional tuple.",
+            "confidence": 1,
+            "file_path": "ringlpn/scripts/run_direct_ot_fc_baseline.py",
+            "line_end": 191,
+            "line_start": 187,
+            "priority": 2,
+            "title": "Label only the GPUs actually used in direct-only plans"
+          }
+        ],
+        "overall_correctness": "incorrect"
+      },
+      "ConversionLifting": {
+        "coverage_summary": "Completed read-only analysis of conversion, PartyRandom, daBit/edaBit and Boolean-triple wrappers, the conditional-view audit, contract \u00a75, and the SCI sources selected by the build scripts. Resolution: the independent-random-tape theorem is sound; a black-box RNG lifting is conditional on hidden-provider pseudorandomness and stateful OT security; the same lifting to arbitrary prescribed output shares with exposed deterministic provider state is unjustified and can be impossible. An exact retained-state obstruction and a state-preserving confidentiality simulator are given below. This is a functionality/modeling distinction, not a demonstrated conversion confidentiality flaw. No files edited; no commands, tests, builds, validation, network requests, or GPU operations executed.",
+        "deferred": [
+          {
+            "paths": [
+              "../SCI/src/utils/prg.h",
+              "../SCI/src/utils/group_openssl.h",
+              "ringlpn/src/two_party_ot.h"
+            ],
+            "reason": "Native execution, empirical entropy behavior, installed OpenSSL provider configuration, and all tests/builds/validation were intentionally not performed under the assignment. Concrete instantiation is conditional on the explicit source-level hypotheses above, not merely on future human approval."
+          }
+        ],
+        "findings": [
+          {
+            "category": "cryptographic-functionality-boundary",
+            "confidence": "high",
+            "cwe": [],
+            "evidence": [
+              {
+                "explanation": "Let B=2^bw. For corrupted P0 with raw final daBit share a, define C(a,z)={z-Qa,z-Q(1-a)} modulo B. Real r0 belongs to C with probability 1. The two values are distinct: equality would imply 2a=1 modulo B because Q is odd. A fresh ideal output sampled uniformly independently of previously exposed a belongs to C with probability exactly 2/B. For k such coordinates, the probability is (2/B)^k. This efficient consistency check uses only the corrupt party's own input, state, and output; it neither recovers nor tests the honest input.",
+                "label": "Exact retained-mask distinguisher"
+              },
+              {
+                "explanation": "Start a default PartyRandom, make one u64() call, and expose its resulting state. Then buffer_pos=1 and bits_left=0; buffer[0..511] has already been filled. For the next q64/count=1 conversion, ell=63. The 63 edaBit Boolean draws consume 63 bits of buffer[1]. Its 63 arithmetic u128 draws consume words 2..127. The final daBit Boolean draw consumes the remaining bit of buffer[1]. Its arithmetic u128 consumes high word 128 and low word 129. Therefore a=buffer[129] modulo B was already exposed before conversion. At bw=3 an independent ideal output passes the two-value consistency test with probability 1/4; at bw=32, with probability 2^-31. This requires no deterministic DRBG and applies even to a perfectly random refill interface. The earlier incremental example used a snapshot immediately after refill at position zero; this version uses an ordinary completed-call boundary.",
+                "label": "Reachable ideal-byte-buffer counterexample"
+              },
+              {
+                "explanation": "Suppose a deterministic provider uses s seed bits and no additional hidden entropy during a fixed k-coordinate conversion schedule. Across all seeds and h vectors, at most 2^(s+k) output vectors are possible, whereas fresh F_CONV has B^k possibilities. Even an unbounded simulator receiving an independent uniform prescribed vector fails seed/output consistency with probability at least 1-2^(s-(bw-1)k), when the exponent is negative. Source-native PartyRandom(uint64_t) test mode gives s=64; bw=32,count=3 yields failure at least 1-2^-29. That mode is explicitly not production randomness. It is a concrete counterexample to a generic seed-lifting claim, not an allegation that the live protocol uses MT. The same bound applies to a seeded cryptographic PRG; ordinary PRG security is compatible with this obstruction.",
+                "label": "Unconditional exposed-seed support obstruction"
+              },
+              {
+                "explanation": "The two possible outputs depend only on z and a. With ideal fresh honest correlations, h is independent uniform, even after fixing the corrupt logical sender tape. The forward construction below simulates the complete corrupt view without the honest input. The source remains correct: the two parties' corrected wrap shares sum to wrap, and their outputs sum to the canonical conversion result.",
+                "label": "Why this is not an honest-input disclosure"
+              },
+              {
+                "explanation": "sample_local(), simulate(), view(), and honest_completion() retain component daBits, local triples, local sender masks, selected OT values, intermediate ripple state, and all logical exchanges. They contain no PartyRandom buffer reconstruction, OpenSSL provider simulation, SCI extension transcript, or base-OT state. The script explicitly labels its model as independent ideal logical coins. Its exact mode enumerates remaining randomness on two fixed local slices, not all slices or concrete states. The general equality follows from the algebraic bijections, not those sampled slices.",
+                "label": "Actual abstraction represented by the audit"
+              }
+            ],
+            "locations": [
+              {
+                "end_line": 263,
+                "path": "ringlpn/src/secure_convert.cpp",
+                "role": "raw-to-corrected share and output equation",
+                "start_line": 247
+              },
+              {
+                "end_line": 320,
+                "path": "ringlpn/src/secure_convert.cpp",
+                "role": "component daBits and arithmetic masks",
+                "start_line": 281
+              },
+              {
+                "end_line": 366,
+                "path": "ringlpn/src/secure_convert.cpp",
+                "role": "correlation generation order",
+                "start_line": 352
+              },
+              {
+                "end_line": 1081,
+                "path": "ringlpn/src/two_party_ot.h",
+                "role": "word buffer, bit pool, u128 layout, and private RNG API",
+                "start_line": 1034
+              },
+              {
+                "end_line": 1113,
+                "path": "ringlpn/src/two_party_ot.h",
+                "role": "triple sender masks and receiver values",
+                "start_line": 1094
+              },
+              {
+                "end_line": 165,
+                "path": "ringlpn/scripts/audit_conversion_simulator.py",
+                "role": "logical conditional sampler and honest-completion witness",
+                "start_line": 49
+              },
+              {
+                "end_line": 466,
+                "path": "ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
+                "role": "fresh-share ideal functionality",
+                "start_line": 462
+              },
+              {
+                "end_line": 1002,
+                "path": "ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
+                "role": "repeated-invocation and concrete-lifting boundary",
+                "start_line": 961
+              }
+            ],
+            "optionalProperties": {
+              "candidate_functionality_and_theorem_wording": {
+                "alternative": "An ideal shared-output interface may instead explicitly let the simulator choose the corrupt output share, after generating a source-consistent view, and set the honest share by subtraction. This avoids seed inversion and is sufficient for confidentiality/correctness of shared outputs, but is a different functionality from independently sampled fresh F_CONV. Its simulator must reproduce the real source distribution; arbitrary malicious share selection is not being claimed.",
+                "fresh_share_theorem": "For any accepted public batch schedule, odd Q, canonical input vector, and one static semi-honest corruption, the conversion protocol in the chosen-message F_OT hybrid with independent private word tapes perfectly realizes F_CONV in the stand-alone complete-view sense: a polynomial-time simulator given only the corrupt input, its ideal output shares, and public metadata produces the joint distribution of all its logical coins, retained component correlations, sender inputs, selected OT outputs, arithmetic/Boolean exchanges, intermediate local state, and buffer state. This claim allows joint offline sampling of the relevant tape and excludes previously fixed exposed coordinates inconsistent with the prescribed outputs. Replacing the word interface by a hidden-state RNG and F_OT by the specified stateful SCI realization yields computational security only under their explicit assumptions.",
+                "retained_state_functionality": "For a native-state statement, define F_CONV-ret^b relative to registered corrupt provider/tape state and the fixed source consumption schedule. For b=0, derive the corrupt final raw masks a0 from that retained state, sample independent uniform h values, set w0=a0 when h=0 and w0=1-a0 when h=1, and set r0=z0-Q*w0 modulo B. Return to the honest party r1=((z0+z1) modulo Q)-r0 modulo B. Preserve the corrupt provider continuation instead of resampling it. For b=1, sample r1 uniformly, set r0 to the complementary share, preserve the corrupt RNG state/choices, and simulate its final arithmetic share as the selected OT value determined by r1 and an independent uniform h. This role-conditioned formulation matches the repository's existing retained-state F_RINGOLE^b convention; it is not a claim that fresh shares are independent of all native state.",
+                "retained_state_theorem": "Assuming the hidden honest randomness interfaces and the stateful chosen-message OT realization satisfy the stated hypotheses, the source conversion with a statically corrupt party's native RNG state retained admits a simulator from its own input, registered local state, and public schedule alone, and realizes F_CONV-ret^b with the correct output sum. In the ideal-honest-randomness/F_OT hybrid the simulation is exact. The simulator does not invert or alter the corrupt seed and does not learn the honest input.",
+                "runtime_consequence": "No runtime redesign is established as necessary. For the logical/random-API theorem, modeling precision suffices. For a theorem exposing full native state, use the retained-state or explicitly simulator-selected-share functionality and propagate that boundary into composition. If an application specifically requires shares independent of previously exposed native RNG state, the current source does not meet that stronger requirement."
+              },
+              "complete_logical_lifting_argument": [
+                "Fix one static corrupt role b, canonical inputs, a public accepted batch schedule, odd Q, B=2^bw, and N=2^ell with 2Q<=N. Retain every local edaBit component pair, not just its weighted aggregate. The map from the global edaBit R to A=z0+z1+R modulo N is a permutation independent of the retained local component vector.",
+                "For each Boolean gate, with previous wires fixed, changing the fresh global triple masks (alpha,beta) to openings (D,E)=(alpha XOR x,beta XOR y) is a bijection. The local c share is included in the retained state, and the peer triple is completed uniquely. Thus A and every successive opening pair have the asserted joint conditional law, not merely uniform marginals.",
+                "For the final daBit, change global bit d to h=wrap XOR d. For each fixed h, change local raw arithmetic a_b to output r_b=z_b-Q*w_b. Since Q is odd, this is a permutation of Z_B. Therefore conditioning on prescribed r_b leaves the prefix and h uniform and forces exactly a_b=Q^-1(z_b-r_b) for h=0, or a_b=(1-b)-Q^-1(z_b-r_b) for h=1.",
+                "Augment each triple with its local sender mask mu_b and derive the selected receiver output o_b=c_b XOR (a_b AND b_b) XOR mu_b. The peer sender mask completion in the audit satisfies both directional OT selections. For each daBit, role 0 exposes both source message inputs and its locally drawn arithmetic mask; role 1 exposes its Boolean choice and selected arithmetic output. No unused sender message is added to a receiver's ideal view.",
+                "Complete the source's independent word tape by assigning the resulting logical coins to their actual consumption positions. The bit pool draws full words separate from arithmetic u128 calls; consumed word copies, shifted bit_pool values, unused high bits, unused buffer words, and positions must agree. This completion has the exact conditional distribution because it constrains disjoint independent bit coordinates and samples the complement uniformly.",
+                "Replace the ideal OTs by a stateful chosen-message OT simulator covering the actual setup, padded batches, both directions, all local randomness/state, and sequential continuation. Under hidden-provider RNG abstraction, replace the full RNG streams in a joint-distribution hybrid. The total distinguishing advantage is bounded by the relevant multi-call RNG advantages plus the stateful OT realization advantage; the conversion/wrapper/word-packing step contributes zero statistical error. This argument never replaces an exposed deterministic seed by unrelated uniform output bits."
+              ],
+              "concrete_ot_hypotheses": [
+                {
+                  "evidence": "ringlpn/scripts/build_common.sh:8,57 selects ../SCI/src; build_secure_convert_test.sh:7,10-15 does likewise. The inspected ext/sytorch copy is not substituted as evidence for that dependency. PartyChannel uses two separate SplitIKNP contexts. Conversion uses the 128-bit chosen-message API for daBits and the packed one-bit chosen-message API for triples, not an assumed native COT primitive.",
+                  "hypothesis": "Correct dependency and API selection"
+                },
+                {
+                  "evidence": "../SCI/src/OT/split-iknp.h:36-57,178-270,946-1007 initializes 128 base OTs per direction and advances persistent G0/G1 counters across padded extension batches. A sufficient theorem must cover arbitrary polynomial public batch sequences, correlated sender inputs/receiver choices, auxiliary local state, both API widths, and the interleaving of the two independent directional contexts. A fresh-session or output-only OT theorem is insufficient.",
+                  "hypothesis": "Stateful static semi-honest chosen-message OT"
+                },
+                {
+                  "evidence": "../SCI/src/OT/np.h:54-102,145-179 implements C=g^d, complementary receiver public keys, g^r, and hashed DH masks. ../SCI/src/utils/group_openssl.h:171-175 selects NIST P-256. ../SCI/src/utils/hash.h:74-100 uses the first 128 SHA256 bits on serialized point plus an identifier. Sufficient cryptographic hypotheses are the corresponding passive Naor\u2013Pinkas theorem under P-256 DH hardness (DDH with random-oracle KDF is a sufficient formulation here), idealized hashing of these encodings, correctly sampled independent scalars, and the usual negligible exceptional scalar/group events. No malicious-input group-validation theorem is claimed.",
+                  "hypothesis": "Naor\u2013Pinkas base OT assumptions"
+                },
+                {
+                  "evidence": "../SCI/src/utils/prg.h:71-76,111-122 expands AES under seeded keys on incrementing counters. ../SCI/src/OT/split-iknp.h:178-206 reseeds once at setup, then send_pre/recv_pre advance the streams. The reduction may replace streams whose keys remain hidden; it must retain the corrupt party's exposed AES keys, counters, and reproducible outputs. Per-context continuation and no reset/reuse are essential.",
+                  "hypothesis": "Hidden-key AES expansion, with no counter reuse"
+                },
+                {
+                  "evidence": "../SCI/src/utils/crh.h:36-60 implements H(x)=AES_fixed-key(x) XOR x. ../SCI/src/OT/split-iknp.h:430-460,466-522 applies it to q and q XOR s; there is no OT-index tweak. The needed statement is multi-query hidden-shift/correlation robustness for these source-generated rows, including the receiver's known PRG seeds and auxiliary state, across all batches and directions, or an explicit fixed-public-AES random-permutation model supporting that statement. Ordinary secret-key AES PRP security and an IKNP theorem assuming an independently indexed random oracle do not by themselves prove this concrete instantiation. The class actually used is sci::CRH, not the separate emp::CCRH.",
+                  "hypothesis": "The actual extension hash needs a stronger explicit hypothesis than generic AES security"
+                },
+                {
+                  "evidence": "PartyChannel ot_send_128/ot_recv_128 at two_party_ot.h:440-483 are exact 128-bit conversions. The one-bit wrappers at 514-551 build rows (m0,m1), use l=1, and mask the receiver result. ../SCI/src/OT/ot-utils.h:28-147 packs/unpacks the low hash-mask bit and chosen message. These deterministic adapters preserve an appropriate OT theorem; their byte packing does not establish that theorem independently.",
+                  "hypothesis": "Chosen-message adapters expose no extra values beyond OT"
+                },
+                {
+                  "evidence": "PartyRandom::refill checks RAND_priv_bytes failure. However, ../SCI/src/utils/prg.h:64-66 invokes _rdseed64_step twice without checking success in the normal build branch, and group_openssl.h:198 ignores BN_rand_range status. The inspected direct build scripts enable -mrdseed and do not themselves define EMP_USE_RANDOM_DEVICE. Therefore correct high-entropy SCI seed/scalar initialization must remain an explicit precondition; CPU support is not proof of every draw succeeding. If an extension sender's seed becomes public/predictable, its s vector is predictable and a receiver can derive both H(t) and H(t XOR s), illustrating why this precondition matters. No entropy-failure occurrence or frequency was measured in this assignment.",
+                  "hypothesis": "Successful entropy generation is a real source hypothesis, not already guaranteed by these wrappers"
+                },
+                {
+                  "evidence": "Require static passive endpoints, authenticated confidential transport as already scoped by the project, distinct private process state, fresh correlations, accepted canonical inputs, and a fixed public workload schedule. No adaptive state compromise, malicious endpoint, restart rollback, or side-channel guarantee follows. EMP-Silent is outside this lifting result.",
+                  "hypothesis": "Transport and execution model"
+                }
+              ],
+              "independently_reproducible_obstruction": {
+                "command": "python3 - <<'PY'\nQ = 4611686018326724609\nB = 8\nvalid = sum(r in {(0-Q*a) % B, (0-Q*(1-a)) % B}\n            for a in range(B) for r in range(B))\nassert valid == 16\npos, left = 1, 0  # state after one default PartyRandom.u64() call\n\ndef u64():\n    global pos\n    result = pos\n    pos += 1\n    return result\n\ndef bit():\n    global left\n    if left == 0:\n        u64()\n        left = 64\n    left -= 1\n\ndef u128():\n    return u64(), u64()  # high word, low word\n\nfor _ in range(63):\n    bit()\nfor _ in range(63):\n    u128()\nbit()\nassert u128() == (128, 129)\nassert 64 + 3 - 32*3 == -29\nprint('Exact fresh-ideal consistency: 16/64 = 1/4')\nprint('Retained final raw mask: buffer[129] modulo 2^bw')\nprint('64-bit deterministic-seed, bw32/count3 support fraction <= 2^-29')\nPY",
+                "limits": "This is an independently reproducible arithmetic/model obstruction, not a native OpenSSL or SCI execution, a seeded production attack, or security approval.",
+                "status": "Command supplied for Main; not executed by this agent. Expected arithmetic follows directly from the proved source schedule and support calculation."
+              },
+              "resolution_matrix": [
+                {
+                  "decision": "Exact prescribed-output simulation is justified in F_OT.",
+                  "limit": "This is a stand-alone/whole-view statement. It does not permit rewriting a prefix already delivered to an online observer or an independently established provider state.",
+                  "model": "Standard passive end-of-run view with independent private random-tape bits",
+                  "reason": "The simulator may construct the entire tape conditionally, rather than preserve a previously fixed external tape. Every used logical draw occupies distinct tape coordinates. For fixed output, the \u00a75 change of variables is bijective; unused bits can be sampled uniformly. Component masks and OT values remain consistent."
+                },
+                {
+                  "decision": "Exact lifting is justified when the whole relevant buffer history is sampled jointly.",
+                  "limit": "A previously exposed buffer suffix is not fresh randomness merely because u64() has not returned it yet. Conditional sequential composition must retain those coordinates.",
+                  "model": "PartyRandom over ideal independent refill bytes, including its complete local buffers in one final simulated view",
+                  "reason": "Pack bit draws into dedicated u64 pool words, respecting the persistent bits_left value and the separate u128 hi-then-lo consumption order. For reduced u128 values, constrain only the necessary low bits and fill all discarded high bits uniformly. Build each full refill array, all retained consumed words, shifted bit_pool copies, positions, and unused suffixes from the same sampled word stream."
+                },
+                {
+                  "decision": "Computational lifting is justified under an explicit multi-call RNG indistinguishability assumption and the OT assumptions below.",
+                  "limit": "Prove joint view/output indistinguishability, not arbitrary rare-output conditional PRG security. This abstraction is not equivalent to exposure of all native process memory.",
+                  "model": "Black-box cryptographic RNG API with provider seed/state excluded from the corrupt view",
+                  "reason": "Replace each hidden provider's complete output stream by independent uniform bytes in a joint-distribution hybrid; then apply the exact simulator. Buffered bytes and returned values may all be visible. The seed itself must not be visible or fixed as external auxiliary input."
+                },
+                {
+                  "decision": "No general lifting to arbitrary independently prescribed fresh shares.",
+                  "limit": "The argument requires deterministic reproducibility over the relevant interval. No installed OpenSSL DRBG version, entropy schedule, or reseed configuration was inspected or assumed.",
+                  "model": "Exposed initial DRBG state/seed plus entropy and reseed history",
+                  "reason": "The simulator must produce seed-consistent draws. The support obstruction can make this impossible; otherwise ordinary PRG security still gives no efficient conditional inversion algorithm."
+                },
+                {
+                  "decision": "Must be specified separately; neither automatic success nor automatic seed-replay failure follows.",
+                  "limit": "A theorem needs the precise state-leakage interface. Standard hidden-seed PRG security alone is insufficient.",
+                  "model": "Only a post-execution provider-state snapshot",
+                  "reason": "Backtracking resistance and reseeding may prevent the final provider state from determining past outputs. Conversely, PartyRandom's retained buffer directly exposes many past and future words irrespective of provider backtracking resistance."
+                },
+                {
+                  "decision": "Use one joint whole-history simulation where permitted, or a state-preserving functionality/simulator; do not independently resample each call's fresh output after fixing an exposed prefix.",
+                  "limit": "Fresh-share composition remains valid for genuinely fresh unexposed independent coordinates, with input/auxiliary state independent of those coordinates.",
+                  "model": "Repeated conversions with retained native state",
+                  "reason": "Provider state, partially consumed bit pools, unconsumed buffer words, and persistent OT contexts cross call boundaries. Unique correlation IDs prevent correlation reuse but do not make already-exposed future RNG words conditionally independent."
+                }
+              ],
+              "state_preserving_forward_simulator": {
+                "construction": [
+                  "Execute the corrupt source RNG schedule unchanged. For b=0 retain its generated edaBit Boolean/arithmetic components and final raw arithmetic mask. For b=1 retain its generated Boolean choices and sample the edaBit selected arithmetic receiver values independently uniformly in Z_N.",
+                  "For both roles retain each triple's locally generated a,b,mu. Sample its selected receiver output o uniformly and compute c=(a AND b) XOR mu XOR o. This is exactly the ideal-OT local law conditional on the local RNG draws.",
+                  "Sample A uniformly, and sample each successive (D,E) uniformly. Run both local ripple adders and derive all outgoing and incoming shares exactly as in the source. These values are independent of the honest input by the same gate-by-gate completion argument.",
+                  "Sample h uniformly. For b=0 keep the raw arithmetic share already generated by the real local RNG. For b=1, for a forward sampler sample the final selected arithmetic OT value uniformly; for a prescribed-output sampler solve that selected value using h and r1. This programs an incoming ideal OT value, not the receiver's RNG seed.",
+                  "Compute the local output from the source equation. Derive every sender input and selected receiver value from the retained tape and the sampled correlations. Preserve updated bit-pool/buffer/provider state and OT context across calls."
+                ],
+                "input": "Corrupt canonical input z_b, accepted public schedule, and the corrupt provider/PartyRandom state (or a faithfully sampled continuation of that state). No honest input, sum, wrap, or global masks.",
+                "proof": "After fixing local sender/choice coins, the remaining honest edaBit bits, honest arithmetic masks, and honest triple sender masks supply exactly the independent uniform coordinates used above. The same honest-completion bijections prove equality of the entire ideal-OT view. For concrete execution, keep the corrupt provider untouched, idealize only hidden honest randomness, and invoke a state-preserving stateful OT theorem. This proves corrupt-view confidentiality/noninterference, with the retained output distribution, without conditional inversion of an exposed corrupt seed."
+              }
+            },
+            "rule_id": "P-CONV-STATE-BOUNDARY",
+            "severity": "informational",
+            "summary": "The source's final P0 arithmetic daBit share is locally generated. Given its retained value a, P0's conversion output has only two possible values, z-Qa and z-Q(1-a) modulo 2^bw. Consequently, the existing fresh-share F_CONV cannot be composed independently of already-exposed RNG state. Ordinary PRG security does not allow conditioning an exposed seed to obtain an arbitrary prescribed output. This does not reveal the honest input: a forward simulator retaining the corrupt state exists in the ideal-OT/ideal-honest-randomness hybrid. The runtime need not be redesigned; the theorem must distinguish end-of-run independent-tape simulation, hidden-provider RNG abstraction, and retained native state.",
+            "title": "Fresh prescribed output shares require an explicit random-tape or retained-state functionality boundary"
+          }
+        ],
+        "reviewed_paths": [
+          "ringlpn/CLAUDE.md",
+          "ringlpn/src/secure_convert.cpp",
+          "ringlpn/src/two_party_ot.h",
+          "ringlpn/scripts/audit_conversion_simulator.py",
+          "ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
+          "ringlpn/scripts/build_common.sh",
+          "ringlpn/scripts/build_secure_convert_test.sh",
+          "ringlpn/scripts/build_two_party_fc_preprocess.sh",
+          "../SCI/src/OT/split-iknp.h",
+          "../SCI/src/OT/np.h",
+          "../SCI/src/OT/ot-utils.h",
+          "../SCI/src/utils/prg.h",
+          "../SCI/src/utils/crh.h",
+          "../SCI/src/utils/hash.h",
+          "../SCI/src/utils/group_openssl.h",
+          "ext/sytorch/ext/sci/src/OT/split-iknp.h",
+          "ext/sytorch/ext/sci/src/OT/np.h",
+          "ext/sytorch/ext/sci/src/utils/prg.h",
+          "ext/sytorch/ext/sci/src/utils/crh.h",
+          "ext/sytorch/ext/sci/src/utils/ccrh.h"
+        ]
+      },
+      "LifetimeAccounting": {
+        "changed": [
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "ringlpn/results/reports/structured_attack_audit_2026_08_04.md"
+        ],
+        "commands": [
+          "python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,2,regular,1,1 --budget-bits 64 --check-reduced",
+          "python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,1,regular,7424,1 --workload 8192,2,8,1,regular,7425,1 --budget-bits 64",
+          "python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,2,regular,64000,22 --budget-bits 64",
+          "python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,1,uniform,1,1 --budget-bits 64"
+        ],
+        "deterministic_expectations": [
+          "First command: J=1,D=2048,L=11,K0=K1=512; 4,194,304 keygen frontier conversions across both parties versus 1,024 conditional one-role/one-world hidden maps.",
+          "Capacity-edge workload aggregate: J=1,2; K0=1536,K1=0.",
+          "22-invocation workload: J=9,K0=K1=101376.",
+          "Uniform workload: D=16384,L=14,K0=512,K1=0.",
+          "Role checker: 676 cases; revealed-seed and repeated-independent-resampling equality counterexamples give 12/13."
+        ],
+        "implementation": [
+          "Added repeatable explicit --workload N,C,T,LIMBS,MODE,CROSS,INVOCATIONS mode, preserving mutually exclusive legacy hypothetical comparison mode.",
+          "Inventory covers directions, CRT limbs, domains/depths, distinct tree pairs versus key halves/frontier conversions, candidate hidden expansion sites, Phase-B string OTs, external epoch-zero products, prior-Ring-OLE bootstrap consumption, final-tail disposal and application capacity.",
+          "Exact rational conditional one-world/two-world map terms, separate ideal PRP/PRF switching and iid-root repetition terms; unknown complete live bound is null.",
+          "Added deterministic 676-case role/tag/finalCW enumeration and revealed-seed conditional-law counterexample to --check-reduced; existing five arithmetic enumerations retained.",
+          "Added SHA-256 bindings for two_party_spfss.h and gpu_aes_prg_host.h; existing runtime pins unchanged."
+        ],
+        "limits": "P-KEY remains open. Conditional hidden-path AES replacement, full distributed-view simulation and adaptive joint bootstrap/application Ring-LPN lifting remain unproved. Root repetition is not an internal-seed collision bound; identifier width does not establish namespace failure probabilities. No independence of Cartesian-product noise challenges, runtime-to-proof counter equivalence, approved tuple or human sign-off is claimed.",
+        "result": "Derived a source-specific conditional whole-key lemma: signed frontier cancellation leaves one hidden on-path mapped seed per tree pair for a fixed corrupted role. finalCW is bijective in that hidden map for BOTH tag values, giving exact delta-to-uniform and fixed-alpha disjoint-payload-shift epsilon, without a 1/2 shortcut. Report \u00a7\u00a79.6\u20139.10 distinguish this lemma from the unproved live AES/distributed-transcript/bootstrap lifting.",
+        "verification": "NOT executed, as instructed. No validation, tests, builds, GPU activity, Docker, commits or publication actions performed. Report explicitly separates prior historical execution claims from this unexecuted extension."
+      },
+      "ProofChallenge": {
+        "coverage_summary": "No surviving counterexample was found to the expressly conditional lemmas. This is a bounded source-only assessment, not security approval.\n\nConversion: secure_convert.cpp:246\u2013261 implements w_b=a_b for h=0 and w_b=(1-b)-a_b for h=1. With fixed P0 a,z and odd Q, its two outputs are distinct because equality would require 2a=1 modulo 2^bw. An independently uniform prescribed output therefore passes the retained-mask relation with probability exactly 2/2^bw. The buffer example matches PartyRandom's high-then-low u128 order and separate bit pool: following the stated initial u64 call, q64/count-one uses words 128 and 129 for the final arithmetic mask. The forward simulator remains valid with arbitrary fixed corrupt sender coins in the ideal-honest-randomness/F_OT hybrid: honest Boolean shares provide uniform global bits, and honest sender masks provide uniform selected triple outputs. For corrupt P1, w=Q^(-1)(z-r) and raw=w or -w, according to h, determine its selected incoming OT value without changing its local RNG choices. The independent-word whole-view construction does not justify rewriting an exposed buffer suffix, conditioning a concrete DRBG on rare outputs, or sequential fresh-share simulation after state exposure. Those exclusions are explicit rather than missing hypotheses.\n\nDPF: signed frontier sums and the three Phase-C products yield finalCW=(t0-t1)(beta-c0+c1). For b=0 its conditional law is (2t-1)(beta-a+Z); for b=1 it is (1-2t)(beta-Z+a). In all four role/tag cases the coefficient of Z is \u00b11, so under H the joint prefix/final-word replacement distance is exactly delta. This does not acquire either a domain-size factor or a tag-probability factor. Tag-zero keys still contain finalCW. Fixed-alpha, common-prefix payload translation gives epsilon for the specified disjoint shift; it is a different comparison from the generic two-world 2*sum(K_l*delta_l) bound. The programmed hidden-path experiment supplies independent correction words and a uniform hidden keeping seed, but is deliberately not claimed to be a consistent live AES oracle. A revealed hidden seed instead gives joint distance 1-1/p, as the supplement correctly warns. Repeated or adaptive local evaluations of an already supplied key are the same-key continuation and add no map replacements; independent answer resampling would be invalid.\n\nInventory: source loops confirm two directions per batch and limb, K_l=2*I*J*(c*t)^2 tree pairs per active limb, not twice that count for party halves. One bootstrap pool is retained per limb across directions; only its first epoch uses external products. External and prior-pool product counts are I*ell*R and I*ell*(2J-1)*R, with I*ell*R final tail slots discarded. Bootstrap/application reuse creates no additional key but does require joint simulation. Cartesian noise-factor reuse makes tree inputs correlated; fresh roots alone do not remove the need for conditional H. Reported frontier and AES counts agree with the inspected recurrence and four-output expansion.\n\nAudit limits: both Python programs were inspected, not executed. Conversion exact mode covers two fixed local slices at Q=3,bw=1, not every local state; sampled completion is not a proof. The state-boundary audit models consumption rather than native RNG/OT execution. The leaf audit checks arithmetic and role/tag pushforwards, not hidden-path AES or distributed-view simulation. Source pins were read but not recomputed. No edits, tests, builds, validation commands, network calls or GPU activity were performed. The live model remains unchanged and uncertified; unknown RNG/stateful-OT, AES/related-key and exposure-event, distributed-transcript, adaptive bootstrap and structured Ring-LPN reductions remain substantive hypotheses, not zero-valued terms or matters resolved by sampling or human-review wording.",
+        "deferred": [
+          {
+            "reason": "Concrete SCI/IKNP/base-OT security and entropy-provider hypotheses were not independently discharged. This review checked their explicit conditional status, not an upstream primitive reduction."
+          },
+          {
+            "reason": "No live AES/distributed-view/structured Ring-LPN reduction or complete numerical security bound is established by the assigned supplements; their unknown terms remain open as stated."
+          }
+        ],
+        "findings": [],
+        "reviewed_paths": [
+          "ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md",
+          "ringlpn/results/reports/structured_attack_audit_2026_08_04.md",
+          "ringlpn/scripts/audit_conversion_simulator.py",
+          "ringlpn/scripts/audit_dpf_leaf_loss.py",
+          "ringlpn/src/secure_convert.cpp",
+          "ringlpn/src/two_party_ot.h",
+          "ringlpn/src/two_party_dpf_protocol.h",
+          "ringlpn/src/two_party_dpf_gpu.cuh",
+          "ringlpn/src/two_party_linear_preprocess.cuh",
+          "ringlpn/src/ringlpn_ole_party.cuh",
+          "ringlpn/src/two_party_spfss.h",
+          "ringlpn/src/spfss_host.cpp",
+          "ringlpn/src/gpu_spfss_zp.cuh",
+          "ringlpn/src/gpu_aes_prg_host.h"
+        ]
+      },
+      "RuntimeCandidate": {
+        "behavior": [
+          "Fresh public HTTPS fetch of exact afc93c6fb94af01239f51b06d5c29a40c6fe7d84; initializes only the FC-required CUTLASS submodule at its exact parent gitlink. Other FC dependencies are parent-tracked source. No datasets/weights submodules.",
+          "Rejects existing, nested, repository-local or symlink-parent work/output roots. Constructs context from admitted Git archive source/license entries and three individually hashed packaging files; accepts no caller source/evidence/context/binary overrides.",
+          "Uses reproduction recipe's digest-pinned CUDA base, Ubuntu snapshot 20260810T000000Z and exact direct package versions; calls existing canonical FC builder without alternative compiler commands.",
+          "Contains actual FC producer/checker, admitted source/licenses, shared libraries and build provenance; fails unresolved ldd dependencies. Runtime UID/GID 65532.",
+          "Exports Docker-save archive and verifies exported config SHA256 equals immutable local image ID. Captures exact binary path/SHA256, source/tool/recipe/package/library identities. Never pushes/tags or fills publication fields.",
+          "Propagates command failures, terminates interrupted subprocess groups, removes exact temporary container and scratch, retains consumed-root tombstone and logs. Failure removes candidate.json/archive."
+        ],
+        "binary_path": "/opt/ringlpn/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess",
+        "build_command": "python3 ringlpn/scripts/build_source_runtime_candidate.py --work-root /tmp/ringlpn-runtime-work-afc93c6-001 --output-root /tmp/ringlpn-runtime-artifacts-afc93c6-001 --docker-host unix:///var/run/docker.sock",
+        "files": [
+          "ringlpn/scripts/Dockerfile.runtime",
+          "ringlpn/scripts/build_source_runtime_candidate.py",
+          "ringlpn/scripts/capture_runtime_build.py",
+          "ringlpn/results/reports/authenticated_two_host_deployment_2026_08_04.md (runtime-candidate supplement only)"
+        ],
+        "limits": [
+          "No builds, Docker operations, tests, validation, GPU activity, commits or pushes performed, as instructed. Main must establish executable proof.",
+          "Fixed linux/amd64 and CUDA sm_89, matching existing reproduction convention.",
+          "Reports measured identities; does not promise Docker archive/image byte equality across BuildKit versions/timestamps.",
+          "Local image/config digest is not a registry manifest digest; no registry owner/reference authorization or two-host deployment success is claimed."
+        ],
+        "outputs": {
+          "candidate.json": "ringlpn-source-runtime-candidate-v1; source/build hashes, binary identity, local image/config ID, RootFS, export SHA256/size, host tool versions; registry manifest digest and authorized reference null",
+          "commands.json": "Command arrays, return codes and numbered logs",
+          "image-config.json": "Exact config bytes bound to local image ID",
+          "provenance/build.json": "ringlpn-source-runtime-build-v1; binary/tool/library identity, package inventory and hashed command/environment/dependency/link artifacts",
+          "runtime-candidate.docker.tar": "Portable image export; docker image load --input PATH",
+          "source-admission.json": "ringlpn-source-runtime-admission-v1; public commit/tree/gitlink and admitted source/recipe hashes",
+          "test_two_party_fc_preprocess": "Extracted ELF checked against in-image binary hash"
+        },
+        "planner_command": "docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev IMAGE_ID --plan --qbits 128 --bw 32 --rows 2 --inner 3 --cols 2",
+        "required_inputs": [
+          "Python >=3.11, Git, Docker CLI/BuildKit and accessible local Docker Unix socket",
+          "Network access to public source/CUTLASS, Docker CUDA registry and Ubuntu snapshot; sufficient storage",
+          "Fresh external work/output roots; no secret credentials or registry authentication",
+          "For separate native execution: explicitly selected allowed GPUs, party-private authentication files, durable consume-once ledgers and fresh UID-65532-writable private mounts"
+        ],
+        "status": "implemented; intentionally unexecuted pending Main validation"
+      }
+    },
+    "proof_challenge_surviving_findings": 0,
+    "review_boundary": "Automated challenge under explicit hypotheses is not qualified human sign-off or a live cryptographic reduction."
+  },
+  "schema": "ringlpn-autonomous-technical-execution-v1",
+  "source_and_report_sha256": {
+    "GPU-MPC/ringlpn/CLAUDE.md": "d2c483419a829d1341a8dcbc2df3c118d124f711232facc35dd961e3aaf64c23",
+    "GPU-MPC/ringlpn/README.md": "0b15b85171ca1795e634ff31fe9a3552e094ee6601192092d801ff6b2318b2a8",
+    "GPU-MPC/ringlpn/results/README.md": "354c4b61284cf6c6654d6f2feb83034a5ff05317d14fdfc158de0d40189355ae",
+    "GPU-MPC/ringlpn/results/reports/authenticated_two_host_deployment_2026_08_04.md": "aacfe51e273bf8681d0129ea2f4bbe899631d0d49041fc242aee71e6f9ee7d84",
+    "GPU-MPC/ringlpn/results/reports/chief_of_staff_handoff_2026_09_10.md": "60573395021979fe067310e3c7cb365458a4aefb858e06eee90aa1fb6aa81727",
+    "GPU-MPC/ringlpn/results/reports/dealerless_orca_fc_security_contract_2026_07_29.md": "50b0fe036a4a096b7d4c028bb6d109dcdf00d817d62518b2bb89a23105b50b82",
+    "GPU-MPC/ringlpn/results/reports/regular_dmpf_design_no_go_2026_08_06.md": "5e20a5c462e41d281aa999bd805fd4ff49b803f12d790365da8ba493345ffefa",
+    "GPU-MPC/ringlpn/results/reports/structured_attack_audit_2026_08_04.md": "7aebf648d8c7e349fd23ceaa015e22567aa228fba0be858e5b99deeaf4bda57e",
+    "GPU-MPC/ringlpn/scripts/Dockerfile.runtime": "8da942113fe97dc780c668704b2892a4655d53468868cb1def2dfe078c460dbc",
+    "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py": "4cba3c945687f69b872a1e9cb884f2841d3f056a99a2b3e616ba615221a0bd42",
+    "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py": "73cc2803f26f7a30fa6e0842a171dec688925a3bc4bd3a23433efbe1a0a0b18e",
+    "GPU-MPC/ringlpn/scripts/build_component.sh": "843fb56d959aa9586e1662a0a4e78307396a8ef86ef40da9f0b0a7b83649458a",
+    "GPU-MPC/ringlpn/scripts/build_source_runtime_candidate.py": "0279588945a62fc4ca3db04350b1819565f77858ec3eddd1a1cd16ad37ebca65",
+    "GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh": "05aaf46a89d5a9ef4fb04acd1501730e0a510fabf110108ec97014c1d64266f0",
+    "GPU-MPC/ringlpn/scripts/capture_runtime_build.py": "2793c1c3e892cc1096d53d24230aba29f2411a3efccc81412504717efe549837",
+    "GPU-MPC/ringlpn/scripts/run_direct_ot_fc_baseline.py": "634adcfad30fa809ca374da476e058b90501b2bd7e60d3f8431c9adb1a8ac31e",
+    "GPU-MPC/ringlpn/src/test_direct_ot_fc_preprocess.cu": "cd519c4f52da16fce43b1f3bf5b4155b2f0e56c2e78c33b6772f6d6f31c583c4"
+  },
+  "source_publication": {
+    "actual_push_attempts": [
+      {
+        "interactive": true,
+        "outcome": "timed_out_no_output",
+        "timeout_seconds": 120
+      },
+      {
+        "interactive": true,
+        "last_trace_stage": "configured VSCode askpass.sh waiting for Username for https://github.com",
+        "outcome": "timed_out",
+        "timeout_seconds": 120
+      }
+    ],
+    "authentication_material_read": false,
+    "branch": "ringlpn/clinical-review-2026-09-10",
+    "intended_changed_paths": [
+      "GPU-MPC/ringlpn/scripts/audit_conversion_simulator.py",
+      "GPU-MPC/ringlpn/scripts/audit_dpf_leaf_loss.py",
+      "GPU-MPC/ringlpn/scripts/Dockerfile.runtime",
+      "GPU-MPC/ringlpn/scripts/build_source_runtime_candidate.py",
+      "GPU-MPC/ringlpn/scripts/capture_runtime_build.py",
+      "GPU-MPC/ringlpn/scripts/build_component.sh",
+      "GPU-MPC/ringlpn/scripts/build_two_party_fc_preprocess.sh",
+      "GPU-MPC/ringlpn/scripts/run_direct_ot_fc_baseline.py",
+      "GPU-MPC/ringlpn/src/test_direct_ot_fc_preprocess.cu",
+      "GPU-MPC/ringlpn/README.md"
+    ],
+    "internal_master_pushed": false,
+    "parent": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+    "portable_bundle": {
+      "imported_commit": "9bf1ab047e5f4fd9b048cd355bad994f135ae62c",
+      "internal_commit_object_absent": "6f80f2bca3ccd0c2f4e079bcc9f915e8ba5d61fc",
+      "isolated_verification_repository_removed": true,
+      "path": "/tmp/ringlpn-autonomous-source-9bf1ab0-zthq7bd4/ringlpn-source-9bf1ab0.bundle",
+      "required_base": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+      "scope": "Incremental source-only transfer artifact; not evidence of remote publication.",
+      "sha256": "fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed",
+      "size_bytes": 28794,
+      "verification_stderr": "/tmp/ringlpn-autonomous-source-9bf1ab0-zthq7bd4/ringlpn-source-9bf1ab0.bundle is okay\n",
+      "verification_stdout": "The bundle contains this ref:\n9bf1ab047e5f4fd9b048cd355bad994f135ae62c refs/heads/ringlpn/clinical-review-2026-09-10\nThe bundle requires this ref:\nafc93c6fb94af01239f51b06d5c29a40c6fe7d84 \nThe bundle uses this hash algorithm: sha1\n",
+      "verified_changed_source_blobs": 10
+    },
+    "prompt_disabled_dry_run": {
+      "askpass": "/bin/false",
+      "returncode": 128,
+      "scope": "Shows this no-prompt route lacks a username; not a proof interactive authentication is impossible."
+    },
+    "remote_commit_after_attempts": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+    "remote_probe_stdout": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84\trefs/heads/ringlpn/clinical-review-2026-09-10\n",
+    "scope": "Earlier afc93c6 publication remains successful; new 9bf1ab0 is committed and portable but not remotely published.",
+    "source_only_commit": "9bf1ab047e5f4fd9b048cd355bad994f135ae62c",
+    "status": "blocked_current_VSCode_askpass_route"
+  },
+  "source_runtime_candidate": {
+    "consumed_root_reuse_control": {
+      "arguments": [
+        "python3",
+        "/home/fatih/EzPC/GPU-MPC/ringlpn/scripts/build_source_runtime_candidate.py",
+        "--work-root",
+        "/tmp/ringlpn-runtime-work-afc93c6-002",
+        "--output-root",
+        "/tmp/ringlpn-runtime-artifacts-afc93c6-002"
+      ],
+      "returncode": 1,
+      "stderr": "source runtime candidate failed: stale/reused root is forbidden: /tmp/ringlpn-runtime-work-afc93c6-002\n",
+      "stdout": ""
+    },
+    "distinct_host_execution": false,
+    "immutable_registry_reference": null,
+    "initial_failure": {
+      "cause": "Extensionless cryptoTools GSL headers omitted by source admission",
+      "output_root": "/tmp/ringlpn-runtime-artifacts-afc93c6-001",
+      "resolution": "Admit the explicit GSL source headers; do not widen admission to arbitrary evidence/data."
+    },
+    "output_root": "/tmp/ringlpn-runtime-artifacts-afc93c6-002",
+    "packaging_stage_flags_note": "The saved build-stage JSON predates subsequent planner/GPU execution; its false execution flags are not rewritten.",
+    "packaging_stage_observation": {
+      "base_image": "nvidia/cuda@sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade",
+      "binary": {
+        "path": "/opt/ringlpn/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess",
+        "sha256": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283"
+      },
+      "build_provenance_sha256": "a64de246108fe41aef08cb88189629eadd475e5bc0391bb6ea6cfcb6dc644961",
+      "classification": "local-image-candidate-not-authorized-registry-runtime",
+      "export": {
+        "bytes": 7754951680,
+        "format": "docker-save",
+        "path": "runtime-candidate.docker.tar",
+        "sha256": "3d6d288e555281ab2ef0d11069b9137dc9b05f66509b0a236dd9ea15841baf29"
+      },
+      "gpu_execution_performed": false,
+      "host_tools": {
+        "docker": {
+          "Client": {
+            "ApiVersion": "1.51",
+            "Arch": "amd64",
+            "BuildTime": "Wed Sep  3 20:57:32 2025",
+            "Context": "default",
+            "DefaultAPIVersion": "1.51",
+            "GitCommit": "d8eb465",
+            "GoVersion": "go1.24.7",
+            "Os": "linux",
+            "Platform": {
+              "Name": "Docker Engine - Community"
+            },
+            "Version": "28.4.0"
+          },
+          "Server": {
+            "ApiVersion": "1.51",
+            "Arch": "amd64",
+            "BuildTime": "2025-09-03T20:57:32.000000000+00:00",
+            "Components": [
+              {
+                "Details": {
+                  "ApiVersion": "1.51",
+                  "Arch": "amd64",
+                  "BuildTime": "Wed Sep  3 20:57:32 2025",
+                  "Experimental": "false",
+                  "GitCommit": "249d679",
+                  "GoVersion": "go1.24.7",
+                  "KernelVersion": "6.8.0-78-generic",
+                  "MinAPIVersion": "1.24",
+                  "Os": "linux"
+                },
+                "Name": "Engine",
+                "Version": "28.4.0"
+              },
+              {
+                "Details": {
+                  "GitCommit": "b98a3aace656320842a23f4a392a33f46af97866"
+                },
+                "Name": "containerd",
+                "Version": "v1.7.28"
+              },
+              {
+                "Details": {
+                  "GitCommit": "v1.3.0-0-g4ca628d1"
+                },
+                "Name": "runc",
+                "Version": "1.3.0"
+              },
+              {
+                "Details": {
+                  "GitCommit": "de40ad0"
+                },
+                "Name": "docker-init",
+                "Version": "0.19.0"
+              }
+            ],
+            "GitCommit": "249d679",
+            "GoVersion": "go1.24.7",
+            "KernelVersion": "6.8.0-78-generic",
+            "MinAPIVersion": "1.24",
+            "Os": "linux",
+            "Platform": {
+              "Name": "Docker Engine - Community"
+            },
+            "Version": "28.4.0"
+          }
+        },
+        "git": "git version 2.43.0"
+      },
+      "image": {
+        "authorized_reference": null,
+        "config_sha256": "632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8",
+        "local_id": "sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8",
+        "platform": "linux/amd64",
+        "registry_manifest_digest": null,
+        "rootfs": {
+          "Layers": [
+            "sha256:27123a71e85e0540333291adccf7b9c340d089e8c3717c380d3b75cc8c7df90f",
+            "sha256:e523ea6ed9fbf4fc6165712010761109b428f1cdbb90b45321f314353ded88fc",
+            "sha256:311e2007374d02c2b56b78001e4e8601ee0c72c09a3cec7c104393444c533374",
+            "sha256:910b63bb00adb5a625b6bb74ab7b8eebc4ab4a1b839c366d00a4390fbbb98184",
+            "sha256:f72f00af3d1173f2896261009fdf165589496b3d8d3db4f15f93034a3aadf38d",
+            "sha256:344cd4317909695385bfa3c2ab514ee48bfa373d00f79ebfae437045bedb04d4",
+            "sha256:d4bdf88b7c27d652eead66accdc52f8af2eba6818adc5387bcd42812c97e319d",
+            "sha256:0a527e8bdcb7ed7be439f6c94a57024593314c0b26d59ad8cbf0d012ca86c005",
+            "sha256:ddb1a9e6dbb4ca986aded36a3eec38c9c17538550a9543f7a54dd3c8bd69777a",
+            "sha256:8ea47e0c5c68b44f6a05d25e5b8fa4c7bdc7574766b8d2d2d871af94ed68e8f9",
+            "sha256:7167130cd07bf41cd51cbe092699dde8fa4517f303332fcfadc904bcadb43d55",
+            "sha256:7cdcc66e260a7b9ff98c29239018f61cb5614e41149fe4a0dacb49f72c06246a",
+            "sha256:5c9f095a96042011963c0a0ee0cb370688cc696c4a7222f470ca132d22a76508",
+            "sha256:6bcab682970ae04850eef6f10a631883642bc5a6f1fe4cb884436a9f66a5472d",
+            "sha256:51e41f71841800be4baf60550e2eb10e868783a090386f6ab57a2949e47fb5b4",
+            "sha256:94637334b742dbccd3a01ec8653aa2d656db471758b1b29ed18ca84ca2fcba7b",
+            "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+          ],
+          "Type": "layers"
+        }
+      },
+      "publication_authorized": false,
+      "runtime_planner_executed": false,
+      "schema": "ringlpn-source-runtime-candidate-v1",
+      "security_claim": "none",
+      "source_admission_sha256": "c29458637b8549e465dbcc412f7ee9f87bef9453d012e51514896eb5ed49ac17",
+      "source_commit": "afc93c6fb94af01239f51b06d5c29a40c6fe7d84",
+      "ubuntu_snapshot": "20260810T000000Z"
+    },
+    "publication_authorized": false,
+    "readonly_nonroot_planner": {
+      "binary_matches_existing_reference": true,
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--read-only",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev",
+        "sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8",
+        "--plan",
+        "--qbits",
+        "128",
+        "--bw",
+        "32",
+        "--rows",
+        "100",
+        "--inner",
+        "64",
+        "--cols",
+        "10"
+      ],
+      "container_was_readonly_network_disabled_nonroot": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "fc,128,32,6400,640,1000,64000,9,7424,768,0,0\n"
+    },
+    "recipe_source_sha256": {
+      "scripts/Dockerfile.runtime": "8da942113fe97dc780c668704b2892a4655d53468868cb1def2dfe078c460dbc",
+      "scripts/build_source_runtime_candidate.py": "0279588945a62fc4ca3db04350b1819565f77858ec3eddd1a1cd16ad37ebca65",
+      "scripts/capture_runtime_build.py": "2793c1c3e892cc1096d53d24230aba29f2411a3efccc81412504717efe549837"
+    },
+    "registry_manifest_digest": null,
+    "source_admission_file_count": 1071,
+    "subsequent_in_image_gpu_checker": {
+      "checker": {
+        "bw": "32",
+        "checker_two_share_online_us": "98.167",
+        "checker_us": "161642",
+        "cols": "2",
+        "final_payload_bytes_per_party": "128",
+        "inner": "3",
+        "invocation_id": "5b8e92f3d8e5a1aa35fe6005c71df4e3",
+        "key_order": "pass",
+        "ledger_digest": "f9e4d617876393babe8467f6ef42e6236523f023d5a678652fa00965d2c3c558",
+        "matched_dealer_keygen_contract": "pass",
+        "matched_dealer_keygen_us": "14542.5",
+        "min_gpu_free_bytes": "33393344512",
+        "online_contract": "pass",
+        "peak_gpu_bytes": "433192960",
+        "peak_host_rss_bytes": "128241664",
+        "qbits": "128",
+        "ring_batches": "1",
+        "rows": "2",
+        "status": "pass"
+      },
+      "checker_return_code": 0,
+      "command_template": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--read-only",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--gpus",
+        "device=3",
+        "--user",
+        "1013:1014",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev",
+        "--mount",
+        "type=bind,src=<PRIVATE_SMOKE_ROOT>,dst=/private,readonly",
+        "sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8",
+        "--check",
+        "--p0-record",
+        "/private/party0/key_p0.fc",
+        "--p1-record",
+        "/private/party1/key_p1.fc",
+        "--p0-state",
+        "/private/party0/mask.state",
+        "--p1-state",
+        "/private/party1/mask.state",
+        "--csv-header"
+      ],
+      "environment_post": [
+        {
+          "clocks.mem": "9000",
+          "clocks.sm": "2550",
+          "driver_version": "560.35.03",
+          "index": "3",
+          "memory.total": "32760",
+          "memory.used": "16",
+          "name": "NVIDIA RTX 5000 Ada Generation",
+          "power.limit": "250.00",
+          "utilization.gpu": "7"
+        }
+      ],
+      "environment_pre": [
+        {
+          "clocks.mem": "405",
+          "clocks.sm": "210",
+          "driver_version": "560.35.03",
+          "index": "3",
+          "memory.total": "32760",
+          "memory.used": "16",
+          "name": "NVIDIA RTX 5000 Ada Generation",
+          "power.limit": "250.00",
+          "utilization.gpu": "0"
+        }
+      ],
+      "image_id": "sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8",
+      "producer_gpu_visibility": "empty",
+      "producer_return_codes": [
+        0,
+        0
+      ],
+      "scope": "same-host CPU direct-OT producer pair; source-only image checker on physical GPU3 only",
+      "status": "pass"
+    },
+    "successful_build_wall_seconds": 126.71
+  },
+  "unchanged_evidence": {
+    "current_pdf_path": "GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.pdf",
+    "current_pdf_sha256": "f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a",
+    "internal_master_pushed": false,
+    "prediction_gate": "Failed prospective capacity gate preserved; no refit, interval widening, or new capacity-prediction cohort. The direct-OT baseline is a separate experiment.",
+    "runtime_protocol_source_changed": false
+  },
+  "verdict": "Executed substantial reachable engineering rather than treating implementation as permission-blocked. No approved security level, full-evidence release, comparative speedup, or distinct-host deployment is manufactured."
+}

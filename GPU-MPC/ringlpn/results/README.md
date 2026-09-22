@@ -4,7 +4,36 @@ Reorganized 2026-06-10. Evidence-producing runners write into their artifact
 directory below. The terminal application gate emits only sanitized public rows
 and deletes private scratch; its dated CSV/log are explicit retained summaries.
 
-## Technical follow-through (2026-09-22)
+## Autonomous engineering execution (2026-09-22)
+
+`reports/autonomous_technical_closure_2026_09_22.json` supersedes the earlier
+prerequisite-only assessment without rewriting historical observations.
+It retains complete audit outputs, delegated review outcomes, actual runtime
+build/planner/GPU-checker evidence, source identities, and remaining hypotheses.
+
+- Conversion: 72 exact conditional-view identities, 1,120 sampled cases, and
+  96 retained-mask cases pass. Fixing exposed state rules out an independently
+  fresh ideal output; the documented retained-state functionality is an
+  explicit alternative, not an approved live-model change.
+- Leaf accounting: eight source pins, a conditional whole-key replacement
+  lemma, workload-derived lifetime inventory, and 676 reduced role/tag checks.
+  The complete live security bound remains unset.
+- `reports/direct_ot_fc_complete_2026_09_22.{json,plan.json}`: the new direct-OT
+  FC baseline passes eight cases through the unchanged checker with independent
+  mask-state inputs. The three measured `100x64x10` runs have median
+  1.079694043 s. The comparison attempt stops at occupied GPU2; no historical
+  timings are substituted and no speedup ratio is claimed. Earlier failed or
+  superseded `direct_ot_fc_*_2026_09_22` cohorts remain separately retained.
+- A source-only, pinned-dependency runtime candidate actually builds, exports,
+  and passes the in-image GPU3 checker. Its producer/checker binary is byte-
+  identical to the reference. Registry authorization and two-host deployment
+  are still absent.
+
+The new source-only commit is `9bf1ab0`; its exact publication outcome and
+verified portable bundle are in the report. Internal master/evidence, the
+prospective prediction failure, and the current PDF remain unexported/unchanged.
+
+## Earlier technical follow-through (2026-09-22)
 
 `reports/technical_followthrough_2026_09_22.json` retains the successful
 source-only Git publication and two new CPU-only research audits. The complete
@@ -19,9 +48,11 @@ approved lifetime counts or security levels.
 The security contract now gives the output-conditioned simulator candidate,
 and the structured-attack report distinguishes exact single-law distance,
 payload-shift gap, and tag-event gap. P-KEY and P-CONV independent human review
-remain open. Deployment lacks authorized hosts/runtime/mount/release inputs;
-the matched dealerless comparison still needs reviewed parameters and a
-consumer-matched implementation. Source publication does not close full-evidence
+remain open. At that checkpoint deployment lacked authorized
+hosts/runtime/mount/release inputs and the comparison lacked a consumer-matched
+implementation. The execution above closes the implementation and local-image
+gaps, not parameter approval or authenticated deployment. Source publication
+does not close full-evidence
 release. The failed prospective prediction experiment and current PDF are
 unchanged. Audit source and its README are in source-only commit `afc93c6`;
 it is now published on `ringlpn/clinical-review-2026-09-10`, with its exact

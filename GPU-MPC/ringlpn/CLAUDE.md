@@ -45,6 +45,46 @@ dealerless nonlinear preprocessing, private/trained inference, accuracy, a full-
 performance distribution, deployment, or a new security claim. A
 conference/security-level claim remains a NO-GO.**
 
+**Autonomous engineering execution (2026-09-22).** The latest retained record is
+`results/reports/autonomous_technical_closure_2026_09_22.json`. Five delegated
+research, implementation, and challenge slices were integrated with actual
+builds and executions; automated review is not human approval.
+
+- Conversion now separates independently programmable logical tapes, hidden
+  provider state, and externally retained native state. With the final raw
+  arithmetic mask fixed, the real share has two possible values; a fresh
+  independent bw32 ideal share passes that consistency condition with only
+  probability `2^-31`. The source-bound audit passes 96 retained-mask cases,
+  alongside the previous 72 distribution identities and 1,120 sampled cases.
+  The contract develops a role-conditioned retained-state functionality and
+  concrete lifting hypotheses; it does not silently replace the live model.
+- Leaf accounting now pins eight source files and derives conditional
+  whole-key replacement counts from actual workloads. Reduced-domain role/tag
+  checks pass in 676 cases. This removes unjustified domain-size and repeated-
+  evaluation multipliers, but does not establish the live AES/OT/RNG reductions
+  or a complete approved security/lifetime bound.
+- `test_direct_ot_fc_preprocess` is an implemented, separate direct-Gilboa-OT
+  FC producer, not the unimplemented raw-diagonal regular-DMPF replacement.
+  `direct_ot_fc_complete_2026_09_22.{json,plan.json}` retains eight passing
+  cases: q64/q128, an OT chunk boundary, independent output-mask/checker checks,
+  replay rejection, and mixed-protocol authentication rejection. Three measured
+  `100x64x10` runs have median 1.079694043 s. Direct producers are CPU-only;
+  the unchanged checker uses GPU3. GPU2 remains occupied, so no fresh Ring-LPN
+  comparison ratio or security-matched performance claim is available.
+- The source-only runtime candidate actually builds and exports a 7,754,951,680-
+  byte Docker archive. Image `sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8`
+  contains reference binary `a5630582...`, byte-identical to the existing
+  producer/checker. Its read-only, nonroot planner and in-image GPU3 checker
+  pass. This is not an authorized registry runtime or distinct-host deployment.
+
+New source-only commit `9bf1ab047e5f4fd9b048cd355bad994f135ae62c` has a verified
+incremental bundle; the exact push outcome is recorded in the latest JSON.
+Internal evidence/history remain private. Production cryptographic sources,
+the frozen failed prediction experiment, and the retained 36-page PDF are
+unchanged. Remaining work includes real cryptographic reductions and reviewed
+parameters, not merely signatures, plus authorized hosts, durable mounts,
+native rootless deployment prerequisites, and full-evidence release authority.
+
 **Engineering review supplement (2026-09-10).** Persistent producer claims are
 now serialized under a directory lock; FC/Conv/scale runners refuse reused
 work roots instead of deleting consumption history. Private FIFO inputs reject

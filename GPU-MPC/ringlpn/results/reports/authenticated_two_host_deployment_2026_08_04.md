@@ -200,3 +200,158 @@ container image/binary identities, local/remote executor hashes, distinct
 machine identities, session and invocation IDs, coordinator-ledger digest, both
 ports, common-public-parameter digest, isolation-manifest paths, return codes,
 record digests, fault-control point, status, and `security_claim=none`.
+
+## Source-only local runtime candidate (September 22 supplement)
+
+`scripts/build_source_runtime_candidate.py` supplies a separate **local image
+candidate**, not an authorized registry runtime or publication release. It does
+not modify the publication manifest, execute the coordinator, create an approval
+object, tag source, push an image, or fill any release-authorization null.
+Implementation is supplied here; build/planner/GPU success is not asserted by
+this supplement.
+
+The only application-source input is public commit
+`afc93c6fb94af01239f51b06d5c29a40c6fe7d84` from
+`https://github.com/mottopanikeiku/EzPC.git`. The driver creates a new checkout,
+checks exact HEAD/tree and clean index/worktree state, and initializes only the
+FC-required CUTLASS gitlink at its parent-pinned commit. The other FC dependencies
+(SCI/src, Sytorch, cryptoTools, LLAMA, bitpack) are tracked parent-tree source.
+Unused source submodules and the dataset/weight submodules are not initialized.
+The build context is reconstructed from Git archive entries: regular source
+files in the required include/source roots, the canonical FC build scripts, and
+upstream license/notice files. Results, evidence, manuscripts, measurements,
+datasets, weights, Git metadata, approval objects and arbitrary caller inputs
+are excluded. The three locally supplied packaging recipes are separately
+SHA-256 identified; they are not represented as files from the pinned public
+commit.
+
+`Dockerfile.runtime` pins the same CUDA 12.6.3-devel Ubuntu 24.04 base digest
+as `Dockerfile.reproduction`:
+`sha256:badf6c452e8b1efea49d0bb956bef78adcf60e7f87ac77333208205f00ac9ade`.
+The mutable CUDA apt repository is disabled. Ubuntu packages use only
+`https://snapshot.ubuntu.com/ubuntu/20260810T000000Z/`, with the reproduction
+recipe's exact GCC-13, OpenSSL and other direct package versions. The complete
+installed version/architecture inventory is retained. Transitive packages are
+resolved from this dated snapshot, not silently from today's archive.
+Compilation enters the existing `build_two_party_fc_preprocess.sh` →
+`build_component.sh linear-fc` route, including its fixed canonical symlink,
+compiler flags and object cleanup. No alternate compiler command is introduced.
+The image retains the admitted source/licenses, recipe, compiler environment,
+real linked producer/checker ELF and its shared libraries. A missing `ldd`
+dependency fails the build. NVIDIA host-driver injection is still required for
+GPU execution; driver libraries are not copied from the build host.
+
+Required host inputs: Python 3.11 or newer, Git, Docker CLI with BuildKit, a local
+Docker Unix socket accessible to the invoking user, network access to the public
+Git repositories/CUDA registry/Ubuntu snapshot, and enough local build/export
+storage. No GPU is accessed by the packaging driver. No credentials, SSH agent,
+registry login, proxy environment, Podman socket, source override or prebuilt
+binary is accepted. Docker uses a fresh empty client configuration. Work/output
+roots must be absent, disjoint, normalized absolute paths with existing
+non-symlink parents, and outside the repository. They remain consumed even after
+failure; choose new roots rather than retrying over them.
+
+From `GPU-MPC`, with the two example paths not already present:
+
+```sh
+python3 ringlpn/scripts/build_source_runtime_candidate.py \
+  --work-root /tmp/ringlpn-runtime-work-afc93c6-001 \
+  --output-root /tmp/ringlpn-runtime-artifacts-afc93c6-001 \
+  --docker-host unix:///var/run/docker.sock
+```
+
+For rootless Docker, supply that daemon's actual local Unix socket instead.
+This is not a rootless-Podman deployment test. No socket enters the build context
+or image. Child command failures propagate, interrupted child process groups are
+terminated, exact temporary containers are removed, and fresh scratch is deleted
+while the work-root tombstone and output logs remain. A failure does not retain
+a success `candidate.json` or portable archive. A successfully built image may
+remain in the local daemon by its immutable image ID.
+
+Output contracts:
+
+- `source-admission.json`, schema `ringlpn-source-runtime-admission-v1`: public
+  URL/commit/tree, required gitlink URL/commit, all admitted source paths/modes/
+  SHA-256s, packaging recipe hashes, base digest and package snapshot.
+- `provenance/build.json`, schema `ringlpn-source-runtime-build-v1`: exact
+  canonical builder, compiler/tool paths/resolved paths/hashes/version output,
+  source admission digest, absolute ELF path/SHA-256, architecture and resolved
+  shared-library paths/SHA-256s. Adjacent artifacts retain package inventory,
+  linker map, dependency files, NUL-delimited build commands/environment,
+  `ldd` and ELF dynamic-section output, with hashes bound by `build.json`.
+- `candidate.json`, schema `ringlpn-source-runtime-candidate-v1`: source/build
+  provenance digests, ELF identity, immutable **local image/config ID**,
+  platform/RootFS identity, host Git/Docker versions, and portable archive
+  size/SHA-256. `registry_manifest_digest` and `authorized_reference` are null;
+  `publication_authorized`, `gpu_execution_performed`, and
+  `runtime_planner_executed` are false.
+- `runtime-candidate.docker.tar`: portable `docker image save` artifact. The
+  driver verifies its single image's config SHA-256 equals the local image ID.
+  `image-config.json` preserves those exact config bytes. The extracted
+  `test_two_party_fc_preprocess` SHA-256 must equal the in-image build record.
+  `commands.json` and numbered logs record host commands and return codes.
+
+The in-image executable is:
+`/opt/ringlpn/source/GPU-MPC/ringlpn/bin/test_two_party_fc_preprocess`.
+It is the real FC producer and unchanged stock-Orca checker, not a planner-only
+stub. Its planner can be exercised without a GPU after a successful build:
+
+```sh
+OUT=/tmp/ringlpn-runtime-artifacts-afc93c6-001
+IMAGE_ID=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["image"]["local_id"])' "$OUT/candidate.json")
+docker run --rm --network none --read-only --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --tmpfs /tmp:rw,nosuid,nodev "$IMAGE_ID" \
+  --plan --qbits 128 --bw 32 --rows 2 --inner 3 --cols 2
+```
+
+Portable import uses `docker image load --input "$OUT/runtime-candidate.docker.tar"`;
+compare the loaded ID/config and binary hashes to `candidate.json` before use.
+Native producer/checker execution must separately provide explicitly selected
+allowed physical GPUs, party-private authenticated channel files, distinct
+persistent consume-once ledgers, fresh private output mounts writable by UID
+65532, and the producer's public shape/invocation arguments. It is not run by this
+packaging command. Do not mount a repository, Docker/Podman socket, secret
+credential directory or internal evidence tree into the candidate.
+
+This recipe pins rebuild inputs and reports measured artifact identities; it
+does not promise byte-identical Docker-save tars or image IDs across daemon/
+BuildKit versions and timestamps. A local config digest is **not** a registry
+manifest digest. Registry upload, a resulting registry manifest identity,
+authorized owner/reference, two-host admission and native execution evidence
+remain separate requirements; the existing coordinator rightly does not accept
+this local-candidate record as satisfying them.
+
+### Executed local candidate, not authorized deployment
+
+Main built the recipe from a fresh public checkout on September 22. The
+first attempt exposed a missing extensionless `cryptoTools/gsl/span` header
+in source admission; the corrected policy admits the tracked GSL header
+directory, not arbitrary extensionless data. The next fresh build succeeded:
+
+- Source: `afc93c6fb94af01239f51b06d5c29a40c6fe7d84`; 1,071 admitted source/license files.
+- Local image/config ID:
+  `sha256:632f3d1e16225968a91c49816e97c234078158e5a57aef756b617bac49f683c8`.
+- FC ELF SHA-256:
+  `a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283`,
+  byte-identical to the existing reference binary.
+- Portable archive: `/tmp/ringlpn-runtime-artifacts-afc93c6-002/runtime-candidate.docker.tar`,
+  7,754,951,680 bytes, SHA-256
+  `3d6d288e555281ab2ef0d11069b9137dc9b05f66509b0a236dd9ea15841baf29`.
+
+The in-image `100x64x10`, q128/bw32 planner passed with the container
+read-only, network disabled and default UID/GID 65532. A fresh CPU-only
+direct-OT producer pair then generated q128/bw32 `2x3x2` records and
+independent mask states. The **in-image unchanged checker** passed all
+stock-consumer/dealer-equivalence checks on physical GPU3 only, using
+the invoking nonroot UID/GID and a read-only private fixture mount.
+All private fixture files and the temporary container were removed.
+Reusing the consumed packaging roots rejected before a build.
+
+Packaging metadata remains the immutable build-stage observation; later
+planner/GPU-checker evidence is recorded separately in
+`autonomous_technical_closure_2026_09_22.json`. No runtime producer pair was
+run across hosts, no registry manifest was published, and the publication
+manifest's authorization/runtime fields remain unfilled. Docker here is an
+ephemeral local build/smoke vehicle, not a bypass of the Podman or host-policy
+requirements above.

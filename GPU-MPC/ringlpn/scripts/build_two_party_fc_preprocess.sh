@@ -4,6 +4,9 @@ set -euo pipefail
 
 if [[ "${RINGLPN_COMPONENT_DISPATCH_ACTIVE:-0}" != "1" ]]; then
   component="linear-${RINGLPN_LINEAR_KIND:-fc}"
+  if [[ "${RINGLPN_DIRECT_OT_FC:-0}" == "1" ]]; then
+    component="direct-ot-fc"
+  fi
   exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/build_component.sh" "$component"
 fi
 
@@ -48,6 +51,13 @@ if [[ "$LINEAR_KIND" != "fc" && "$LINEAR_KIND" != "conv" ]]; then
   exit 2
 fi
 OUTPUT="$OUT_DIR/test_two_party_${LINEAR_KIND}_preprocess"
+if [[ "${RINGLPN_DIRECT_OT_FC:-0}" == "1" ]]; then
+  if [[ "$LINEAR_KIND" != "fc" ]]; then
+    echo "direct OT baseline supports FC only" >&2
+    exit 2
+  fi
+  OUTPUT="$OUT_DIR/test_direct_ot_fc_preprocess"
+fi
 
 mkdir -p "$OUT_DIR"
 ringlpn_require_command NVCC nvcc 'Run inside the CUDA toolkit environment.'
@@ -96,6 +106,11 @@ fi
 SOURCE_FILES=(
   "src/test_two_party_${LINEAR_KIND}_preprocess.cu"
   "src/linear_preprocess_${LINEAR_KIND}.cu"
+)
+if [[ "${RINGLPN_DIRECT_OT_FC:-0}" == "1" ]]; then
+  SOURCE_FILES=(src/test_direct_ot_fc_preprocess.cu)
+fi
+SOURCE_FILES+=(
   src/secure_convert.cpp
   src/secure_truncate.cpp
   ../utils/gpu_mem.cu

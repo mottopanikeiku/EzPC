@@ -1,0 +1,8 @@
+{
+  "error_code": "wire_conservation_failed",
+  "error_type": "ExperimentError",
+  "plan_sha256": "8575b0730a578923cf4557f3eb77b8b9a1ef28c564613cf4b1a4a68d8c692452",
+  "samples": [],
+  "schema_version": 1,
+  "status": "failed"
+}

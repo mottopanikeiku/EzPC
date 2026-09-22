@@ -1,0 +1,8 @@
+{
+  "error_code": "selected_gpu_has_compute_process",
+  "error_type": "ExperimentError",
+  "plan_sha256": "93c77c30367274055eeeb8f4fe78e1638bcfd124b5f1b24f421fa84dae3c1592",
+  "samples": [],
+  "schema_version": 1,
+  "status": "failed"
+}

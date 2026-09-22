@@ -1,0 +1,188 @@
+{
+  "binary_sha256": {
+    "direct": "9522205fbb7d08cf5970b9622b8344c5be5d70c329057a38f81dde2893ae9bec",
+    "reference": "a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283"
+  },
+  "checker": "unchanged_reference_binary_with_independent_input_output_mask_states",
+  "mode": "compare",
+  "order": [
+    {
+      "bw": 16,
+      "ordinal": 0,
+      "qbits": 64,
+      "replay_control": true,
+      "role": "functional",
+      "shape": [
+        2,
+        2,
+        2
+      ],
+      "side": "direct"
+    },
+    {
+      "bw": 32,
+      "ordinal": 1,
+      "qbits": 128,
+      "replay_control": false,
+      "role": "functional",
+      "shape": [
+        2,
+        2,
+        2
+      ],
+      "side": "direct"
+    },
+    {
+      "bw": 32,
+      "ordinal": 2,
+      "qbits": 128,
+      "replay_control": false,
+      "role": "functional",
+      "shape": [
+        2,
+        1025,
+        3
+      ],
+      "side": "direct"
+    },
+    {
+      "bw": 32,
+      "ordinal": 3,
+      "qbits": 128,
+      "role": "warmup",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "direct",
+      "trial": 0
+    },
+    {
+      "bw": 32,
+      "ordinal": 4,
+      "qbits": 128,
+      "role": "warmup",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "ringlpn",
+      "trial": 0
+    },
+    {
+      "bw": 32,
+      "ordinal": 5,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "ringlpn",
+      "trial": 0
+    },
+    {
+      "bw": 32,
+      "ordinal": 6,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "direct",
+      "trial": 0
+    },
+    {
+      "bw": 32,
+      "ordinal": 7,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "ringlpn",
+      "trial": 1
+    },
+    {
+      "bw": 32,
+      "ordinal": 8,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "direct",
+      "trial": 1
+    },
+    {
+      "bw": 32,
+      "ordinal": 9,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "ringlpn",
+      "trial": 2
+    },
+    {
+      "bw": 32,
+      "ordinal": 10,
+      "qbits": 128,
+      "role": "measured",
+      "shape": [
+        100,
+        64,
+        10
+      ],
+      "side": "direct",
+      "trial": 2
+    },
+    {
+      "bw": 32,
+      "ordinal": 11,
+      "qbits": 128,
+      "role": "control",
+      "shape": [
+        2,
+        2,
+        2
+      ],
+      "side": "mismatch"
+    }
+  ],
+  "physical_gpus": [
+    1,
+    2,
+    3
+  ],
+  "publication_approval": false,
+  "schema_version": 1,
+  "scope": "local_same_function_not_security_matched_not_raw_diagonal",
+  "security_bits": null,
+  "source_sha256": {
+    "scripts/build_common.sh": "c75d5463e0f62098abff6f4992d8e075800ebc8657a955ccbbcaafb371ac8f62",
+    "scripts/build_component.sh": "2e279e028e210ca7bc92555ee51d65519cd84aa790da082998156c2aab10ff03",
+    "scripts/build_two_party_fc_preprocess.sh": "05aaf46a89d5a9ef4fb04acd1501730e0a510fabf110108ec97014c1d64266f0",
+    "scripts/run_direct_ot_fc_baseline.py": "d30cab5958d2ecbf105d361a694223e3742655bb37df97a818409779905bd643",
+    "scripts/run_fc_review_experiments.py": "aa0c40ea898935d3e360a7184058096b20abf62d3e1bcc98269e73500611db0f",
+    "src/secure_convert.cpp": "94e4686c3c1834b1b7d7fa2798c4896065391008ca06195a777b3e7c8af435c8",
+    "src/secure_convert.h": "311428e4fb64bb2e9149554faee2ed0c833b4a3688179d6bcb016080bba52247",
+    "src/test_direct_ot_fc_preprocess.cu": "cd519c4f52da16fce43b1f3bf5b4155b2f0e56c2e78c33b6772f6d6f31c583c4",
+    "src/two_party_linear_preprocess.cuh": "c2fcb41d6f72341d6392e4b8b1803528122eef431ff5e4c0eca96af01b125ca7",
+    "src/two_party_ot.h": "bafdac15667e61033d90777a6c075e7b81145ad920fac22d6e1de5852dfb5fd4"
+  },
+  "timeout_sha256": "2ee918a5358c0388719e710134bc32cffb934f4bd2a8fb9beb86ef4d6ec8bd8a",
+  "timing": "controller launch to both party exits; includes setup, excludes checker; no predictor refit"
+}

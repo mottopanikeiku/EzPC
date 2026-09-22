@@ -1,6 +1,6 @@
 # Structured Ring-LPN attack audit
 
-**Date:** 2026-08-04; live source and hybrid-formula bindings refreshed 2026-08-10; ideal-leaf arithmetic supplement 2026-09-22
+**Date:** 2026-08-04; live source and hybrid-formula bindings refreshed 2026-08-10; ideal-leaf arithmetic and conditional lifetime supplement 2026-09-22
 **Status:** internal/advisor; attack inventory and proof obligation ledger; **not a parameter pin or concrete-security review**
 **Scope:** the current audited regular sampler revision, its direct expanded instance, every one-sparse fully split projection, and the implemented DPF map's ideal-leaf statistical loss
 **Review state:** source-grounded model/attack triage, an elementary orbit lemma, and exact ideal-leaf arithmetic; independent human cryptographic review is required
@@ -290,7 +290,7 @@ bound and an exact disjoint-payload-shift gap, not the exact single-law TV.
 ### 9.1 Source binding and probability experiment
 
 The executable companion is `scripts/audit_dpf_leaf_loss.py`. It fails closed
-unless SHA-256 pins match all six reviewed source files, extracts both primes
+unless SHA-256 pins match all eight reviewed source files, extracts both primes
 from `two_party_dpf_protocol.h`, and emits source/script hashes with its JSON.
 Its source bindings cover:
 
@@ -305,6 +305,9 @@ Its source bindings cover:
 - `src/ringlpn_ole_party.cuh`: `(c*t)^2` trees per Ring-OLE instance;
 - `src/two_party_linear_preprocess.cuh`: aggregation and the expected
   `2*limbs*ring_batches` Ring-OLE instances per linear-layer invocation.
+- `src/two_party_spfss.h`: regular/uniform domains, Cartesian-product tree
+  layout, local noise-factor reuse, and frontier limits;
+- `src/gpu_aes_prg_host.h`: four distinct AES input blocks under each node seed.
 
 Hashes bind the reviewed source, not a compiled binary or a proof of its
 execution. The arithmetic below treats `lo,hi` as independent uniform integers
@@ -403,7 +406,7 @@ for leaves sharing seeds, correction words, keys, or PRG calls. We do not
 multiply independent-sample success probabilities, nor insert the joint-tag
 witness's factor `1/2` into an alleged full-key upper bound.
 
-Tree/evaluator counters do not determine `N0,N1`. Runtime accounting gives
+Tree/evaluator counters alone do not determine `N0,N1`. Runtime accounting gives
 `2*ring_batches*(c*t)^2` tree pairs per active limb per linear invocation,
 already including the two Ring-OLE directions. The two parties hold shares
 of those same tree pairs; summing their identical counters double-counts
@@ -413,20 +416,21 @@ Conversely, a DPF reduction may need multiple primitive/conditional
 replacements per tree. None of `trees`, `trees*domain`, number of key files,
 or evaluator calls is silently promoted to a proved comparison count.
 
-The command requires both counts and a leaf-only diagnostic target `2^-b`.
+The legacy command mode requires both counts and a leaf-only diagnostic target `2^-b`.
 The reported Boolean says only whether the stated conditional upper bound
 fits that target by exact rational comparison. A false result means this
 upper-bound certificate misses the target, not a lower bound on the
 composed advantage. Exit success means arithmetic/source processing
 succeeded, not that any security budget passed.
 
-Still missing: a reviewed AES/DPF key-privacy reduction establishing the
-conditional leaf/tag laws and every replacement count; the exact lifetime
-inventory over both CRT limbs, directions, keys, batches, layers and epochs;
-composition with PRG/OT/OLE/Ring-LPN/conversion/sampler losses and all bad
-events; and independent human cryptographic review of that reduction and
-budget. Exact coupling of distributed and centralized key generation with
-the same biased map cannot substitute for this privacy argument.
+The subsequent source-specific supplement (§§9.6–9.10) derives a conditional
+one-hidden-map-per-tree charge and an explicit workload inventory. It does
+not establish the live conditional laws or distributed-view reduction.
+Still missing are the AES/DPF hidden-path reduction, distributed transcript
+and adaptive Ring-LPN bootstrap lifting, numerical primitive/bad-event
+advantages, and independent human review. Exact coupling of distributed and
+centralized key generation with the same biased map cannot substitute for
+this privacy argument.
 
 ### 9.5 Focused reproduction (CPU only)
 
@@ -461,3 +465,335 @@ were executed successfully on September 22, and the five reduced-domain
 enumerations agree exactly with the formulas. Neither illustrative bound
 meets its requested leaf-only target. Source-bound outputs and the precise
 non-claims are retained in `technical_followthrough_2026_09_22.json`.
+
+### 9.6 One key, one role: the frontier cancels; the final word does not
+
+**New result: a conditional whole-key map-replacement lemma, not a live
+AES or distributed-protocol privacy theorem.** Fix one corrupted role
+`b in {0,1}`, a tree's point `alpha` and payload `beta`, and its modulus.
+Write `c_b(x)=Convert(s_b(x))`. The correction recurrence in
+`two_party_dpf_protocol.h::apply_level_correction` (and its GPU twin)
+preserves the usual DPF invariant:
+
+```text
+x != alpha: s0(x)=s1(x), t0(x)=t1(x);
+x  = alpha: t0(alpha) XOR t1(alpha)=1.
+```
+
+Indeed, at a level all already-off-path pairs have equal seeds/tags and
+identical expansions. Their XORs cancel in the two parties' aggregate
+left/right values. The remaining pair gives exactly the centralized losing
+child correction. The selected child keeps opposite tags; the losing child
+acquires equal seeds/tags. This induction also explains why breadth/frontier
+keygen and on-path centralized keygen have the same final correction
+semantics; it does **not** simulate the messages used to compute it.
+
+Let `S_b` and `T_b` denote the protocol's **signed** seed/control sums.
+Every off-path field term cancels between the parties. Consequently:
+
+```text
+S0+S1 = c0(alpha)-c1(alpha);
+T0+T1 = t0(alpha)-t1(alpha) in {+1,-1};
+d0+d1 = beta-(S0+S1);
+finalCW = (d0+d1)*(T0+T1)
+        = (t0-t1)*(beta-c0+c1).
+```
+
+This is exactly the three-product Phase-C code: one multiplication shares
+`beta=beta_factor0*beta_factor1`; two more provide the cross terms of
+`(d0+d1)*(s0+s1)`. There are `2*D` frontier map calls per tree pair
+(`D=2^L`) in key generation, but **one hidden terminal coordinate for a
+fixed corrupted role** after this cancellation. There is no need to
+uniformize the corrupted party's computable leaves or either party's
+off-path leaves to obtain this identity.
+
+Define `V` to include the corrupted party's root, all `L` seed/tag
+correction words, its entire computable seed/tag tree, its input, and the
+auxiliary history allowed in the experiment, but **not finalCW**. Fix
+`alpha,beta` when conditioning, so the corrupted party's `a=c_b(alpha)`
+and `t=t_b(alpha)` are functions of `V`. Hypothesis H is that the opposite
+party's terminal raw seed, conditional on every such `V` of positive
+probability, is uniform in `{0,1}^128`. Equivalently for this lemma it
+suffices that its conversion `Z` has the exact law `Q` of §9.2.
+The rest of the view must be obtained from `(V,finalCW)` by the same
+possibly randomized channel in the two experiments, not by additionally
+revealing the replaced raw seed.
+
+For the two roles the entire public final word has the following law:
+
+```text
+b=0: finalCW = (2*t-1)*(beta-a+Z);
+b=1: finalCW = (1-2*t)*(beta-Z+a).
+```
+
+For **both values of t**, these are bijections of `Z` onto `F_p`.
+Replacing `Z~Q` by `U_p` therefore changes the joint key `(V,finalCW)`
+by exactly `delta=TV(Q,U_p)` under H, not `D*delta`, and not `delta/2`.
+The uniform final word is independent of `V`. Any evaluation transcript
+has distance at most `delta` by data processing. No fairness assumption
+on the corrupted party's tag is needed.
+
+For a fixed `alpha`, two payloads, and an identical prefix law in both
+experiments, the final-word distance for any payload shift is at most
+`epsilon`; for shift `floor(p/2)` at these primes it is exactly `epsilon`.
+This holds in the tag-zero branch as well: although the party's
+`Eval_b(alpha)` then omits finalCW, the **key contains finalCW** and the
+party can inspect it. The `epsilon/2` event from §9.3 remains a valid
+conditioned witness, never a whole-key upper bound.
+
+### 9.7 What establishes H in an ideal path experiment, and what does not
+
+An explicit ideal **programmed hidden-path** experiment supplies H as
+follows. At each level replace the *opposite party's on-path parent*
+expansion by a fresh independent tuple `(sL,tL,sR,tR)` with uniform
+128-bit seeds and fair independent tags. The losing seed one-time-pads
+the seed correction word against the known party's losing seed. The two
+hidden tags one-time-pad the two tag correction words. The hidden
+**keeping** seed is independent of all those outputs; XOR with the
+published correction word preserves uniformity. Inductively, the
+corrupted key prefix can be generated by its uniform root and independent
+uniform correction seeds/tags, without `alpha` or `beta`. At the final
+level the keeping seed gives H. This uses `L` hidden expansion sites and
+one final map replacement, per tree and per comparison world.
+
+This experiment is not silently identified with a globally consistent
+AES/random-function execution. A hidden seed might coincide with a known
+seed, a seed from another tree, or an adversarially queried seed. Repeated
+seed queries must receive the same expansion, not a new tuple. Corrections
+also deliberately make off-path seeds equal; a birthday bound over all
+frontier nodes would misclassify these forced equalities as rare.
+The missing primitive reduction must show that the programmed path can
+be coupled to a consistent expansion oracle except for explicitly
+bounded exposure/collision events, including all related-key dependencies.
+An `L`-site list is the proposed hybrid's size, **not a theorem charging
+`L` ordinary independent-key AES advantages to the live execution**.
+
+The source uses four AES evaluations under the seed-as-key, at plaintext
+blocks `0,1,2,3`; it does not use a single fixed-key PRF with independent
+domain-tagged tree inputs. In a fresh independent ideal-permutation node
+experiment, replacing its four distinct-block outputs by independent
+blocks costs at most `binom(4,2)/2^128=6/2^128`. Extracting the tag bits
+cannot increase that distance. The calculator reports this switching
+term separately for the candidate `L` sites. It does not prove AES is a
+PRP under the required auxiliary/related-key distribution, or establish
+freshness of the hidden sites.
+
+**Exact counterexample to a marginal-law shortcut.** Let a raw seed `S`
+be uniform but include `V=S` in the auxiliary view. Then `Convert(S)` has
+the exact marginal `Q`, yet
+
+```text
+TV((S,Convert(S)), (S,U_p)) = 1-1/p,
+```
+
+not `delta`. The equality event verifies this directly. The same failure
+arises in the final-word experiment when both terminal seeds are known.
+This is why the conditional H hypothesis cannot be replaced by DRBG
+freshness, histogram checks, or an assertion that AES output “looks random.”
+The source's distributed transcript is **more** than a centralized key:
+it includes local randomness, selected OTs, openings, noise bindings and
+prior Ring-OLE correlations. A simulator must condition on the corrupt
+party's prescribed input/output and handle all of those dependencies.
+The field-cancellation identity alone gives no such simulator.
+
+Repeated or adaptive local evaluations of one fixed key cost **zero new
+map replacements**. Give the adversary the key once, fix its private tape,
+and generate each query from the preceding answers: the entire transcript
+is a function of the same key/tape, so data processing covers every finite
+number of adaptive queries. In particular, evaluating the same input
+twice must return the same answer. A supposed hybrid that resamples an
+independent uniform answer each time breaks this equality with probability
+`1-1/p`; it is not a valid same-key hybrid. Adaptive *new key generation*
+requires H conditional on prior views at each new key, and is charged
+once per newly generated tree. Computation time/query bounds still enter
+the AES reduction even though they do not multiply the map term.
+
+### 9.8 Source-bound workload inventory, including the reuse chain
+
+For each declared fresh linear invocation, let `X>0` be its cross-term
+count (`M*K*N` for FC; the count of valid, nonpadding scalar products for
+Conv2D). The existing source computes:
+
+```text
+B=(c*t)^2; R=3*B; A=n-R>0; J=ceil(X/A);
+D=2*n/t (regular) or 2*n (uniform); L=log2(D).
+```
+
+Every `(batch,direction,limb)` runs one Ring-OLE with `B` new tree pairs,
+fresh noise calls and fresh roots. For `I` invocations and `ell` active
+limbs, the inventory is:
+
+| quantity | exact count |
+|---|---:|
+| Ring-OLE instances, all limbs | `2*I*J*ell` |
+| distinct tree pairs, **each active limb** | `K_l=2*I*J*B` |
+| party key halves, all limbs | `2*sum_l K_l` |
+| keygen frontier map calls, both parties | `2*sum_l K_l*D` |
+| one complete evaluation's map calls, both parties | `2*sum_l K_l*D` |
+| keygen expanded nodes, both parties | `2*sum_l K_l*(D-1)` |
+| keygen AES block evaluations, both parties | `8*sum_l K_l*(D-1)` |
+| conditional hidden map sites, one role/one world | `sum_l K_l` |
+| candidate hidden expansion sites, one role/one world | `sum_l K_l*L` |
+| Phase-B 128-bit string OTs, both OT directions | `2*sum_l K_l*L` |
+| Phase-C scalar products | `3*sum_l K_l` |
+| external epoch-zero scalar products | `I*ell*R` |
+| prior-Ring-OLE scalar products consumed | `I*ell*(2*J-1)*R` |
+| Ring-OLE tail slots reserved / finally discarded | `2*I*J*ell*R` / `I*ell*R` |
+| application slots used / discarded | `2*I*ell*X` / `2*I*ell*(J*A-X)` |
+
+Sum these formulas across workload rows when shapes/parameters differ.
+Parties do not create two different tree-pair populations; summing their
+identical tree counters double-counts. DPF evaluator launch counts group
+many trees and have no direct security meaning. The evaluation row counts
+one full materialization, not every possible fallback's AES operations
+(root-to-leaf evaluation may repeat ancestor expansions).
+
+There is one bootstrap pool **per limb**, not one per direction.
+Within that limb the epochs are ordered `(batch0,direction0)`,
+`(batch0,direction1)`, `(batch1,direction0)`, and so on.
+Only the first uses external Gilboa products. Each epoch reserves its
+last `R` output slots for the next epoch's three products per tree; the
+final tail is discarded. The first `A` slots serve application products,
+including unused-capacity discards. Thus using one expanded vector for
+both bootstrap and application does not generate another DPF key or
+another hidden-leaf map draw. It **does** require a joint pseudorandomness
+and simulation theorem for the two projections and the adaptive chain.
+Charging independent copies of the same vector is invalid.
+
+Within one Ring-OLE, `make_party_spfss_batch` repeats each local noise
+position/payload across Cartesian-product pairs `(i,j,k,l)`. The resulting
+`B` points/payloads are not independent challenges, even though root
+sampling occurs for every tree. The conditional telescoping argument
+allows correlated inputs, but only if H and the continuation simulation
+hold with this auxiliary information. New scopes per limb/direction/batch
+do not prove conditional seed independence. The default `(8192,2,8)` and
+any workload printed here remain feasibility examples, not security tuples.
+
+### 9.9 A complete conditional expression, with the unknowns left visible
+
+Fix a static semi-honest corrupted role, finite declared workload and
+adversarial resource bound. Consider two admissible secret worlds with
+the same allowed public/corrupt-input/output leakage and the same workload.
+The following are **hypotheses**, not properties inferred from counters:
+
+1. The DRBG is replaced by the specified independent logical random coins
+   with advantage `rng_w` in world `w`.
+2. Distributed keygen/transcript simulation reduces the view to the
+   single-key experiment with advantage `transcript_w`, conditional on
+   the party's prescribed input/output and previous history.
+3. A consistent hidden-path AES replacement with the auxiliary information
+   of §9.7 costs `aes_w`, ideal PRP/PRF switching costs `switch_w`, and all
+   seed exposure/collision/domain failures cost `bad_w`. Outside those
+   events H holds at each of the `K_l` replacements. Do not condition
+   away a bad event and then assume unchanged uniform laws without proving it.
+4. The remaining joint Figure-2/Ring-LPN, OT/OLE, conversion and sampler
+   transitions cost respectively `ring_w`, `ot_ole_w`, `conversion_w`,
+   `sampler_w`. These transitions must be defined to avoid charging the
+   same primitive simulation twice. Bootstrap/application projections and
+   other outputs involving the raw replaced state must be simulated, not
+   declared data processing of a single key without proof.
+5. After these transitions and uniform final-word replacement the two
+   ideal views have distance at most `sigma`. For the standalone programmed
+   one-key experiment `sigma=0` follows from the uniform prefix/final-word
+   simulator above; it is **not set to zero for the full Ring-LPN protocol**.
+
+Then telescoping, the conditional lemma and triangle inequality yield:
+
+```text
+Adv_event <= min(1,
+  sigma
+  + sum_(w=0,1) [
+      rng_w + transcript_w + aes_w + switch_w + bad_w
+      + ring_w + ot_ole_w + conversion_w + sampler_w
+    ]
+  + 2*sum_l K_l*delta_l).
+```
+
+Here event advantage is a probability gap, not excess guessing success.
+For a one-world simulation only one copy of its terms and
+`sum_l K_l*delta_l` occurs. The more economical
+`sum_l K_l*epsilon_l` applies to the **separate fixed-alpha, payload-only,
+common-prefix experiment**, not arbitrary point changes or the complete
+protocol. It must not be added to the uniform-replacement bound.
+Neither argument assumes independence of the trees; both require the
+conditional hypotheses for every step, with a common continuation kernel.
+
+The calculator computes the map sums exactly and, separately, the
+candidate ideal switching sum `6*sum_l K_l*L/2^128` **per world**.
+Under the explicitly independent-uniform root experiment alone, with
+`Qroot=2*sum_l K_l` sampled roots, it also computes the valid union bound
+`binom(Qroot,2)/2^128` for repeated roots across roles/limbs/scopes.
+This is only a root-repetition event, not a bound for all corrected
+internal seeds or adversarial seed queries. Forced equal off-path seeds
+are excluded from this root sample population.
+No numerical domain/namespace failure rate is supplied: invocation
+freshness, hash/RO collisions and ledger rollback require their own model;
+an identifier's bit width does not prove uniform independent sampling.
+Neither term repairs a missing transcript or Ring-LPN reduction.
+
+Accordingly `live_complete_bound` is emitted as JSON `null`; unknown
+advantages are never silently zeroed. The unconditional numerical
+whole-protocol upper bound available without those hypotheses is merely
+the trivial `1`. P-KEY and independent qualified review remain open.
+
+### 9.10 Executable finite cases and verification status
+
+The extended calculator is CPU/standard-library-only. It retains legacy
+`--comparisons-p*` arithmetic, mutually exclusive with repeated `--workload`
+arguments of form `n,c,t,limbs,noise,cross_terms,invocations`.
+Workloads describe explicit **successful fresh invocations**, not a model
+name from which layers, aborted sessions, retries or an indefinite service
+lifetime are guessed. The calculator checks the source degree, depth,
+frontier, tree, bootstrap and integer-domain constraints, but is not a
+replacement for native shape/record admission.
+
+Commands for Main to execute after all edits settle:
+
+```sh
+# Both roles, both tags, all own residues and payloads in a tiny field:
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --workload 8192,2,8,2,regular,1,1 --budget-bits 64 --check-reduced
+
+# Exact capacity edge and one term past it, aggregated as two invocations:
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --workload 8192,2,8,1,regular,7424,1 \
+  --workload 8192,2,8,1,regular,7425,1 --budget-bits 64
+
+# Explicit 22-invocation FC5-shaped population, not inferred model lifetime:
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --workload 8192,2,8,2,regular,64000,22 --budget-bits 64
+
+# Uniform sampler changes the domain/depth, not trees per Ring-OLE:
+python3 ringlpn/scripts/audit_dpf_leaf_loss.py \
+  --workload 8192,2,8,1,uniform,1,1 --budget-bits 64
+```
+
+Deterministic expectations from the formulas: the first case has `J=1`,
+`D=2048`, `L=11`, `K0=K1=512`; two parties' keygen converts `4,194,304`
+leaves but the conditional one-role/one-world map count is `1,024`.
+The capacity-edge rows have `J=1,2` and aggregate `K0=1536,K1=0`.
+The 22-invocation population has `J=9` and `K0=K1=101376`.
+The uniform case has `D=16384,L=14,K0=512,K1=0`.
+All are arithmetic expectations, not claimed runtime measurements.
+
+`--check-reduced` retains the five historical distribution checks and adds
+`4*13*13=676` exact role/tag/own-residue/payload comparisons at
+`half_bits=4,p=13`. It checks whole-final-word distance `delta` and the
+disjoint payload-shift distance `epsilon` in **every** tag branch. It
+also enumerates the revealed-seed counterexample and reports the exact
+repeated-resampling equality gap `12/13`. These cases distinguish the
+proved conditional lemma from the invalid marginal-law/independent-query
+shortcuts. No AES or DPF implementation is executed by these checks.
+
+**Executed by Main on September 22.** All four commands above exited zero
+and matched the stated exact counts; the first also passed the five
+distribution checks and all 676 role/tag cases. The exported source-only
+checkout additionally passed `--workload 8192,2,8,2,regular,64000,1
+--budget-bits 64 --check-reduced`, with `K0=K1=4608`.
+Mixing `--workload` with hypothetical `--comparisons-p*` rejected before
+JSON output. Exact outputs are retained in
+`autonomous_technical_closure_2026_09_22.json`. A second independent automated
+source-only challenge found no counterexample to the expressly conditional
+lemmas; it did not discharge the live primitive or composition hypotheses.
+No capacity predictor, historical failed gate, runtime protocol source,
+or security approval was changed.

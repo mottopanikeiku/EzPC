@@ -10,6 +10,8 @@ No third-party modules, native protocol execution, GPU access, or files written.
 import argparse
 from collections import Counter
 from itertools import product
+import hashlib
+from pathlib import Path
 import json
 import random
 
@@ -251,9 +253,75 @@ def sampled_audit(samples, seed):
             "production_moduli": [str(P0), str(P0 * P1)]}
 
 
+def retained_state_audit():
+    """Exact state/output obstruction, not a production entropy experiment."""
+    pins = {
+        "src/secure_convert.cpp": "94e4686c3c1834b1b7d7fa2798c4896065391008ca06195a777b3e7c8af435c8",
+        "src/two_party_ot.h": "bafdac15667e61033d90777a6c075e7b81145ad920fac22d6e1de5852dfb5fd4",
+    }
+    root = Path(__file__).resolve().parents[1]
+    for name, expected in pins.items():
+        if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
+            raise ValueError("retained-state source binding changed: " + name)
+    cases = 0
+    for q, width in ((3, 3), (5, 3), (9, 4), (P0, 3), (P0 * P1, 3)):
+        modulus = 1 << width
+        for z in (0, q - 1):
+            for raw in range(modulus):
+                outputs = {(z - q * raw) % modulus, (z - q * (1 - raw)) % modulus}
+                assert len(outputs) == 2
+                assert sum(value in outputs for value in range(modulus)) == 2
+                # Both real h branches always satisfy the retained-state relation.
+                for h in (0, 1):
+                    corrected = raw if h == 0 else (1 - raw) % modulus
+                    assert (z - q * corrected) % modulus in outputs
+                cases += 1
+
+    # A reachable completed-call snapshot: one default PartyRandom.u64()
+    # already filled all 512 words, with position=1 and an empty bit pool.
+    position, left = 1, 0
+
+    def word():
+        nonlocal position
+        index = position
+        position += 1
+        return index
+
+    def bit():
+        nonlocal left
+        if left == 0:
+            word()
+            left = 64
+        left -= 1
+
+    def wide():
+        return word(), word()  # source hi-then-lo order
+
+    for _ in range(63):
+        bit()
+    for _ in range(63):
+        wide()
+    bit()
+    final_words = wide()
+    assert final_words == (128, 129) and position < 512
+    return {
+        "source_sha256": pins,
+        "exact_retained_mask_cases": cases,
+        "real_consistency_probability": "1",
+        "independent_fresh_ideal_consistency_probability": "2/2^bw",
+        "bw32_single_coordinate_consistency_probability": "2^-31",
+        "q64_count1_preexposed_final_mask_buffer_word": final_words[1],
+        "deterministic_64_bit_seed_bw32_count3_support_fraction_upper_bound": "2^-29",
+        "decision": "fresh independent output cannot be required after fixing exposed state",
+        "confidentiality_attack_demonstrated": False,
+        "runtime_redesign_required": False,
+        "scope": "source-bound arithmetic and consumption model; no native DRBG/OT execution",
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("exact", "sampled", "all"), default="all")
+    parser.add_argument("--mode", choices=("exact", "sampled", "state-boundary", "all"), default="all")
     parser.add_argument("--samples", type=int, default=40)
     parser.add_argument("--seed", type=int, default=20260922)
     args = parser.parse_args()
@@ -265,6 +333,8 @@ def main():
         result["exact"] = exact_audit()
     if args.mode in ("sampled", "all"):
         result["sampled"] = sampled_audit(args.samples, args.seed)
+    if args.mode in ("state-boundary", "all"):
+        result["retained_state"] = retained_state_audit()
     print(json.dumps(result, indent=2, sort_keys=True))
 
 
