@@ -26,10 +26,7 @@ sudo needs a password. Orca runbooks: `GPU-MPC/docs/workspace_guide_2026_05_18.m
 
 Gotchas: shared machine (check `nvidia-smi`; never touch other users' jobs);
 `GPU_ARCH=89`; `.gitignore` rules hide `*.csv`, `*.txt`, and ringlpn `*.pdf`, so
-evidence needs `git add -f`. Full re-validation (three distinct free GPUs):
-
-```bash
-cd GPU-MPC/ringlpn && RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
-  CUDA_VISIBLE_DEVICES=<a>,<b>,<c> PATH=/usr/local/cuda/bin:$PATH \
-  ./scripts/run_paper_checkpoint_smoke.sh   # "[paper-smoke] ALL GATES PASS"
-```
+evidence needs `git add -f`. Full re-validation: the canonical gate in
+`GPU-MPC/ringlpn/CLAUDE.md` §8. It needs three idle, distinct GPUs selected
+through its `ORCA_LINEAR_*`/`FULL_GRAPH_*` variables (`CUDA_VISIBLE_DEVICES`
+alone still lands on GPUs 0/1/2) and prints `[paper-smoke] ALL GATES PASS`.

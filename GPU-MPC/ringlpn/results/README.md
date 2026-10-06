@@ -124,8 +124,12 @@ RINGLPN_EVIDENCE_DIR=/absolute/mount/local-smoke-evidence \
 ```
 
 Local smoke mounts the clone read-only and runs in an owner-private copy. It
-retains only sanitized external evidence. GPU roles default to 0/1/2 and must
-be pairwise distinct.
+retains only sanitized external evidence. GPU roles default to 0/1/2: export
+idle, pairwise-distinct `P0_GPU`/`P1_GPU`/`CHECK_GPU` (forwarded as the
+`FULL_GRAPH_*` roles). The dispatcher forwards neither `ORCA_LINEAR_*` nor
+`CUDA_VISIBLE_DEVICES`, so in the container the application gate always uses
+GPUs 0/1 and inheriting stages use GPU 0; do not run local smoke while GPU 0 or
+1 is occupied.
 
 Two-host publication runs on the coordinator host and uses each host's native
 rootless Podman, never `docker run`. It is blocked: annotated-tag/operator

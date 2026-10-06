@@ -196,19 +196,28 @@ without rebinding their pins.
 Run from `GPU-MPC/ringlpn` unless noted. Check `nvidia-smi` first.
 
 ```bash
-# Canonical gate (≥15 min; 2026-09-10 took 5,228 s). Consumes fresh namespaces
-# and regenerates tracked results. Needs three distinct free GPUs.
-RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a>,<b>,<c> \
-  PATH=/usr/local/cuda/bin:$PATH ./scripts/run_paper_checkpoint_smoke.sh
-# success: exit 0 and "[paper-smoke] ALL GATES PASS"
+# Canonical gate (~1.5 h; 2026-09-10 took 5,228 s). Consumes fresh namespaces and
+# regenerates tracked results. <a>,<b>,<c> = three idle, distinct physical GPUs.
+# CUDA_VISIBLE_DEVICES pins only the stages that inherit it; the application and
+# full-graph runners overwrite it per child from ORCA_LINEAR_* / FULL_GRAPH_*,
+# which default to GPUs 0/1 and 0/1/2 (trusted adapter 1). 2026-09-10 used 1/2/3.
+RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a> \
+  ORCA_LINEAR_P0_GPU=<a> ORCA_LINEAR_P1_GPU=<b> \
+  FULL_GRAPH_P0_GPU=<a> FULL_GRAPH_P1_GPU=<b> FULL_GRAPH_CHECK_GPU=<c> \
+  FULL_GRAPH_TRUSTED_GPU=<b> PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
+  ./scripts/run_paper_checkpoint_smoke.sh
+# success: exit 0 and "[paper-smoke] ALL GATES PASS". With only two idle GPUs
+# (now 1 and 3: vLLM holds 0 and 2), add RUN_FULL_GRAPH_SMOKE=0: every stage but
+# the full graph runs, ending "full ResNet18 graph skipped; GPU component gates pass".
 
 # Focused runners
 ./scripts/run_two_party_fc_preprocess.sh
 ./scripts/run_two_party_conv_preprocess.sh
 ./scripts/run_secure_truncate_test.sh
 ./scripts/run_full_linear_manifest_gate.sh
-LINEAR_LANES='0:1:2:22000-22085' ./scripts/run_resnet18_full_graph.sh ABS_OUT ABS_STATE
-#   optional lanes P0:P1:CHECK:PORTS; each lane needs 3 distinct GPUs, ≥86 ports
+P0_GPU=<a> P1_GPU=<b> CHECK_GPU=<c> TRUSTED_GPU=<b> LINEAR_LANES='<a>:<b>:<c>:22000-22085' \
+  ./scripts/run_resnet18_full_graph.sh /abs/new-out /abs/new-state
+#   defaults 0/1/2, trusted 1; optional lanes P0:P1:CHECK:PORTS, each 3 distinct GPUs, ≥86 ports
 
 # Terminal Orca application, then macro-off stock build
 PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 ./scripts/build_component.sh orca-linear-application

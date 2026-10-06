@@ -13,8 +13,10 @@ own copy of this README.
   `GPU_ARCH=89` (RTX 5000 Ada).
 - Recursive submodules initialized (`ext/cutlass`, `ext/sytorch`,
   `extern/NFLlib`). Builds fail before compiling if one is missing.
-- Shared machine: check `nvidia-smi` and pin GPUs with `CUDA_VISIBLE_DEVICES`
-  or the runner's `P0_GPU`/`P1_GPU` variables. Two-party runs need distinct GPUs.
+- Shared machine: check `nvidia-smi`. Two-party runners overwrite
+  `CUDA_VISIBLE_DEVICES` per child, so pin physical GPUs with their
+  `P0_GPU`/`P1_GPU`/`CHECK_GPU` variables; several default to GPU 0, and
+  two-party runs need distinct GPUs.
 
 ## Canonical component builds
 
@@ -46,14 +48,10 @@ export PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89
 
 ## Gate and focused runners
 
-The canonical gate needs three distinct free GPUs and takes 15 minutes or
-more. It consumes fresh correlation namespaces and regenerates tracked results.
-
-```bash
-RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a>,<b>,<c> \
-  PATH=/usr/local/cuda/bin:$PATH ./scripts/run_paper_checkpoint_smoke.sh
-# success: exit 0 and "[paper-smoke] ALL GATES PASS"
-```
+The canonical gate command, with its GPU selectors, is in
+[`CLAUDE.md`](CLAUDE.md) §8. It needs three idle, distinct GPUs for the
+full-graph stage, takes about 1.5 h (2026-09-10: 5,228 s), consumes fresh
+correlation namespaces, and regenerates tracked results.
 
 Without `RUN_GPU_SMOKE=1` the gate runs host checks only: manifests and
 contracts, private-file and SHAKE controls, host OLE, bridge, conversion,
@@ -72,7 +70,8 @@ truncation, and DPF keygen.
 
 The full-graph wrapper is serial by default. To opt into parallel lanes, set
 `LINEAR_LANES` to comma-separated `P0_GPU:P1_GPU:CHECK_GPU:FIRST-LAST` lanes
-(e.g. `0:1:2:22000-22085`). Each lane needs three distinct GPUs and at least
+(e.g. `1:2:3:22000-22085`; also set `P0_GPU`/`P1_GPU`/`CHECK_GPU`/`TRUSTED_GPU`,
+which default to 0/1/2/1). Each lane needs three distinct GPUs and at least
 86 ports, and lanes must not overlap. Application runs share fixed port 42003:
 never run two at once.
 
