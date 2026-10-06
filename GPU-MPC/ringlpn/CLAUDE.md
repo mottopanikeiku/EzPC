@@ -30,7 +30,8 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 - The live source is trusted-dealer-free in the stated random-oracle model for
   forward FC/Conv2D at feasibility parameters: two OS processes on distinct
   GPUs, terminal FC/Conv2D through real Orca, full ResNet18 graph composition
-  with a TEST-ONLY trusted nonlinear adapter.
+  whose nonlinear keys and truncation/remask/terminal masks still come from a
+  TEST-ONLY trusted adapter.
 - Performance is strongly negative (882×, 60.6×, 268.7× slower than the stock
   dealer). The frozen prospective capacity-prediction gate **failed**.
 - No security level, parameter set, two-host run, clean-clone run, or
@@ -62,7 +63,7 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 | Controlled CNN2 FC4/FC5 and CNN3 FC5 matrix, 30/30 layer trials, same-GPU stock-dealer comparison | `results/fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.csv` plus `*_2026_09_11` derived files and `results/fc/model_scale_inputs_2026_08_14/` | strongly negative; binary `bf4e4f90…`, GPUs 1/3 |
 | Opt-in EMP-Silent rerun: same 5 cases and 16 controls, exact OT inventory | `results/fc/two_party_fc_emp_silent_correctness_2026_08_14.csv` (ignored path; force-added) | correctness/accounting only; unreviewed backend; one trial per case |
 | Source-bound 21-layer ResNet18 plan `(262144,2,8)`: 1,680,390,912 cross terms, 6,439 batches, 25,756 Ring-OLE, 6,593,536 DPF trees, 130,774,336 payload B/party | `results/fc/resnet18_adaptive_degree_linear_execution_manifest_2026_08_07.json` | plan and isolated records only |
-| Full-graph known-zero composition: 62-item stream (21 linear, 21 truncations over 2,484,224 values, 19 stock nonlinear consumers, 20 remasks, 3 projection + 5 identity residuals, GlobalAvgPool, terminal), 7 graph controls | `results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json`, manifest digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395` | internal-only and byte-immutable; TEST-ONLY trusted nonlinear adapter; host strings and GPU-1 reuse |
+| Full-graph known-zero composition, one run: 62-item stream (21 linear, 20 truncation, 17 ReLU-extend, MaxPool, GlobalAvgPool, sign-extend, output); the run executes 21 truncations over 2,484,224 values, 19 stock nonlinear keys, 20 remasks, 3 projection + 5 identity residuals; 7 graph controls. Linear critical-path sum 4,720.417 s; graph 11.852 s (party 0); adapter 9.356 s and 1,084,582,352 stock-key B/party; 17 payload files + `INDEX.json` | `results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json`, `FULL_GRAPH.manifest` (manifest digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`) | internal-only, byte-immutable; the TEST-ONLY trusted adapter reads both parties' mask states and supplies the nonlinear keys, both truncation successor-mask shares, and remask/terminal material; each linear record was first consumed by its omniscient checker (not consume-once deployment evidence); host strings and GPU-1 reuse |
 | Isolated secure truncation | `results/secure_truncate/secure_truncate_check_2026_08_06.csv` | component |
 | Two-process DPF transport: 369/369 pairs, depths 4–14, `6L+6` direction switches, 256 base OTs, 21,829 B setup; L=11 batch 1→256 gives 52,626→3,789 B/tree and 11.2 ms→148 µs | `results/dpf/`; memo `results/reports/two_party_dpf_transport_memo_2026_07_29.md` | IKNP, not silent OT; direction switches are not network rounds |
 | GPU-AES four-call PRG: 16 device vectors, 88 two-process keys | `results/dpf/two_party_gpu_dpf_2026_07_29.csv` | key compatibility, not GPU keygen |
