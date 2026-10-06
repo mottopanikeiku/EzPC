@@ -321,7 +321,10 @@ it end-to-end.
   `~/.local/share/ringlpn/` (`artifacts/runtime-candidate-afc93c6/`,
   `artifacts/source-bundles/`, `reviews/2026-09-10/full-graph/`). The public
   source worktree `/tmp/ringlpn-review-20260910-_m6jgfab/public-source` is
-  disposable: `git worktree add <dir> ringlpn/clinical-review-2026-09-10`.
+  registered with `ringlpn/clinical-review-2026-09-10` checked out; reuse it
+  while it exists. After a wipe, `git worktree prune && git worktree add <dir>
+  ringlpn/clinical-review-2026-09-10` (git refuses a second checkout of the
+  branch while the stale registration remains).
 
 ## 11. Working rules
 
