@@ -15,14 +15,6 @@ results/notes*.md
 results/TODO*.md
 results/*_private.md
 
-# -- In-progress abstract / submission / status materials --
-# (These were `git rm --cached`-ed on 2026-04-21; local copies preserved.)
-results/abstract_submission_draft.md
-results/abstract_benchmark_appendix.md
-results/ringlpn_vole_abstract_support.md
-results/ringlpn_status_report.md
-results/ringlpn_linear_integration_plan.md
-
 # -- Given materials (papers / docx / slides provided to you) --
 *.pdf
 *.PDF
@@ -46,7 +38,6 @@ host_bin/
 # -- Regenerable two-party protocol records / keys --
 results/dpf/two_party_keys/
 results/dpf/two_party_gpu_keys/
-results/ole/api_smoke/
 results/ole/two_party_keys/
 results/ole/two_party_keys_*/
 results/secure_convert/two_party_outputs/
@@ -85,9 +76,6 @@ results/**/*.stdout
 results/reports/*.aux
 results/reports/*.log
 results/reports/*.out
-# -- Persistent private consume-once state (public evidence stores digests only) --
-results/deployment/session-locks/
-results/deployment/correlation-ledger/
 
 # -- Editor / OS cruft --
 *.swp
