@@ -4,15 +4,17 @@ Dealerless Ring-LPN preprocessing for Orca's forward linear layers; Orca's
 online consumers stay unchanged. Project status, claims, open gates, and
 gotchas live in [`CLAUDE.md`](CLAUDE.md); the evidence index is
 [`results/README.md`](results/README.md). This file covers building and running
-only. The public source branch `ringlpn/clinical-review-2026-09-10` carries its
-own copy of this README.
+only. The public source branch `ringlpn/clinical-review-2026-09-10` has its own,
+different README.
 
 ## Prerequisites
 
 - CUDA toolkit at `/usr/local/cuda/bin` (not on the default `PATH`);
   `GPU_ARCH=89` (RTX 5000 Ada).
-- Recursive submodules initialized (`ext/cutlass`, `ext/sytorch`,
-  `extern/NFLlib`). Builds fail before compiling if one is missing.
+- Submodule `GPU-MPC/ext/cutlass` initialized, plus `GPU-MPC/ringlpn/extern/NFLlib`
+  for the CPU NTT benchmark (`scripts/setup_nfl.sh`); `ext/sytorch` with
+  cryptoTools/LLAMA/bitpack is tracked source. Linear, graph, and application
+  builds fail before compiling if CUTLASS/Sytorch/SCI sources are missing.
 - Shared machine: check `nvidia-smi`. Two-party runners overwrite
   `CUDA_VISIBLE_DEVICES` per child, so pin physical GPUs with their
   `P0_GPU`/`P1_GPU`/`CHECK_GPU` variables; several default to GPU 0, and
