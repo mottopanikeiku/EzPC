@@ -306,9 +306,11 @@ it end-to-end.
   executables.
 - `bench_ntt` (CPU NFLlib) needs libmpfr-dev; install it only inside an
   ephemeral container.
-- `extern/NFLlib` is a submodule pinned at `quarkslab/NFLlib@5cf40ed`; its
-  in-tree `build/` makes the pointer show dirty: do not commit that. The
-  mnist/weights submodules carry deliberate renames: leave them.
+- `extern/NFLlib` is a submodule pinned at `quarkslab/NFLlib@5cf40ed`.
+  `scripts/setup_nfl.sh` builds it in-tree, so `git status` shows untracked
+  content (`?`) there, as for `GPU-MPC/ext/cutlass`; both gitlinks are
+  unchanged: do not commit, clean, or re-pin them. The mnist/weights submodules
+  carry pre-existing internal staged renames (status `m`): leave them.
 - Root `.gitignore` hides `*.csv`/`*.txt`; `ringlpn/.gitignore` hides `*.pdf`: use `git add -f`.
 - The local `ringlpn-repro:2026-08-10` tag is not publication provenance. In
   Debian containers `/bin/sh` is dash (no brace expansion). Inside the
