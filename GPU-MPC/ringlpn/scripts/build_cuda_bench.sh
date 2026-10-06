@@ -8,6 +8,7 @@ SRC="$BASE_DIR/src/bench_ntt_cuda_cheddar.cu"
 CUDA_ARCH="${CUDA_ARCH:-${GPU_ARCH:-89}}"
 NVCC="${NVCC:-nvcc}"
 DEVICE_LABEL="${DEVICE_LABEL:-cuda}"
+NTT_CUDA_BIN="${NTT_CUDA_BIN:-bench_ntt_cuda}"
 
 mkdir -p "$OUT_DIR"
 
@@ -16,4 +17,4 @@ if ! command -v "$NVCC" >/dev/null 2>&1; then
   exit 1
 fi
 
-"$NVCC" -O3 -std=c++17 -arch="sm_${CUDA_ARCH}" -DRINGLPN_DEVICE_LABEL="\"${DEVICE_LABEL}\"" "$SRC" -o "$OUT_DIR/bench_ntt_cuda"
+"$NVCC" -O3 -std=c++17 -arch="sm_${CUDA_ARCH}" -DRINGLPN_DEVICE_LABEL="\"${DEVICE_LABEL}\"" "$SRC" -o "$OUT_DIR/$NTT_CUDA_BIN"
