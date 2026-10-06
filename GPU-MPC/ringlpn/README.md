@@ -80,11 +80,10 @@ never run two at once.
 
 ## Same-function direct-OT FC baseline
 
-`direct-ot-fc` builds an experimental producer that computes both FC cross
-products with Gilboa OLE (both CRT fields for q128). It reuses the exact
-conversion, authenticated channel, consume-once claims, and record writer. It
-generates no Ring-LPN noise, DPF keys, or expansion slots. The unchanged
-reference executable checks its records.
+`direct-ot-fc` builds an experimental producer that computes both FC cross products
+with Gilboa OLE (both CRT fields for q128), reusing the exact conversion, authenticated
+channel, consume-once claims, and record writer; it generates no Ring-LPN noise, DPF
+keys, or expansion slots. The unchanged reference executable checks its records.
 
 ```bash
 cd "$(git rev-parse --show-toplevel)/GPU-MPC"
@@ -121,14 +120,12 @@ python3 ringlpn/scripts/build_source_runtime_candidate.py \
   --output-root ~/.local/share/ringlpn/artifacts/runtime-$STAMP
 ```
 
-The retained candidate is in
-`~/.local/share/ringlpn/artifacts/runtime-candidate-afc93c6/`. To restore the
-image, run `docker image load --input runtime-candidate.docker.tar` there.
+Restore the retained candidate with `docker image load --input runtime-candidate.docker.tar`
+in `~/.local/share/ringlpn/artifacts/runtime-candidate-afc93c6/`.
 
 ## Component microbenchmarks (historical rows)
 
-These generate the retained component results. None of them is the live
-two-process path.
+These generate the retained component results; none is the live two-process path.
 
 | Build → run | Results |
 |---|---|
