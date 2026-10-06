@@ -25,7 +25,7 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
   `extern/Cheddar_MIT_LICENSE.txt`). GPU-NTT is a cited external baseline.
 - The separate private GPU-PCG/PIM stream must not be imported or claimed.
 
-## 2. Status snapshot (2026-10-06, internal `master` at `bf239ff`)
+## 2. Status snapshot (2026-10-06; last engineering commit `bf239ff`, then documentation/evidence hygiene commits)
 
 - The live source is trusted-dealer-free in the stated random-oracle model for
   forward FC/Conv2D at feasibility parameters: two OS processes on distinct
