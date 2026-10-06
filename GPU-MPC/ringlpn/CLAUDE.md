@@ -244,11 +244,22 @@ python3 ringlpn/scripts/test_fc_model_scale_statistics.py --replay-dir <new-dir>
 # nonzero by design.
 ```
 
-Evidence guard (from `/home/fatih/EzPC`; silent exit 0 = pass):
+Evidence checks, from `/home/fatih/EzPC`, after any change under `results/` or
+to the manifest. The private-artifact guard (silent exit 0 = pass) checks the
+manifest self-digest, the full-graph INDEX, and leftover private files; it does
+not re-hash bound files. The bound-digest check re-hashes every
+`required_tracked_evidence` entry and the v2.17 TeX/PDF `build` pins:
 
 ```bash
 python3 GPU-MPC/ringlpn/scripts/retained_public_evidence.py --repo /home/fatih/EzPC \
   --manifest /home/fatih/EzPC/GPU-MPC/ringlpn/scripts/publication_environment_manifest_2026_08_10.json
+python3 - <<'PY'   # prints "bound evidence OK"
+import hashlib, json
+m = json.load(open("GPU-MPC/ringlpn/scripts/publication_environment_manifest_2026_08_10.json")); b = m["build"]
+pins = [(e["path"], e["sha256"]) for e in m["required_tracked_evidence"]] + [(b["publication_source"], b["publication_source_sha256"]), (b["publication_pdf"], b["publication_pdf_sha256"])]
+bad = [p for p, h in pins if hashlib.sha256(open(p, "rb").read()).hexdigest() != h]
+print("\n".join(bad) or "bound evidence OK"); raise SystemExit(bool(bad))
+PY
 ```
 
 Direct-OT baseline, runtime candidate, and component builds: `README.md`.

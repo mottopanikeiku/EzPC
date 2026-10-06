@@ -12,8 +12,10 @@ Status values:
 
 Files marked bound are listed in
 `../scripts/publication_environment_manifest_2026_08_10.json`
-`required_tracked_evidence` or pinned by other JSON. Run the guard in
-`../CLAUDE.md` §8 after any change under `results/`.
+`required_tracked_evidence`, pinned by its `build.publication_*_sha256` (v2.17
+TeX/PDF), or pinned by other JSON. After any change under `results/`, run both
+evidence checks in `../CLAUDE.md` §8: the private-artifact guard does not
+re-hash bound files; the bound-digest check does.
 
 ## Directories
 
