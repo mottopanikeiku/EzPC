@@ -133,7 +133,8 @@ Gate IDs follow §8 of the security contract.
 
 | Gate | Blocker |
 |---|---|
-| P-PCG / S2 parameters | No reviewed structured projected-code reduction, two-CRT-limb advantage composition, modern direct RSD or 2025/2026 QA-SD dispositions; BCG+20 discrepancy unresolved. Needs qualified human review. |
+| P-POS / P-PCG / S2 parameters | Hard theorem blockers. P-POS: the exact projection law is pinned to the live sampler, but the hardness bridge is open. P-PCG: no reviewed structured projected-code reduction, two-CRT-limb advantage composition, modern direct RSD or 2025/2026 QA-SD dispositions; BCG+20 discrepancy unresolved. Needs qualified human review. |
+| Regular-DMPF route | Design NO-GO; reopen only with a source-reviewed fixed-transcript construction below the audited cost ceiling (`results/reports/regular_dmpf_design_no_go_2026_08_06.md`). |
 | P-KEY | Actual AES/leaf-map reduction and lifetime loss composition. |
 | P-CONV | Independent human review of the hybrid proof; no DRBG or concrete-OT simulation. |
 | P-RNG | SHAKE/random-oracle instantiation review. |
