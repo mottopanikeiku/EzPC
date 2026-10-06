@@ -88,18 +88,21 @@ generates no Ring-LPN noise, DPF keys, or expansion slots. The unchanged
 reference executable checks its records.
 
 ```bash
-cd GPU-MPC
+cd "$(git rev-parse --show-toplevel)/GPU-MPC"
+export PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89
+bash ringlpn/scripts/build_component.sh linear-fc      # the --reference checker binary
 bash ringlpn/scripts/build_component.sh direct-ot-fc
 python3 ringlpn/scripts/run_direct_ot_fc_baseline.py --mode direct-only \
   --direct ringlpn/bin/test_direct_ot_fc_preprocess \
   --reference ringlpn/bin/test_two_party_fc_preprocess \
-  --output /tmp/direct-ot-fc-fresh.json
+  --output "/tmp/direct-ot-fc-$(date -u +%Y%m%dT%H%M%S).json"
 ```
 
-- Direct producers run on the CPU with CUDA hidden; the checker uses GPU3.
+- Direct producers run on the CPU with CUDA hidden; the checker locks GPU3,
+  which must be idle. The output file and its `.plan.json` must not exist yet.
 - `--mode compare` interleaves the same `100x64x10` q128/bw32 workload with the
-  Ring-LPN producer on GPU1 and GPU2. It needs both GPUs idle, never selects
-  GPU0, and never reuses a failed plan.
+  Ring-LPN producer on GPU1 and GPU2 and locks GPU3 for the checker; all three
+  must be idle. It never selects GPU0 and never reuses a failed plan.
 
 ## Source-only runtime candidate
 
