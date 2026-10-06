@@ -21,12 +21,13 @@ upstream files (`git diff f24bf3e master`):
 
 **Container:** `./start` launches the `orca-dev` container, which mounts only
 `GPU-MPC/` as `/home` (so `/home/ringlpn` = `GPU-MPC/ringlpn`). Host builds also
-work. Container builds run as root; fix ownership with a docker chown, since
-sudo needs a password. Orca runbooks: `GPU-MPC/docs/workspace_guide_2026_05_18.md`.
+work. Container builds run as root; fix ownership with a docker chown (the user
+has no sudo rights). Orca runbooks: `GPU-MPC/docs/workspace_guide_2026_05_18.md`.
 
 Gotchas: shared machine (check `nvidia-smi`; never touch other users' jobs);
-`GPU_ARCH=89`; `.gitignore` rules hide `*.csv`, `*.txt`, and ringlpn `*.pdf`, so
-evidence needs `git add -f`. Full re-validation: the canonical gate in
+`GPU_ARCH=89`; `.gitignore` rules hide `*.csv`, `*.txt`, `*.sh` (except
+`GPU-MPC/ringlpn/scripts/*.sh`), and ringlpn `*.pdf`, so evidence needs
+`git add -f`. Full re-validation: the canonical gate in
 `GPU-MPC/ringlpn/CLAUDE.md` §8. It needs three idle, distinct GPUs selected
 through its `ORCA_LINEAR_*`/`FULL_GRAPH_*` variables (`CUDA_VISIBLE_DEVICES`
 alone still lands on GPUs 0/1/2) and prints `[paper-smoke] ALL GATES PASS`.
