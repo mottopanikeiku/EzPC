@@ -1,5 +1,8 @@
-% Dealerless Orca Ring-LPN proposal, v2.15 (2026-08-14): internal/advisor checkpoint
-% Version 2.15 (2026-08-14): retained complete full-graph evidence and hardened clean-clone gate
+% > **HISTORICAL (superseded 2026-08-17).** Frozen v2.16 advisor predecessor;
+% > use dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex and CLAUDE.md.
+% > Statements below may describe an older state.
+% Dealerless Orca Ring-LPN proposal, v2.16 (2026-08-14): internal/advisor checkpoint
+% Version 2.16 (2026-08-14): controlled CNN2/CNN3 FC matrix and exact stock-dealer A/B evidence
 %   1) problem overview  2) motivation (dealerless + GPU)
 %   3) proposed design   4) experiment setup
 % All "Figure 2" references to BCG+20 renamed to "BCG+20 generator";
@@ -59,12 +62,16 @@ dealer for forward linear layers at unpinned Ring-LPN feasibility parameters.
 Party-local sparse noise feeds distributed DPF generation, Ring-LPN OLE,
 noncircular Ring-OLE-output bootstrap, exact $\Z_Q\!\to\!\Z_{2^\bw}$
 conversion, stock-format key serialization, and unchanged Orca FC/Conv2D
-consumers. Five focused q64/q128 cases and sixteen rejection controls pass.
-The current ResNet18 classifier row records a 4.0193924415\,s median
-setup-included preprocessing time against a 14.73535\,ms shape/contract-matched
-stock-dealer median; uncontrolled physical-GPU occupancy makes the descriptive
-per-trial ratio median, $268.6769431352700\times$, a negative comparison rather
-than a speedup claim.
+consumers. The default SCI/IKNP focused suite and a separate opt-in EMP-Silent
+rerun each pass the same five q64/q128 cases and sixteen rejection controls;
+the latter is independently unreviewed correctness/accounting evidence only.
+The controlled source-manifest matrix covers both CNN2 FC layers and the CNN3
+FC scale point. Every layer passes one warmup plus ten measured trials. On a
+quiescent RTX 5000 Ada selected per sample for both the protocol critical path
+and subsequent stock dealer, median setup-included preprocessing/stock-dealer
+ratios are $879.2970985824659\times$ for CNN2's two FC layers in aggregate and
+$60.3181599795375\times$ for CNN3 FC5. These same-host feasibility results are
+a controlled negative comparison, not a speedup or security claim.
 
 A source-bound known-zero control separately composes all 21 fresh linear
 records through the exact 62-item ResNet18 stream. Its trusted test-only
@@ -197,11 +204,13 @@ executes the stock nonlinear consumers.
 \item[G2 --- Exact share conversion: closed.]
   Batched edaBits, daBits, and Boolean triples from the selected OT backend
   implement exact $\Z_Q\to\Z_{2^\bw}$ conversion. The canonical and classifier
-  suites use SCI/IKNP; EMP-Silent remains an opt-in, independently unreviewed
-  source path. The wrap bit is never opened; the simulator in
-  \S\ref{sec:design-convert} proves privacy at the correlation boundary. The
-  measured runner first performs mutual HMAC-SHA256 endpoint/context
-  establishment; later protocol bytes have no per-message integrity.
+  suites use SCI/IKNP. A current separate EMP-Silent rerun passes the same five
+  focused cases and sixteen controls with exact directional inventory
+  exhaustion, but remains opt-in and independently unreviewed. The wrap bit is
+  never opened; the simulator in \S\ref{sec:design-convert} proves privacy at
+  the correlation boundary. The measured local runner first performs mutual
+  HMAC-SHA256 endpoint/context establishment; later loopback bytes have no
+  application-layer per-message integrity.
 \item[G3 --- Randomness/RO separation: closed.]
   Private roots, masks, and noise come from each process's OpenSSL private
   DRBG. For every Ring-OLE correlation, $a_0=1$ is the unsent public identity
@@ -236,9 +245,9 @@ timings are retained without claiming an end-to-end speedup;
 $\Z_Q\to\Z_{2^\bw}$ conversion;
 (5)~a source-to-transcript map and conditional forward-FC theorem with explicit
 leakage, assumptions, and nonclaims;
-(6)~an exact-ResNet18-classifier feasibility evaluation with ten trials and a
-shape/contract-matched stock trusted-dealer comparator whose physical-GPU
-occupancy was not controlled;
+(6)~a source-manifest-derived CNN2/CNN3 forward-FC feasibility matrix with one
+warmup and ten passing trials per layer and a same-physical-GPU,
+quiescence-checked stock trusted-dealer comparator;
 (7)~a fail-closed source-bound known-zero full-ResNet18 systems composition
 using all 21 linear records and the exact 62-item stock stream; and
 (8)~a manifest-bound clean-clone/container gate that rebuilds the paper and
@@ -252,9 +261,10 @@ output layer; professor/contributor credit, permission, disclosure, and
 private-project-overlap rulings remain explicitly open and must be settled
 before external circulation. The point-DPF and Ring-LPN generator primitives
 are prior work, not claimed as novel. This is feasibility evidence: the
-descriptive $268.6769431352700\times$ preprocessing/dealer ratio median,
-without controlled physical-GPU occupancy, unprotected post-handshake local
-transport, and unpinned Ring-LPN parameters are publication risks rather than
+controlled CNN2/CNN3 median setup-included preprocessing/dealer ratios are
+$879.2970985824659\times$ and $60.3181599795375\times$, respectively.
+Together with unprotected post-handshake local transport and unpinned Ring-LPN
+parameters, these negative results are publication risks rather than
 competitive-system evidence.
 \section{Motivation: why dealerless, and why on GPUs}
 \label{sec:motivation}
@@ -459,11 +469,12 @@ authenticated point-to-point channels, AES as a PRG/PRF
 the Gilboa field-multiplication wrapper, and BGI DPF, plus decisional
 splittable Ring-LPN for the exact selected sparse-noise distribution
 (\S\ref{sec:design-params}). The canonical and classifier suites instantiate
-SCI/IKNP; EMP-Silent remains opt-in and independently unreviewed. Current
-measurements use same-host loopback after a mutual HMAC-SHA256
-endpoint/context handshake, but later protocol bytes have no per-message
-integrity. They are implementation/correctness evidence for the conditional
-theorem rather than an authenticated-channel deployment.
+SCI/IKNP. The separate EMP-Silent correctness/accounting rerun remains opt-in
+and independently unreviewed. Current measurements use same-host loopback after
+a mutual HMAC-SHA256 endpoint/context handshake, but later local protocol bytes
+have no application-layer integrity. They are implementation/correctness
+evidence for the conditional theorem rather than an authenticated-channel
+deployment.
 
 Out of scope: malicious security, external packet attackers, timing and
 microarchitectural side channels, stateful training transitions, and
@@ -476,11 +487,13 @@ noncryptographic splitmix64 correctness PRG.
 The live path separately uses full-width GPU AES, the selected real OT backend,
 epoch-zero Gilboa OLE, consume-once Ring-OLE-output bootstrap, a four-word
 joint public seed, domain-separated SHAKE256 public-polynomial derivation, and
-separate process/GPU state. The canonical and classifier suites use SCI/IKNP;
-the separate EMP-Silent source path remains opt-in and independently unreviewed.
-The proof models SHAKE256 as a public random oracle and remains conditional on
-the unpinned Ring-LPN assumption; the TCP channel lacks authentication.
-Therefore neither artifact establishes an end-to-end 128-bit-security claim.
+separate process/GPU state. The canonical and classifier suites use SCI/IKNP.
+The separate current EMP-Silent route supplies focused correctness and
+accounting evidence only; it remains independently unreviewed. The proof models
+SHAKE256 as a public random oracle and remains
+conditional on the unpinned Ring-LPN assumption; measured local traffic is not
+an authenticated deployment. Therefore neither backend artifact establishes
+an end-to-end 128-bit-security claim.
 
 \subsection{D1: Distributed SPFSS key generation (removes G1)}
 \label{sec:design-keygen}
@@ -1372,10 +1385,12 @@ RTX 5000 Ada (32{,}760\,MiB each, compute capability 8.9; driver 560.35.03),
 CUDA 12.6, Linux 6.8, and a 32-core CPU allocation. Builds run on the host.
 Two-party tests run as separate processes pinned to distinct GPUs through
 \texttt{CUDA\_VISIBLE\_DEVICES} over single-host IPv4 loopback. The canonical
-q64/q128 and classifier suites use SCI/IKNP. The separate EMP-Silent path is
-opt-in and independently unreviewed. Both backends use
-\texttt{PartyChannel}/SCI \texttt{NetIO}; neither transport is authenticated.
-Application-byte counters exclude backend setup and TCP/IP overhead.
+q64/q128 and classifier suites use SCI/IKNP. A separate current EMP-Silent
+five-case/16-control rerun is opt-in and independently unreviewed. Both
+backends use \texttt{PartyChannel}/SCI \texttt{NetIO}; local measurements
+authenticate endpoint/context before preflight but do not protect later bytes
+at the application layer. Application-byte counters exclude backend setup and
+TCP/IP overhead.
 The GPU NTT backend is a
 cheddar-derived merged-stage kernel family (signed Montgomery arithmetic;
 q32/q64/q128-CRT; negacyclic) with the Hadamard product adaptively fused into
@@ -1523,7 +1538,7 @@ run observations, not transport measurements. Table~\ref{tab:m1proto} proves
 functional compatibility, edge correctness, and ideal-primitive accounting,
 not computational privacy or 128-bit security.
 
-\paragraph{Current classifier-layer result (2026-08-10).}
+\paragraph{Retained classifier-layer result (2026-08-10).}
 The recorded artifact evaluates the exact inference classifier-layer shape
 $1{\times}512{\times}1000$ at $\bw=32$ with
 $(n,c,t)=(8192,2,8)$, q128, regular noise, $C_{\rm key}=768$, and
@@ -1576,7 +1591,7 @@ final payload bytes per party & $4{,}108{,}096$\\
 serialized record bytes per party & $4{,}108{,}304$\\
 \bottomrule
 \end{tabular}
-\caption{Exact current classifier-layer result. Time statistics are over ten
+\caption{Exact retained ResNet18 classifier-layer result. Time statistics are over ten
 measured trials; $268.6769431352700\times$ is the median of setup-included
 shape-matched per-trial ratios, not the quotient of displayed medians.
 Setup-included time is the per-layer sum of the party maximum of
@@ -1593,7 +1608,55 @@ unrelated shared-GPU occupancy, not a process allocation measurement.}
 \label{tab:modelscale}
 \end{table}
 
-In the current rows, legacy post-OT median Phase C is 0.041723\,s, Phase B is
+\paragraph{Controlled CNN2/CNN3 FC matrix (2026-08-14).}
+The source-authored workload manifest selects CNN2 FC4
+($100{\times}256{\times}128$), CNN2 FC5
+($100{\times}128{\times}10$), and CNN3 FC5
+($100{\times}64{\times}10$). All use q128/bw32, regular noise, and the
+feasibility tuple $(n,c,t)=(8192,2,8)$; they require 42, 18, and 9 Ring-LPN
+batches, respectively. Every layer passes one warmup and ten measured trials,
+for 30/30 passing measured layer trials. Both protocol parties run on distinct
+quiescent RTX 5000 Ada GPUs. After they exit, the stock
+\texttt{gpuKeygenMatmul} comparator runs on the quiescent physical GPU of the
+sample's slower setup-included party; advisory per-GPU locks span the complete
+run. Thus the comparator matches source shape, key contract, binary, allocator
+and synchronization boundary, physical GPU, and observed quiescence. Execution
+order is fixed as protocol then dealer, not randomized.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}l rr@{}}
+\toprule
+metric & CNN2 all FC & CNN3 FC5\\
+\midrule
+FC layers / measured layer trials & $2$ / $20$ & $1$ / $10$\\
+mean setup-included / sample SD (s) & $26.881842$ / $0.050965$ & $0.903894$ / $0.018971$\\
+median / R-7 IQR (s) & $26.897711$ / $0.065754$ & $0.904910$ / $0.028512$\\
+95\% Student-$t$ CI for mean (s) & $[26.845384,26.918301]$ & $[0.890323,0.917466]$\\
+mean stock dealer / sample SD (ms) & $30.46697$ / $0.47174$ & $14.92146$ / $0.31011$\\
+median stock dealer (ms) & $30.5729$ & $14.96295$\\
+median paired setup-included ratio & $879.2970985824659\times$ & $60.3181599795375\times$\\
+application / total transport bytes & $1{,}302{,}752{,}736$ / $1{,}302{,}840{,}696$ & $39{,}432{,}504$ / $39{,}476{,}484$\\
+semantic dependency layers & $72{,}278$ & $1{,}663$\\
+mean peak host RSS / process GPU bytes & $305{,}696{,}768$ / $431{,}095{,}808$ & $137{,}465{,}446$ / $431{,}095{,}808$\\
+\bottomrule
+\end{tabular}
+\caption{Controlled model-FC feasibility matrix. CNN2 statistics sum both
+retained FC layers within each measured model trial; CNN3 has one supported FC
+layer. Setup-included time sums the per-layer critical-party
+\texttt{total\_us+preflight\_us+ot\_setup\_us}; it still excludes channel
+construction, socket establishment, authentication, checker time, and the
+stock dealer. ``Semantic dependency layers'' are implementation schedule
+depths, not packet or network-round counts. Total transport adds selected
+SCI/IKNP base-OT setup bytes but excludes TCP/IP framing. The fixed
+protocol-then-dealer order can retain order bias. All values are local
+loopback feasibility measurements at unpinned parameters, not full-model,
+WAN, security-level, or competitive-performance evidence.}
+\label{tab:cnnmatrix}
+\end{table}
+
+In the retained classifier rows, legacy post-OT median Phase C is 0.041723\,s, Phase B is
 1.955515\,s, Phase A is 0.2462935\,s, and GPU Ring-LPN expansion is
 1.226650\,s.
 
@@ -1652,9 +1715,12 @@ full-model performance claim.
 
 The closest in-artifact dealer comparator is stock
 \texttt{gpuKeygenMatmul}, aligned on shape, masks, bit width,
-allocator/synchronization boundary, and output bytes. The retained executions
-were not controlled on the same physical GPU and occupancy state, so the
-$268.6769431352700\times$ setup-included statistic is descriptive rather than a hardware-matched A/B result.
+allocator/synchronization boundary, and output bytes. The retained classifier
+execution was not controlled on the same physical GPU and occupancy state, so
+its $268.6769431352700\times$ statistic remains descriptive. The newer
+CNN2/CNN3 matrix adds per-sample physical-GPU and quiescence control; its
+$879.2970985824659\times$ and $60.3181599795375\times$ medians are controlled,
+strongly negative stock-dealer comparisons rather than speedup claims.
 A separately pinned stock libOTe Reverse-Cuckoo run and a project-prime
 exact-$p_0$ native-folded adapter diagnostic are retained:
 \begin{table}[ht]
@@ -1679,8 +1745,35 @@ Neither row is raw 31-diagonal GPU output, a function-matched
 comparison, or a security-level result; no speedup ratio is reported.}
 \label{tab:reverse-cuckoo}
 \end{table}
-The EMP-Silent source path remains opt-in and independently
-unreviewed; no current headline measurement uses it.
+\paragraph{Optional EMP-Silent feasibility rerun (2026-08-14).}
+The current opt-in rerun binds FC binary \texttt{bf4e4f90\ldots}, authorized
+bridge \texttt{435f3be6\ldots}, and EMP-OT revision
+\texttt{2fca139f\ldots}. All five live cases and all sixteen rejection controls
+pass; every declared directional 128-bit-OT inventory is consumed exactly.
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+case & straight OTs & reversed OTs & $P_0$ sent & $P_1$ sent\\
+\midrule
+q64 regular small & 59{,}120 & 11{,}248 & 1{,}716{,}463 & 550{,}112\\
+q64 uniform small & 62{,}192 & 14{,}320 & 1{,}766{,}383 & 600{,}032\\
+q128 regular small & 118{,}232 & 22{,}496 & 2{,}645{,}481 & 739{,}129\\
+q128 uniform small & 124{,}376 & 28{,}640 & 2{,}745{,}321 & 838{,}969\\
+q64 regular multibatch & 93{,}184 & 37{,}376 & 2{,}159{,}029 & 739{,}717\\
+\bottomrule
+\end{tabular}
+\caption{Focused EMP-Silent accounting. Byte columns sum instrumented backend
+correlation, chosen-message adjustment, and ciphertext bytes sent; they exclude
+channel authentication and TCP framing. The selected API exposes no
+nonoverlapping base-OT subboundary. Inventories are equal at both parties.}
+\label{tab:emp-silent}
+\end{table}
+There is one trial per case and all four GPUs carried unrelated resident
+workloads. Timing/memory columns therefore support no comparison. The custom
+SilentFerret revision remains independently unreviewed, so these rows make no
+performance, bandwidth-improvement, security, or headline claim.
 
 \paragraph{Performance anchors.}
 Ring-OLE expansion ($n{=}8192$, $c{=}2$): 9.086\,ms (q64) and 18.230\,ms
@@ -1712,11 +1805,20 @@ FC test).
   calls; all 21 shape plans pass. The current FC/Conv binaries begin
   \texttt{02eaaac9}/\texttt{975ac726}, and the focused approval digest begins
   \texttt{ce3cc3a5}. These are correctness/path-counter results, not current
-  Conv0/model-scale timing or a breadth-first speedup claim. Sixteen negative
+  Conv0 timing or a breadth-first speedup claim. Sixteen negative
   controls cover endpoint/context authentication, replay, reflection, freshness,
   ledger integrity, nonpositive capacity, malformed/swapped records, and
   publication failure; the unchanged online consumer reconstructs the expected
   product.
+\item[Closed narrowly --- model-FC matrix.] The source manifest selects CNN2
+  FC4 and FC5 and CNN3 FC5; each passes one warmup and ten measured trials.
+  Per-sample stock-dealer execution follows both parties on the quiescent
+  physical GPU of the slower setup-included party. Aggregate median paired
+  ratios are $879.2970985824659\times$ for CNN2 and
+  $60.3181599795375\times$ for CNN3. This closes source coverage, repetition,
+  dispersion, and same-hardware/quiescence control for these three FC layers,
+  not competitive performance, parameter security, full-model execution, or
+  network evaluation.
 \item[Closed narrowly --- full-graph systems control.] One source-bound
   known-zero run binds a fresh 21-record set to all unchanged Conv2D/FC
   consumers, all secure truncations and stock nonlinear consumers, every
@@ -1745,9 +1847,11 @@ cryptographic review remain open.
   transcript, plain Ring-LPN boundary, application-slot budget, stock-key ABI,
   and deployed-shape cost simultaneously. Keep the measured DPF path for the
   approved full-linear systems integration and pursue algorithmic Phase-B/round
-  reduction. The current descriptive $268.6769431352700\times$ median of
-  setup-included shape-matched per-trial preprocessing/dealer ratios lacks
-  same-physical-GPU/occupancy control and is not competitive.
+  reduction. The controlled model-FC matrix reports median setup-included
+  shape-matched preprocessing/dealer ratios of $879.2970985824659\times$ for
+  CNN2 and $60.3181599795375\times$ for CNN3. The result is not competitive;
+  reruns at reviewed parameters and further Phase-B/dependency-layer work
+  remain necessary.
 \item[Open --- model realism and dealer scope.] Exact source-bound ResNet18
   graph coverage is closed for one known-zero input/weight control. It is not
   private or trained inference, accuracy evidence, a timing distribution, or
@@ -1756,15 +1860,17 @@ cryptographic review remain open.
   accuracy-bearing evaluation, are still required before a broader systems
   claim.
 \item[Open --- deployment.] Source contains fail-closed two-host coordination
-  and peer-private container orchestration over pinned SSH, but no configured
-  second host was available to execute it. Current evidence uses same-host
-  loopback with authenticated endpoint/context establishment but no
-  post-handshake per-message integrity; it cannot predict LAN/WAN latency,
-  establish authenticated protocol-channel integrity, or prove OS-level peer
-  isolation.
+  and peer-private container orchestration: both complete post-handshake
+  streams are carried through one pinned-host-key, AEAD-only OpenSSH tunnel
+  with bounded rekeying. No configured second host was available to execute it.
+  Current evidence uses same-host loopback with authenticated endpoint/context
+  establishment but no application-layer protection for later bytes; it cannot
+  predict LAN/WAN latency, establish executed authenticated-channel integrity,
+  or prove OS-level peer isolation.
 \item[Open --- review.] A human cryptographer who did not author the artifact
-  must review the DPF/OT/OLE/composition proof and the structured-code
-  parameter argument. Internal adversarial review is not a substitute.
+  must review the DPF/OT/OLE/composition proof, the structured-code parameter
+  argument, and the custom pinned EMP-Silent revision. Internal adversarial
+  review and focused differential/correctness tests are not substitutes.
 \item[Out of scope.] Training-state updates, a dealerless DCF-key protocol,
   active security, and full-model dealer removal require separate designs and
   evaluations.
@@ -1786,12 +1892,14 @@ semi-honest security applies only to the forward-linear theorem under its
 explicit DPF, OT/OLE, authenticated-channel, and exact-distribution Ring-LPN
 assumptions.''
 
-The only in-artifact quantitative dealer comparator is stock
-\texttt{gpuKeygenMatmul}, aligned on classifier shape, bit width, masks, output
-bytes, allocator, and synchronization boundary. The retained runs were not
-controlled on the same physical GPU and occupancy state, so they are not a
-hardware-matched A/B result. The older single-process Ring-OLE stage timers
-omit most live work and are not a baseline.
+The in-artifact quantitative dealer comparator is stock
+\texttt{gpuKeygenMatmul}. The current CNN2/CNN3 matrix aligns source-authored
+shapes, bit width, masks, output bytes, binary, allocator/synchronization
+boundary, physical GPU, and observed quiescence for every sample. Its fixed
+protocol-then-dealer order is not randomized, and its strongly negative ratios
+remain local feasibility results. The older classifier rows lack physical-GPU
+and occupancy control and remain descriptive only. The older single-process
+Ring-OLE stage timers omit most live work and are not a baseline.
 Prior dealerless PCG systems expose different correlations, parameter
 assumptions, and applications; no compatible implementation has been measured
 under this artifact's contract, so no cross-paper speedup ratio is reported.
@@ -1874,7 +1982,10 @@ Orca forward-FC/Conv2D consumption. The current five-case focused q64/q128 suite
 integrates the breadth-first path with positive per-party breadth calls, zero
 root-to-leaf calls, and all 21 shape plans passing. The current
 \texttt{02eaaac9\ldots} ResNet18 classifier-layer artifact separately passes
-one warmup plus ten measured trials. A source-bound known-zero control composes
+one warmup plus ten measured trials. A controlled source-manifest matrix also
+covers CNN2 FC4/FC5 and CNN3 FC5 with 30/30 measured layer trials passing and a
+same-physical-GPU, quiescence-checked stock comparator.
+A source-bound known-zero control composes
 all 21 fresh linear records with all 21 secure truncations, the exact 62-item
 stock stream, every residual merge, integer GlobalAvgPool2D, sign extension,
 and terminal reconstruction. Its trusted test-only adapter reads both mask
@@ -1883,20 +1994,24 @@ material, and generates the nonlinear keys; consequently the run proves
 complete graph/state compatibility, not dealerless nonlinear preprocessing or
 a wider security theorem. No private/trained inference, accuracy, timing
 distribution, or full-model performance result is claimed. A mutual HMAC
-preflight authenticates local endpoints/context but not later protocol bytes.
-Pinned-SSH peer-isolation launchers exist, but no two-host execution has
-occurred. EMP-Silent remains opt-in, independently unreviewed, and absent from
-headline rows.
+preflight authenticates local endpoints/context but not later local protocol
+bytes. The distinct-host launcher now provides an AEAD-only pinned-SSH tunnel
+for both complete streams, but no two-host execution has occurred. A separate
+current EMP-Silent five-case/16-control rerun closes only focused correctness
+and exact inventory/component-byte accounting; it remains opt-in,
+independently unreviewed, and absent from headline rows.
 
 This is an internal/advisor checkpoint, not a submission-ready security or
-systems paper. The known-zero graph/state-composition seam is closed, but the
-remaining systems gates are dealerless nonlinear setup, repeated
-private-input/trained-model evidence, authenticated distinct-host execution,
-competitive/matched evaluation, and independent review. No reviewed
-concrete-security parameter point exists, and the current descriptive median
-of setup-included shape-matched per-trial preprocessing/dealer ratios is
-$268.6769431352700\times$ without controlled physical-GPU occupancy. Novelty is
-centered on integration/engineering of known DPF/Ring-LPN/conversion
+systems paper. The known-zero graph/state-composition seam and the narrow
+CNN2/CNN3 same-hardware stock-dealer comparison are closed. The latter is
+strongly negative: median paired setup-included ratios are
+$879.2970985824659\times$ for CNN2's two FC layers and
+$60.3181599795375\times$ for CNN3 FC5. Remaining systems gates include
+dealerless nonlinear setup, repeated private-input/trained-model evidence,
+authenticated distinct-host execution, a compatible dealerless baseline,
+competitive performance, and independent review. No reviewed
+concrete-security parameter point exists. Novelty is centered on
+integration/engineering of known DPF/Ring-LPN/conversion
 primitives. A cryptography-paper claim would require a new protocol, reduction,
 or parameter result. Authorship, contributor credit, private-project reuse
 permission, acknowledgements, and disclosure remain unresolved external gates
@@ -1914,8 +2029,9 @@ stage, byte, memory, source, and proof measurements, plus independent review of
 EMP-Silent before selecting it;
 (4)~authenticated two-host LAN and controlled-WAN execution under distinct
 peer-isolation identities; and
-(5)~a matched dealer comparison plus separately labeled closest reproducible
-dealerless-PCG baselines. The specialized regular-DMPF route remains a design
+(5)~repeat the controlled stock-dealer comparison after a parameter pin and add
+separately labeled closest reproducible dealerless-PCG baselines. The
+specialized regular-DMPF route remains a design
 NO-GO unless a fixed-transcript construction later meets the documented
 simulator, application-capacity, stock-key, and cost gates.
 Training, dealerless nonlinear preprocessing, and malicious security should
