@@ -1,3 +1,7 @@
+> **HISTORICAL (superseded 2026-10-06):** superseded by `GPU-MPC/ringlpn/CLAUDE.md`
+> (§11–12 hold the reusable checklist, invariants, and commit protocol).
+> Statements below may describe an older state.
+
 # Chief-of-staff handoff for the next model — 2026-09-10
 
 ## Mission
