@@ -61,7 +61,7 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 | Terminal FC `(2,3,2)` and Conv2D `(1,4,4,1; 3x3x1x2, pad 1, stride 1)` through real Orca role 2, nonzero values and biases, 8 bilateral controls | `results/application/orca_linear_application_2026_08_24.csv`, `.log`, `orca_linear_application_build_provenance_2026_08_24.json`; memo `results/reports/orca_linear_application_integration_2026_08_24.md` | terminal only, same host, public bias |
 | ResNet18 classifier layer `1x512x1000`, q128/bw32, `(8192,2,8)`, 10/10 trials | `results/fc/two_party_fc_model_scale_2026_08_04.csv` (v6, regenerated 2026-08-10), binary `02eaaac9…` | uncontrolled GPU occupancy; excludes channel/socket/auth time |
 | Controlled CNN2 FC4/FC5 and CNN3 FC5 matrix, 30/30 layer trials, same-GPU stock-dealer comparison | `results/fc/two_party_fc_model_scale_cnn2_cnn3_2026_08_14.csv` plus `*_2026_09_11` derived files and `results/fc/model_scale_inputs_2026_08_14/` | strongly negative; binary `bf4e4f90…`, GPUs 1/3 |
-| Opt-in EMP-Silent rerun: same 5 cases and 16 controls, exact OT inventory | `results/fc/two_party_fc_emp_silent_correctness_2026_08_14.csv` (ignored path; force-added) | correctness/accounting only; unreviewed backend; one trial per case |
+| Opt-in EMP-Silent rerun: same 5 cases and 16 controls, exact OT inventory; FC binary `bf4e4f90…`, bridge library `435f3be6…`, EMP-OT revision `2fca139f…` | `results/fc/two_party_fc_emp_silent_correctness_2026_08_14.csv`, `_environment_2026_08_14.txt` (ignored paths; force-added) | correctness/accounting only; unreviewed backend; one trial per case |
 | Source-bound 21-layer ResNet18 plan `(262144,2,8)`: 1,680,390,912 cross terms, 6,439 batches, 25,756 Ring-OLE, 6,593,536 DPF trees, 130,774,336 payload B/party | `results/fc/resnet18_adaptive_degree_linear_execution_manifest_2026_08_07.json` | plan and isolated records only |
 | Full-graph known-zero composition, one run: 62-item stream (21 linear, 20 truncation, 17 ReLU-extend, MaxPool, GlobalAvgPool, sign-extend, output); the run executes 21 truncations over 2,484,224 values, 19 stock nonlinear keys, 20 remasks, 3 projection + 5 identity residuals; 7 graph controls. Linear critical-path sum 4,720.417 s; graph 11.852 s (party 0); adapter 9.356 s and 1,084,582,352 stock-key B/party; 17 payload files + `INDEX.json` | `results/graph/resnet18_full_graph_checkpoint_2026_08_10/INDEX.json`, `FULL_GRAPH.manifest` (manifest digest `fdf51f25902afd94a1e67b8bdffa33f762d89c104836538d913c2d7e392c5395`) | internal-only, byte-immutable; the TEST-ONLY trusted adapter reads both parties' mask states and supplies the nonlinear keys, both truncation successor-mask shares, and remask/terminal material; each linear record was first consumed by its omniscient checker (not consume-once deployment evidence); host strings and GPU-1 reuse |
 | Isolated secure truncation | `results/secure_truncate/secure_truncate_check_2026_08_06.csv` | component |
@@ -80,12 +80,13 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 | Upstream Orca byte-identical with `ORCA_RINGLPN_FC_KEYS` off | test source `GPU-MPC/tests/nn/orca/fc_test.cu` (`make orca_fc` → ignored binary `tests/nn/orca/fc`); no retained run artifact | macro-off build; rerun before citing |
 | Manuscript v2.17, 36 pages, PDF sha `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`, two byte-identical TeX Live 2023 builds (`SOURCE_DATE_EPOCH=1786320000`) | `results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex`, `.pdf` | internal/advisor only; not submission-ready |
 
-Classifier detail: mean 4.011203588 s, SD 0.036601967373448, median
+Classifier detail (`results/fc/two_party_fc_model_scale_summary_2026_08_04.csv`):
+setup-included critical path mean 4.011203588 s, SD 0.036601967373448, median
 4.0193924415 s, R-7 IQR 0.03481908225, t95 [3.985020117867291,
 4.037387058132709]. Application bytes 182,372,344; total 182,416,324
 (includes 43,658 base-OT bytes). Payload 4,108,096 B/party; 11,023 dependency
-layers; host peak 142,542,848 B; device-wide GPU peak 31,929,597,952 B
-(includes other users). Phase B 1.955515 s, Phase C 0.041723 s,
+layers; median host peak 142,542,848 B; device-wide GPU peak 31,929,597,952 B
+(includes other users). Medians: Phase B 1.955515 s, Phase C 0.041723 s,
 Phase A 0.2462935 s, expansion 1.226650 s. 276 instances, 70,656 trees;
 1,536 epoch-zero and 210,432 PCG Phase-C products; 210,432 consumed + 1,536
 discarded reserved slots; 1,024 unused application slots.
@@ -113,7 +114,7 @@ Gate digests: same-worktree 2026-08-10 `2588eac6…`, 2026-08-24 `ec026fa8…`;
 | CNN2: sum of layer means 26.8818423365 s, CI [26.84972841498, 26.9117673864825]; dealer 30.46697 ms; ratio 882.3273970631×, CI [876.3872084103, 890.1395707186] | `results/fc/two_party_fc_model_scale_cnn2_cnn3_summary_2026_09_11.csv` |
 | CNN3: mean 0.903894393 s, CI [0.8929673378725, 0.9152799675375], SD 0.01897115914, median 0.904909782, IQR 0.02851206825; dealer 14.92146 ms; ratio 60.5768063581×, CI [59.3418846688, 61.8764437656]; paired-ratio median 60.3181599795375× | same; bootstrap 10,000 draws, seed 20260911, R-7 |
 | CNN bytes (application/total): CNN2 1,302,752,736 / 1,302,840,696; CNN3 39,432,504 / 39,476,484; dependency layers 72,278 / 1,663 | same |
-| Classifier: stock dealer 14.73535 ms, online 1.14969 ms, ratio 268.6769431352700× (descriptive, uncontrolled GPUs) | `results/fc/two_party_fc_model_scale_2026_08_04.csv` |
+| Classifier medians: stock dealer 14.73535 ms, online 1.14969 ms; median per-trial setup-included ratio 268.6769431352700× (descriptive, uncontrolled GPUs) | `results/fc/two_party_fc_model_scale_summary_2026_08_04.csv` |
 | Prospective capacity gate FAILS: 88 training + 22 held-out runs; FC2 predicted 14.577957 vs 14.358284 s (inside interval); AlexNet gemm13 42.931651 vs 43.026200 s, outside [42.886032, 42.978961]; no refit or widening | `results/fc/capacity_model_prospective_2026_09_11.json`, `.plan.json`, `.seal.json` |
 | Regular-DMPF design NO-GO | `results/reports/regular_dmpf_design_no_go_2026_08_06.md` |
 | Native-ring PCG NO-GO | `results/reports/native_ring_technology_audit_2026_08_04.md` |
@@ -122,7 +123,7 @@ Gate digests: same-worktree 2026-08-10 `2588eac6…`, 2026-08-24 `ec026fa8…`;
 | Architecture microbenchmark: OKVS 275× faster with uniform noise but 0.79× with the regular layout; big-state 2.29× at 37× key bytes | `results/reports/s2_architecture_comparison_2026_07_29.md` |
 | Reverse Cuckoo stock libOTe: 12.43 s, 22,939,444 KiB RSS, `setBase` 446.448 ms; exact-p0 folded run: setup 18,523,424 µs, online 2,116,894 µs, end-to-end 20,688,314 µs; no ratio allowed | `results/reports/libote_reverse_cuckoo_stock_baseline_2026_08_04.md`, `results/reports/reverse_cuckoo_p0_baseline_2026_08_04.json` |
 | GPU-NTT 1.2–3.9× faster but cannot run 62-bit primes; keep Cheddar (revisit if primes drop to ≤60 bits) | `results/reports/ntt_baseline_comparison_2026_06_10.md` |
-| Older-binary Conv0 rows 358.085 s and 384.816 s (binary `1db001…`, not current `6a9ae142…`); no breadth-first speedup claim | `results/conv/conv0_breadth_comparison_2026_08_09/` |
+| Older-binary Conv0 rows 358.085 s and 384.816 s (binary `1db001…`, not the currently approved Conv binary `8130d135…`); no breadth-first speedup claim | `results/conv/conv0_breadth_comparison_2026_08_09/` |
 | Withdrawn: old CNN2 model-trial median/SD/IQR/t-CI and paired median. The consumed, incomplete 2026-08-07 forward-linear record set (records and ledger deleted): never cite or resume | — |
 
 ## 6. Open gates and exact blockers
