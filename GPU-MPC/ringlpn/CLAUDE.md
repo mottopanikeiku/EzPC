@@ -1,56 +1,51 @@
 # ringlpn — canonical project guide
 
-Single live document for project state. History lives in `results/reports/`;
-`results/README.md` indexes every artifact.
+Single live document for project state. History lives in `results/reports/`; `results/README.md`
+indexes every artifact.
 
 ## 1. What and why
 
-Orca (the GPU FSS secure-ML system in this repository) needs a trusted dealer
-to produce Beaver keys for its linear layers. This subproject replaces that
-dealer for forward FC/Conv2D layers with a two-party protocol built on a
-Ring-LPN pseudorandom correlation generator:
+Orca (the GPU FSS secure-ML system in this repository) needs a trusted dealer to produce Beaver
+keys for its linear layers. This subproject replaces that dealer for forward FC/Conv2D layers
+with a two-party protocol built on a Ring-LPN pseudorandom correlation generator:
 
-GPU NTT → `Z_p` SPFSS (sum of DPFs) → Figure-2 (BCG+20) Ring-LPN OLE →
-slot-packed Beaver cross terms → `Z_M → Z_2^bw` conversion → byte-compatible
-stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
+GPU NTT → `Z_p` SPFSS (sum of DPFs) → Figure-2 (BCG+20) Ring-LPN OLE → slot-packed Beaver cross
+terms → `Z_M → Z_2^bw` conversion → byte-compatible stock keys consumed by the **unchanged**
+`gpuMatmulBeaver` / `gpuConv2DBeaver`.
 
-- Candidate contribution: only the exact Ring-LPN → Orca GPU FC/Conv
-  integration. The per-point DPF, the Ring-LPN generator, the conversion
-  primitives, Orca, and the GPU polynomial backends are prior or inherited work.
-- No "first" claim of any kind. Prior art: Silentium (ePrint 2025/1013);
-  libOTe `RingLpnTriple` and Reverse Cuckoo (MIT); Agarwal–Raghuraman–Rindal
-  (ePrint 2025/2294); Rivinius et al. (PoPETs 2023, ePrint 2023/359, source
-  `618301c…`).
+- Candidate contribution: only the exact Ring-LPN → Orca GPU FC/Conv integration. The per-point
+  DPF, the Ring-LPN generator, the conversion primitives, Orca, and the GPU polynomial backends
+  are prior or inherited work.
+- No "first" claim of any kind. Prior art: Silentium (ePrint 2025/1013); libOTe `RingLpnTriple`
+  and Reverse Cuckoo (MIT); Agarwal–Raghuraman–Rindal (ePrint 2025/2294); Rivinius et al.
+  (PoPETs 2023, ePrint 2023/359, source `618301c…`).
 - Cheddar is an attributed MIT dependency (`extern/Cheddar_PROVENANCE.txt`,
   `extern/Cheddar_MIT_LICENSE.txt`). GPU-NTT is a cited external baseline.
 - The separate private GPU-PCG/PIM stream must not be imported or claimed.
 
 ## 2. Status snapshot (2026-10-06; last engineering commit `bf239ff`, then documentation, evidence, and build-script hygiene commits)
 
-- The live source is trusted-dealer-free in the stated random-oracle model for
-  forward FC/Conv2D at feasibility parameters: two OS processes on distinct
-  GPUs, terminal FC/Conv2D through real Orca, full ResNet18 graph composition
-  whose nonlinear keys and truncation/remask/terminal masks still come from a
-  TEST-ONLY trusted adapter.
-- Performance is strongly negative (882×, 60.6×, 268.7× slower than the stock
-  dealer). The frozen prospective capacity-prediction gate **failed**.
-- No security level, parameter set, two-host run, clean-clone run, or
-  independent human cryptographic review exists.
+- The live source is trusted-dealer-free in the stated random-oracle model for forward
+  FC/Conv2D at feasibility parameters: two OS processes on distinct GPUs, terminal FC/Conv2D
+  through real Orca, full ResNet18 graph composition whose nonlinear keys and
+  truncation/remask/terminal masks still come from a TEST-ONLY trusted adapter.
+- Performance is strongly negative (882×, 60.6×, 268.7× slower than the stock dealer). The
+  frozen prospective capacity-prediction gate **failed**.
+- No security level, parameter set, two-host run, clean-clone run, or independent human
+  cryptographic review exists.
 - Last full canonical gate: `ALL GATES PASS` on 2026-09-10 in 5,228.406 s
-  (`results/reports/engineering_review_verification_2026_09_10.json`).
-- Latest engineering record:
-  `results/reports/autonomous_technical_closure_2026_09_22.json`.
-- `origin` is public: internal history through `9685463` (2026-09-11),
-  including the internal-only full-graph checkpoint, is on `origin/master` (§14).
-- Public source branch `ringlpn/clinical-review-2026-09-10`: the remote is at
-  `afc93c6`. Local `9bf1ab0` plus 12 source-cleanup mirror commits (tip
-  `ac711e2`) are bundled but **not pushed**: pushes stall in the VS Code
-  askpass username prompt and no GitHub SSH key is configured.
-- The fresh Ring-LPN vs direct-OT comparison is **blocked**: `--mode compare`
-  needs idle GPUs 1, 2 and 3, and GPU 2 is occupied by another user's process
-  (2026-09-22 record; vLLM on GPUs 0 and 2 as of 2026-10-06).
-- Production cryptographic sources, the failed prediction gate, and the
-  36-page v2.17 PDF are unchanged by the 2026-09-22 work and this cleanup.
+  (`results/reports/engineering_review_verification_2026_09_10.json`). Latest engineering
+  record: `results/reports/autonomous_technical_closure_2026_09_22.json`.
+- `origin` is public: internal history through `9685463` (2026-09-11), including the
+  internal-only full-graph checkpoint, is on `origin/master` (§14).
+- Public source branch `ringlpn/clinical-review-2026-09-10`: the remote is at `afc93c6`. Local
+  `9bf1ab0` plus 12 source-cleanup mirror commits (tip `ac711e2`) are bundled but **not
+  pushed**: pushes stall in the VS Code askpass username prompt and no GitHub SSH key exists.
+- The fresh Ring-LPN vs direct-OT comparison is **blocked**: `--mode compare` needs idle GPUs 1,
+  2 and 3, and GPU 2 is occupied by another user's process (2026-09-22 record; vLLM on GPUs 0
+  and 2 as of 2026-10-06).
+- Production cryptographic sources, the failed prediction gate, and the 36-page v2.17 PDF are
+  unchanged by the 2026-09-22 work and this cleanup.
 
 ## 3. Validated claims
 
@@ -81,31 +76,25 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 | Upstream Orca byte-identical with `ORCA_RINGLPN_FC_KEYS` off | test source `GPU-MPC/tests/nn/orca/fc_test.cu` (`make orca_fc` → ignored binary `tests/nn/orca/fc`); no retained run artifact | macro-off build; rerun before citing |
 | Manuscript v2.17, 36 pages, PDF sha `f0544ee14d076289320492364a269a076ed61f13e63ba3d752684c5a3e716d4a`, two byte-identical TeX Live 2023 builds (`SOURCE_DATE_EPOCH=1786320000`) | `results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex`, `.pdf` | internal/advisor only; not submission-ready |
 
-Classifier detail (`results/fc/two_party_fc_model_scale_summary_2026_08_04.csv`):
-setup-included critical path mean 4.011203588 s, SD 0.036601967373448, median
-4.0193924415 s, R-7 IQR 0.03481908225, t95 [3.985020117867291,
-4.037387058132709]. Application bytes 182,372,344; total 182,416,324
-(includes 43,658 base-OT bytes). Payload 4,108,096 B/party; 11,023 dependency
-layers; median host peak 142,542,848 B; device-wide GPU peak 31,929,597,952 B
-(includes other users). Medians: Phase B 1.955515 s, Phase C 0.041723 s,
-Phase A 0.2462935 s, expansion 1.226650 s. 276 instances, 70,656 trees;
-1,536 epoch-zero and 210,432 PCG Phase-C products; 210,432 consumed + 1,536
-discarded reserved slots; 1,024 unused application slots.
+Classifier detail (`results/fc/two_party_fc_model_scale_summary_2026_08_04.csv`): setup-included
+critical path mean 4.011203588 s, SD 0.036601967373448, median 4.0193924415 s, R-7 IQR
+0.03481908225, t95 [3.985020117867291, 4.037387058132709]. Application bytes 182,372,344; total
+182,416,324 (includes 43,658 base-OT bytes). Payload 4,108,096 B/party; 11,023 dependency layers;
+median host peak 142,542,848 B; device-wide GPU peak 31,929,597,952 B (includes other users).
+Medians: Phase B 1.955515 s, Phase C 0.041723 s, Phase A 0.2462935 s, expansion 1.226650 s. 276
+instances, 70,656 trees; 1,536 epoch-zero and 210,432 PCG Phase-C products; 210,432 consumed +
+1,536 discarded reserved slots; 1,024 unused application slots.
 
-Gate digests: same-worktree 2026-08-10 `2588eac6…`, 2026-08-24 `ec026fa8…`;
-2026-09-10 fresh graph `ccd598f8…` (18-file summary, owner-private, at
-`~/.local/share/ringlpn/reviews/2026-09-10/full-graph/`).
+Gate digests: same-worktree 2026-08-10 `2588eac6…`, 2026-08-24 `ec026fa8…`; 2026-09-10 fresh
+graph `ccd598f8…` (18-file summary, owner-private, `~/.local/share/ringlpn/reviews/2026-09-10/full-graph/`).
 
 ## 4. Not claimable
 
-- Any security level. q64/q128 mean one or two ~62-bit arithmetic limbs; no
-  `(n,c,t,p0,p1)` is pinned.
+- Any security level. q64/q128 mean one or two ~62-bit arithmetic limbs; no `(n,c,t,p0,p1)` is pinned.
 - A secure network deployment. After the HMAC handshake, traffic is plain TCP.
 - A performance win of any kind.
-- Full-model dealer removal, multi-layer record dispatch, or dealerless
-  nonlinear preprocessing.
-- Private, trained, or accuracy results; training; malicious security; WAN;
-  side-channel resistance.
+- Full-model dealer removal, multi-layer record dispatch, or dealerless nonlinear preprocessing.
+- Private, trained, or accuracy results; training; malicious security; WAN; side-channel resistance.
 - Conference readiness. The ASPLOS 2027 deadline (2026-09-09 AoE) has passed.
 
 ## 5. Negative results (keep prominent)
@@ -127,9 +116,7 @@ Gate digests: same-worktree 2026-08-10 `2588eac6…`, 2026-08-24 `ec026fa8…`;
 | Older-binary Conv0 rows 358.085 s and 384.816 s (binary `1db001…`, not the currently approved Conv binary `8130d135…`); no breadth-first speedup claim | `results/conv/conv0_breadth_comparison_2026_08_09/` |
 | Withdrawn: old CNN2 model-trial median/SD/IQR/t-CI and paired median. The consumed, incomplete 2026-08-07 forward-linear record set (records and ledger deleted): never cite or resume | — |
 
-## 6. Open gates and exact blockers
-
-Gate IDs follow §8 of the security contract.
+## 6. Open gates and exact blockers (gate IDs per §8 of the security contract)
 
 | Gate | Blocker |
 |---|---|
@@ -179,51 +166,40 @@ Gate IDs follow §8 of the security contract.
 | `test_resnet18_graph_prefix.cu`, `test_stock_nonlinear_prefix_keygen.cu`, `stock_nonlinear_prefix_record.h` | Superseded prefix regression; generators of retained `results/graph/resnet18_graph_prefix_*` rows; never cite as current |
 | `orca_globals_stub.cpp` | Defines `OneGB` for standalone binaries |
 
-Upstream integration points (all other upstream edits are listed in
-`/home/fatih/EzPC/AGENTS.md`):
+Upstream integration points (all other upstream edits: `/home/fatih/EzPC/AGENTS.md`):
+`GPU-MPC/backend/orca_base.h` (behaviour-preserving extraction of the stock matmul/Conv2D
+helpers); `GPU-MPC/experiments/orca/orca_inference.cu` (`ORCA_RINGLPN_LINEAR_INTEGRATION` role 2;
+macro-off roles 0/1 unchanged and do not link Ring-LPN); `GPU-MPC/nn/orca/fc_layer.cu`
+(`ORCA_RINGLPN_FC_KEYS`; flag off is the byte-identical baseline).
 
-- `GPU-MPC/backend/orca_base.h`: behaviour-preserving extraction of the stock
-  matmul/Conv2D helpers.
-- `GPU-MPC/experiments/orca/orca_inference.cu`: `ORCA_RINGLPN_LINEAR_INTEGRATION`
-  role 2; macro-off roles 0/1 unchanged and do not link Ring-LPN.
-- `GPU-MPC/nn/orca/fc_layer.cu`: `ORCA_RINGLPN_FC_KEYS`; flag off is the
-  byte-identical baseline.
-
-`scripts/`: every artifact has a `build_*.sh`/`run_*.sh` pair writing
-`.csv` + `.md` + `.log` under `results/<area>/`; `scripts/build_component.sh
-list` names the maintained targets. Do not edit hash-pinned scripts
-(`build_full_linear_model_manifest.py`, the audit scripts' source pins,
-runtime-candidate recipes, `publication_environment_manifest_2026_08_10.json`)
-without rebinding their pins.
+`scripts/`: every artifact has a `build_*.sh`/`run_*.sh` pair writing `.csv` + `.md` + `.log`
+under `results/<area>/`; `scripts/build_component.sh list` names the maintained targets. Do not
+edit hash-pinned scripts (`build_full_linear_model_manifest.py`, the audit scripts' source pins,
+runtime-candidate recipes, `publication_environment_manifest_2026_08_10.json`) without rebinding.
 
 ## 8. Commands
 
 Run from `GPU-MPC/ringlpn` unless noted. Check `nvidia-smi` first.
 
 ```bash
-# Canonical gate (~1.5 h; 2026-09-10 took 5,228 s). Consumes fresh namespaces and
+# Canonical gate (~1.5 h; 2026-09-10 took 5,228 s with 1/2/3). Consumes fresh namespaces and
 # regenerates tracked results. <a>,<b>,<c> = three idle, distinct physical GPUs.
-# CUDA_VISIBLE_DEVICES pins only the stages that inherit it; the application and
-# full-graph runners overwrite it per child from ORCA_LINEAR_* / FULL_GRAPH_*,
-# which default to GPUs 0/1 and 0/1/2 (trusted adapter 1). 2026-09-10 used 1/2/3.
+# CUDA_VISIBLE_DEVICES pins only stages that inherit it; the application and full-graph runners
+# overwrite it per child from ORCA_LINEAR_* (default 0/1) and FULL_GRAPH_* (default 0/1/2, trusted 1).
 RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a> \
   ORCA_LINEAR_P0_GPU=<a> ORCA_LINEAR_P1_GPU=<b> \
   FULL_GRAPH_P0_GPU=<a> FULL_GRAPH_P1_GPU=<b> FULL_GRAPH_CHECK_GPU=<c> \
   FULL_GRAPH_TRUSTED_GPU=<b> PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 \
   ./scripts/run_paper_checkpoint_smoke.sh
-# success: exit 0 and "[paper-smoke] ALL GATES PASS". With only two idle GPUs
-# (now 1 and 3: vLLM holds 0 and 2), add RUN_FULL_GRAPH_SMOKE=0: every stage but
-# the full graph runs, ending "full ResNet18 graph skipped; GPU component gates pass".
-
-# Focused runners, the terminal application, and the macro-off stock build:
-# README.md "Gate and focused runners" (prerequisites and GPU defaults per runner).
+# success: exit 0 and "[paper-smoke] ALL GATES PASS". With only two idle GPUs (now 1 and 3; vLLM
+# holds 0 and 2) add RUN_FULL_GRAPH_SMOKE=0: all but the full graph run, ending
+# "full ResNet18 graph skipped; GPU component gates pass". Focused runners, the terminal
+# application, and the macro-off stock build: README.md "Gate and focused runners".
 
 # Provenance verification (2026-10-06: all three exit 1, see §6 "Build-input drift")
-python3 scripts/linear_adapter_build_provenance.py verify-approval --repo-root ../.. \
-  --ringlpn-root . --approval results/fc/linear_adapter_binary_approval_2026_08_07.json
-python3 scripts/orca_linear_application_build_provenance.py verify --repo-root ../.. \
-  --cmake-build build/graph-libraries \
-  --manifest results/application/orca_linear_application_build_provenance_2026_08_24.json
+python3 scripts/linear_adapter_build_provenance.py verify-approval --repo-root ../.. --ringlpn-root . --approval results/fc/linear_adapter_binary_approval_2026_08_07.json
+python3 scripts/orca_linear_application_build_provenance.py verify --repo-root ../.. --cmake-build \
+  build/graph-libraries --manifest results/application/orca_linear_application_build_provenance_2026_08_24.json
 python3 scripts/graph_build_provenance.py verify --repo-root ../.. --cmake-build \
   build/graph-libraries --manifest bin/resnet18_full_graph_build_provenance.json  # ignored output of the resnet18-full-graph build
 
@@ -233,15 +209,13 @@ python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,2,regular,1,1
 python3 ringlpn/scripts/audit_conversion_simulator.py
 python3 ringlpn/scripts/test_fc_model_scale_statistics.py --replay-dir <new-dir>
 # also audit_ringlpn_regular_projection.py, audit_regular_isd_crypto2024.py,
-# audit_hybrid_rsd_asiacrypt2025.py; audit_ringlpn_finite_field_models.py exits
-# nonzero by design.
+# audit_hybrid_rsd_asiacrypt2025.py; audit_ringlpn_finite_field_models.py exits nonzero by design.
 ```
 
-Evidence checks, from `/home/fatih/EzPC`, after any change under `results/` or
-to the manifest. The private-artifact guard (silent exit 0 = pass) checks the
-manifest self-digest, the full-graph INDEX, and leftover private files; it does
-not re-hash bound files. The bound-digest check re-hashes every
-`required_tracked_evidence` entry and the v2.17 TeX/PDF `build` pins:
+Evidence checks, from `/home/fatih/EzPC`, after any change under `results/` or to the manifest.
+The private-artifact guard (silent exit 0 = pass) checks the manifest self-digest, the full-graph
+INDEX, and leftover private files; it does not re-hash bound files. The bound-digest check
+re-hashes every `required_tracked_evidence` entry and the v2.17 TeX/PDF `build` pins:
 
 ```bash
 python3 GPU-MPC/ringlpn/scripts/retained_public_evidence.py --repo /home/fatih/EzPC \
@@ -255,13 +229,11 @@ print("\n".join(bad) or "bound evidence OK"); raise SystemExit(bool(bad))
 PY
 ```
 
-Direct-OT baseline, runtime candidate, and component builds: `README.md`.
-Clean-clone and two-host reproduction: `results/README.md`.
-Authorized source push (public-safe branch only, never `master`):
+Direct-OT baseline, runtime candidate, and component builds: `README.md`. Clean-clone and two-host
+reproduction: `results/README.md`. Authorized source push (public-safe branch only, never `master`):
 `git push origin refs/heads/ringlpn/clinical-review-2026-09-10:refs/heads/ringlpn/clinical-review-2026-09-10`.
-TeX rebuild (overrides the image's dispatcher entrypoint and uid 65532; the
-image sets `SOURCE_DATE_EPOCH`). On 2026-10-06 two passes on a scratch copy of
-the v2.17 `.tex` reproduced the pinned PDF sha `f0544ee1…` exactly:
+TeX rebuild (overrides the image's dispatcher entrypoint and uid 65532; the image sets
+`SOURCE_DATE_EPOCH`). On 2026-10-06 two passes on a scratch copy reproduced the pinned PDF exactly:
 
 ```bash
 T="$(mktemp -d)"; cp GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex "$T/"  # repo root
@@ -271,9 +243,8 @@ for pass in 1 2; do docker run --rm --network=none --user "$(id -u):$(id -g)" -e
 sha256sum "$T"/*.pdf; rm -rf "$T"
 ```
 
-For a deliberate manuscript change, edit the `.tex`, rebuild, inspect every
-page, copy the PDF back, and rebind both `build.publication_*_sha256` and the
-PDF's `required_tracked_evidence` entry under the §11 rule.
+For a deliberate manuscript change, edit the `.tex`, rebuild, inspect every page, copy the PDF back,
+and rebind `build.publication_*_sha256` and the PDF's `required_tracked_evidence` entry (§11).
 
 ## 9. Perf anchors (RTX 5000 Ada; diagnostic unless stated)
 
@@ -284,77 +255,61 @@ PDF's `required_tracked_evidence` entry under the §11 rule.
 | Linear OLE→Beaver 2×2×2 regular | 143.686 ms (q64) / 289.511 ms (q128) |
 | Cheddar polymul n=8192 batch 64 (q64) | ~255–265 µs |
 
-Setup-included time = per-layer preflight + OT setup + legacy total; it
-excludes `PartyChannel` construction, sockets, and authentication. Never call
-it end-to-end.
+Setup-included time = per-layer preflight + OT setup + legacy total; it excludes `PartyChannel`
+construction, sockets, and authentication. Never call it end-to-end.
 
 ## 10. Environment gotchas
 
-- Shared server, no sudo. Docker group membership is root-equivalent: use it
-  only for ephemeral containers and to chown your own files
-  (`docker run --rm -v <dir>:/x ubuntu:22.04 chown -R 1013:1014 /x/...`).
-  Never touch other users' files or processes (e.g. the vLLM jobs on GPUs 0/2).
-- `nvcc` is in `/usr/local/cuda/bin` (not on `PATH`). `GPU_ARCH=89`, 4× RTX
-  5000 Ada.
-- Ephemeral ports are 32768–60999; runners use 20400–29761. A full-graph run
-  at base 57400 lost a bind; a consume-once run must restart fresh, never resume.
-- Role 2 inherits `GpuPeer` port 42003 (inside the ephemeral range): serialize
-  application runs.
-- Never call Orca's eager 25 GiB `initGPUMemPool()` from focused Ring-LPN
-  executables.
-- `scripts/setup_nfl.sh` exits 0 when NFLlib is built at its pinned commit
-  (`FORCE=1` rebuilds). A fresh build needs git, cmake, make, a C++ compiler,
-  and GMP/MPFR headers (absent on this host: use `ringlpn-repro:2026-08-10`). It
-  refuses a `build/` cache configured for another source path (e.g. the
-  container's `/home/ringlpn`): move `extern/NFLlib/build` aside and rerun.
-- `extern/NFLlib` is a submodule pinned at `quarkslab/NFLlib@5cf40ed`.
-  `scripts/setup_nfl.sh` builds it in-tree, so `git status` shows untracked
-  content (`?`) there, as for `GPU-MPC/ext/cutlass`; both gitlinks are
-  unchanged: do not commit, clean, or re-pin them. The mnist/weights submodules
-  carry pre-existing internal staged renames (status `m`): leave them.
-- Root `.gitignore` hides `*.csv`/`*.txt`; `ringlpn/.gitignore` hides `*.pdf`
-  and re-allows `src/emp_silent_bridge_build/CMakeLists.txt` (tracked since
-  `a458db2`, so `build_component.sh emp-silent-bridge` works from a clean
-  checkout): add evidence with `git add -f`.
-- The local `ringlpn-repro:2026-08-10` tag is not publication provenance. In
-  Debian containers `/bin/sh` is dash (no brace expansion). Inside the
-  `orca-dev` container `/home/ringlpn` = `GPU-MPC/ringlpn`.
-- Flags: `ORCA_RINGLPN_LINEAR_INTEGRATION`, `ORCA_RINGLPN_FC_KEYS` (+`_QBITS`,
-  `_SEED`), `RINGLPN_NTT_NO_FUSE` / `RINGLPN_NTT_FORCE_FUSE`, `SMOKE=1 QBITS NOISE`.
-- Never reuse ledgers or work roots. Raw records, states, ledgers, and auth
-  files are never evidence.
-- `/tmp` is wiped at boot and after 30 days. Durable artifacts live in
-  `~/.local/share/ringlpn/` (`artifacts/runtime-candidate-afc93c6/`,
-  `artifacts/source-bundles/`, `reviews/2026-09-10/full-graph/`). The public
-  source worktree `/tmp/ringlpn-review-20260910-_m6jgfab/public-source` is
-  registered with `ringlpn/clinical-review-2026-09-10` checked out; reuse it
-  while it exists. After a wipe, `git worktree prune && git worktree add <dir>
-  ringlpn/clinical-review-2026-09-10` (git refuses a second checkout of the
-  branch while the stale registration remains).
+- Shared server, no sudo. Docker group membership is root-equivalent: use it only for ephemeral
+  containers and to chown your own files (`docker run --rm -v <dir>:/x ubuntu:22.04 chown -R
+  1013:1014 /x/...`). Never touch other users' files or processes (e.g. vLLM on GPUs 0/2).
+- `nvcc` is in `/usr/local/cuda/bin` (not on `PATH`). `GPU_ARCH=89`, 4× RTX 5000 Ada.
+- Ephemeral ports are 32768–60999; runners use 20400–29761. A full-graph run at base 57400 lost
+  a bind; a consume-once run must restart fresh, never resume. Role 2 inherits `GpuPeer` port
+  42003 (inside the ephemeral range): serialize application runs.
+- Never call Orca's eager 25 GiB `initGPUMemPool()` from focused Ring-LPN executables.
+- `extern/NFLlib` is a submodule pinned at `quarkslab/NFLlib@5cf40ed`. `scripts/setup_nfl.sh`
+  exits 0 when it is built at that commit (`FORCE=1` rebuilds); a fresh build needs git, cmake,
+  make, a C++ compiler, and GMP/MPFR headers (absent on this host: use `ringlpn-repro:2026-08-10`).
+  It refuses a `build/` cache configured for another source path (e.g. the container's
+  `/home/ringlpn`): move `extern/NFLlib/build` aside and rerun. The in-tree build makes
+  `git status` show untracked content (`?`), as for `GPU-MPC/ext/cutlass`; both gitlinks are
+  unchanged: do not commit, clean, or re-pin them. The mnist/weights submodules carry
+  pre-existing internal staged renames (status `m`): leave them.
+- Root `.gitignore` hides `*.csv`/`*.txt`; `ringlpn/.gitignore` hides `*.pdf` and re-allows
+  `src/emp_silent_bridge_build/CMakeLists.txt` (tracked since `a458db2`, so
+  `build_component.sh emp-silent-bridge` works from a clean checkout). Add evidence with `git add -f`.
+- The local `ringlpn-repro:2026-08-10` tag is not publication provenance. In Debian containers
+  `/bin/sh` is dash (no brace expansion). Inside `orca-dev`, `/home/ringlpn` = `GPU-MPC/ringlpn`.
+- Flags: `ORCA_RINGLPN_LINEAR_INTEGRATION`, `ORCA_RINGLPN_FC_KEYS` (+`_QBITS`, `_SEED`),
+  `RINGLPN_NTT_NO_FUSE` / `RINGLPN_NTT_FORCE_FUSE`, `SMOKE=1 QBITS NOISE`.
+- Never reuse ledgers or work roots. Raw records, states, ledgers, and auth files are never evidence.
+- `/tmp` is wiped at boot and after 30 days. Durable artifacts live in `~/.local/share/ringlpn/`
+  (`artifacts/runtime-candidate-afc93c6/`, `artifacts/source-bundles/`,
+  `reviews/2026-09-10/full-graph/`). The public source worktree
+  `/tmp/ringlpn-review-20260910-_m6jgfab/public-source` is registered with
+  `ringlpn/clinical-review-2026-09-10` checked out; reuse it while it exists. After a wipe, run
+  `git worktree prune && git worktree add <dir> ringlpn/clinical-review-2026-09-10` (git refuses
+  a second checkout of the branch while the stale registration remains).
 
 ## 11. Working rules
 
-Hash-bound files stay in place: everything in the manifest's
-`required_tracked_evidence`, the v2.17 TeX/PDF pinned by
-`build.publication_*_sha256`, files pinned by other JSON (approvals, checkpoint
-manifests, seals, plans), and all of
-`results/graph/resnet18_full_graph_checkpoint_2026_08_10/` (byte-immutable).
-Never edit a digest to match a changed artifact. A deliberate edit to a bound
-report (as in `c097af9`) must, in the same commit, rebind its `sha256` and the
-`manifest_digest` (SHA-256 of the manifest minus that key, `json.dumps` with
-`sort_keys=True`, separators `(",", ":")`, ASCII) and pass both §8 checks.
-Refresh `results/fc/linear_adapter_binary_approval_2026_08_07.json` or any
-other approval only with explicit owner approval; until then adapter
-source/build drift makes the canonical gate fail by design.
+Hash-bound files stay in place: everything in the manifest's `required_tracked_evidence`, the
+v2.17 TeX/PDF pinned by `build.publication_*_sha256`, files pinned by other JSON (approvals,
+checkpoint manifests, seals, plans), and all of
+`results/graph/resnet18_full_graph_checkpoint_2026_08_10/` (byte-immutable). Never edit a digest
+to match a changed artifact. A deliberate edit to a bound report (as in `c097af9`) must, in the
+same commit, rebind its `sha256` and the `manifest_digest` (SHA-256 of the manifest minus that
+key, `json.dumps` with `sort_keys=True`, separators `(",", ":")`, ASCII) and pass both §8
+checks. Refresh `results/fc/linear_adapter_binary_approval_2026_08_07.json` or any other approval
+only with explicit owner approval; until then adapter source/build drift makes the canonical gate
+fail by design.
 
-**House rules.**
-1. New artifact = source + build script + run script + CSV/MD/log in its
-   `results/` area + dated memo in `results/reports/` + gate hook if it guards
-   a claim. Suites exit non-zero on any failure.
-2. Validate against an independent oracle (host reference or unchanged Orca
-   online path), never against the code under test.
-3. No performance claim without an A/B at the consumer's real shape.
-4. A component PASS never skips a claim gate.
+**House rules.** (1) New artifact = source + build script + run script + CSV/MD/log in its
+`results/` area + dated memo in `results/reports/` + gate hook if it guards a claim; suites exit
+non-zero on any failure. (2) Validate against an independent oracle (host reference or unchanged
+Orca online path), never the code under test. (3) No performance claim without an A/B at the
+consumer's real shape. (4) A component PASS never skips a claim gate.
 
 **Terminal-integration invariants** (re-establish after any related change):
 1. `OwnedLayerMaterial` is move-only and adopts record + state atomically.
@@ -372,65 +327,58 @@ source/build drift makes the canonical gate fail by design.
 13. Builds are repeatable; retained provenance verifies against the artifacts.
 14. Claim scope: terminal FC/Conv2D, same host, public bias, feasibility only.
 
-**Commit protocol.** One coherent slice per commit, after its applicable check:
-stage exact paths or hunks → `git diff --cached --stat`, `--check`, full
-`git diff --cached` → confirm no private file, raw record, ledger, secret,
-scratch path, host identifier, generated timing drift, or unrelated hunk →
-scoped message (`ringlpn:`, `docs:`, `evidence:`) → never amend; corrections
-get new commits and rerun the affected gate. Never push internal `master`.
+**Commit protocol.** One coherent slice per commit, after its applicable check: stage exact paths
+or hunks → `git diff --cached --stat`, `--check`, full `git diff --cached` → confirm no private
+file, raw record, ledger, secret, scratch path, host identifier, generated timing drift, or
+unrelated hunk → scoped message (`ringlpn:`, `docs:`, `evidence:`) → never amend; corrections get
+new commits and rerun the affected gate. Never push internal `master`.
 
 ## 12. Chief-of-staff checklist (reusable; replaces `results/reports/chief_of_staff_handoff_2026_09_10.md`)
 
-1. Baseline without mutating: `git status --short --branch`, recent log,
-   remotes, worktrees, submodules, `nvidia-smi`.
-2. Classify every dirty and untracked path by workstream, owner, dependency,
-   evidence, and proposed commit; read each shared file's full diff first.
-3. Review integration edges, not style: public ABI, producer/state formats,
-   stock kernels (`fss/gpu_matmul*`, `gpu_conv2d*`, `backend/orca_base.h`),
-   Sytorch callbacks, `orca_inference.cu`, comms, build/provenance, approvals.
-4. Static review targets: integer widths, file mode/owner/symlink checks,
-   scrubbing, digest order, preflight deadlocks, fixed ports, process cleanup,
-   macro isolation, deterministic builds, "current" claims about old binaries.
-5. Run the narrowest check after each fix; the canonical gate only after
-   focused checks and approvals pass. Never weaken a gate.
-6. Snapshot status before a gate; afterwards keep only intended evidence
-   refreshes and never "clean" a file that was dirty before the run.
+1. Baseline without mutating: `git status --short --branch`, recent log, remotes, worktrees,
+   submodules, `nvidia-smi`.
+2. Classify every dirty and untracked path by workstream, owner, dependency, evidence, and
+   proposed commit; read each shared file's full diff first.
+3. Review integration edges, not style: public ABI, producer/state formats, stock kernels
+   (`fss/gpu_matmul*`, `gpu_conv2d*`, `backend/orca_base.h`), Sytorch callbacks,
+   `orca_inference.cu`, comms, build/provenance, approvals.
+4. Static review targets: integer widths, file mode/owner/symlink checks, scrubbing, digest
+   order, preflight deadlocks, fixed ports, process cleanup, macro isolation, deterministic
+   builds, "current" claims about old binaries.
+5. Run the narrowest check after each fix; the canonical gate only after focused checks and
+   approvals pass. Never weaken a gate.
+6. Snapshot status before a gate; afterwards keep only intended evidence refreshes and never
+   "clean" a file that was dirty before the run.
 7. Commit per the protocol above; keep a ledger of hash, message, check.
-8. Final report: decision; findings by severity; fixes; exact commands and
-   results; commit ledger; remaining worktree; blockers; next three actions.
+8. Final report: decision; findings by severity; fixes; exact commands and results; commit
+   ledger; remaining worktree; blockers; next three actions.
 
 ## 13. Roadmap
 
 1. Preserve consumed and retained state; keep the full-graph boundary exact.
-2. Obtain a reviewed structured-code reduction and parameters; then reduce
-   Phase B/rounds and remeasure at the reviewed tuple.
+2. Obtain a reviewed structured-code reduction and parameters; then reduce Phase B/rounds and remeasure.
 3. Replace the trusted nonlinear adapter with a reviewed dealerless protocol.
-4. Run repeated authenticated LAN/WAN two-host trials and the clean-clone
-   publication mode.
-5. Owner decisions on authorship, credit, reuse, and outreach before any
-   external circulation.
+4. Run repeated authenticated LAN/WAN two-host trials and the clean-clone publication mode.
+5. Owner decisions on authorship, credit, reuse, outreach, and the public `origin/master`
+   history before any further circulation.
 
 ## 14. Version control facts
 
-- Remotes: `origin` = `github.com/mottopanikeiku/EzPC` (public fork);
-  `upstream` = `mpc-msri/EzPC`; `gpu-mpc` = `mottopanikeiku/GPU-MPC`.
-- `origin/master` = `9685463` (pushed 2026-09-11) is an ancestor of internal
-  `master`, so internal history through it is public, including the
-  internal-only 2026-08-10 full-graph checkpoint (18 files with
-  `private_inputs/` provenance) and the 34-page v2.17 PDF build (`dd1de27a…`).
-  Later commits are unpublished. Never push `master` again; restricting or
-  rewriting the public history is an owner ruling (§6).
-- Public branch history: `1433e0a` base → `a1f006a` → `4a2e29a` → `afc93c6`
-  (published, remote-verified 2026-10-06) → `9bf1ab0` → 12 source-cleanup
-  mirror commits ending at `ac711e2` (all local only).
-- Bundles in `~/.local/share/ringlpn/artifacts/source-bundles/`:
-  `ringlpn-source-audit-afc93c6.bundle` (sha256 `eb6d7d98…`, requires
-  `4a2e29a`), `ringlpn-source-9bf1ab0.bundle`, and
-  `ringlpn-source-ac711e2.bundle` (36,664 B, sha256 `0c72fca5…`); the last two
-  require `afc93c6`.
-- Recent commits use Git author `mottopanikeiku`; the paper names Alp
-  `<fcetin@hawk.iit.edu>` by user direction. Authorship and credit remain
-  owner rulings.
+- Remotes: `origin` = `github.com/mottopanikeiku/EzPC` (public fork); `upstream` =
+  `mpc-msri/EzPC`; `gpu-mpc` = `mottopanikeiku/GPU-MPC`.
+- `origin/master` = `9685463` (pushed 2026-09-11) is an ancestor of internal `master`, so internal
+  history through it is public, including the internal-only 2026-08-10 full-graph checkpoint (18
+  files with `private_inputs/` provenance) and the 34-page v2.17 PDF build (`dd1de27a…`). Later
+  commits are unpublished. Never push `master` again; restricting or rewriting the public history
+  is an owner ruling (§6).
+- Public branch history: `1433e0a` base → `a1f006a` → `4a2e29a` → `afc93c6` (published,
+  remote-verified 2026-10-06) → `9bf1ab0` → 12 source-cleanup mirror commits ending at `ac711e2`
+  (all local only).
+- Bundles in `~/.local/share/ringlpn/artifacts/source-bundles/`: `ringlpn-source-audit-afc93c6.bundle`
+  (sha256 `eb6d7d98…`, requires `4a2e29a`), `ringlpn-source-9bf1ab0.bundle`, and
+  `ringlpn-source-ac711e2.bundle` (§6); the last two require `afc93c6`.
+- Recent commits use Git author `mottopanikeiku`; the paper names Alp `<fcetin@hawk.iit.edu>` by
+  user direction. Authorship and credit remain owner rulings.
 
 ## 15. Documentation contract (binding)
 
@@ -439,18 +387,14 @@ Before ending any session that changed code, results, or plans:
 1. Update this file: status, claims, gates, source map, perf anchors, gotchas.
 2. Add or update the row in `results/README.md`.
 3. Write or refresh a dated memo in `results/reports/` with reproduction commands.
-4. Banner superseded documents (`> **HISTORICAL …** superseded by CLAUDE.md`)
-   or move unbound ones to `results/archive/reports/`; never edit hash-bound
-   bytes outside the §11 rebind rule.
-5. Never let two live documents disagree: the newer gate-verified statement
-   wins; fix or banner the other in the same commit.
-6. `results/outreach/`, `results/archive/`, and bannered reports are
-   read-only history: quote them, do not trust them.
+4. Banner superseded documents (`> **HISTORICAL …** superseded by CLAUDE.md`) or move unbound
+   ones to `results/archive/reports/`; never edit hash-bound bytes outside the §11 rebind rule.
+5. Never let two live documents disagree: the newer gate-verified statement wins; fix or banner
+   the other in the same commit.
+6. `results/outreach/`, `results/archive/`, and bannered reports are read-only history: quote
+   them, do not trust them.
 
-Key reports: security contract
-(`results/reports/dealerless_orca_fc_security_contract_2026_07_29.md`),
-roadmap (`results/reports/publication_readiness_plan_2026_07_21.md`),
-attack audit (`results/reports/structured_attack_audit_2026_08_04.md`),
-two-host contract (`results/reports/authenticated_two_host_deployment_2026_08_04.md`),
-portfolio (`results/reports/publication_portfolio_2026_08_04.md`),
-security artifacts (`results/security/README.md`).
+Key reports (`results/reports/`): security contract `dealerless_orca_fc_security_contract_2026_07_29.md`,
+roadmap `publication_readiness_plan_2026_07_21.md`, attack audit `structured_attack_audit_2026_08_04.md`,
+two-host contract `authenticated_two_host_deployment_2026_08_04.md`, portfolio
+`publication_portfolio_2026_08_04.md`; security artifacts: `results/security/README.md`.
