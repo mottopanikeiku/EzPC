@@ -215,22 +215,8 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a> \
 # (now 1 and 3: vLLM holds 0 and 2), add RUN_FULL_GRAPH_SMOKE=0: every stage but
 # the full graph runs, ending "full ResNet18 graph skipped; GPU component gates pass".
 
-# Focused runners (FC always rebuilds its adapter, so nvcc must be on PATH;
-# FC/Conv default P0_GPU=1 P1_GPU=3; truncation/convert runners need a prior build)
-export PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89
-./scripts/run_two_party_fc_preprocess.sh
-./scripts/run_two_party_conv_preprocess.sh
-./scripts/build_component.sh secure-truncate && ./scripts/run_secure_truncate_test.sh
-./scripts/run_full_linear_manifest_gate.sh   # needs bin/test_two_party_{fc,conv}_preprocess; CPU, writes nothing
-P0_GPU=<a> P1_GPU=<b> CHECK_GPU=<c> TRUSTED_GPU=<b> LINEAR_LANES='<a>:<b>:<c>:22000-22085' \
-  ./scripts/run_resnet18_full_graph.sh /abs/new-out /abs/new-state
-#   defaults 0/1/2, trusted 1; optional lanes P0:P1:CHECK:PORTS, each 3 distinct GPUs,
-#   ≥86 ports. A stale bin/ graph provenance aborts it: rebuild resnet18-full-graph first.
-
-# Terminal Orca application (rebuilds unless ORCA_LINEAR_SKIP_BUILD=1; GPUs default 0/1;
-# prints to stdout), then the macro-off stock build
-P0_GPU=<a> P1_GPU=<b> ./scripts/run_orca_linear_application.sh
-(cd .. && make GPU_ARCH=89 orca_inference)
+# Focused runners, the terminal application, and the macro-off stock build:
+# README.md "Gate and focused runners" (prerequisites and GPU defaults per runner).
 
 # Provenance verification (2026-10-06: all three exit 1, see §6 "Build-input drift")
 python3 scripts/linear_adapter_build_provenance.py verify-approval --repo-root ../.. \

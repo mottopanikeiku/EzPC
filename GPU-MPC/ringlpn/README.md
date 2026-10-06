@@ -35,18 +35,15 @@ export PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89
 ./scripts/build_component.sh orca-linear-application
 ```
 
-- `linear-library` installs the standalone `<ringlpn/linear_preprocess.h>` and a
-  public-API probe. The facade opens exactly one party-local private record at
-  a time and exposes no record-pair loader.
-- `linear-fc` and `linear-conv` build through a fixed private canonical source
-  symlink so the binaries match
-  `results/fc/linear_adapter_binary_approval_2026_08_07.json`; any drift
-  rejects before records are produced.
-- `graph-libraries` source-builds its dependencies under
-  `build/graph-libraries`. It downloads nothing and does not use an untracked
-  `GPU-MPC/ext/sytorch/build`.
-- Legacy `build_*.sh` entry points remain callable and route the approved
-  adapters and the full graph through `build_component.sh`.
+- `linear-library` installs `<ringlpn/linear_preprocess.h>` and a public-API
+  probe; the facade opens one party-local private record at a time and has no
+  record-pair loader.
+- `linear-fc`/`linear-conv` build through a fixed private canonical source
+  symlink so the binaries match `results/fc/linear_adapter_binary_approval_2026_08_07.json`;
+  any drift rejects before records are produced.
+- `graph-libraries` source-builds its dependencies under `build/graph-libraries`
+  (no downloads, no untracked `GPU-MPC/ext/sytorch/build`). Legacy `build_*.sh`
+  entry points route the approved adapters and the full graph through it.
 
 ## Gate and focused runners
 
@@ -59,20 +56,20 @@ Without `RUN_GPU_SMOKE=1` the gate runs host checks only (shell syntax, 21-layer
 manifest gate, private-file, consume-once ledger and SHAKE controls, host OLE,
 Zp bridge, conversion, truncation, host and two-process DPF keygen), rewrites
 their tracked results, and ends with
-`[paper-smoke] HOST GATES PASS (GPU smoke skipped)`. Its manifest gate needs
-`bin/test_two_party_{fc,conv}_preprocess`: build `linear-fc` and `linear-conv`
-first.
+`[paper-smoke] HOST GATES PASS (GPU smoke skipped)`; build `linear-fc` and
+`linear-conv` first for its manifest gate.
 
 | Runner | Output |
 |---|---|
-| `scripts/run_two_party_fc_preprocess.sh` (rebuilds its adapter; nvcc on `PATH`) | `results/fc/two_party_fc_preprocess_*` |
-| `scripts/run_two_party_conv_preprocess.sh` | `results/conv/` |
+| `scripts/run_two_party_fc_preprocess.sh` (rebuilds its adapter, so nvcc must be on `PATH`; GPUs default `P0_GPU=1 P1_GPU=3`) | `results/fc/two_party_fc_preprocess_*` |
+| `scripts/run_two_party_conv_preprocess.sh` (builds if missing; GPUs default 1/3) | `results/conv/` |
 | `scripts/run_two_party_fc_model_scale.sh` | `results/fc/two_party_fc_model_scale_*` |
 | `scripts/build_component.sh secure-convert` → `scripts/run_secure_convert_test.sh`; `scripts/build_component.sh secure-truncate` → `scripts/run_secure_truncate_test.sh` | `results/secure_convert/`, `results/secure_truncate/` |
 | `scripts/run_two_party_dpf_keygen.sh`, `scripts/run_two_party_gpu_dpf.sh` | `results/dpf/` |
 | `scripts/run_full_linear_manifest_gate.sh` (needs `linear-fc`/`linear-conv` built) | checks the 21-layer manifests (no output) |
-| `scripts/run_resnet18_full_graph.sh ABS_OUT ABS_STATE` | external output root |
-| `P0_GPU=<g> P1_GPU=<g> scripts/run_orca_linear_application.sh` (rebuilds unless `ORCA_LINEAR_SKIP_BUILD=1`) | stdout only; `results/application/*_2026_08_24.*` are retained captures |
+| `P0_GPU=<a> P1_GPU=<b> CHECK_GPU=<c> TRUSTED_GPU=<b> scripts/run_resnet18_full_graph.sh /abs/new-out /abs/new-state` (defaults 0/1/2, trusted 1; a stale `bin/` graph provenance aborts it: rebuild `resnet18-full-graph` first) | external output root |
+| `P0_GPU=<a> P1_GPU=<b> scripts/run_orca_linear_application.sh` (rebuilds unless `ORCA_LINEAR_SKIP_BUILD=1`; defaults 0/1) | stdout only; `results/application/*_2026_08_24.*` are retained captures |
+| `(cd .. && make GPU_ARCH=89 orca_inference)` | macro-off stock `../experiments/orca/orca_inference` |
 
 The full-graph wrapper is serial by default. To opt into parallel lanes, set
 `LINEAR_LANES` to comma-separated `P0_GPU:P1_GPU:CHECK_GPU:FIRST-LAST` lanes
