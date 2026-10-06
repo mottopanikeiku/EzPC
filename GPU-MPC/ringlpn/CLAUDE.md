@@ -39,6 +39,8 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
   (`results/reports/engineering_review_verification_2026_09_10.json`).
 - Latest engineering record:
   `results/reports/autonomous_technical_closure_2026_09_22.json`.
+- `origin` is public: internal history through `9685463` (2026-09-11),
+  including the internal-only full-graph checkpoint, is on `origin/master` (§14).
 - Public source branch `ringlpn/clinical-review-2026-09-10`: the remote is at
   `afc93c6`. Source-only commit `9bf1ab0` is committed locally and bundled but
   **not pushed**: pushes stall in the VS Code askpass username prompt and no
@@ -139,9 +141,9 @@ Gate IDs follow §8 of the security contract.
 | Two-host deployment | Not executed. Missing: authorized distinct host and identities, native rootless Podman with subuid/subgid, block-backed ext4/xfs ledger mounts (tmpfs rejected), annotated tag and source authorization, immutable runtime digest. Manifest fields are null by design. |
 | Clean-clone reproduction | Not executed; no two-build image receipt. |
 | Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` needs idle GPUs 1 and 2; GPUs 0 and 2 run another user's vLLM. |
-| Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any external circulation. |
+| Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any further circulation; the 2026-08-10 bytes are already public via `origin/master` (`9685463`). |
 | Source push of `9bf1ab0` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-9bf1ab0.bundle` (28,794 B, sha256 `fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed`, requires `afc93c6`). |
-| Owner rulings | Authorship, credit, reuse, circulation, outreach (`results/reports/s2_professor_decision_request_2026_07_29.md`). |
+| Owner rulings | Authorship, credit, reuse, circulation, outreach (`results/reports/s2_professor_decision_request_2026_07_29.md`), and whether to restrict or rewrite the public `origin/master` history that holds internal-only artifacts (§14). |
 
 ## 7. Source map (`src/`)
 
@@ -366,8 +368,14 @@ get new commits and rerun the affected gate. Never push internal `master`.
 
 ## 14. Version control facts
 
-- Remotes: `origin` = `github.com/mottopanikeiku/EzPC`; `upstream` =
-  `mpc-msri/EzPC`. Internal `master` (latest `bf239ff`) is private.
+- Remotes: `origin` = `github.com/mottopanikeiku/EzPC` (public fork);
+  `upstream` = `mpc-msri/EzPC`; `gpu-mpc` = `mottopanikeiku/GPU-MPC`.
+- `origin/master` = `9685463` (pushed 2026-09-11) is an ancestor of internal
+  `master`, so internal history through it is public, including the
+  internal-only 2026-08-10 full-graph checkpoint (18 files with
+  `private_inputs/` provenance) and the 34-page v2.17 PDF build (`dd1de27a…`).
+  Later commits are unpublished. Never push `master` again; restricting or
+  rewriting the public history is an owner ruling (§6).
 - Public branch history: `1433e0a` base → `a1f006a` → `4a2e29a` → `afc93c6`
   (published, remote-verified) → `9bf1ab0` (local only).
 - Bundles: `~/.local/share/ringlpn/artifacts/source-bundles/` holds
