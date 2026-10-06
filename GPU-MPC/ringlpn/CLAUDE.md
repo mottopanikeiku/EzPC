@@ -46,8 +46,9 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
   `afc93c6`. Source-only commit `9bf1ab0` is committed locally and bundled but
   **not pushed**: pushes stall in the VS Code askpass username prompt and no
   GitHub SSH key is configured.
-- The fresh Ring-LPN vs direct-OT comparison is **blocked** because GPUs 0 and
-  2 are occupied by another user's vLLM workload.
+- The fresh Ring-LPN vs direct-OT comparison is **blocked**: `--mode compare`
+  needs idle GPUs 1, 2 and 3, and GPU 2 is occupied by another user's process
+  (2026-09-22 record; vLLM on GPUs 0 and 2 as of 2026-10-06).
 - Production cryptographic sources, the failed prediction gate, and the
   36-page v2.17 PDF are unchanged by the 2026-09-22 work and this cleanup.
 
@@ -143,7 +144,7 @@ Gate IDs follow §8 of the security contract.
 | Two-host deployment | Not executed. Missing: authorized distinct host and identities, native rootless Podman with subuid/subgid, block-backed ext4/xfs ledger mounts (tmpfs rejected), annotated tag and source authorization, immutable runtime digest. Manifest fields are null by design. |
 | Clean-clone reproduction | Not executed. `reproduce_publication.sh check`/`local-smoke` fail closed until annotated tag `ringlpn-publication-candidate-v1` (manifest `source_release.required_annotated_tag`) points at HEAD with a matching `GPU-MPC/ringlpn` tree; no such tag exists (owner-approved release commit needed). No two-build image receipt. |
 | Build-input drift | `build_component.sh` changed in `bf239ff` (direct-OT dispatch) after the 2026-09-10 gate, so `verify-approval` of `results/fc/linear_adapter_binary_approval_2026_08_07.json` and the local `bin/` provenances exit 1 ("… differs: …/build_component.sh"); the retained 08-24 application provenance predates the `051e7f0` `orca_base.h` change. The approved binary hashes still pass the gate's plan check (`RUNNER_PLAN_CHECK=1 run_full_linear_manifest_gate.sh`). Approval refresh needs owner approval (§11). |
-| Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` needs idle GPUs 1 and 2; GPUs 0 and 2 run another user's vLLM. |
+| Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` locks GPUs 1 and 2 (producers) and 3 (checker), all of which must be idle; GPU 2 is occupied. The harness never uses GPU 0. |
 | Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any further circulation; the 2026-08-10 bytes are already public via `origin/master` (`9685463`). |
 | Source push of `9bf1ab0` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-9bf1ab0.bundle` (28,794 B, sha256 `fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed`, requires `afc93c6`). |
 | Owner rulings | Authorship, credit, reuse, circulation, outreach (`results/reports/s2_professor_decision_request_2026_07_29.md`), and whether to restrict or rewrite the public `origin/master` history that holds internal-only artifacts (§14). |
