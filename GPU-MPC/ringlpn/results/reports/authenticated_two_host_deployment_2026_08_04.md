@@ -256,7 +256,7 @@ From `GPU-MPC`, with the two example paths not already present:
 ```sh
 python3 ringlpn/scripts/build_source_runtime_candidate.py \
   --work-root /tmp/ringlpn-runtime-work-afc93c6-001 \
-  --output-root /tmp/ringlpn-runtime-artifacts-afc93c6-001 \
+  --output-root "$HOME/.local/share/ringlpn/artifacts/runtime-candidate-afc93c6-003" \
   --docker-host unix:///var/run/docker.sock
 ```
 
@@ -297,7 +297,7 @@ It is the real FC producer and unchanged stock-Orca checker, not a planner-only
 stub. Its planner can be exercised without a GPU after a successful build:
 
 ```sh
-OUT=/tmp/ringlpn-runtime-artifacts-afc93c6-001
+OUT="$HOME/.local/share/ringlpn/artifacts/runtime-candidate-afc93c6-003"
 IMAGE_ID=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["image"]["local_id"])' "$OUT/candidate.json")
 docker run --rm --network none --read-only --cap-drop ALL \
   --security-opt no-new-privileges \
@@ -335,8 +335,9 @@ directory, not arbitrary extensionless data. The next fresh build succeeded:
 - FC ELF SHA-256:
   `a5630582ebcd27b5c347c1a1ea12172268a884d0fe53c15a40bdba23de0f2283`,
   byte-identical to the existing reference binary.
-- Portable archive: `/tmp/ringlpn-runtime-artifacts-afc93c6-002/runtime-candidate.docker.tar`,
-  7,754,951,680 bytes, SHA-256
+- Portable archive: `~/.local/share/ringlpn/artifacts/runtime-candidate-afc93c6/runtime-candidate.docker.tar`
+  (relocated 2026-10-06 from `/tmp/ringlpn-runtime-artifacts-afc93c6-002`,
+  SHA-256 verified), 7,754,951,680 bytes, SHA-256
   `3d6d288e555281ab2ef0d11069b9137dc9b05f66509b0a236dd9ea15841baf29`.
 
 The in-image `100x64x10`, q128/bw32 planner passed with the container

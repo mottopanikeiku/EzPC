@@ -483,9 +483,9 @@
     },
     {
       "path": "GPU-MPC/ringlpn/results/reports/authenticated_two_host_deployment_2026_08_04.md",
-      "sha256": "aacfe51e273bf8681d0129ea2f4bbe899631d0d49041fc242aee71e6f9ee7d84"
+      "sha256": "2aadaae5d7a795523548263a659aae8216e1e6bf8eb241e2079fe0c54c5e9cbe"
     }
   ],
   "secrets_policy": "SSH identities, pinned known_hosts, and private channel-authentication files remain owner-only host files; their paths may be passed in argv, but secret bytes are never placed in argv, environment variables, images, or evidence. Persistent consume-once ledgers are distinct owner-only host directories. No Podman socket is mounted into Docker; publication parties and the networkless checker run only through each host's native rootless Podman.",
-  "manifest_digest": "44a916126dc5283246e205aa9d34426d2c2d6be08ae97b530226c3cecd9df73b"
+  "manifest_digest": "4e386f4e8bf0403ab6c229a8ec7d4f7939af2b213246814e898c8a2c7c6ccfd2"
 }
