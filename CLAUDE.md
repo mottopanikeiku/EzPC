@@ -1,32 +1,35 @@
 # EzPC (fork) — orientation
 
-This fork's active work is **`GPU-MPC/ringlpn/`**: dealerless Ring-LPN
-preprocessing for Orca's linear layers. Read `GPU-MPC/ringlpn/CLAUDE.md`
-first — it is the canonical catch-up document (source map, validated claims,
-roadmap, gotchas). Results and reports are indexed in
-`GPU-MPC/ringlpn/results/README.md`.
+`AGENTS.md` is a symlink to this file. Active work is **`GPU-MPC/ringlpn/`**:
+dealerless Ring-LPN preprocessing for Orca's linear layers. Read
+`GPU-MPC/ringlpn/CLAUDE.md` first (canonical status, claims, gates, commands,
+gotchas); evidence is indexed in `GPU-MPC/ringlpn/results/README.md`.
 
-Everything else (SCI, CrypTFlow2, sytorch, the stock Orca under `GPU-MPC/`)
-is upstream EzPC/Orca code — treat as read-only unless the task says
-otherwise. The one deliberate upstream change is the feature-flagged keygen
-path in `GPU-MPC/nn/orca/fc_layer.cu` (`ORCA_RINGLPN_FC_KEYS`; flag off =
-byte-identical baseline).
+Everything else (SCI, CrypTFlow2, sytorch, stock Orca under `GPU-MPC/`) is
+upstream EzPC code: read-only unless a task says otherwise. Fork edits to
+upstream files (`git diff f24bf3e master`):
+- Ring-LPN integration points: `GPU-MPC/backend/orca_base.h` (helper
+  extraction), `GPU-MPC/experiments/orca/orca_inference.cu`
+  (`ORCA_RINGLPN_LINEAR_INTEGRATION` role 2), `GPU-MPC/nn/orca/fc_layer.cu`
+  (`ORCA_RINGLPN_FC_KEYS`). With both macros off, Orca is the stock baseline.
+- Local tooling: `GPU-MPC/Makefile` (nvcc at `/usr/local/cuda/bin`,
+  `dpf_online_keygen` target), `GPU-MPC/README.md`,
+  `GPU-MPC/experiments/orca/config.json` (per-party key dirs, loopback peers),
+  `GPU-MPC/utils/gpu_mem.cu` (pool reserve 40→25 GiB),
+  `GPU-MPC/utils/gpu_file_utils.cpp` (key-write timing print), `.gitignore`,
+  `.gitmodules` (`GPU-MPC/ringlpn/extern/NFLlib`).
 
-**Container model:** `./start` launches/attaches the `orca-dev` docker
-container, which mounts **only `GPU-MPC/` as `/home`** — so
-`GPU-MPC/ringlpn` is `/home/ringlpn` inside it. Old logs/scripts that mention
-`/home/...` paths mean the container. Host-side builds also work
-(`nvcc` at `/usr/local/cuda/bin`); container builds run as root and leave
-root-owned files (fix via docker chown; sudo needs a password). For Orca
-experiment runbooks, build pipeline, and filesystem map, see
-`GPU-MPC/docs/workspace_guide_2026_05_18.md` (its Ring-LPN sections are
-HISTORICAL — trust `GPU-MPC/ringlpn/CLAUDE.md`).
+**Container:** `./start` launches the `orca-dev` container, which mounts only
+`GPU-MPC/` as `/home` (so `/home/ringlpn` = `GPU-MPC/ringlpn`). Host builds also
+work. Container builds run as root; fix ownership with a docker chown, since
+sudo needs a password. Orca runbooks: `GPU-MPC/docs/workspace_guide_2026_05_18.md`.
 
-Repo-wide gotchas: `GPU_ARCH=89`; the root `.gitignore` ignores `*.csv` so
-result CSVs need `git add -f`. One-command re-validation of all
-ringlpn claims:
+Gotchas: shared machine (check `nvidia-smi`; never touch other users' jobs);
+`GPU_ARCH=89`; `.gitignore` rules hide `*.csv`, `*.txt`, and ringlpn `*.pdf`, so
+evidence needs `git add -f`. Full re-validation (three distinct free GPUs):
 
 ```bash
-RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 PATH=/usr/local/cuda/bin:$PATH \
-  GPU-MPC/ringlpn/scripts/run_paper_checkpoint_smoke.sh   # "ALL GATES PASS"
+cd GPU-MPC/ringlpn && RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 \
+  CUDA_VISIBLE_DEVICES=<a>,<b>,<c> PATH=/usr/local/cuda/bin:$PATH \
+  ./scripts/run_paper_checkpoint_smoke.sh   # "[paper-smoke] ALL GATES PASS"
 ```
