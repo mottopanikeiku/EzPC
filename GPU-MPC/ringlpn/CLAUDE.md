@@ -261,8 +261,8 @@ construction, sockets, and authentication. Never call it end-to-end.
 ## 10. Environment gotchas
 
 - Shared server, no sudo. Docker group membership is root-equivalent: use it only for ephemeral
-  containers and to chown your own files (`docker run --rm -v <dir>:/x ubuntu:22.04 chown -R
-  1013:1014 /x/...`). Never touch other users' files or processes (e.g. vLLM on GPUs 0/2).
+  containers and to chown your own files (`docker run --rm -v <dir>:/x ubuntu:22.04 chown -R 1013:1014 /x/...`);
+  never touch other users' files or processes (e.g. vLLM on GPUs 0/2).
 - `nvcc` is in `/usr/local/cuda/bin` (not on `PATH`). `GPU_ARCH=89`, 4× RTX 5000 Ada.
 - Ephemeral ports are 32768–60999; runners use 20400–29761. A full-graph run at base 57400 lost
   a bind; a consume-once run must restart fresh, never resume. Role 2 inherits `GpuPeer` port
