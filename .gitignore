@@ -26,3 +26,7 @@ GPU-MPC/experiments/sigma/sigma_offline_online
 
 # Orca test binaries built by make orca_* targets
 GPU-MPC/tests/nn/orca/fc
+# Built by `make dpf_online_keygen` (GPU-MPC/scripts/run_dpf_online_keygen_sweep.py)
+GPU-MPC/tests/fss/dpf_online_keygen
+# Bytecode from importing the experiments helpers
+GPU-MPC/experiments/__pycache__/
