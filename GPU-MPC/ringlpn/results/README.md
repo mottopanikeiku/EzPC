@@ -56,11 +56,11 @@ re-hash bound files; the bound-digest check does.
 | `orca_linear_application_integration_2026_08_24.md` | 08-24 | bound | Terminal Orca FC/Conv2D integration design, verification, hashes |
 | `dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex` + `.pdf` | 08-17 | bound | Live internal/advisor manuscript, 36 pages; not a submission |
 | `dealerless_orca_ringlpn_proposal_v2_2026_07_10.tex` + `.pdf` | 07-10 | historical | v2.16 predecessor; named by the 2026-08-04 manifest in git history |
-| `regular_dmpf_design_no_go_2026_08_06.md` | 08-06 | bound, negative | Specialized regular-DMPF design NO-GO; selects the full-linear route |
+| `regular_dmpf_design_no_go_2026_08_06.md` | 09-22 | bound, negative | Specialized regular-DMPF design NO-GO; selects the full-linear route; 09-22 direct-OT prerequisite note |
 | `full_linear_layer_systems_plan_2026_08_06.md` | 08-06 | historical | Plan that led to the 21-record/full-graph checkpoint (kept in place: a bound report links it) |
 | `dealerless_orca_fc_security_contract_2026_07_29.md` | 09-22 | bound | Forward security contract, simulators, P-* gate table, source map |
-| `structured_attack_audit_2026_08_04.md` | 08-10 | bound | Attack inventory; projection law, regular-ISD, hybrid-RSD rebound (`fbdb56f8…`, `cbcedaf6…`/`1f671d94…`); no pin |
-| `authenticated_two_host_deployment_2026_08_04.md` | 09-11 | bound | Two-host deployment contract; not executed |
+| `structured_attack_audit_2026_08_04.md` | 09-22 | bound | Attack inventory; projection law, regular-ISD, hybrid-RSD rebound (`fbdb56f8…`, `cbcedaf6…`/`1f671d94…`); 09-22 ideal-leaf/lifetime supplement; no pin |
+| `authenticated_two_host_deployment_2026_08_04.md` | 10-06 | bound | Two-host deployment contract; 09-22 runtime-candidate supplement; artifact path relocated 10-06 (`c097af9`); not executed |
 | `publication_portfolio_2026_08_04.md` | 08-10 | live | Systems vs cryptography tracks and their blocking gates |
 | `closest_dmpf_baseline_audit_2026_08_04.md` | 08-04 | live | Reverse Cuckoo/libOTe as closest distributed baseline; noncomparability rules |
 | `libote_reverse_cuckoo_stock_baseline_2026_08_04.md` | 08-04 | negative | Stock libOTe run: 12.43 s, 22,939,444 KiB RSS; no ratio |
@@ -70,7 +70,7 @@ re-hash bound files; the bound-digest check does.
 | `s2_parameter_novelty_provenance_audit_2026_07_29.md` | 08-04 | live, negative | S2 hard stop: invalid estimator calls, `n=2^17,c=4,t=34` NO-GO, no pin |
 | `s2_architecture_comparison_2026_07_29.md` | 07-29 | historical | Encoder microbenchmarks (275×, 0.79×, 2.29×); a bound report cites it |
 | `s2_professor_decision_request_2026_07_29.md` | 07-29 | historical | Advisor questions; the provenance/credit questions remain open |
-| `publication_readiness_plan_2026_07_21.md` | 09-11 | live | S1–S10 and M1–M6 roadmap and gates |
+| `publication_readiness_plan_2026_07_21.md` | 09-22 | live | S1–S10 and M1–M6 roadmap and gates |
 | `two_party_dpf_transport_memo_2026_07_29.md` | 07-29 | historical | SCI/IKNP/Gilboa transport component evidence |
 | `dealerless_ole_two_party_keys_memo_2026_07_29.md` | 07-29 | historical | Paired-record two-process SPFSS key evidence |
 | `distributed_dpf_keygen_memo_2026_07_21.md` | 07-21 | historical | Ideal-OT host prototype, 2,432-tree controls |
