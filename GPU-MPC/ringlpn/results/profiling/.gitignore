@@ -1,0 +1,3 @@
+# Raw VTune result directories (run_vtune_*.sh) stay local; only the readable
+# text summaries in this directory are tracked.
+/*/
