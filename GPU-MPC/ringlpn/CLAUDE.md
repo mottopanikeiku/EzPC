@@ -318,11 +318,18 @@ it end-to-end.
 
 ## 11. Working rules
 
-Hash-bound files are byte-immutable and stay in place: everything in the
-manifest's `required_tracked_evidence`, files pinned by other JSON (approvals,
-checkpoint manifests, seals, plans), and all of
-`results/graph/resnet18_full_graph_checkpoint_2026_08_10/`. Never edit a digest
-to match a changed artifact; regenerate and rebind instead.
+Hash-bound files stay in place: everything in the manifest's
+`required_tracked_evidence`, the v2.17 TeX/PDF pinned by
+`build.publication_*_sha256`, files pinned by other JSON (approvals, checkpoint
+manifests, seals, plans), and all of
+`results/graph/resnet18_full_graph_checkpoint_2026_08_10/` (byte-immutable).
+Never edit a digest to match a changed artifact. A deliberate edit to a bound
+report (as in `c097af9`) must, in the same commit, rebind its `sha256` and the
+`manifest_digest` (SHA-256 of the manifest minus that key, `json.dumps` with
+`sort_keys=True`, separators `(",", ":")`, ASCII) and pass both §8 checks.
+Refresh `results/fc/linear_adapter_binary_approval_2026_08_07.json` or any
+other approval only with explicit owner approval; until then adapter
+source/build drift makes the canonical gate fail by design.
 
 **House rules.**
 1. New artifact = source + build script + run script + CSV/MD/log in its
@@ -414,7 +421,8 @@ Before ending any session that changed code, results, or plans:
 2. Add or update the row in `results/README.md`.
 3. Write or refresh a dated memo in `results/reports/` with reproduction commands.
 4. Banner superseded documents (`> **HISTORICAL …** superseded by CLAUDE.md`)
-   or move unbound ones to `results/archive/reports/`; never edit hash-bound bytes.
+   or move unbound ones to `results/archive/reports/`; never edit hash-bound
+   bytes outside the §11 rebind rule.
 5. Never let two live documents disagree: the newer gate-verified statement
    wins; fix or banner the other in the same commit.
 6. `results/outreach/`, `results/archive/`, and bannered reports are

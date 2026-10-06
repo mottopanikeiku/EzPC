@@ -6,7 +6,7 @@ commands are in [`../README.md`](../README.md).
 
 Status values:
 - **live**: current evidence.
-- **bound**: live and hash-bound; never edit the bytes.
+- **bound**: live and hash-bound; edit only with a same-commit rebind (`../CLAUDE.md` §11).
 - **historical**: correct for its date, superseded since.
 - **negative**: a measured or audited NO-GO.
 
