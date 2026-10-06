@@ -70,7 +70,7 @@ first.
 | `scripts/run_two_party_dpf_keygen.sh`, `scripts/run_two_party_gpu_dpf.sh` | `results/dpf/` |
 | `scripts/run_full_linear_manifest_gate.sh` (needs `linear-fc`/`linear-conv` built) | checks the 21-layer manifests (no output) |
 | `scripts/run_resnet18_full_graph.sh ABS_OUT ABS_STATE` | external output root |
-| `P0_GPU=<g> P1_GPU=<g> scripts/run_orca_linear_application.sh` | `results/application/` |
+| `P0_GPU=<g> P1_GPU=<g> scripts/run_orca_linear_application.sh` (rebuilds unless `ORCA_LINEAR_SKIP_BUILD=1`) | stdout only; `results/application/*_2026_08_24.*` are retained captures |
 
 The full-graph wrapper is serial by default. To opt into parallel lanes, set
 `LINEAR_LANES` to comma-separated `P0_GPU:P1_GPU:CHECK_GPU:FIRST-LAST` lanes
@@ -136,7 +136,7 @@ two-process path.
 | `scripts/setup_nfl.sh` (inits pinned `extern/NFLlib`, builds it; needs cmake, GMP, MPFR) → `scripts/build_bench.sh` → `scripts/run_sweep.sh` | `results/ntt/ntt_cpu*` |
 | `scripts/build_cuda_bench.sh` → `scripts/run_cuda_sweep.sh` (`QBITS=32\|64\|128`), `scripts/run_cuda_single.sh` | `results/ntt/ntt_gpu_q*` |
 | `scripts/build_cuda_bench_cheddar.sh` (same source, binary `bin/bench_ntt_cuda_cheddar`) | manual checks |
-| `ALLOW_LEGACY_CUDA_NTT=1 scripts/build_cuda_bench_legacy.sh` → `scripts/run_cuda_sweep_legacy.sh` | `results/ntt/ntt_gpu_q32_legacy*` |
+| `ALLOW_LEGACY_CUDA_NTT=1 scripts/build_cuda_bench_legacy.sh` → `ALLOW_LEGACY_CUDA_NTT=1 scripts/run_cuda_sweep_legacy.sh` | `results/ntt/ntt_gpu_q32_legacy*` |
 | `scripts/build_ntt_gpu_ntt_baseline.sh` → `scripts/run_ntt_baseline_compare.sh` (needs `GPU_NTT_HOME`) | `results/ntt/ntt_gpu_ntt_baseline_compare.*` |
 | `scripts/build_vole_bench.sh` → `scripts/run_vole_sweep.sh` | `results/vole/` |
 | `scripts/build_ole_cuda_bench.sh` → `SMOKE=1 [NOISE=regular] scripts/run_ole_sweep.sh`; `scripts/run_ole_two_party_keys.sh` | `results/ole/` |
@@ -147,7 +147,7 @@ two-process path.
 | `scripts/run_native_ring_pcg_baseline.sh` | `results/pcg/` |
 | `scripts/run_reverse_cuckoo_p0_adapter.sh` | `results/reports/reverse_cuckoo_p0_baseline_2026_08_04.json` |
 | `scripts/run_vtune_hotspots.sh`, `scripts/run_vtune_memory.sh` (needs VTune) | `results/profiling/` |
-| `make GPU_ARCH=89 dpf_online_keygen` (from `GPU-MPC/`) → `python3 scripts/run_dpf_online_keygen_sweep.py` | `results/dpf/dpf_online_keygen_*` |
+| `python3 ../scripts/run_dpf_online_keygen_sweep.py` (runs `make dpf_online_keygen` in `GPU-MPC/` itself) | `results/dpf_online_keygen_bin16_chunk8192.{csv,md}` at the top of `results/`; retained copies live in `results/dpf/` |
 
 `bench_ntt_cuda` accepts `--n`, `--qbits 30|32|64|128`, `--batch`, `--iters`,
 and `--warmup`. Requested q32/q64/q128 map to actual 30/62/124 bits; q128

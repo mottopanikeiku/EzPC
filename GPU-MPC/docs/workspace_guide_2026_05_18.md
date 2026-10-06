@@ -434,8 +434,8 @@ If the task mentions Ring-LPN, NTT, SPFSS, OLE, or trusted-dealer removal for li
 If the task mentions DPF, online key generation, partial keys, or memory-footprint reduction:
 
 - start with [GPU-MPC/tests/fss/dpf_online_keygen_bench.cu](../tests/fss/dpf_online_keygen_bench.cu)
-- then read [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](../scripts/run_dpf_online_keygen_sweep.py)
-- then read [GPU-MPC/ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.md](../ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.md)
+- then read [GPU-MPC/scripts/run_dpf_online_keygen_sweep.py](../scripts/run_dpf_online_keygen_sweep.py) (it runs `make dpf_online_keygen` itself and writes to the top of `GPU-MPC/ringlpn/results/`)
+- then read the retained copy [GPU-MPC/ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.md](../ringlpn/results/dpf/dpf_online_keygen_bin16_chunk8192.md)
 - historical abstract context: [GPU-MPC/ringlpn/results/outreach/gpu_fss_memory_efficiency_outline.md](../ringlpn/results/outreach/gpu_fss_memory_efficiency_outline.md)
 
 If the task mentions Sigma:
