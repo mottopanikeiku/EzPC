@@ -141,6 +141,7 @@ Gate IDs follow §8 of the security contract.
 | Nonlinear dealer | TEST-ONLY trusted adapter needs a reviewed dealerless DCF/DMPF replacement. |
 | Two-host deployment | Not executed. Missing: authorized distinct host and identities, native rootless Podman with subuid/subgid, block-backed ext4/xfs ledger mounts (tmpfs rejected), annotated tag and source authorization, immutable runtime digest. Manifest fields are null by design. |
 | Clean-clone reproduction | Not executed. `reproduce_publication.sh check`/`local-smoke` fail closed until annotated tag `ringlpn-publication-candidate-v1` (manifest `source_release.required_annotated_tag`) points at HEAD with a matching `GPU-MPC/ringlpn` tree; no such tag exists (owner-approved release commit needed). No two-build image receipt. |
+| Build-input drift | `build_component.sh` changed in `bf239ff` (direct-OT dispatch) after the 2026-09-10 gate, so `verify-approval` of `results/fc/linear_adapter_binary_approval_2026_08_07.json` and the local `bin/` provenances exit 1 ("… differs: …/build_component.sh"); the retained 08-24 application provenance predates the `051e7f0` `orca_base.h` change. The approved binary hashes still pass the gate's plan check (`RUNNER_PLAN_CHECK=1 run_full_linear_manifest_gate.sh`). Approval refresh needs owner approval (§11). |
 | Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` needs idle GPUs 1 and 2; GPUs 0 and 2 run another user's vLLM. |
 | Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any further circulation; the 2026-08-10 bytes are already public via `origin/master` (`9685463`). |
 | Source push of `9bf1ab0` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-9bf1ab0.bundle` (28,794 B, sha256 `fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed`, requires `afc93c6`). |
@@ -211,28 +212,31 @@ RUN_GPU_SMOKE=1 REQUIRE_GPU_SMOKE=1 CUDA_VISIBLE_DEVICES=<a> \
 # (now 1 and 3: vLLM holds 0 and 2), add RUN_FULL_GRAPH_SMOKE=0: every stage but
 # the full graph runs, ending "full ResNet18 graph skipped; GPU component gates pass".
 
-# Focused runners
+# Focused runners (FC always rebuilds its adapter, so nvcc must be on PATH;
+# FC/Conv default P0_GPU=1 P1_GPU=3; truncation/convert runners need a prior build)
+export PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89
 ./scripts/run_two_party_fc_preprocess.sh
 ./scripts/run_two_party_conv_preprocess.sh
-./scripts/run_secure_truncate_test.sh
-./scripts/run_full_linear_manifest_gate.sh
+./scripts/build_component.sh secure-truncate && ./scripts/run_secure_truncate_test.sh
+./scripts/run_full_linear_manifest_gate.sh   # needs bin/test_two_party_{fc,conv}_preprocess; CPU, writes nothing
 P0_GPU=<a> P1_GPU=<b> CHECK_GPU=<c> TRUSTED_GPU=<b> LINEAR_LANES='<a>:<b>:<c>:22000-22085' \
   ./scripts/run_resnet18_full_graph.sh /abs/new-out /abs/new-state
-#   defaults 0/1/2, trusted 1; optional lanes P0:P1:CHECK:PORTS, each 3 distinct GPUs, ≥86 ports
+#   defaults 0/1/2, trusted 1; optional lanes P0:P1:CHECK:PORTS, each 3 distinct GPUs,
+#   ≥86 ports. A stale bin/ graph provenance aborts it: rebuild resnet18-full-graph first.
 
-# Terminal Orca application, then macro-off stock build
-PATH=/usr/local/cuda/bin:$PATH GPU_ARCH=89 ./scripts/build_component.sh orca-linear-application
-P0_GPU=<gpu> P1_GPU=<gpu> PATH=/usr/local/cuda/bin:$PATH ./scripts/run_orca_linear_application.sh
-(cd .. && PATH=/usr/local/cuda/bin:$PATH make GPU_ARCH=89 orca_inference)
+# Terminal Orca application (rebuilds unless ORCA_LINEAR_SKIP_BUILD=1; GPUs default 0/1;
+# prints to stdout), then the macro-off stock build
+P0_GPU=<a> P1_GPU=<b> ./scripts/run_orca_linear_application.sh
+(cd .. && make GPU_ARCH=89 orca_inference)
 
-# Provenance verification
+# Provenance verification (2026-10-06: all three exit 1, see §6 "Build-input drift")
+python3 scripts/linear_adapter_build_provenance.py verify-approval --repo-root ../.. \
+  --ringlpn-root . --approval results/fc/linear_adapter_binary_approval_2026_08_07.json
 python3 scripts/orca_linear_application_build_provenance.py verify --repo-root ../.. \
   --cmake-build build/graph-libraries \
   --manifest results/application/orca_linear_application_build_provenance_2026_08_24.json
-python3 scripts/linear_adapter_build_provenance.py verify-approval --repo-root ../.. \
-  --ringlpn-root . --approval results/fc/linear_adapter_binary_approval_2026_08_07.json
-python3 scripts/graph_build_provenance.py verify --repo-root ../.. \
-  --cmake-build build/graph-libraries --manifest bin/resnet18_full_graph_build_provenance.json
+python3 scripts/graph_build_provenance.py verify --repo-root ../.. --cmake-build \
+  build/graph-libraries --manifest bin/resnet18_full_graph_build_provenance.json  # ignored output of the resnet18-full-graph build
 
 # CPU-only audits (from GPU-MPC/)
 python3 ringlpn/scripts/audit_dpf_leaf_loss.py --workload 8192,2,8,2,regular,1,1 \

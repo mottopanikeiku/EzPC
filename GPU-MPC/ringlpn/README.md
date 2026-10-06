@@ -53,18 +53,22 @@ The canonical gate command, with its GPU selectors, is in
 full-graph stage, takes about 1.5 h (2026-09-10: 5,228 s), consumes fresh
 correlation namespaces, and regenerates tracked results.
 
-Without `RUN_GPU_SMOKE=1` the gate runs host checks only: manifests and
-contracts, private-file and SHAKE controls, host OLE, bridge, conversion,
-truncation, and DPF keygen.
+Without `RUN_GPU_SMOKE=1` the gate runs host checks only (shell syntax, 21-layer
+manifest gate, private-file, consume-once ledger and SHAKE controls, host OLE,
+Zp bridge, conversion, truncation, host and two-process DPF keygen), rewrites
+their tracked results, and ends with
+`[paper-smoke] HOST GATES PASS (GPU smoke skipped)`. Its manifest gate needs
+`bin/test_two_party_{fc,conv}_preprocess`: build `linear-fc` and `linear-conv`
+first.
 
 | Runner | Output |
 |---|---|
-| `scripts/run_two_party_fc_preprocess.sh` | `results/fc/two_party_fc_preprocess_*` |
+| `scripts/run_two_party_fc_preprocess.sh` (rebuilds its adapter; nvcc on `PATH`) | `results/fc/two_party_fc_preprocess_*` |
 | `scripts/run_two_party_conv_preprocess.sh` | `results/conv/` |
 | `scripts/run_two_party_fc_model_scale.sh` | `results/fc/two_party_fc_model_scale_*` |
-| `scripts/run_secure_convert_test.sh`, `scripts/run_secure_truncate_test.sh` | `results/secure_convert/`, `results/secure_truncate/` |
+| `scripts/build_component.sh secure-convert` → `scripts/run_secure_convert_test.sh`; `scripts/build_component.sh secure-truncate` → `scripts/run_secure_truncate_test.sh` | `results/secure_convert/`, `results/secure_truncate/` |
 | `scripts/run_two_party_dpf_keygen.sh`, `scripts/run_two_party_gpu_dpf.sh` | `results/dpf/` |
-| `scripts/run_full_linear_manifest_gate.sh` | checks the 21-layer manifests (no output) |
+| `scripts/run_full_linear_manifest_gate.sh` (needs `linear-fc`/`linear-conv` built) | checks the 21-layer manifests (no output) |
 | `scripts/run_resnet18_full_graph.sh ABS_OUT ABS_STATE` | external output root |
 | `P0_GPU=<g> P1_GPU=<g> scripts/run_orca_linear_application.sh` | `results/application/` |
 
