@@ -90,22 +90,19 @@ provenance is in `../extern/Cheddar_PROVENANCE.txt`.
 - Every run writes `.csv` (data), usually `.md` (summary), and `.log` (raw
   output). `validation` and `*_contract` columns must read `pass`; suites exit
   non-zero on any failure.
-- The root `.gitignore` ignores `*.csv` and `*.txt`, and `ringlpn/.gitignore` ignores `*.pdf`, so add evidence
-  with `git add -f`.
+- Root `.gitignore` ignores `*.csv`/`*.txt` and `ringlpn/.gitignore` ignores `*.pdf`: add evidence with `git add -f`.
 - Raw private records, states, ledgers, shares, and auth files are never
   evidence and are ignored.
-- Staleness: superseded documents carry a `> **HISTORICAL …**` banner, or
-  they move to `archive/reports/` when nothing bound links them.
-  `outreach/` and `archive/` are wholly historical. Banner or archive in the
-  same commit that supersedes a document.
+- Staleness: superseded documents carry a `> **HISTORICAL …**` banner, or move
+  to `archive/reports/` when nothing bound links them, in the superseding commit.
+  `outreach/` and `archive/` are wholly historical.
 
 ## Clean-clone and two-host reproduction
 
-The clean-clone configuration is
-`../scripts/publication_environment_manifest_2026_08_10.json` (schema
-`ringlpn-publication-environment/v4`) plus `../scripts/Dockerfile.reproduction`.
-The dispatcher is `../scripts/reproduce_publication.sh`, which fails closed.
-The schema-v1 2026-08-04 manifest was removed and survives in git history.
+The clean-clone configuration is `../scripts/publication_environment_manifest_2026_08_10.json`
+(schema `ringlpn-publication-environment/v4`) plus `../scripts/Dockerfile.reproduction`.
+The dispatcher `../scripts/reproduce_publication.sh` fails closed. The schema-v1
+2026-08-04 manifest was removed and survives in git history.
 
 The Docker image serves only clean-clone `check`, `local-smoke`, and build
 gates. It holds no source or credentials and never gets a Podman socket. The
