@@ -149,7 +149,17 @@ rootless Podman, never `docker run`. It is blocked: annotated-tag/operator
 source authorization and the immutable runtime digest are unset. Evidence,
 local-smoke evidence, and the coordinator and party ledgers must be
 owner-only, pairwise non-nested, block-backed mounts. Ledgers are retained and
-never published or rolled back. Once the release prerequisites exist:
+never published or rolled back.
+
+`RINGLPN_SOURCE_AUTHORIZATION` names an operator-supplied
+`ringlpn-source-authorization/v1` JSON file: regular, outside the clone, on a
+read-only mount, with exactly the keys `schema`, `tag`
+(`ringlpn-publication-candidate-v1`), `tag_object_id`, `commit`, and
+`authorization_digest` = SHA-256 of `json.dumps` of the other four fields with
+`sort_keys=True` and separators `(",", ":")`. `tag_object_id` and `commit` must
+match the annotated tag at a clean HEAD
+(`../scripts/host_publication_coordinator.py:265-294`). It is a consistency
+binding, not a verified signer attestation. Once the release prerequisites exist:
 
 ```bash
 SESSION="$(date -u +%Y%m%d%H%M%S)"
