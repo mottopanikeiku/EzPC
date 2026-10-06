@@ -273,9 +273,21 @@ Direct-OT baseline, runtime candidate, and component builds: `README.md`.
 Clean-clone and two-host reproduction: `results/README.md`.
 Authorized source push (public-safe branch only, never `master`):
 `git push origin refs/heads/ringlpn/clinical-review-2026-09-10:refs/heads/ringlpn/clinical-review-2026-09-10`.
-TeX rebuild: two-pass `pdflatex` in `/work/EzPC/GPU-MPC/ringlpn/results/reports`
-inside `ringlpn-repro:2026-08-10` (repo mounted read-write at `/work/EzPC`);
-delete `.aux/.log/.out` afterwards, inspect every page, refresh digests.
+TeX rebuild (overrides the image's dispatcher entrypoint and uid 65532; the
+image sets `SOURCE_DATE_EPOCH`). On 2026-10-06 two passes on a scratch copy of
+the v2.17 `.tex` reproduced the pinned PDF sha `f0544ee1…` exactly:
+
+```bash
+T="$(mktemp -d)"; cp GPU-MPC/ringlpn/results/reports/dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex "$T/"  # repo root
+for pass in 1 2; do docker run --rm --network=none --user "$(id -u):$(id -g)" -e HOME=/tmp \
+  -v "$T:/work/t" -w /work/t --entrypoint pdflatex ringlpn-repro:2026-08-10 -interaction=nonstopmode \
+  -halt-on-error dealerless_orca_ringlpn_proposal_v2_17_2026_08_17.tex >/dev/null || break; done
+sha256sum "$T"/*.pdf; rm -rf "$T"
+```
+
+For a deliberate manuscript change, edit the `.tex`, rebuild, inspect every
+page, copy the PDF back, and rebind both `build.publication_*_sha256` and the
+PDF's `required_tracked_evidence` entry under the §11 rule.
 
 ## 9. Perf anchors (RTX 5000 Ada; diagnostic unless stated)
 
