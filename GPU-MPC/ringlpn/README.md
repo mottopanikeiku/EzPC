@@ -109,14 +109,17 @@ python3 ringlpn/scripts/run_direct_ot_fc_baseline.py --mode direct-only \
 `scripts/build_source_runtime_candidate.py` fetches public commit
 `afc93c6fb94af01239f51b06d5c29a40c6fe7d84` and its CUTLASS gitlink, admits
 only source, licenses, and the hashed recipe, and builds the FC producer
-inside `scripts/Dockerfile.runtime`. It requires fresh external work and
-output roots. The output is a local image plus a Docker-save archive, not a
-registry publication. Keep outputs outside `/tmp`, which is wiped at boot.
+inside `scripts/Dockerfile.runtime`. The output is a local image plus a
+Docker-save archive, not a registry publication. Roots must be absolute, new,
+disjoint, and outside the repo, with existing parents; keep them outside `/tmp`.
 
 ```bash
+cd "$(git rev-parse --show-toplevel)/GPU-MPC"
+STAMP="$(date -u +%Y%m%dT%H%M%S)"
+install -d -m 700 ~/.local/share/ringlpn/work
 python3 ringlpn/scripts/build_source_runtime_candidate.py \
-  --work-root ~/.local/share/ringlpn/work/runtime-new \
-  --output-root ~/.local/share/ringlpn/artifacts/runtime-new
+  --work-root ~/.local/share/ringlpn/work/runtime-$STAMP \
+  --output-root ~/.local/share/ringlpn/artifacts/runtime-$STAMP
 ```
 
 The retained candidate is in
