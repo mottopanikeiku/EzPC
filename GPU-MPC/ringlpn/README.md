@@ -135,7 +135,7 @@ two-process path.
 
 | Build → run | Results |
 |---|---|
-| `scripts/setup_nfl.sh` (inits pinned `extern/NFLlib`, builds it; needs cmake, GMP, MPFR) → `scripts/build_bench.sh` → `scripts/run_sweep.sh` | `results/ntt/ntt_cpu*` |
+| `scripts/setup_nfl.sh` (inits pinned `extern/NFLlib` and builds it; exits 0 if already built, `FORCE=1` rebuilds; needs git, cmake, make, C++, GMP/MPFR headers, e.g. inside `ringlpn-repro:2026-08-10`) → `scripts/build_bench.sh` → `scripts/run_sweep.sh` | `results/ntt/ntt_cpu*` |
 | `scripts/build_cuda_bench.sh` → `scripts/run_cuda_sweep.sh` (`QBITS=32\|64\|128`), `scripts/run_cuda_single.sh` | `results/ntt/ntt_gpu_q*` |
 | `scripts/build_cuda_bench_cheddar.sh` (same source, binary `bin/bench_ntt_cuda_cheddar`) | manual checks |
 | `ALLOW_LEGACY_CUDA_NTT=1 scripts/build_cuda_bench_legacy.sh` → `ALLOW_LEGACY_CUDA_NTT=1 scripts/run_cuda_sweep_legacy.sh` | `results/ntt/ntt_gpu_q32_legacy*` |

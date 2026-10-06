@@ -25,7 +25,7 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
   `extern/Cheddar_MIT_LICENSE.txt`). GPU-NTT is a cited external baseline.
 - The separate private GPU-PCG/PIM stream must not be imported or claimed.
 
-## 2. Status snapshot (2026-10-06; last engineering commit `bf239ff`, then documentation/evidence hygiene commits)
+## 2. Status snapshot (2026-10-06; last engineering commit `bf239ff`, then documentation, evidence, and build-script hygiene commits)
 
 - The live source is trusted-dealer-free in the stated random-oracle model for
   forward FC/Conv2D at feasibility parameters: two OS processes on distinct
@@ -316,14 +316,20 @@ it end-to-end.
   application runs.
 - Never call Orca's eager 25 GiB `initGPUMemPool()` from focused Ring-LPN
   executables.
-- `bench_ntt` (CPU NFLlib) needs libmpfr-dev; install it only inside an
-  ephemeral container.
+- `scripts/setup_nfl.sh` exits 0 when NFLlib is built at its pinned commit
+  (`FORCE=1` rebuilds). A fresh build needs git, cmake, make, a C++ compiler,
+  and GMP/MPFR headers (absent on this host: use `ringlpn-repro:2026-08-10`). It
+  refuses a `build/` cache configured for another source path (e.g. the
+  container's `/home/ringlpn`): move `extern/NFLlib/build` aside and rerun.
 - `extern/NFLlib` is a submodule pinned at `quarkslab/NFLlib@5cf40ed`.
   `scripts/setup_nfl.sh` builds it in-tree, so `git status` shows untracked
   content (`?`) there, as for `GPU-MPC/ext/cutlass`; both gitlinks are
   unchanged: do not commit, clean, or re-pin them. The mnist/weights submodules
   carry pre-existing internal staged renames (status `m`): leave them.
-- Root `.gitignore` hides `*.csv`/`*.txt`; `ringlpn/.gitignore` hides `*.pdf`: use `git add -f`.
+- Root `.gitignore` hides `*.csv`/`*.txt`; `ringlpn/.gitignore` hides `*.pdf`
+  and re-allows `src/emp_silent_bridge_build/CMakeLists.txt` (tracked since
+  `a458db2`, so `build_component.sh emp-silent-bridge` works from a clean
+  checkout): add evidence with `git add -f`.
 - The local `ringlpn-repro:2026-08-10` tag is not publication provenance. In
   Debian containers `/bin/sh` is dash (no brace expansion). Inside the
   `orca-dev` container `/home/ringlpn` = `GPU-MPC/ringlpn`.
