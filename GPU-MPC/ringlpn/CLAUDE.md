@@ -43,9 +43,9 @@ stock keys consumed by the **unchanged** `gpuMatmulBeaver` / `gpuConv2DBeaver`.
 - `origin` is public: internal history through `9685463` (2026-09-11),
   including the internal-only full-graph checkpoint, is on `origin/master` (§14).
 - Public source branch `ringlpn/clinical-review-2026-09-10`: the remote is at
-  `afc93c6`. Source-only commit `9bf1ab0` is committed locally and bundled but
-  **not pushed**: pushes stall in the VS Code askpass username prompt and no
-  GitHub SSH key is configured.
+  `afc93c6`. Local `9bf1ab0` plus 12 source-cleanup mirror commits (tip
+  `ac711e2`) are bundled but **not pushed**: pushes stall in the VS Code
+  askpass username prompt and no GitHub SSH key is configured.
 - The fresh Ring-LPN vs direct-OT comparison is **blocked**: `--mode compare`
   needs idle GPUs 1, 2 and 3, and GPU 2 is occupied by another user's process
   (2026-09-22 record; vLLM on GPUs 0 and 2 as of 2026-10-06).
@@ -147,7 +147,7 @@ Gate IDs follow §8 of the security contract.
 | Build-input drift | `build_component.sh` changed in `bf239ff` (direct-OT dispatch) after the 2026-09-10 gate, so `verify-approval` of `results/fc/linear_adapter_binary_approval_2026_08_07.json` and the local `bin/` provenances exit 1 ("… differs: …/build_component.sh"); the retained 08-24 application provenance predates the `051e7f0` `orca_base.h` change. The approved binary hashes still pass the gate's plan check (`RUNNER_PLAN_CHECK=1 run_full_linear_manifest_gate.sh`). Approval refresh needs owner approval (§11). |
 | Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` locks GPUs 1 and 2 (producers) and 3 (checker), all of which must be idle; GPU 2 is occupied. The harness never uses GPU 0. |
 | Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any further circulation; the 2026-08-10 bytes are already public via `origin/master` (`9685463`). |
-| Source push of `9bf1ab0` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-9bf1ab0.bundle` (28,794 B, sha256 `fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed`, requires `afc93c6`). |
+| Source push of `afc93c6..ac711e2` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-ac711e2.bundle` (36,664 B, sha256 `0c72fca5a0c6576645d6888cbd823ebcd4340407431c32142daef12d34562622`, requires `afc93c6`). |
 | Owner rulings | Authorship, credit, reuse, circulation, outreach (`results/reports/s2_professor_decision_request_2026_07_29.md`), and whether to restrict or rewrite the public `origin/master` history that holds internal-only artifacts (§14). |
 
 ## 7. Source map (`src/`)
@@ -435,10 +435,13 @@ get new commits and rerun the affected gate. Never push internal `master`.
   Later commits are unpublished. Never push `master` again; restricting or
   rewriting the public history is an owner ruling (§6).
 - Public branch history: `1433e0a` base → `a1f006a` → `4a2e29a` → `afc93c6`
-  (published, remote-verified) → `9bf1ab0` (local only).
-- Bundles: `~/.local/share/ringlpn/artifacts/source-bundles/` holds
+  (published, remote-verified 2026-10-06) → `9bf1ab0` → 12 source-cleanup
+  mirror commits ending at `ac711e2` (all local only).
+- Bundles in `~/.local/share/ringlpn/artifacts/source-bundles/`:
   `ringlpn-source-audit-afc93c6.bundle` (sha256 `eb6d7d98…`, requires
-  `4a2e29a`) and `ringlpn-source-9bf1ab0.bundle` (requires `afc93c6`).
+  `4a2e29a`), `ringlpn-source-9bf1ab0.bundle`, and
+  `ringlpn-source-ac711e2.bundle` (36,664 B, sha256 `0c72fca5…`); the last two
+  require `afc93c6`.
 - Recent commits use Git author `mottopanikeiku`; the paper names Alp
   `<fcetin@hawk.iit.edu>` by user direction. Authorship and credit remain
   owner rulings.
