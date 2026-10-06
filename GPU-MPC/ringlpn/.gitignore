@@ -47,6 +47,9 @@ scripts/__pycache__/
 .deps/
 extern/NFLlib/
 
+# -- Build sources hidden by the top-level `*.txt` rule --
+!src/emp_silent_bridge_build/CMakeLists.txt
+
 # -- Regenerable live-run working directories and private party records --
 results/fc/two_party_fc_work_*/
 results/fc/two_party_fc_model_scale_work_*/
