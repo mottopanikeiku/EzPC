@@ -1,25 +1,15 @@
 #!/usr/bin/env bash
+# Initialize the pinned extern/NFLlib submodule and build the static library
+# that build_bench.sh links (extern/NFLlib/build/libnfllib_static.a).
+# Prerequisites (not installed here): git, cmake, make, a C++ compiler, and the
+# GMP/MPFR development headers.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 NFL_DIR="$BASE_DIR/extern/NFLlib"
 
-if [[ -d "$NFL_DIR" ]]; then
-  echo "NFLlib already exists at $NFL_DIR"
-  exit 0
-fi
+git -C "$BASE_DIR" submodule update --init -- extern/NFLlib
 
-mkdir -p "$BASE_DIR/extern"
-cd "$BASE_DIR/extern"
-
-git clone https://github.com/quarkslab/NFLlib.git
-cd NFLlib
-
-apt-get update
-apt-get install -y cmake libgmp-dev libmpfr-dev
-
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DNFL_OPTIMIZED=ON
-make -j"$(nproc)"
+cmake -S "$NFL_DIR" -B "$NFL_DIR/build" -DCMAKE_BUILD_TYPE=Release -DNFL_OPTIMIZED=ON
+cmake --build "$NFL_DIR/build" --target nfllib_static -j"$(nproc)"
