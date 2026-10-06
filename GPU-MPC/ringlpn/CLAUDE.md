@@ -139,7 +139,7 @@ Gate IDs follow §8 of the security contract.
 | P-TOPO | Training-state extension. |
 | Nonlinear dealer | TEST-ONLY trusted adapter needs a reviewed dealerless DCF/DMPF replacement. |
 | Two-host deployment | Not executed. Missing: authorized distinct host and identities, native rootless Podman with subuid/subgid, block-backed ext4/xfs ledger mounts (tmpfs rejected), annotated tag and source authorization, immutable runtime digest. Manifest fields are null by design. |
-| Clean-clone reproduction | Not executed; no two-build image receipt. |
+| Clean-clone reproduction | Not executed. `reproduce_publication.sh check`/`local-smoke` fail closed until annotated tag `ringlpn-publication-candidate-v1` (manifest `source_release.required_annotated_tag`) points at HEAD with a matching `GPU-MPC/ringlpn` tree; no such tag exists (owner-approved release commit needed). No two-build image receipt. |
 | Matched baseline | No dealerless baseline at reviewed parameters. Fresh Ring-LPN vs direct-OT `--mode compare` needs idle GPUs 1 and 2; GPUs 0 and 2 run another user's vLLM. |
 | Full-graph checkpoint | Replace with a fresh normalized 3-GPU run before any further circulation; the 2026-08-10 bytes are already public via `origin/master` (`9685463`). |
 | Source push of `9bf1ab0` | VS Code askpass route stalls; no SSH key. Bundle: `~/.local/share/ringlpn/artifacts/source-bundles/ringlpn-source-9bf1ab0.bundle` (28,794 B, sha256 `fd313351547469e3b63b891b52ab1568ff84adaba605f183546c525d77f676ed`, requires `afc93c6`). |

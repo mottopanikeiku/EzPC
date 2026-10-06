@@ -111,6 +111,17 @@ manifest pins `platform.reproduction_gate_image_id=sha256:63b6d387733d145bd26e6d
 No two-build reproducibility receipt exists. Every visible CPU must have
 `aes`, `avx2`, `pclmulqdq`, `rdseed`, and `sse4_1`.
 
+`check` and `local-smoke` are currently blocked. On the host both first run
+`verify_authorized_worktree` (`../scripts/reproduce_publication.sh:22-50,165`):
+HEAD must be the annotated tag `ringlpn-publication-candidate-v1` (manifest
+`source_release.required_annotated_tag`) with a matching `GPU-MPC/ringlpn` tree.
+No such tag exists; `check` exits 1 with "cannot resolve authorized tagged
+commit". `local-smoke` also requires the local image ID to equal the pin. The
+local `ringlpn-repro:2026-08-10` already matches
+(`docker image inspect --format '{{.Id}}' ringlpn-repro:2026-08-10`), so run the
+`--no-cache` build below only on a host without it; a rebuild can retag a
+different ID.
+
 ```bash
 SOURCE_DATE_EPOCH=1786320000 docker build --no-cache \
   --build-arg SOURCE_DATE_EPOCH=1786320000 \
